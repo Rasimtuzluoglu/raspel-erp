@@ -37,6 +37,13 @@ class TahsilatControllerTest {
     @MockBean
     private TahsilatService tahsilatService;
 
+    // REDTEAM C10: TahsilatController artık yetki kodunu @PreAuthorize ifadesinde
+    // referans alıyor (@yetkiKontrol.kontrol(authentication, 'FINANS_WRITE')).
+    // @WebMvcTest dilimi config altındaki @Service/@Component'i otomatik yüklemediği
+    // için bean sağlanmalıdır; varsayılan stub true döner.
+    @MockBean
+    private com.raspel.erp.config.security.YetkiKontrol yetkiKontrol;
+
     @Test
     void ozet_donar() throws Exception {
         TahsilatDTO dto = TahsilatDTO.builder()

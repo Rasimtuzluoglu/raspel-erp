@@ -41,6 +41,7 @@ public class IrsaliyeController {
 
     @PostMapping
     @Operation(summary = "Yeni irsaliye oluştur", description = "Yeni bir irsaliye oluşturur")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'IRSALIYE_WRITE')")
     public ResponseEntity<IrsaliyeDTO> olustur(HttpServletRequest request, @Valid @RequestBody IrsaliyeDTO dto) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.status(HttpStatus.CREATED).body(irsaliyeService.olustur(dto, sirketId));
@@ -48,12 +49,14 @@ public class IrsaliyeController {
 
     @PutMapping("/{id}")
     @Operation(summary = "İrsaliye güncelle", description = "İrsaliye bilgilerini günceller")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'IRSALIYE_WRITE')")
     public ResponseEntity<IrsaliyeDTO> guncelle(@PathVariable Long id, @Valid @RequestBody IrsaliyeDTO dto) {
         return ResponseEntity.ok(irsaliyeService.guncelle(id, dto));
     }
 
     @PutMapping("/{id}/durum")
     @Operation(summary = "İrsaliye durum güncelle", description = "İrsaliye durumunu günceller")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'IRSALIYE_WRITE')")
     public ResponseEntity<IrsaliyeDTO> durumGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body) {
         return ResponseEntity.ok(irsaliyeService.durumGuncelle(id, body.getDurum()));
     }
@@ -61,6 +64,7 @@ public class IrsaliyeController {
     @PostMapping("/{id}/faturaya-donustur")
     @Operation(summary = "İrsaliyeyi faturaya dönüştür",
             description = "Kesilmiş irsaliyeyi faturaya çevirir; stok tekrar düşülmez (irsaliyeId bağı).")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'IRSALIYE_WRITE')")
     public ResponseEntity<IrsaliyeDTO> faturayaDonustur(@PathVariable Long id,
                                                         jakarta.servlet.http.HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
@@ -68,8 +72,8 @@ public class IrsaliyeController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "İrsaliye sil", description = "İrsaliyeyi siler (yalnızca ADMIN)")
-    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "İrsaliye sil", description = "İrsaliyeyi siler")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'IRSALIYE_DELETE')")
     public ResponseEntity<Void> sil(@PathVariable Long id) {
         irsaliyeService.sil(id);
         return ResponseEntity.noContent().build();

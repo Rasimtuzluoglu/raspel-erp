@@ -61,12 +61,52 @@ public class RaporDTO {
         private BigDecimal kdvFarki;
     }
 
+    /**
+     * Cari bazında vade yaşlandırma satırı.
+     *
+     * <p><b>Kural:</b> satırdaki tutarlar carinin NET bakiyesi değil, vadesi
+     * geçmemiş her bir faturanın kalan tutarının kova toplamıdır. Önceden
+     * {@code bakiye = |cari bakiyesi|} gösteriliyordu; 1.000 TL vadesi geçmiş
+     * fatura + 500 TL peşin tahsilatı olan cari 90+ kovasında 500 TL ile
+     * görünüyor, yani rapor tahsil edilebilecek tutarı olduğundan az gösteriyordu.
+     *
+     * <p>{@code kova} alanı i18n anahtarıdır; etiketler frontend'de çevrilir
+     * (backend'de Türkçe sabit metin döndürmek EN kullanıcısına sızıyordu).
+     */
     @Data @NoArgsConstructor @AllArgsConstructor @Builder
     public static class YaslandirmaDTO {
+        private Long cariHesapId;
         private String cariAd;
-        private BigDecimal bakiye;
-        private int gun;
-        private String aralik;
+        /** Kova toplamları: VADEDI_GELMEMIS, GUN_0_30, GUN_31_60, GUN_61_90, GUN_90_PLUS */
+        private Map<String, BigDecimal> kovalar;
+        /** Kova toplamlarının toplamı (cari toplam tahsil edilecek). */
+        private BigDecimal toplam;
+        /** En gecikmiş faturanın gecikme günü (0 = vadesi gelmemiş fatura yok). */
+        private int enFazlaGecikmeGun;
+        /** Ağırlıklı ortalama gecikme günü; yalnızca gecikmiş faturalar üzerinden. */
+        private double ortalamaGecikmeGun;
+        /** Gecikmiş tutar (VADEDI_GELMEMIS hariç kova toplamı). */
+        private BigDecimal gecikmisTutar;
+    }
+
+    /** Yaşlandırma raporunun kova bazlı toplamı (tüm cariler). */
+    @Data @NoArgsConstructor @AllArgsConstructor @Builder
+    public static class YaslandirmaOzetDTO {
+        private Map<String, BigDecimal> kovalar;
+        private BigDecimal toplam;
+        private BigDecimal gecikmisTutar;
+        private int cariSayisi;
+        /** Kova anahtarlarının görünüm sırası; frontend başlık sırasını buradan alır. */
+        private List<String> kovaSirasi;
+    }
+
+    /** Yaşlandırma raporu: satırlar + kova toplamları. */
+    @Data @NoArgsConstructor @AllArgsConstructor @Builder
+    public static class YaslandirmaRaporDTO {
+        private List<YaslandirmaDTO> satirlar;
+        private YaslandirmaOzetDTO ozet;
+        /** Referans tarih (gecikme günleri bu tarihe göre hesaplanır). */
+        private java.time.LocalDate referansTarih;
     }
 
     @Data @NoArgsConstructor @AllArgsConstructor @Builder

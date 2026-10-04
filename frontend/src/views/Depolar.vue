@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="depolar-container">
     <div class="sayfa-baslik">
       <h1 class="page-title">
@@ -76,6 +76,7 @@
                 @click="dialogAc(data)"
               />
               <Button
+                v-permission="'STOK_DELETE'"
                 icon="pi pi-trash"
                 :aria-label="$t('common.delete')"
                 class="p-button-rounded p-button-text"
@@ -117,12 +118,13 @@
             <div class="form-row">
               <Dropdown
                 v-model="stokForm.stokId"
-                :options="stokListesi"
+                :options="stokOnerileri"
                 option-label="ad"
                 option-value="id"
                 :placeholder="t('depolar.urunSec')"
                 class="w-full"
                 filter
+                @filter="stokAra"
               />
               <InputNumber
                 v-model="stokForm.miktar"
@@ -268,12 +270,13 @@
         <div class="field">
           <label>{{ t('depolar.urunZorunlu') }}</label><Dropdown
             v-model="transferForm.stokId"
-            :options="stokListesi"
+            :options="stokOnerileri"
             option-label="ad"
             option-value="id"
             :placeholder="t('depolar.urunSec')"
             class="w-full"
             filter
+            @filter="stokAra"
           />
         </div>
         <div class="field">
@@ -382,7 +385,8 @@ import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { depoAPI, subeAPI, stokAPI, depoTransferAPI } from '../api/index.js'
+import { useStokOnerileri } from '../composables/useStokOnerileri.js'
+import { depoAPI, subeAPI, depoTransferAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
 import EmptyState from '../components/EmptyState.vue'
 
@@ -393,7 +397,12 @@ const confirm = useConfirm()
 const authStore = useAuthStore()
 const list = ref([])
 const subeListesi = ref([])
-const stokListesi = ref([])
+
+// Depo stok girişi ve transfer dropdown'ları sunucu aramalı. Önceden
+// parametresiz `stokAPI.getAll()` çağrılıyordu ve backend'in 50 kayıtlık
+// varsayılan tavanına takılıyordu: 50. stoktan sonrası hiçbir depoya
+// giriş/transfer yapılamıyordu, kullanıcı sessizce eksik listede kalıyordu.
+const { oneriler: stokOnerileri, ara: stokAra, hemenAra: stokOnerileriYukle } = useStokOnerileri()
 const depoStoklari = ref([])
 const seciliDepo = ref(null)
 const yukleniyor = ref(false)
@@ -417,10 +426,11 @@ const formatCurrency = (v) => {
 onMounted(async () => {
   yukleniyor.value = true
   try {
-    const [depoRes, subeRes, stokRes] = await Promise.all([depoAPI.getAll(), subeAPI.getAll(), stokAPI.getAll()])
+    const [depoRes, subeRes] = await Promise.all([depoAPI.getAll(), subeAPI.getAll()])
     list.value = unwrapList(depoRes)
     subeListesi.value = unwrapList(subeRes)
-    stokListesi.value = unwrapList(stokRes)
+    // Dropdown ilk açılışta boş görünmesin diye ilk sayfa bir kez çekilir.
+    stokOnerileriYukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('depolar.hataVeri'))
   }

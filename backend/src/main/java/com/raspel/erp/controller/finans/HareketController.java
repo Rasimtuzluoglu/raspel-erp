@@ -22,6 +22,7 @@ import org.springframework.data.web.PageableDefault;
 import com.raspel.erp.util.SayfalamaUtil;
 import java.time.LocalDate;
 import java.util.List;
+import com.raspel.erp.util.CsvGuvenliUtil;
 import com.raspel.erp.entity.finans.Hareket;
 
 /**
@@ -78,11 +79,11 @@ public class HareketController {
         csv.append("ID,Cari Hesap,Tür,Tutar,Tarih,Açıklama\n");
         for (HareketDTO h : liste) {
             csv.append(h.getId()).append(",")
-               .append("\"").append(csvSafe(h.getCariHesapAd())).append("\",")
+               .append("\"").append(CsvGuvenliUtil.deger(h.getCariHesapAd())).append("\",")
                .append(h.getTur()).append(",")
                .append(h.getTutar()).append(",")
                .append(h.getHareketTarihi() != null ? h.getHareketTarihi() : "").append(",")
-               .append("\"").append(csvSafe(h.getAciklama())).append("\"\n");
+               .append("\"").append(CsvGuvenliUtil.deger(h.getAciklama())).append("\"\n");
         }
 
         byte[] bytes = csv.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
@@ -92,14 +93,6 @@ public class HareketController {
         return ResponseEntity.ok().headers(headers).body(bytes);
     }
 
-    private String csvSafe(String value) {
-        if (value == null) return "";
-        String escaped = value.replace("\"", "\"\"");
-        if (escaped.startsWith("=") || escaped.startsWith("+") || escaped.startsWith("-") || escaped.startsWith("@")) {
-            escaped = "'" + escaped;
-        }
-        return escaped;
-    }
 
     @GetMapping
     @Operation(summary = "Tüm hareketleri getir/filtrele", description = "Tüm hareketleri getirir veya filtreleme yapar")

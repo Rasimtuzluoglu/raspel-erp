@@ -4,6 +4,7 @@ import com.raspel.erp.dto.envanter.StokDTO;
 import com.raspel.erp.dto.envanter.StokHareketDTO;
 import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.entity.envanter.Stok;
+import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.entity.envanter.StokHareket;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.envanter.StokHareketRepository;
@@ -19,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -415,5 +417,150 @@ class StokServiceTest {
 
         assertEquals("Kurumsal", result.getAd());
         assertEquals(0, result.getFiyat().compareTo(BigDecimal.valueOf(90)));
+    }
+
+    // hareketler() eskiden bos map gecirdi; hareketToDTO her satir icin ayri
+    // findById cagirip depo/seri adi cozdugu icin hareket sayisi kadar ek sorgu
+    // uretiliyordu (N+1). Artik depo/seri adlari findAllById ile tek seferde alinir.
+    @Test
+    void hareketler_depoVeSeriAdlariniTopluCozer() {
+        Stok stok = createStok(1L);
+        stok.setSirketId(1L);
+        when(stokRepository.findById(1L)).thenReturn(Optional.of(stok));
+
+        StokHareket h1 = hareket(1L, stok, 10L, 100L);
+        StokHareket h2 = hareket(2L, stok, 10L, 101L);
+        when(stokHareketRepository.findByStokIdOrderByHareketTarihiDesc(1L)).thenReturn(List.of(h1, h2));
+        when(depoRepository.findAllById(Set.of(10L))).thenReturn(List.of(
+                com.raspel.erp.entity.sube.Depo.builder().id(10L).ad("Merkez Depo").build()));
+        when(stokSeriRepository.findAllById(Set.of(100L, 101L))).thenReturn(List.of(
+                com.raspel.erp.entity.envanter.StokSeri.builder().id(100L).seriNo("SN-1").build(),
+                com.raspel.erp.entity.envanter.StokSeri.builder().id(101L).seriNo("SN-2").build()));
+
+        List<StokHareketDTO> sonuc = stokService.hareketler(1L);
+
+        assertEquals(2, sonuc.size());
+        assertEquals("Merkez Depo", sonuc.get(0).getDepoAd());
+        assertEquals("Merkez Depo", sonuc.get(1).getDepoAd());
+        assertEquals("SN-1", sonuc.get(0).getSeriNo());
+        assertEquals("SN-2", sonuc.get(1).getSeriNo());
+
+        verify(depoRepository, times(1)).findAllById(any());
+        verify(stokSeriRepository, times(1)).findAllById(any());
+        verify(depoRepository, never()).findById(any());
+        verify(stokSeriRepository, never()).findById(any());
+    }
+
+    @Test
+    void hareketler_depoVeSeriIdleriYoksaEkSorguYapmaz() {
+        Stok stok = createStok(1L);
+        stok.setSirketId(1L);
+        when(stokRepository.findById(1L)).thenReturn(Optional.of(stok));
+        StokHareket h = hareket(1L, stok, null, null);
+        when(stokHareketRepository.findByStokIdOrderByHareketTarihiDesc(1L)).thenReturn(List.of(h));
+
+        List<StokHareketDTO> sonuc = stokService.hareketler(1L);
+
+        assertEquals(1, sonuc.size());
+        assertNull(sonuc.get(0).getDepoAd());
+        assertNull(sonuc.get(0).getSeriNo());
+        verify(depoRepository, never()).findAllById(any());
+        verify(stokSeriRepository, never()).findAllById(any());
+    }
+
+    private StokHareket hareket(Long id, Stok stok, Long depoId, Long seriId) {
+        StokHareket h = StokHareket.builder()
+                .id(id).stok(stok).tur("GIRIS").miktar(BigDecimal.ONE)
+                .hareketTarihi(LocalDate.of(2026, 1, id.intValue()))
+                .build();
+        h.setDepoId(depoId);
+        h.setSeriId(seriId);
+        return h;
+    }
+
+    // ---------- B4c: toplu fiyat guncelleme (double -> BigDecimal, oran dogrulama) ----------
+
+    private Stok fiyatliStok(Long id, String fiyat, String satis) {
+        Stok s = new Stok();
+        s.setId(id);
+        s.setAd("Stok " + id);
+        s.setFiyat(new BigDecimal(fiyat));
+        s.setSatisFiyati(new BigDecimal(satis));
+        return s;
+    }
+
+    /**
+     * B4c: eski kullanim `double carpan` idi ve her satirda
+     * `BigDecimal.valueOf(double)` cagriliyordu. double ikili temsil
+     * hatasi nedeniyle 100,00 x %15 = 114,99999... yerine kesin
+     * 115,00 vermeli.
+     */
+    @Test
+    void topluFiyatGuncelle_artistaKesinYuzdeUygular() {
+        Stok s = fiyatliStok(1L, "100.00", "200.00");
+        when(stokRepository.findBySirketIdOrderByAd(eq(1L), any())).thenReturn(new PageImpl<>(List.of(s)));
+
+        int n = stokService.topluFiyatGuncelle(
+                com.raspel.erp.dto.envanter.TopluFiyatDTO.builder().yon("ARTIR").oran(15.0).build(), 1L);
+
+        assertEquals(1, n);
+        assertEquals(0, new BigDecimal("115.00").compareTo(s.getFiyat()));
+        assertEquals(0, new BigDecimal("230.00").compareTo(s.getSatisFiyati()));
+    }
+
+    @Test
+    void topluFiyatGuncelle_azaltMamulYuzdeUygular() {
+        Stok s = fiyatliStok(1L, "100.00", "200.00");
+        when(stokRepository.findBySirketIdOrderByAd(eq(1L), any())).thenReturn(new PageImpl<>(List.of(s)));
+
+        stokService.topluFiyatGuncelle(
+                com.raspel.erp.dto.envanter.TopluFiyatDTO.builder().yon("AZALT").oran(10.0).build(), 1L);
+
+        assertEquals(0, new BigDecimal("90.00").compareTo(s.getFiyat()));
+        assertEquals(0, new BigDecimal("180.00").compareTo(s.getSatisFiyati()));
+    }
+
+/** B4c: negatif oran reddedilir (aksi halde fiyat isareti bozulur). */
+    @Test
+    void topluFiyatGuncelle_negatifOranReddedilir() {
+        assertThrows(BusinessException.class, () -> stokService.topluFiyatGuncelle(
+                com.raspel.erp.dto.envanter.TopluFiyatDTO.builder().yon("ARTIR").oran(-50.0).build(), 1L));
+        // Fail-fast: gecersiz oranda tablo HIC sorgulanmaz.
+        verify(stokRepository, never()).findBySirketIdOrderByAd(any(), any());
+        verify(stokRepository, never()).saveAll(any());
+    }
+
+    /** B4c: AZALT yonunde %100'den buyuk oran fiyati negatife cevirirdi. */
+    @Test
+    void topluFiyatGuncelle_yuzdenBuyukAzaltmaReddedilir() {
+        assertThrows(BusinessException.class, () -> stokService.topluFiyatGuncelle(
+                com.raspel.erp.dto.envanter.TopluFiyatDTO.builder().yon("AZALT").oran(150.0).build(), 1L));
+        verify(stokRepository, never()).saveAll(any());
+    }
+
+    /** B4c: %100 azaltma fiyati sifira indirir, hata vermez. */
+    @Test
+    void topluFiyatGuncelle_yuzAzaltmaSifirYapar() {
+        Stok s = fiyatliStok(1L, "100.00", "80.00");
+        when(stokRepository.findBySirketIdOrderByAd(eq(1L), any())).thenReturn(new PageImpl<>(List.of(s)));
+
+        stokService.topluFiyatGuncelle(
+                com.raspel.erp.dto.envanter.TopluFiyatDTO.builder().yon("AZALT").oran(100.0).build(), 1L);
+
+        assertEquals(0, BigDecimal.ZERO.compareTo(s.getFiyat()));
+        assertEquals(0, BigDecimal.ZERO.compareTo(s.getSatisFiyati()));
+    }
+
+    /** B4c: oran null ise carpan 1 -> fiyat degismez. */
+    @Test
+    void topluFiyatGuncelle_oranNullFiyatiDegistirmez() {
+        Stok s = fiyatliStok(1L, "100.00", "200.00");
+        when(stokRepository.findBySirketIdOrderByAd(eq(1L), any())).thenReturn(new PageImpl<>(List.of(s)));
+
+        stokService.topluFiyatGuncelle(
+                com.raspel.erp.dto.envanter.TopluFiyatDTO.builder().yon("ARTIR").build(), 1L);
+
+        assertEquals(0, new BigDecimal("100.00").compareTo(s.getFiyat()));
+        assertEquals(0, new BigDecimal("200.00").compareTo(s.getSatisFiyati()));
     }
 }

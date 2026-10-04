@@ -10,6 +10,9 @@ export const useAuthStore = defineStore('auth', () => {
   const sirketAdi = ref('')
   const sirketLogo = ref('')
   const yetkiler = ref([])
+  // Rol yetkileri sunucudan okundu mu? `hasPermission` bu bayrağa bakar:
+  // yüklenene kadar hiçbir şey gizlenmez (menü boş görünmez).
+  const yetkiYuklendi = ref(false)
   const loading = ref(false)
   const tokenExpiresAt = ref(null)
 
@@ -18,28 +21,46 @@ export const useAuthStore = defineStore('auth', () => {
   const isSaha = computed(() => kullanici.value?.sahaKullanici === true)
   const isDriver = computed(() => kullanici.value?.role === 'DRIVER')
 
+  /**
+   * Yetki kontrolü. ADMIN her zaman geçer. Yetkiler henüz yüklenmediyse
+   * gizleme YAPILMAZ (eski davranış): aksi halde menü/route koruması geçici
+   * olarak yanlış kapanır. `yetkiYuklendi` bayrağı yüklenmeyi netleştirir.
+   */
   const hasPermission = (permissionCode) => {
     if (!kullanici.value) return false
     if (kullanici.value.role === 'ADMIN') return true
     if (!permissionCode) return true
+    if (!yetkiYuklendi.value) return true
     return yetkiler.value.includes(permissionCode)
   }
 
   const yetkileriYukle = async () => {
-    if (!kullanici.value?.role) return
+    if (!kullanici.value?.role) {
+      yetkiYuklendi.value = true
+      return
+    }
     if (kullanici.value.role === 'ADMIN') {
       yetkiler.value = ['*']
+      yetkiYuklendi.value = true
       return
     }
     try {
       const res = await apiClient.get('/yetkiler/roller')
       const roller = res.data || []
-      const userRol = roller.find((r) => r.ad === kullanici.value.role)
-      if (userRol && userRol.yetkiler) {
-        yetkiler.value = userRol.yetkiler.map((y) => y.kod)
+      // Rol eşleşmesi önce `role` alanı, olmazsa `ad` üzerinden yapılır;
+      // backend roller için `ad` döner, `role` eşleşmesi ileri uyumludur.
+      const userRol = roller.find((r) => r.ad === kullanici.value.role || r.role === kullanici.value.role)
+      if (userRol?.yetkiler) {
+        yetkiler.value = userRol.yetkiler.map((y) => (typeof y === 'string' ? y : y.kod)).filter(Boolean)
+      } else {
+        // Rol tanımı yoksa: rol satırı eksik demektir. Saha/şoför akışları
+        // bu durumda kırılmasın diye yetkisiz sayılır, menü koruması uygulanır.
+        yetkiler.value = []
       }
     } catch {
-      /* empty */
+      yetkiler.value = []
+    } finally {
+      yetkiYuklendi.value = true
     }
   }
 
@@ -83,7 +104,9 @@ export const useAuthStore = defineStore('auth', () => {
         yetkiler.value = data.yetkiler || []
         tokenExpiresAt.value = data.tokenExpiresAt || null
         if (kullanici.value) {
-          if (yetkiler.value.length === 0) yetkileriYukle()
+          // Rol yetkileri sunucudan her oturumda tazelenir: yönetici bir rolden
+          // yetki kaldırdığında açık oturumlar da bir sonraki istekte güncellenir.
+          await yetkileriYukle()
           await kullaniciGuncelle()
         }
       }
@@ -208,6 +231,7 @@ export const useAuthStore = defineStore('auth', () => {
     sirketAdi.value = ''
     sirketLogo.value = ''
     yetkiler.value = []
+    yetkiYuklendi.value = false
     tokenExpiresAt.value = null
     authTemizle()
     hassasYerelVerileriTemizle()
@@ -290,6 +314,7 @@ export const useAuthStore = defineStore('auth', () => {
     sirketAdi,
     sirketLogo,
     yetkiler,
+    yetkiYuklendi,
     tokenExpiresAt,
     loading,
     isLoggedIn,

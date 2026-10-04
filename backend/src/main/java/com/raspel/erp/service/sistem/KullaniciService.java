@@ -17,6 +17,8 @@ import com.raspel.erp.util.TotpUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -56,6 +58,45 @@ public class KullaniciService {
     private final EmailService emailService;
     private final com.raspel.erp.repository.ik.PersonelRepository personelRepository;
     private final com.raspel.erp.service.sistem.AuditLogService auditLogService;
+    private final ObjectProvider<MeterRegistry> meterRegistryProvider;
+
+    /**
+     * REDTEAM H-1: Platform geneli işlemlere (yedekleme/geri yükleme) yetkili
+     * kullanıcı adları. {@code app.platform.admin-users} (ortam değişkeni
+     * {@code APP_PLATFORM_ADMIN_USERS}) ile verilir; virgülle ayrılır.
+     * Varsayılan {@code admin}. Boş bırakılırsa platform işlemleri KAPALI olur
+     * (fail-closed): yedekleme gibi kritik işlemler sessizce açık kalmamalıdır.
+     */
+    @org.springframework.beans.factory.annotation.Value(
+            "${app.platform.admin-users:${APP_PLATFORM_ADMIN_USERS:admin}}")
+    private String platformAdminlarBoru = "admin";
+
+    /** Platform yönetici beyaz listesi (karşılaştırma için küçük harfe indirgenmiş). */
+    private java.util.Set<String> platformAdminlar() {
+        if (platformAdminlarBoru == null || platformAdminlarBoru.isBlank()) {
+            return java.util.Set.of();
+        }
+        return java.util.Arrays.stream(platformAdminlarBoru.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(s -> s.toLowerCase(java.util.Locale.ROOT))
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
+    /**
+     * Kimlik dogrulama denemeleri sayaci. Basarisiz girisler {sonuc} etiketiyle
+     * "hatali_sifre" / "kullanici_yok" / "pasif" olarak sayilir; kaba kuvvet
+     * (brute force) tespiti icin gereklidir (config/prometheus/alert.rules.yml:
+     * LoginFailuresSpike). Kullanici adi etiketi EKLENMEZ: etiket olarak kullanici
+     * adi koymak hem yuksek kardinalite hem de PII sizinti riski tasir.
+     */
+    private static final String METRIK_GIRIS = "raspel.giris.deneme";
+
+    private void girisSayaci(String sonuc) {
+        MeterRegistry registry = meterRegistryProvider.getIfAvailable();
+        if (registry == null) return;
+        registry.counter(METRIK_GIRIS, "sonuc", sonuc).increment();
+    }
 
     @Value("${app.jwt.expiration-ms:86400000}")
     private long jwtExpirationMs;
@@ -161,6 +202,60 @@ public class KullaniciService {
         }
     }
 
+    /**
+     * <b>Platform geneli erişim</b> kontrolü — tüm şirketlerin verisini içeren
+     * işlemler için (veritabanı yedekleme/geri yükleme, platform yapılandırması).
+     *
+     * <p>REDTEAM H-1: {@code /api/backups/**} yalnızca {@code hasRole('ADMIN')}
+     * ile korunuyordu ve {@code BackupService} içinde {@code sirketId} hiç geçmiyordu.
+     * Bu projede {@code Kullanici.role} <b>şirket başına</b> bir roldür ve platform
+     * geneli superadmin kavramı YOKTUR. Testte kanıtlandı: Şirket B'nin ADMIN'i
+     * Şirket 4'e ait TÜM veritabanı yedeklerini listeleyip indirebildi (yedek
+     * tek DB dump'u olduğu için tüm şirketleri içerir) ve
+     * {@code klasor=backups} ile presigned URL alabildi.
+     *
+     * <p><b>DÜZELTME:</b> Bu işlemler artık {@code app.platform.admin-users}
+     * beyaz listesindeki kullanıcılara açıktır (fail-closed: liste boşsa kimse
+     * erişemez). Beyaz liste <b>kullanıcı adına</b> göre tanımlanır ve ortam
+     * değişkeni {@code APP_PLATFORM_ADMIN_USERS} ile verilir; varsayılan
+     * {@code admin} (kurulumda oluşan ilk yönetici).
+     *
+     * @return {@code true} yalnızca gerçekten platform yöneticisiyse
+     */
+    public boolean platformYoneticisiMi() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication();
+        if (auth == null || auth.getName() == null) return false;
+        String username = auth.getName().trim();
+        // ADMIN yetkisi tüm roller için geçerli olduğundan ikisini de kontrol et.
+        if (!auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()))) return false;
+        // Beyaz liste KULLANICI ADINA göredir; DB'deki rol tek başına yeterli
+        // değildir (aksi halde her şirketin ADMIN'i platform erişimi kazanırdı).
+        java.util.Set<String> platformAdminlar = platformAdminlar();
+        if (!platformAdminlar.contains(username.toLowerCase(java.util.Locale.ROOT))) {
+            if (log.isDebugEnabled()) {
+                log.debug("Platform geneli işlem reddedildi (beyaz listede değil): {}", username);
+            }
+            return false;
+        }
+        // Beyaz listede olsa bile DB kaydı silinmişse erişim verilmez (fail-closed).
+        return kullaniciRepository.findByUsername(username)
+                .map(u -> "ADMIN".equals(u.getRole()) && Boolean.TRUE.equals(u.getActive()))
+                .orElse(false);
+    }
+
+    /** Platform geneli işlem için yetki yoksa 403 fırlatır. */
+    public void platformYoneticisiGerekir(String islem) {
+        if (!platformYoneticisiMi()) {
+            throw new com.raspel.erp.exception.BusinessException(
+                    "Bu işlem yalnızca platform yöneticisi tarafından gerçekleştirilebilir: " + islem
+                    + " ( Erişim verilen hesaplar: "
+                    + (platformAdminlar().isEmpty() ? "<yapılandırılmamış>"
+                       : String.join(", ", platformAdminlar())) + ")");
+        }
+    }
+
     public List<String> bildirimTercihleriGetir(Long kullaniciId) {
         Kullanici k = kullaniciRepository.findById(kullaniciId)
                 .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", kullaniciId));
@@ -237,11 +332,35 @@ public class KullaniciService {
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
             sifrePolitikasiKontrol(dto.getPassword());
             k.setPassword(passwordEncoder.encode(dto.getPassword()));
+            // REDTEAM C9: Şifre değişiminde tokenVersion ARTIRILMIYORDU. Bu,
+            // ele geçirilmiş bir hesabın parolası değiştirilse bile saldırganın
+            // mevcut JWT'sinin geçerli kalmasına yol açıyordu (parola sıfırlama
+            // olay müdahalesinin temel amacı iptaldir).
+            tokenVersionArtir(k);
         }
         if (dto.getActive() != null) k.setActive(dto.getActive());
         if (dto.getRole() != null) k.setRole(dto.getRole());
+
+        // REDTEAM C9: Kullanıcı bir şirketten çıkarıldığında (veya üye
+        // şirket listesi değiştiğinde) eski JWT'leri geçerli kalıyordu; JWT'teki
+        // sirketId claim'i DB'den teyit edilmediği için kullanıcı çıkarıldığı
+        // şirketin verisine erişmeye devam ediyordu.
+        if (dto.getSirketId() != null || dto.getSirketIds() != null) {
+            tokenVersionArtir(k);
+        }
         if (dto.getSahaKullanici() != null) k.setSahaKullanici(dto.getSahaKullanici());
         return entityToDTO(kullaniciRepository.save(k));
+    }
+
+    /**
+     * Kullanıcının tüm mevcut oturumlarını geçersiz kılar (tokenVersion++).
+     * {@code JwtAuthFilter} her istekte token sürümünü DB ile karşılaştırdığı için
+     * artış, o kullanıcıya ait tüm JWT'leri geçersiz kılar.
+     */
+    private void tokenVersionArtir(Kullanici k) {
+        k.setTokenVersion((k.getTokenVersion() != null ? k.getTokenVersion() : 0L) + 1);
+        log.info("Kullanıcı oturumları geçersiz kılındı (tokenVersion++): id={}, username={}",
+                k.getId(), k.getUsername());
     }
 
     /** Oturum açmış kullanıcının kendi profil güncellemesi: rol, aktiflik ve şifre değiştirilemez (şifre için ayrı endpoint). */
@@ -429,26 +548,76 @@ public class KullaniciService {
         log.info("Kullanıcı için 2FA devre dışı bırakıldı: {}", k.getUsername());
     }
 
+    /**
+     * Kullanıcı varlığını sızdırmayan giriş doğrulaması.
+     *
+ * <p><b>Numaralandırma (enumeration) düzeltmesi:</b> Pasif bir kullanıcı giriş
+ * denediğinde "Bu kullanıcı aktif değil" mesajı dönüyordu; olmayan kullanıcıda
+ * ise "Kullanıcı adı veya şifre hatalı" dönüyordu. Farklı mesaj, saldırıya
+ * geçerli kullanıcı adlarını listeleme imkânı veriyordu. Artık tüm başarısız
+ * durumlar (kullanıcı yok / pasif / yanlış şifre) AYNI mesajı döner.
+ *
+ * <p><b>Zamanlama (timing) düzeltmesi:</b> Kullanıcı bulunamazsa BCrypt
+ * karşılaştırması hiç çalışmıyordu; istek ~1 ms'de dönüyordu. Gerçek bir şifre
+ * kontrolü BCrypt ile ~100 ms sürer. Fark, ölçüm yapan bir saldırganla
+ * kullanıcı adlarını ayırt etmeye yeter. Bu yüzden kullanıcı bulunamasa bile
+ * sabit bir BCrypt karşılaştırması (dummy) yapılır.
+ */
+/**
+     * Tüm başarısız giriş durumları için tek mesaj. Farklı mesajlar kullanıcı
+     * adlarının numaralandırılmasına (enumeration) yol açar.
+     */
+    private static final String GIRIS_HATASI = "Kullanıcı adı veya şifre hatalı";
+
+    /**
+     * Kullanıcı bulunamadığında gerçek bir BCrypt karşılaştırması kadar süre
+     * harcanmasını sağlayan "kül" hash. Değeri kimseyle eşleşmez; amacı yalnızca
+     * yanıt süresini eşitlemek (BCrypt kasıtlı olarak yavaştır).
+     */
+    private static final String ZAMANLAMA_KUL_HASH =
+            "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+
+    /** Kullanıcı bulunamadığında yanıt süresini normal şifre kontrolüyle eşitler. */
+    private void sifreDogrulaZamanlamaEsla(String sifre) {
+        try {
+            passwordEncoder.matches(sifre != null ? sifre : "", ZAMANLAMA_KUL_HASH);
+        } catch (Exception e) {
+            // Hash bozuksa sessizce geç; kimlik doğrulama zaten başarısız.
+            log.debug("Zamanlama eşleme hash'i işlenemedi: {}", e.getMessage());
+        }
+    }
+
     public LoginResponse giris(LoginRequest req) {
-        log.info("Giriş denemesi: {}", req.getUsername());
-        Kullanici k = kullaniciRepository.findByUsername(req.getUsername())
-                .orElseThrow(() -> {
-                    log.warn("BAŞARISIZ GİRİŞ - kullanıcı bulunamadı: {}", req.getUsername());
-                    return new BusinessException("Kullanıcı adı veya şifre hatalı");
-                });
+    log.info("Giriş denemesi: {}", req.getUsername());
+    java.util.Optional<Kullanici> bulunan = kullaniciRepository.findByUsername(req.getUsername());
 
-        if (!k.getActive()) {
-            log.warn("BAŞARISIZ GİRİŞ - pasif kullanıcı: {}", req.getUsername());
-            throw new BusinessException("Bu kullanıcı aktif değil");
-        }
+    if (bulunan.isEmpty()) {
+        // Zamanlama eşitlemesi: gerçek bir BCrypt doğrulaması kadar süre harcanır.
+        sifreDogrulaZamanlamaEsla(req.getPassword());
+        log.warn("BAŞARISIZ GİRİŞ - kullanıcı bulunamadı: {}", req.getUsername());
+        girisSayaci("kullanici_yok");
+        throw new BusinessException(GIRIS_HATASI);
+    }
 
-        if (!passwordEncoder.matches(req.getPassword(), k.getPassword())) {
-            log.warn("BAŞARISIZ GİRİŞ - hatalı şifre: {}", req.getUsername());
-            auditLogService.log(k.getId(), k.getSirketId(), "LOGIN_FAILED", "Kullanici", k.getId(),
-                    "Başarısız giriş (hatalı şifre): " + k.getUsername(), null);
-            throw new BusinessException("Kullanıcı adı veya şifre hatalı");
-        }
+    Kullanici k = bulunan.get();
 
+    if (!passwordEncoder.matches(req.getPassword(), k.getPassword())) {
+        log.warn("BAŞARISIZ GİRİŞ - hatalı şifre: {}", req.getUsername());
+        girisSayaci("hatali_sifre");
+        auditLogService.log(k.getId(), k.getSirketId(), "LOGIN_FAILED", "Kullanici", k.getId(),
+                "Başarısız giriş (hatalı şifre): " + k.getUsername(), null);
+        throw new BusinessException(GIRIS_HATASI);
+    }
+
+    // Sıralama: önce şifre doğrulanır, sonra pasiflik kontrolü yapılır. Aksi halde
+    // doğru şifreye sahip olmayan biri bile "pasif" bilgisini öğrenebilirdi.
+    if (!k.getActive()) {
+        log.warn("BAŞARISIZ GİRİŞ - pasif kullanıcı: {}", req.getUsername());
+        girisSayaci("pasif");
+        throw new BusinessException(GIRIS_HATASI);
+    }
+
+        girisSayaci("basarili");
         log.info("Başarılı giriş: {}", req.getUsername());
         // Kalıcı denetim izi: kimlik doğrulama olayları audit_log'a yazılır (forensics/uyum).
         auditLogService.log(k.getId(), k.getSirketId(), "LOGIN", "Kullanici", k.getId(),
@@ -475,6 +644,28 @@ public class KullaniciService {
                 .build();
     }
 
+    /**
+ * TOTP replay kontrolü.
+ *
+     * <p>Doğrulama penceresi ±1 adım (±30 sn) olduğu için geçerli bir kod üç kez
+     * kabul edilebiliyordu. Ekrandan görülen bir kod (omuz sörfü, ekran görüntüsü)
+     * tekrar kullanılabiliyordu. Artık kullanılan zaman adımı saklanıyor ve aynı
+     * adımla gelen ikinci istek reddediliyor.
+     *
+     * @return true ise bu kod daha önce kullanılmıştır (replay)
+     */
+    private boolean replayKontrolu(Kullanici k, long counter) {
+        Long son = k.getTwoFactorLastCounter();
+        if (son != null && counter <= son) {
+            log.warn("TOTP replay denemesi - kullanıcı: {}, counter: {} (son: {})",
+                    k.getUsername(), counter, son);
+            return true;
+        }
+        k.setTwoFactorLastCounter(counter);
+        kullaniciRepository.save(k);
+        return false;
+    }
+
     public LoginResponse giris2faTamamla(TwoFactorGirisRequest req) {
         if (req == null || req.getGirisToken() == null || req.getGirisToken().isBlank()) {
             throw new BusinessException("Giriş oturumu bulunamadı, tekrar giriş yapınız");
@@ -496,13 +687,21 @@ public class KullaniciService {
         if (k.getTwoFactorEnabled() == null || !k.getTwoFactorEnabled()) {
             throw new BusinessException("2FA aktif değil");
         }
-        if (!TotpUtil.validate(k.getTwoFactorSecret(), req.getCode(), System.currentTimeMillis())) {
+        TotpUtil.DogrulamaSonucu dogrulama = TotpUtil.dogrula(k.getTwoFactorSecret(), req.getCode(), System.currentTimeMillis());
+        // Replay koruması: aynı zaman adımına ait kod ikinci kez kabul edilmez.
+        // Pencere ±30 sn olduğu için aynı kod üç kere kullanılabiliyordu.
+        if (dogrulama.gecerli() && replayKontrolu(k, dogrulama.counter())) {
+            throw new BusinessException("Bu doğrulama kodu zaten kullanıldı. Lütfen uygulamadaki yeni kodu girin.");
+        }
+        if (!dogrulama.gecerli()) {
+            girisSayaci("hatali_2fa_kodu");
             throw new BusinessException("Doğrulama kodu geçersiz veya süresi dolmuş");
         }
 
         bekleyenSil(req.getGirisToken());
         String yeniToken = UUID.randomUUID().toString();
         bekleyenKaydet(yeniToken, k.getId(), System.currentTimeMillis());
+        girisSayaci("basarili_2fa");
 
         List<com.raspel.erp.dto.sistem.SirketDTO> sirketler = getSirketlerForKullanici(k);
         return LoginResponse.builder()

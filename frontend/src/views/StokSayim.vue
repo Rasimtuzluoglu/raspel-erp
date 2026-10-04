@@ -152,12 +152,14 @@
           <label>{{ t('stokSayim.urunZorunlu') }}</label>
           <Dropdown
             v-model="form.stokId"
-            :options="stokListesi"
+            :options="stokOnerileri"
             option-label="ad"
             option-value="id"
             :placeholder="t('stokSayim.urunSec')"
             class="w-full"
             filter
+            filter-by="ad,stokKodu,barkod"
+            @filter="stokAra"
             @change="onStokSec"
           />
         </div>
@@ -217,7 +219,8 @@ import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { stokSayimAPI, stokAPI } from '../api/index.js'
+import { stokSayimAPI } from '../api/index.js'
+import { useStokOnerileri } from '../composables/useStokOnerileri.js'
 import { useI18n } from 'vue-i18n'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
 
@@ -226,7 +229,10 @@ const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { t } = useI18n()
 const list = ref([])
-const stokListesi = ref([])
+// Sayım ürün seçici sunucu aramalı. Önceden `stokAPI.getAll({ size: 5000 })`
+// ile 5000 stok her sayfa açılışında çekiliyordu (uygulamadaki en büyük tek
+// istek) ve 5000. stoktan sonrası seçilemiyordu.
+const { oneriler: stokOnerileri, ara: stokAra, hemenAra: stokOnerileriYukle } = useStokOnerileri()
 const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const dialog = ref(false)
@@ -247,9 +253,10 @@ const formatNumber = (v) => {
 onMounted(async () => {
   yukleniyor.value = true
   try {
-    const [sR, stR] = await Promise.all([stokSayimAPI.getAll(), stokAPI.getAll({ size: 5000 })])
+    const sR = await stokSayimAPI.getAll()
     list.value = unwrapList(sR)
-    stokListesi.value = stR.data.content || stR.data
+    // Dropdown ilk açılışta boş görünmesin diye ilk sayfa bir kez çekilir.
+    stokOnerileriYukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('stokSayim.hataYukleme'))
   }
@@ -279,7 +286,7 @@ const dialogAc = (data) => {
 }
 
 const onStokSec = () => {
-  const stok = stokListesi.value.find((s) => s.id === form.value.stokId)
+  const stok = stokOnerileri.value.find((s) => s.id === form.value.stokId)
   form.value.beklenenMiktar = stok?.miktar ?? 0
 }
 

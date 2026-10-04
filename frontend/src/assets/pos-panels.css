@@ -1,0 +1,986 @@
+/* ==========================================================================
+   POS SIPARIS PANELI — paylasilan panel stilleri
+   --------------------------------------------------------------------------
+   Bu stiller PosMusteriPaneli / PosSepetPaneli / PosOdemePaneli bilesenlerine
+   ait. HizliSatis.vue'nin scoped <style> blogu cocuk bilesenlere UYMAZ
+   (Vue scoped CSS yalnizca bilesenin kendi sablonunu kapsar), bu yuzden
+   kurallar burada `.pos-container` altinda toplanir: hem bilesenlere ulastigi
+   icin gecerli, hem de POS sayfasi disinda sizmaz.
+   ========================================================================== */
+
+.pos-container {
+  /* Ortak olcek: panel ici bosluklar bu degere gore tekillestirilir. */
+  --pos-bolum-gap: 10px;
+  --pos-alan-gap: 10px;
+  --pos-etiket-font: 11.5px;
+  --pos-alan-radius: 12px;
+}
+
+/* ---------------------------------------------------------------- BOLUM CEV ---
+   Katlanabilir bolum basligi buton kalibi (musteri / teslimat / odeme). */
+.pos-container .pos-bolum {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pos-bolum-gap);
+  min-width: 0;
+}
+.pos-container .pos-bolum + .pos-bolum {
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+}
+.pos-container .katlanir-baslik {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s, color 0.15s;
+}
+.pos-container .katlanir-baslik:hover {
+  background: var(--bg-secondary);
+}
+.pos-container .katlanir-baslik:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.pos-container .katlanir-sol {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.pos-container .katlanir-sol i {
+  color: var(--accent);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+/* Basligin sonundaki acilma oku her zaman saga yaslanir (ikon + metin + ok
+   arasinda bosluk birikmemesi icin). */
+.pos-container .katlanir-baslik > .katlanir-ok {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-size: 12px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+.pos-container .katlanir-rozet {
+  margin-left: auto;
+  max-width: 140px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pos-container .katlanir-ikon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.pos-container .katlanir-ikon-btn:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ------------------------------------------------------------ ORTAK ALAN ---
+   Tum panellerde ayni etiket tipografisi ve alan boslugu. */
+.pos-container .odenen-satir,
+.pos-container .teslim-eden-alan {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.pos-container .odenen-satir label,
+.pos-container .teslim-eden-alan label {
+  display: block;
+  font-size: var(--pos-etiket-font);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.pos-container .teslim-eden-alan .zorunlu,
+.pos-container .required {
+  color: var(--danger);
+}
+
+/* ------------------------------------------------------- MUSTERI + TESLIMAT */
+.pos-container .customer-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pos-container .musteri-modu {
+  display: flex;
+}
+.pos-container .musteri-modu .p-selectbutton,
+.pos-container .musteri-modu .p-selectbutton .p-button {
+  flex: 1;
+  justify-content: center;
+}
+/* Müşteri öneri satırı (PosMusteriPaneli AutoComplete #option).
+   `.pos-container` öneki KALDIRILDI: panel body'ye teleport edildiği için
+   konteyner altındaki kurallar uygulanmıyordu. */
+.musteri-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+.musteri-option-detay {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* AutoComplete öneri satırları.
+   DİKKAT: PrimeVue overlay panelini body'ye teleport eder. Bu yüzden kurallar
+   `.pos-container` altında yazılırsa UYGULANMAZ (panel DOM'da konteynerin
+   dışındadır). Oneri satırları bu yüzden global, önek olmadan tanımlanır. */
+.urun-oneri {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  width: 100%;
+}
+.urun-oneri-ad {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.urun-oneri-kod {
+  flex: 0 0 auto;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.urun-oneri-fiyat {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.pos-container .secili-musteri-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid var(--accent-soft-strong);
+  border-radius: 10px;
+  background: var(--accent-soft);
+  font-size: 13px;
+}
+.pos-container .secili-musteri-chip i {
+  color: var(--accent);
+  font-size: 14px;
+}
+.pos-container .secili-musteri-ad {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.pos-container .secili-musteri-sil {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.pos-container .secili-musteri-sil:hover {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+.pos-container .anlik-musteri {
+  margin-bottom: 4px;
+}
+.pos-container .musteri-bakiye-uyari {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.pos-container .musteri-bakiye-uyari.danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid var(--danger-border);
+}
+.pos-container .musteri-bakiye-uyari.warn {
+  background: var(--warning-soft);
+  color: var(--warning);
+  border: 1px solid var(--warning-border);
+}
+.pos-container .musteri-bakiye-uyari.info {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent-soft-strong);
+}
+.pos-container .degisim-bilgi {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--accent-soft-strong);
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+.pos-container .degisim-bilgi span {
+  flex: 1;
+  min-width: 0;
+}
+.pos-container .degisim-kapat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.pos-container .degisim-kapat:hover {
+  background: var(--accent-soft-strong);
+}
+
+/* Teslimat / sofor */
+.pos-container .teslimat-ipucu {
+  margin: 0;
+  padding: 8px 10px;
+  border-left: 3px solid var(--accent-border);
+  border-radius: 0 8px 8px 0;
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.pos-container .teslim-durum-secim .p-selectbutton {
+  display: flex;
+  flex-wrap: wrap;
+}
+.pos-container .personel-opsiyon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+.pos-container .personel-opsiyon > span:not(.sofor-bekleyen):not(.sofor-rol-uyari) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pos-container .personel-opsiyon i {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.pos-container .personel-opsiyon .sofor-rol-uyari {
+  margin-left: auto;
+  color: var(--warning);
+  font-size: 12px;
+}
+.pos-container .personel-opsiyon .sofor-bekleyen {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: 11px;
+  font-weight: 700;
+}
+.pos-container .personel-opsiyon .sofor-rol-uyari + .sofor-bekleyen {
+  margin-left: 0;
+}
+
+/* ------------------------------------------------------------------ SEPET */
+.pos-container .sepet-bolum {
+  min-height: 0;
+}
+.pos-container .sepet-bolum .sepet-baslik {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+.pos-container .sepet-baslik-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 4px 6px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.pos-container .sepet-baslik-toggle:hover {
+  background: var(--bg-secondary);
+}
+.pos-container .sepet-baslik-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.pos-container .sepet-baslik-btnler {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.pos-container .geri-al-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--warning-border);
+  border-radius: 10px;
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.pos-container .geri-al-bar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--accent);
+  font-weight: 700;
+  cursor: pointer;
+}
+.pos-container .sepet-icerik {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+.pos-container .sepet-bos {
+  padding: 22px 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+}
+.pos-container .sepet-item {
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.pos-container .sepet-item:hover {
+  border-color: var(--border);
+}
+.pos-container .sepet-item.aktif-satir {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.pos-container .sepet-item.surukleniyor {
+  opacity: 0.5;
+}
+.pos-container .sepet-item.yeni-satir {
+  animation: posSepetPulse 0.7s ease;
+}
+@keyframes posSepetPulse {
+  from { background: var(--accent-soft-strong); }
+  to { background: transparent; }
+}
+/* Ust satir: tutamac | ad | tutar | sil. Ad esner (2 satir), tutar ve sil
+   sabit kalir; boylece kalem sayisi artsa da hizalama bozulmaz. */
+.pos-container .sepet-ust {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+.pos-container .sepet-tutamac {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 26px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  cursor: grab;
+}
+.pos-container .sepet-tutamac:active {
+  cursor: grabbing;
+}
+.pos-container .sepet-kod {
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: 110px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pos-container .sepet-ad {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  color: var(--text-primary);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.32;
+}
+/* Ürün adı artık düz metin değil, değiştirmeyi açan düğme.
+   Görsel olarak metinden ayrılması ama satır düzeni bozulmaması için
+   metin kuralları `.sepet-ad` ile paylaşılır. */
+.pos-container .sepet-ad-degistir {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text-primary);
+  position: relative;
+}
+.pos-container .sepet-ad-degistir:hover {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.pos-container .sepet-ad-degistir:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.urun-degistir-ikon {
+  font-size: 10px;
+  margin-left: 5px;
+  opacity: 0.55;
+  flex: 0 0 auto;
+}
+.pos-container .sepet-urun-degistir {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.urun-degistir-vazgec {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 11px;
+}
+.urun-degistir-vazgec:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.pos-container .sepet-tutar {
+  flex-shrink: 0;
+  min-width: 62px;  color: var(--text-primary);
+  font-size: 13.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+  line-height: 1.32;
+}
+.pos-container .sepet-sil {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin-top: -2px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.pos-container .sepet-sil:hover {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+/* Alt satir: barkod rozeti sola, miktar/fiyat kontrolleri saga. Satirlar
+   asla birbirine girmez; dar panelde kontroller alt satira sarar. */
+.pos-container .sepet-kontroller {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 7px;
+  min-width: 0;
+}
+.pos-container .sepet-kontroller .sepet-kod {
+  margin-right: auto;
+}
+.pos-container .sepet-adet-grup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.pos-container .adet-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  min-height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.pos-container .adet-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.pos-container .sepet-adet-input {
+  width: clamp(44px, 7vw, 52px);
+  height: 34px;
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+}
+.pos-container .fiyat-tip-select {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 11.5px;
+  outline: none;
+}
+.pos-container .fiyat-giris-input {
+  width: 76px;
+  height: 34px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 12.5px;
+  text-align: right;
+  outline: none;
+}
+.pos-container .sepet-adet-input:focus,
+.pos-container .fiyat-giris-input:focus,
+.pos-container .fiyat-tip-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.pos-container .sepet-son-alis {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 5px 8px;
+  border: 1px solid var(--warning-border);
+  border-radius: 8px;
+  background: var(--warning-soft);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.pos-container .sepet-son-alis i {
+  font-size: 12px;
+  color: var(--warning);
+}
+.pos-container .sepet-son-alis strong {
+  color: var(--accent);
+}
+
+/* Sepet ozeti */
+.pos-container .ozet-ayrac {
+  margin: 4px 0 0;
+  border: none;
+  border-top: 1px solid var(--border);
+}
+.pos-container .ozet-satir {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 13px;
+}
+.pos-container .ozet-indirim {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pos-container .indirim-input {
+  width: 104px;
+}
+.pos-container .ozet-genel {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 2px solid var(--border);
+  font-weight: 600;
+}
+.pos-container .genel-toplam-deger {
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.pos-container .ozet-detay-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  min-height: 34px;
+  padding: 4px 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.pos-container .ozet-detay-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+.pos-container .ozet-detay-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ ODEME */
+.pos-container .odeme-icerik {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pos-alan-gap);
+}
+.pos-container .odeme-yontem-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.pos-container .odeme-yontem-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--pos-alan-radius);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast, 0.15s) ease,
+    background var(--dur-fast, 0.15s) ease,
+    color var(--dur-fast, 0.15s) ease,
+    transform var(--dur-fast, 0.15s) ease;
+}
+.pos-container .odeme-yontem-btn i {
+  flex-shrink: 0;
+  font-size: 16px;
+  color: var(--text-muted);
+  transition: color var(--dur-fast, 0.15s) ease;
+}
+.pos-container .odeme-yontem-btn:hover {
+  border-color: var(--accent-border);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+.pos-container .odeme-yontem-btn:hover i {
+  color: var(--accent);
+}
+.pos-container .odeme-yontem-btn.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+}
+.pos-container .odeme-yontem-btn.active i {
+  color: var(--accent);
+}
+.pos-container .taksit-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: var(--pos-alan-radius);
+  background: rgba(139, 92, 246, 0.08);
+}
+.pos-container .para-ustu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--success-border);
+  border-radius: 8px;
+  background: var(--success-soft);
+  font-size: 14px;
+}
+.pos-container .para-ustu strong {
+  color: var(--success);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.pos-container .hizli-nakit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pos-container .hizli-nakit-btn {
+  flex: 1 1 auto;
+  min-width: 52px;
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: border-color var(--dur-fast, 0.15s) ease, color var(--dur-fast, 0.15s) ease;
+}
+.pos-container .hizli-nakit-btn:hover {
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+.pos-container .hizli-nakit-btn.tam {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.pos-container .odeme-durum {
+  margin-top: 2px;
+}
+.pos-container .odeme-durum .p-tag {
+  justify-content: center;
+  width: 100%;
+}
+.pos-container .odeme-kalan {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+}
+.pos-container .kalan-deger {
+  color: var(--accent);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.pos-container .pos-komisyon-not {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* ------------------------------------------------ BUYUK YAZI (POS-BUYUK) */
+.pos-container.pos-buyuk .katlanir-baslik,
+.pos-container.pos-buyuk .sepet-baslik-toggle {
+  font-size: 16px;
+}
+.pos-container.pos-buyuk .sepet-ad,
+.pos-container.pos-buyuk .secili-musteri-ad,
+.pos-container.pos-buyuk .musteri-option {
+  font-size: 16px;
+}
+.pos-container.pos-buyuk .musteri-option-detay {
+  font-size: 13px;
+}
+.pos-container.pos-buyuk .sepet-kod {
+  font-size: 13px;
+}
+.pos-container.pos-buyuk .sepet-tutar {
+  font-size: 16px;
+}
+.pos-container.pos-buyuk .sepet-item {
+  padding: 14px 12px;
+}
+.pos-container.pos-buyuk .sepet-son-alis {
+  font-size: 15px;
+}
+.pos-container.pos-buyuk .adet-btn {
+  width: 42px;
+  min-height: 42px;
+  font-size: 19px;
+}
+.pos-container.pos-buyuk .sepet-adet-input,
+.pos-container.pos-buyuk .fiyat-giris-input,
+.pos-container.pos-buyuk .fiyat-tip-select {
+  height: 42px;
+}
+.pos-container.pos-buyuk .sepet-adet-input {
+  width: clamp(52px, 8vw, 62px);
+  font-size: 17px;
+}
+.pos-container.pos-buyuk .odenen-satir label,
+.pos-container.pos-buyuk .teslim-eden-alan label {
+  font-size: 15px;
+}
+.pos-container.pos-buyuk .odeme-yontem-btn {
+  min-height: 52px;
+  font-size: 14px;
+}
+.pos-container.pos-buyuk .odeme-yontem-btn i {
+  font-size: 20px;
+}
+.pos-container.pos-buyuk .ozet-satir,
+.pos-container.pos-buyuk .odeme-kalan {
+  font-size: 16px;
+}
+.pos-container.pos-buyuk .genel-toplam-deger {
+  font-size: 24px;
+}
+.pos-container.pos-buyuk .kalan-deger {
+  font-size: 17px;
+}
+.pos-container.pos-buyuk .ozet-detay-btn {
+  min-height: 40px;
+  font-size: 15px;
+}
+.pos-container.pos-buyuk .sepet-sil {
+  width: 42px;
+  height: 42px;
+  font-size: 19px;
+}
+
+/* ------------------------------------------------------------ RESPONSIVE */
+@media (max-width: 900px) {
+  .pos-container .adet-btn {
+    width: 40px;
+    min-height: 40px;
+  }
+  .pos-container .sepet-adet-input,
+  .pos-container .fiyat-giris-input,
+  .pos-container .fiyat-tip-select {
+    height: 40px;
+  }
+}
+@media (max-width: 380px) {
+  .pos-container .odeme-yontem-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pos-container .sepet-item.yeni-satir {
+    animation: none;
+  }
+  .pos-container .odeme-yontem-btn,
+  .pos-container .katlanir-baslik,
+  .pos-container .odeme-yontem-btn i {
+    transition: none;
+  }
+}

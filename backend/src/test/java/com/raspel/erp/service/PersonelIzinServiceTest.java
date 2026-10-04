@@ -61,9 +61,18 @@ class PersonelIzinServiceTest {
 
     @Test
     void personelIzınleri_returnsForPersonel() {
+        // C1: personel tenant'a ait olmalı (yetkisiz başka şirket personelinin
+        // izinleri görüntülenemez).
+        var personel = new Personel();
+        personel.setId(1L);
+        personel.setSirketId(1L);
+        personel.setAd("Test");
+        personel.setSoyad("User");
+        when(personelRepository.findById(1L)).thenReturn(Optional.of(personel));
         when(izinRepository.findByPersonelIdOrderByBaslangicDesc(1L)).thenReturn(List.of(createIzin(1L)));
         var result = personelIzinService.personelIzınleri(1L);
         assertEquals(1, result.size());
+        verify(tenantChecker).check(1L, "Personel Izin");
     }
 
     @Test

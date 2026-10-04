@@ -25,6 +25,19 @@ import java.util.Iterator;
 @Slf4j
 public class ResimIslemeService {
 
+    /**
+     * Decode öncesi piksel üst sınırı (decompression bomb koruması).
+     *
+     * <p>Bir görselin sıkıştırılmış boyutu ile decode edilmiş bellek boyutu arasında
+     * oran çok büyük olabilir: 10 MB'lık bir PNG/TIFF {@code BufferedImage} olarak
+     * ~30 GB (int ARGB = 4 byte/piksel) ayırabiliyor. Multipart limiti (10 MB) bunu
+     * engellemiyor. Ölçekleme {@code ImageIO.read} SONRASINDA yapıldığı için
+     * saldırı decode aşamasında gerçekleşiyordu; bu yüzden sınır başlık
+     * bilgisi okunarak decode'dan ÖNCE uygulanmalı.
+     */
+    private static final long MAKS_PIKSEL = 40_000_000L; // ~160 MB ARGB
+    private static final long MAKS_BOYUT_BAYT = 40_000_000L; // ~40 MP x 1000
+
     public record IslenmisResim(String dosyaAdi, byte[] icerik, String contentType,
                                 String thumbDosyaAdi, byte[] thumbIcerik, String thumbContentType) {
     }
@@ -36,10 +49,10 @@ public class ResimIslemeService {
      */
     public IslenmisResim isle(byte[] kaynak, String dosyaOneki, int maxKenar, int thumbKenar,
                               float kalite) throws IOException {
-        BufferedImage img = ImageIO.read(new ByteArrayInputStream(kaynak));
-        if (img == null) {
-            throw new IOException("Görsel okunamadı. JPEG, PNG veya WEBP formatında tekrar deneyin.");
+        if (kaynak == null || kaynak.length == 0) {
+            throw new IOException("Görsel dosyası boş.");
         }
+        BufferedImage img = guvenliOku(kaynak);
         boolean saydam = img.getColorModel().hasAlpha();
         String format = saydam ? "png" : "jpg";
         String uzanti = saydam ? ".png" : ".jpg";
@@ -53,6 +66,70 @@ public class ResimIslemeService {
 
         return new IslenmisResim(dosyaOneki + uzanti, anaBayt, mime,
                 dosyaOneki + "_t" + uzanti, thumbBayt, mime);
+    }
+
+    /**
+     * Görseli decode eder; ancak ÖNCE başlık bilgisinden boyut okunup piksel
+     * sayısı sınırlanır. Sınır aşılırsa görsel hiç çözülmeden reddedilir.
+     */
+    private BufferedImage guvenliOku(byte[] kaynak) throws IOException {
+        ImageIO.setUseCache(false);
+        try (ImageIOInputStreamHolder holder = new ImageIOInputStreamHolder(kaynak)) {
+            var okuyucular = ImageIO.getImageReaders(holder.stream());
+            if (!okuyucular.hasNext()) {
+                throw new IOException("Görsel okunamadı. JPEG, PNG veya WEBP formatında tekrar deneyin.");
+            }
+            var okuyucu = okuyucular.next();
+            try {
+                okuyucu.setInput(holder.stream(), false, false);
+                long genislik = okuyucu.getWidth(0);
+                long yukseklik = okuyucu.getHeight(0);
+                if (genislik <= 0 || yukseklik <= 0) {
+                    throw new IOException("Görsel boyutları okunamadı.");
+                }
+                long piksel = genislik * yukseklik;
+                if (piksel > MAKS_PIKSEL) {
+                    log.warn("Decompression bomb engellendi: {}x{} = {} piksel (limit {})",
+                            genislik, yukseklik, piksel, MAKS_PIKSEL);
+                    throw new IOException("Görsel çözünürlüğü çok yüksek. En fazla "
+                            + (MAKS_PIKSEL / 1_000_000) + " milyon piksel olan görseller yükleyebilirsiniz.");
+                }
+                long tahminiBayt = piksel * 4L;
+                if (tahminiBayt > MAKS_BOYUT_BAYT) {
+                    log.warn("Decode boyut sınırı aşıldı: {} piksel (~{} MB)", piksel, tahminiBayt / (1024 * 1024));
+                    throw new IOException("Görsel boyutu işlenemiyor (bellek sınırı).");
+                }
+                BufferedImage img = okuyucu.read(0);
+                if (img == null) {
+                    throw new IOException("Görsel okunamadı. JPEG, PNG veya WEBP formatında tekrar deneyin.");
+                }
+                return img;
+            } finally {
+                okuyucu.dispose();
+            }
+        } catch (IOException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IOException("Görsel okunamadı. JPEG, PNG veya WEBP formatında tekrar deneyin.", e);
+        }
+    }
+
+    /** Basit kapatılabilir {@code ImageInputStream} sarmalayıcı (dekompresyon bombası kontrolü için). */
+    private static final class ImageIOInputStreamHolder implements AutoCloseable {
+        private final javax.imageio.stream.ImageInputStream stream;
+
+        ImageIOInputStreamHolder(byte[] kaynak) throws IOException {
+            this.stream = ImageIO.createImageInputStream(new ByteArrayInputStream(kaynak));
+        }
+
+        javax.imageio.stream.ImageInputStream stream() {
+            return stream;
+        }
+
+        @Override
+        public void close() throws IOException {
+            stream.close();
+        }
     }
 
     private BufferedImage olcekle(BufferedImage kaynak, int maxKenar) {

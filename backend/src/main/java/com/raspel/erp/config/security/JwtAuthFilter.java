@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.slf4j.MDC;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -39,6 +40,27 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        // Log korelasyonu: her istek benzersiz bir iz (traceId) ile başlar ve
+        // istek boyunca log satırlarına eklenir. Tenant/kullanıcı bilgisi token
+        // çözüldükten sonra MDC'ye yazılır (aşağıda). Thread havuzu yeniden
+        // kullanıldığı için MDC finally ile TEMİZLENMEZSE bir sonraki istek
+        // yanlış şirket bilgisiyle loglanır (veri sızıntısı + yanlış teşhis).
+        String traceId = java.util.UUID.randomUUID().toString();
+        MDC.put("traceId", traceId);
+        try {
+            doFilterInternal(request, response, filterChain, traceId);
+        } finally {
+            MDC.remove("traceId");
+            MDC.remove("sirketId");
+            MDC.remove("kullaniciId");
+            MDC.remove("jti");
+        }
+    }
+
+    private void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain,
+                                    String traceId) throws ServletException, IOException {
         // Prometheus scrape token'i: /actuator/prometheus icin PROMETHEUS rolu verir.
         if (metricsScrapeToken != null && !metricsScrapeToken.isBlank()
                 && "/actuator/prometheus".equals(request.getRequestURI())
@@ -84,8 +106,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(kullanici.getUsername());
                 if (userDetails != null && userDetails.isEnabled()) {
-                    request.setAttribute("kullaniciId", kullanici.getId());
-                    request.setAttribute("sirketId", kullanici.getSirketId());
+request.setAttribute("kullaniciId", kullanici.getId());
+                request.setAttribute("sirketId", kullanici.getSirketId());
+                MDC.put("kullaniciId", String.valueOf(kullanici.getId()));
+                MDC.put("sirketId", String.valueOf(kullanici.getSirketId()));
                     request.setAttribute("displayName", kullanici.getDisplayName());
                     UsernamePasswordAuthenticationToken authToken =
                             new UsernamePasswordAuthenticationToken(
@@ -115,10 +139,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
             if (kullaniciId != null) {
                 request.setAttribute("kullaniciId", kullaniciId);
+                MDC.put("kullaniciId", String.valueOf(kullaniciId));
             }
             if (sirketId != null) {
                 request.setAttribute("sirketId", sirketId);
+                // Log satirlarina sirketId eklenir: cok sirketli kullanimda
+                // "hangi sirkette oldu" sorusu cevapsiz kalmaz.
+                MDC.put("sirketId", String.valueOf(sirketId));
             }
+            request.setAttribute("jti", jwtUtil.getJtiFromToken(token));
+            MDC.put("jti", String.valueOf(jwtUtil.getJtiFromToken(token)));
             request.setAttribute("displayName", jwtUtil.getDisplayNameFromToken(token));
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {

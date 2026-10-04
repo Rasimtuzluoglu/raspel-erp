@@ -212,9 +212,14 @@ public class SohbetOdaService {
         // Resim uzantilari icin icerik imzasi dogrulanir (stored XSS/polyglot engeli).
         boolean resim = java.util.Set.of(".jpg", ".jpeg", ".png", ".webp", ".gif").contains(ext);
         try {
+            // Tenant klasörü: sohbet dosyaları düz `sohbet/` altında tutuluyordu ve
+            // indirme ucu önce `sohbet/s{id}` sonra düz `sohbet` klasörünü deniyordu.
+            // Dosyalar düz klasörde olduğu için her istek oraya düşüyor, UUID'yi bilen
+            // herhangi bir kullanıcı BAŞKA ŞİRKETİN sohbet dosyasını indirebiliyordu.
+            String klasor = sirketId != null ? DOSYA_KLASOR + "/s" + sirketId : DOSYA_KLASOR;
             String filename = resim
-                    ? dosyaDepolama.kaydetResimDogrulamali(DOSYA_KLASOR, file)
-                    : dosyaDepolama.kaydet(DOSYA_KLASOR, file);
+                    ? dosyaDepolama.kaydetResimDogrulamali(klasor, file)
+                    : dosyaDepolama.kaydet(klasor, file);
             return "/api/uploads/sohbet/" + filename;
         } catch (IOException e) {
             throw new BusinessException("Dosya yüklenemedi");

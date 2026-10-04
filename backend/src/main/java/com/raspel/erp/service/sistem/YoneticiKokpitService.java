@@ -301,7 +301,7 @@ public class YoneticiKokpitService {
         hedef = sirketHedefRepository.save(hedef);
 
         // Dashboard ve kokpit önbelleklerini temizle (hedef anında yansısın)
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
 
         return SirketHedefDTO.builder()
                 .id(hedef.getId())

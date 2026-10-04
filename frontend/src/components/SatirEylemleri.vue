@@ -11,7 +11,7 @@
       :aria-label="$t('common.actions')"
       aria-haspopup="true"
       :aria-expanded="acik"
-      @click="acToggle($event)"
+      @click.stop="acToggle($event)"
     />
 
     <!-- body'ye teleport: tablo scroll konteyneri icinde kirpilmayi onler -->

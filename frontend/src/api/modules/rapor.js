@@ -16,8 +16,9 @@ export const raporAPI = {
   kdv(params) {
     return apiClient.get('/raporlar/kdv', { params })
   },
-  yaslandirma() {
-    return apiClient.get('/raporlar/yaslandirma')
+  yaslandirma(params) {
+    // `referansTarih` verilmezse backend bugünü esas alır.
+    return apiClient.get('/raporlar/yaslandirma', { params })
   },
   kdvBeyanname(donem) {
     return apiClient.get('/raporlar/kdv-beyanname', { params: { donem } })
@@ -54,6 +55,9 @@ export const raporAPI = {
   },
   cariEkstrePdf(params) {
     return apiClient.get('/raporlar/cari-ekstre/pdf', { params, responseType: 'blob' })
+  },
+  yaslandirmaPdf(params) {
+    return apiClient.get('/raporlar/yaslandirma/pdf', { params, responseType: 'blob' })
   },
   gelirGiderPdf(params) {
     return apiClient.get('/raporlar/gelir-gider/pdf', { params, responseType: 'blob' })

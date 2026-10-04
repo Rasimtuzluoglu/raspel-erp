@@ -10,9 +10,11 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -99,5 +101,31 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("Doğrulama hatası", response.getBody().get("message"));
         assertTrue(((Map<String, String>) response.getBody().get("errors")).isEmpty());
+    }
+
+    // Limit degeri yapilandirmadan gelir; mesajda sabit bir MB yazmak limit
+    // degistiginde kullaniciya yanlis bilgi verirdi.
+    @Test
+    void handleMaxUpload_limitleriYapilandirmadanUretir() throws Exception {
+        ReflectionTestUtils.setField(handler, "maksDosyaBoyutu", "10MB");
+        ReflectionTestUtils.setField(handler, "maksIstekBoyutu", "20MB");
+
+        ResponseEntity<Map<String, Object>> response = handler.handleMaxUpload(
+                new MaxUploadSizeExceededException(20L * 1024 * 1024));
+
+        assertEquals(HttpStatus.PAYLOAD_TOO_LARGE, response.getStatusCode());
+        assertEquals(413, response.getBody().get("status"));
+        String mesaj = (String) response.getBody().get("message");
+        assertEquals("Yüklenen dosya çok büyük. Dosya başına en fazla 10 MB olabilir (toplam istek limiti: 20 MB).", mesaj);
+        assertFalse(mesaj.contains("5MB"), "Sabit 5MB ifadesi kaldirilmalidir");
+    }
+
+    @Test
+    void handleMaxUpload_yapilandirmaYoksaVarsayilanLimitiKullanir() {
+        ResponseEntity<Map<String, Object>> response = handler.handleMaxUpload(
+                new MaxUploadSizeExceededException(10L * 1024 * 1024));
+
+        String mesaj = (String) response.getBody().get("message");
+        assertTrue(mesaj.contains("10 MB"), mesaj);
     }
 }

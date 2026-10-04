@@ -2,6 +2,8 @@ package com.raspel.erp.service.muhasebe;
 
 import com.raspel.erp.dto.muhasebe.MuhasebeFisKalemDTO;
 import com.raspel.erp.dto.muhasebe.MuhasebeFisiDTO;
+import com.raspel.erp.exception.BusinessException;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.entity.ik.MaasBordro;
 import com.raspel.erp.entity.ik.Personel;
 import com.raspel.erp.entity.muhasebe.MuhasebeFisi;
@@ -88,14 +90,56 @@ class OtomatikMuhasebeServiceTest {
         verify(muhasebeService, never()).fisOlustur(any());
     }
 
+    /**
+     * C5 (fail-closed): fiş oluşturma başarısız olduğunda hata SESSIZCE yutulmaz.
+     * Önceki davranış "mahsup yok" diye geçip mali tabloyu eksik bırakıyordu;
+     * çağıran transaction'ın geri alınması gerekiyor ki tutarsız muhasebe kaydı
+     * oluşmasın.
+     */
     @Test
-    void bordroIsle_hataDurumundaBloklamaz() {
+    void bordroIsle_hataDurumundaIslemiDurdurur() {
         when(muhasebeFisiRepository.findFirstBySirketIdAndKaynakTipAndKaynakIdAndDurumNot(any(), any(), any(), any()))
                 .thenReturn(Optional.empty());
         when(hesapPlaniRepository.findBySirketIdAndKod(anyLong(), any())).thenReturn(Optional.empty());
         when(muhasebeService.fisOlustur(any())).thenThrow(new RuntimeException("hesap yok"));
 
-        assertDoesNotThrow(() -> otomatikMuhasebeService.bordroIsle(bordro()));
+        var hata = assertThrows(BusinessException.class,
+                () -> otomatikMuhasebeService.bordroIsle(bordro()));
+        assertTrue(hata.getMessage().contains("otomatik muhasebe"));
+        // Teknik detaj (sinif adi, ic mesaj) yalnizca log'a gider; kullaniciya sizmaz.
+        assertFalse(hata.getMessage().contains("hesap yok"));
+        assertFalse(hata.getMessage().contains("RuntimeException"));
+        // Nedeni korunur: log/izleme icin cause zinciri kaybolmaz.
+        assertNotNull(hata.getCause());
+        assertEquals("hesap yok", hata.getCause().getMessage());
+    }
+
+    /** C5: isletme hatalari olduğu gibi yeniden firlatilir (anlamli mesaj korunur). */
+    @Test
+    void bordroIsle_isletmeHatasiAynenYenidenFirlatilir() {
+        when(muhasebeFisiRepository.findFirstBySirketIdAndKaynakTipAndKaynakIdAndDurumNot(any(), any(), any(), any()))
+                .thenReturn(Optional.empty());
+        when(hesapPlaniRepository.findBySirketIdAndKod(anyLong(), any())).thenReturn(Optional.empty());
+        when(muhasebeService.fisOlustur(any()))
+                .thenThrow(new BusinessException("Hesap kodu 770 tanimli degil"));
+
+        var hata = assertThrows(BusinessException.class,
+                () -> otomatikMuhasebeService.bordroIsle(bordro()));
+        assertEquals("Hesap kodu 770 tanimli degil", hata.getMessage());
+    }
+
+    /** C5: ResourceNotFoundException da oldugu gibi gecer. */
+    @Test
+    void bordroIsle_kayitBulunamadiAynenYenidenFirlatilir() {
+        when(muhasebeFisiRepository.findFirstBySirketIdAndKaynakTipAndKaynakIdAndDurumNot(any(), any(), any(), any()))
+                .thenReturn(Optional.empty());
+        when(hesapPlaniRepository.findBySirketIdAndKod(anyLong(), any())).thenReturn(Optional.empty());
+        when(muhasebeService.fisOlustur(any()))
+                .thenThrow(new ResourceNotFoundException("Hesap kodu 335 bulunamadi"));
+
+        var hata = assertThrows(ResourceNotFoundException.class,
+                () -> otomatikMuhasebeService.bordroIsle(bordro()));
+        assertEquals("Hesap kodu 335 bulunamadi", hata.getMessage());
     }
 
     private com.raspel.erp.entity.ticaret.Fatura fatura(String tur, String ara, String kdv, String toplam) {

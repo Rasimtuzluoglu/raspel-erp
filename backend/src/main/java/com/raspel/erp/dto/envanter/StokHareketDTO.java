@@ -15,7 +15,16 @@ public class StokHareketDTO {
     private String stokKodu;
     @NotBlank(message = "Hareket türü seçilmelidir")
     private String tur;
+
+    /**
+     * REDTEAM C3: {@code @NotNull} tek başına yetmiyordu. {@code miktar=-5000}
+     * gönderildiğinde "yetersiz stok" kontrolü geçiyor ve {@code GIRIS} dalında
+     * stok miktarı <b>artıyordu</b> (100 → 5100). Miktar daima pozitif olmalıdır;
+     * yön bilgisi zaten {@code tur} alanında taşınır.
+     */
     @NotNull(message = "Miktar girilmelidir")
+    @DecimalMin(value = "0.000001", message = "Miktar pozitif olmalıdır")
+    @Digits(integer = 17, fraction = 4, message = "Miktar en fazla 4 ondalık basamak olabilir")
     private BigDecimal miktar;
     @NotNull(message = "Tarih girilmelidir")
     private LocalDate hareketTarihi;

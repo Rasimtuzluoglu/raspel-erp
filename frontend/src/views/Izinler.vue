@@ -102,6 +102,7 @@
             :title="t('izinler.reddet')"
             @click="reddet(data)"
           />
+          v-permission="'IK_DELETE'"
           <Button
             v-if="authStore?.kullanici?.role === 'ADMIN'"
             icon="pi pi-trash"

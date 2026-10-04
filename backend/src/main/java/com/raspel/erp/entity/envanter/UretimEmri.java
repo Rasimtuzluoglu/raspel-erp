@@ -19,6 +19,13 @@ public class UretimEmri {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Optimistik kilitleme. Kolon olmadan iki eşzamanli emirTamamla isteği hammaddeyi iki kez tüketip mamulü iki kez üretiyordu (stok ve maliyet şişmesi).
+     */
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     @Column(name = "sirket_id")
     private Long sirketId;
 

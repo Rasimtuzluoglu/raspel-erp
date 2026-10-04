@@ -14,21 +14,21 @@ export const IZINLI_RESIM_MIME = ['image/jpeg', 'image/png', 'image/webp', 'imag
  * @returns {{ key: string, params?: object } | null}
  */
 export function resimDogrula(file, { maksBoyut = MAKS_DOSYA_BOYUTU } = {}) {
-  if (!file) return { key: 'dosya.dosyaSecilmedi' }
-  if (file.size > maksBoyut) return { key: 'dosya.boyutAsildi', params: { mb: Math.round(maksBoyut / 1024 / 1024) } }
+  if (!file) return { key: 'common.dosya.dosyaSecilmedi' }
+  if (file.size > maksBoyut) return { key: 'common.dosya.boyutAsildi', params: { mb: Math.round(maksBoyut / 1024 / 1024) } }
   if (file.type && !IZINLI_RESIM_MIME.includes(file.type.toLowerCase())) {
     // iPhone HEIC gibi tarayıcı/sunucu tarafından desteklenmeyen formatlar için net yönlendirme.
     if (file.type.toLowerCase().includes('heic') || file.type.toLowerCase().includes('heif')) {
-      return { key: 'dosya.heicDesteklenmiyor' }
+      return { key: 'common.dosya.heicDesteklenmiyor' }
     }
-    return { key: 'dosya.gecersizResimTipi' }
+    return { key: 'common.dosya.gecersizResimTipi' }
   }
   return null
 }
 
 /** Genel dosya boyutu doğrulaması. */
 export function boyutDogrula(file, { maksBoyut = MAKS_DOSYA_BOYUTU } = {}) {
-  if (!file) return { key: 'dosya.dosyaSecilmedi' }
-  if (file.size > maksBoyut) return { key: 'dosya.boyutAsildi', params: { mb: Math.round(maksBoyut / 1024 / 1024) } }
+  if (!file) return { key: 'common.dosya.dosyaSecilmedi' }
+  if (file.size > maksBoyut) return { key: 'common.dosya.boyutAsildi', params: { mb: Math.round(maksBoyut / 1024 / 1024) } }
   return null
 }

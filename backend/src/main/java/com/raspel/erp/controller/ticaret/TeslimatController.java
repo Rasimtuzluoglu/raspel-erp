@@ -37,6 +37,7 @@ public class TeslimatController {
 
     @PostMapping("/api/deliveries")
     @Operation(summary = "Teslimat oluştur", description = "Fatura oluşturulurken teslimat kaydı açar (saleId, driverId, adres)")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SIPARIS_WRITE')")
     public ResponseEntity<TeslimatDTO> olustur(@Valid @RequestBody TeslimatDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.status(HttpStatus.CREATED).body(teslimatService.olustur(dto, sirketId));
@@ -72,6 +73,8 @@ public class TeslimatController {
 
     @PatchMapping("/api/deliveries/{id}/status")
     @Operation(summary = "Teslimat durumunu güncelle", description = "Teslimat durumunu günceller (BEKLEMEDE, YOLDA, TESLIM_EDILDI, IPTAL). İptalde sebep zorunludur.")
+    // Şoför (DRIVER) teslimat akışının parçasıdır; rol bazlı esneklik korunur.
+    @PreAuthorize("hasAnyRole('ADMIN', 'DRIVER') or @yetkiKontrol.kontrol(authentication, 'SIPARIS_WRITE')")
     public ResponseEntity<TeslimatDTO> durumGuncelle(
             @PathVariable Long id,
             @RequestBody DurumRequest body,
@@ -86,6 +89,7 @@ public class TeslimatController {
 
     @PostMapping("/api/deliveries/{id}/foto")
     @Operation(summary = "Teslimat fotoğrafı yükle", description = "Teslimata fotoğraf iliştirir (ispat amaçlı)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DRIVER') or @yetkiKontrol.kontrol(authentication, 'SIPARIS_WRITE')")
     public ResponseEntity<TeslimatDTO> fotoYukle(
             @PathVariable Long id,
             @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
@@ -115,6 +119,7 @@ public class TeslimatController {
 
     @PostMapping("/api/deliveries/{id}/teslim")
     @Operation(summary = "Dijital teslimat (imzalı)", description = "Teslim alan adı ve dijital imza ile teslimatı tamamlar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DRIVER') or @yetkiKontrol.kontrol(authentication, 'SIPARIS_WRITE')")
     public ResponseEntity<TeslimatDTO> teslimEt(
             @PathVariable Long id,
             @RequestParam(value = "teslimAlanAd", required = false) String teslimAlanAd,
@@ -130,6 +135,7 @@ public class TeslimatController {
 
     @PostMapping("/api/deliveries/siparis/{siparisId}/teslim")
     @Operation(summary = "Sipariş dijital teslimat", description = "Saha portalı için sipariş teslimatını imzayla tamamlar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DRIVER', 'SAHA') or @yetkiKontrol.kontrol(authentication, 'SIPARIS_WRITE')")
     public ResponseEntity<TeslimatDTO> teslimEtSiparis(
             @PathVariable Long siparisId,
             @RequestParam(value = "teslimAlanAd", required = false) String teslimAlanAd,

@@ -55,7 +55,10 @@ public class HareketService {
      */
     private void faturaOdemeUygula(Long faturaId, BigDecimal delta, String aciklama) {
         if (faturaId == null || delta == null || delta.compareTo(BigDecimal.ZERO) == 0) return;
-        Fatura fatura = faturaRepository.findById(faturaId)
+        // REDTEAM (yarış koşulu): Kilitli okuma. Kilit olmadan iki paralel tahsilat
+        // isteği aynı odenenTutar'ı görüp ikisi de kendi toplamını yazıyordu
+        // (kanıt: 600 TL'lik faturaya 2x500 TL -> odenen_tutar=1000).
+        Fatura fatura = faturaRepository.findByIdForUpdate(faturaId)
                 .orElseThrow(() -> new BusinessException("Bağlı fatura bulunamadı: " + faturaId));
         tenantChecker.check(fatura.getSirketId(), "Fatura");
         BigDecimal yeniOdenen = (fatura.getOdenenTutar() != null ? fatura.getOdenenTutar() : BigDecimal.ZERO).add(delta);
@@ -65,12 +68,18 @@ public class HareketService {
         }
         BigDecimal toplam = fatura.getGenelToplam() != null ? fatura.getGenelToplam() : BigDecimal.ZERO;
         BigDecimal kalan = toplam.subtract(yeniOdenen);
+        if (kalan.compareTo(BigDecimal.ZERO) < 0) {
+            // Fazla ödeme sessizce yutulmasın: kalan 0'a kırpılıyor ama
+            // avans/fazla ödeme kaydı mutlaka görünür olsun (muhasebe izlenebilirliği).
+            log.warn("Fazla ödeme tespit edildi. faturaId={} genelToplam={} odenen={} fazla={} islem={}",
+                    faturaId, toplam, yeniOdenen, kalan.negate(), aciklama);
+        }
         fatura.setOdenenTutar(yeniOdenen);
         fatura.setKalanTutar(kalan.max(BigDecimal.ZERO));
         fatura.setOdemeDurumu(kalan.compareTo(BigDecimal.ZERO) <= 0 ? "ODENDI"
                 : yeniOdenen.compareTo(BigDecimal.ZERO) > 0 ? "KISMI_ODENDI" : "ODENMEDI");
         faturaRepository.save(fatura);
-        cacheYardimci.temizle("faturalar", "dashboard");
+        cacheYardimci.commitSonrasiTemizle("faturalar", "dashboard");
     }
     
     /**
@@ -115,6 +124,12 @@ public class HareketService {
     /**
      * Yeni hareket oluştur ve cari hesabın bakiyesini güncelle
      */
+    // REDTEAM (yarış koşulu): Bu metot @Transactional DEĞİLDİ; bu yüzden
+    // faturaOdemeUygula içindeki PESSIMISTIC_WRITE kilidi her repository
+    // çağrısının transaction'ı kapanınca BIRAKILIYORDU — yani kilit koruma
+    // sağlamıyordu. Oku-değiştir-yaz döngüsü (odenenTutar) tek transaction
+    // içine alınınca eşzamanlı tahsilatlar seri hale gelir.
+    @Transactional
     public HareketDTO hareketOlustur(HareketDTO dto, Long sirketId) {
         log.info("Yeni hareket oluşturuluyor - Cari ID: {}, Tür: {}, Tutar: {}, sirketId: {}", 
                 dto.getCariHesapId(), dto.getTur(), dto.getTutar(), sirketId);
@@ -129,7 +144,10 @@ public class HareketService {
 
         // Bağlı fatura varsa önceden doğrula (fatura şirketi ile eşleşmeli)
         if (dto.getFaturaId() != null) {
-            Fatura fatura = faturaRepository.findById(dto.getFaturaId())
+            // REDTEAM (yarış koşulu): doğrulama da kilitli okumadan yapılır; aksi
+            // halde doğrulama ile ödeme uygulaması farklı satır sürümlerini
+            // görebilir (kontrol edilen değil, uygulanan tutar eski olur).
+            Fatura fatura = faturaRepository.findByIdForUpdate(dto.getFaturaId())
                     .orElseThrow(() -> new BusinessException("Bağlı fatura bulunamadı: " + dto.getFaturaId()));
             tenantChecker.check(fatura.getSirketId(), "Fatura");
             if (fatura.getCariHesap() != null && !fatura.getCariHesap().getId().equals(dto.getCariHesapId())) {
@@ -241,6 +259,7 @@ public class HareketService {
     /**
      * Hareket güncelle
      */
+    @Transactional
     public HareketDTO hareketGuncelle(Long id, HareketDTO dto) {
         log.info("Hareket güncelleniyor - ID: {}", id);
 
@@ -322,6 +341,7 @@ public class HareketService {
     /**
      * Hareket sil (ve bakiyeyi ters işlemle güncelle)
      */
+    @Transactional
     public void hareketSil(Long id) {
         log.info("Hareket siliniliyor - ID: {}", id);
         

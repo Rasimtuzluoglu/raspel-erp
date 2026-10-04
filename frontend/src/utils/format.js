@@ -111,3 +111,27 @@ export const durumLabel = (durum, t) => {
   if (!key) return durum
   return t ? t(key) : DURUM_TR[durum]
 }
+
+// Vade riski renk sinifi. Makine-okunur `gun` (gecikme gün sayısı) kullanılır;
+// gosterim metni (`aralik`) ceviri veya bicim degisince bozulmamalidir.
+// Esikler backend ile ayni kovalari izler (RaporService.aralik / TahsilatService.aralik):
+//   gun <= 0 -> "Vadesi Gelmemis", <=30, <=60, <=90, uzeri.
+// "0-30 Gün" kovasi vadesi 1-30 gün GECMIS alacaklari icerir; bu yuzden risk-yok
+// rengi yalnizca vadesi gelmemis (gun <= 0) kayitlara verilir.
+export const vadeRiskSinifi = (satir) => {
+  const ham = satir?.gun
+  let gun = typeof ham === 'number' ? ham : Number.parseInt(ham, 10)
+  if (Number.isNaN(gun)) {
+    // Eski API yanitlarinda `gun` yoktur; bu durumda gosterim metninden kovar.
+    const aralik = String(satir?.aralik || '')
+    if (aralik.startsWith('Vadesi Gelmemiş')) gun = 0
+    else if (aralik.startsWith('0')) gun = 30
+    else if (aralik.startsWith('31')) gun = 60
+    else if (aralik.startsWith('61')) gun = 90
+    else gun = 91
+  }
+  if (gun <= 0) return 'risk-yok'
+  if (gun <= 30) return 'risk-az'
+  if (gun <= 60) return 'risk-orta'
+  return 'risk-yuksek'
+}

@@ -1,18 +1,24 @@
 <template>
   <div class="pos-bolum">
-    <div
+    <button
+      type="button"
       class="pos-bolum-baslik katlanir-baslik"
       :aria-expanded="acik"
       :title="acik ? t('hizliSatis.bolumKapat') : t('hizliSatis.bolumAc')"
       @click="$emit('toggle')"
     >
-      <i class="pi pi-wallet" /> {{ t('hizliSatis.odeme') }}
+      <span class="katlanir-sol">
+        <i class="pi pi-wallet" /> {{ t('hizliSatis.odeme') }}
+      </span>
       <i
         class="pi katlanir-ok"
         :class="acik ? 'pi-chevron-down' : 'pi-chevron-right'"
       />
-    </div>
-    <div v-show="acik">
+    </button>
+    <div
+      v-show="acik"
+      class="odeme-icerik"
+    >
       <SelectButton
         :model-value="odemeDurumu"
         :options="odemeTipleri"

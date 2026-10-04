@@ -3,10 +3,12 @@ package com.raspel.erp.controller.finans;
 import com.raspel.erp.dto.finans.TahsilatDTO;
 import com.raspel.erp.service.finans.TahsilatService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,10 +32,14 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/tahsilat")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE', 'DRIVER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
 public class TahsilatController {
 
     private final TahsilatService tahsilatService;
+
+    // REDTEAM C10: Tahsilat yazan uçlar yetki kodu ile de korunuyor; DRIVER'a
+    // FINANS_WRITE verilmez (YetkiService seed'i).
+    private final com.raspel.erp.config.security.YetkiKontrol yetkiKontrol;
 
     @GetMapping
     @Operation(summary = "Tahsilat özeti", description = "Ödenmemiş alacakların cari bazlı yaşlandırma özetini getirir")
@@ -61,10 +67,18 @@ public class TahsilatController {
     }
 
     @PostMapping
-    @Operation(summary = "Tahsilat gir", description = "Cariye ait açık faturalara ödeme tahsis eder; ödeme yöntemi (NAKIT/KART/TAKSIT/HAVALE) ve taksit bilgisi kaydedilir. Saha personeli (USER) da tahsilat kaydedebilir.")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE', 'DRIVER')")
+    @Operation(summary = "Tahsilat gir", description = "Cariye ait açık faturalara ödeme tahsis eder. Saha personeli (USER) da tahsilat kaydedebilir.")
+    // REDTEAM C10: DRIVER rolü burada YANLIŞLIKLA bulunuyordu. DRIVER
+    // ("şoför") yalnızca SIPARIS_READ / CARI_READ / STOK_READ yetkilerine sahip
+    // (YetkiService.seedKontrolu). Bu uç kasa/banka bakiyesini, cari bakiyeyi ve
+    // fatura odenenTutar/kalanTutar alanlarını kalıcı olarak değiştiriyor.
+    // Testte kanıtlandı: DRIVER ile 50.000 TL tahsilat girildi, kasa
+    // 100.000 -> 150.000, cari 5.000 -> 55.000. Şoförün finansal yazma yetkisi
+    // OLMAMALI. Tahsilat yetkisi FINANS_WRITE ile korunur.
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE') or @yetkiKontrol.kontrol(authentication, 'FINANS_WRITE')")
     public ResponseEntity<Map<String, Object>> tahsilatGir(
-            @RequestBody @jakarta.validation.Valid TahsilatGirisDTO dto,
+            Authentication authentication,
+            @RequestBody @Valid TahsilatGirisDTO dto,
             HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Map<String, Object> sonuc = tahsilatService.tahsilatGir(

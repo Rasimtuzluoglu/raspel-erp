@@ -5,6 +5,7 @@ import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.dto.muhasebe.IrsaliyeDTO;
 import com.raspel.erp.dto.muhasebe.IrsaliyeKalemDTO;
 import com.raspel.erp.entity.muhasebe.Irsaliye;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -138,5 +139,53 @@ class IrsaliyeServiceTest {
         i.setDurum("KESILDI");
         when(irsaliyeRepository.findById(1L)).thenReturn(Optional.of(i));
         assertThrows(RuntimeException.class, () -> irsaliyeService.sil(1L));
+    }
+
+    // ------------------------------------------------------------------
+    // REDTEAM C5 regresyonu: PUT /api/irsaliyeler/{id} ile durum mass-assignment
+    //
+    // CANLI KANIT: guncelle() `if (dto.getDurum() != null) i.setDurum(...)`
+    // yaziyordu. Zincir:
+    //   1) POST /irsaliyeler            TASLAK  -> stok etkisiz (100)
+    //   2) PUT  /irsaliyeler/1          durum=KESILDI -> stok HALA 100 (etkisiz)
+    //   3) PUT  /irsaliyeler/1/durum    IPTAL  -> stok 100 -> 150  (+50 BEDAVA)
+    // Durum alani yalnizca ayri uctan (/durum) degistirilebilir olmali.
+    // ------------------------------------------------------------------
+
+    @Test
+    @DisplayName("C5: guncelle() DTO'daki durum alanini YAZMAZ, acikca hata verir")
+    void guncelle_dtoDurumAlaniniYazmaz() {
+        Irsaliye i = createIrsaliye(1L);
+        i.setDurum("TASLAK");
+        when(irsaliyeRepository.findById(1L)).thenReturn(Optional.of(i));
+
+        var dto = new IrsaliyeDTO();
+        dto.setDurum("KESILDI");
+
+        com.raspel.erp.exception.BusinessException hata = assertThrows(
+                com.raspel.erp.exception.BusinessException.class, () -> irsaliyeService.guncelle(1L, dto));
+
+        assertTrue(hata.getMessage().contains("/durum"),
+                "Hata mesaji dogru ucu gostermeli: " + hata.getMessage());
+        assertEquals("TASLAK", i.getDurum(),
+                "PUT /irsaliyeler/{id} durumu degistirmemeli (canli kanit: bedava stok)");
+        verify(irsaliyeRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("C5: durum alani hic gonderilmediginde guncelle normal calisir")
+    void guncelle_durumAlaniYoksaNormalCalisir() {
+        Irsaliye i = createIrsaliye(1L);
+        i.setDurum("TASLAK");
+        when(irsaliyeRepository.findById(1L)).thenReturn(Optional.of(i));
+        when(kalemRepository.findByIrsaliyeId(1L)).thenReturn(java.util.List.of());
+        when(irsaliyeRepository.save(any(Irsaliye.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var dto = new IrsaliyeDTO();
+        dto.setAciklama("Guncellendi mi");
+        var sonuc = irsaliyeService.guncelle(1L, dto);
+
+        assertEquals("TASLAK", sonuc.getDurum());
+        assertEquals("Guncellendi mi", sonuc.getAciklama());
     }
 }

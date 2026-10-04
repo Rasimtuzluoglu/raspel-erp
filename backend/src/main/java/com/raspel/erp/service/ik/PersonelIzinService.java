@@ -42,8 +42,19 @@ public class PersonelIzinService {
                 .map(i -> entityToDTO(i, personelHaritasi));
     }
 
-    @Transactional(readOnly = true)
+    /**
+ * Bir personelin izin kayıtları.
+ *
+ * <p>Tenant izolasyonu: personeli yükleyip {@code tenantChecker.check}
+ * çağırmak zorunlu. Kardeş metotlarda ({@link #getir}, {@link #guncelle},
+ * {@link #durumGuncelle}, {@link #sil}) bu kontrol vardı; bu metot atlıyordu ve
+ * başka şirketin personel izin kayıtları okunabiliyordu (cross-tenant IDOR).
+ */
+@Transactional(readOnly = true)
     public List<PersonelIzinDTO> personelIzınleri(Long personelId) {
+        Personel personel = personelRepository.findById(personelId)
+                .orElseThrow(() -> new ResourceNotFoundException("Personel", personelId));
+        tenantChecker.check(personel.getSirketId(), "Personel Izin");
         return izinRepository.findByPersonelIdOrderByBaslangicDesc(personelId).stream()
                 .map(this::entityToDTO)
                 .collect(Collectors.toList());
@@ -71,7 +82,7 @@ public class PersonelIzinService {
                 .durum("BEKLEMEDE")
                 .aciklama(dto.getAciklama())
                 .build();
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
         return entityToDTO(izinRepository.save(izin));
     }
 
@@ -91,7 +102,7 @@ public class PersonelIzinService {
         if (dto.getDurum() != null) izin.setDurum(dto.getDurum());
         izin.setAciklama(dto.getAciklama());
         izin.setOnaylayan(dto.getOnaylayan());
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
         return entityToDTO(izinRepository.save(izin));
     }
 
@@ -105,7 +116,7 @@ public class PersonelIzinService {
         }
         izin.setDurum(durum);
         if (onaylayan != null) izin.setOnaylayan(onaylayan);
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
         return entityToDTO(izinRepository.save(izin));
     }
 
@@ -118,7 +129,7 @@ public class PersonelIzinService {
             tenantChecker.check(personel.getSirketId(), "Personel Izin");
         }
         izinRepository.deleteById(id);
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
     }
 
     @Transactional(readOnly = true)

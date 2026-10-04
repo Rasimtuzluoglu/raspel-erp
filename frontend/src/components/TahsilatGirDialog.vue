@@ -13,6 +13,10 @@
           <i class="pi pi-user" /> {{ $t('tahsilat.cariHesap') }}
         </div>
         <FormField :label="$t('tahsilat.cariHesap')">
+          <!-- Sunucu aramalı cari listesi. Önceden Tahsilat sayfası her açılışta
+               `getAll({ size: 1000 })` ile 1000 cari çekiyordu; 1000. cari
+               sonrası seçilemiyordu. Gelen `cariler` (faturalı, tutarlı) listenin
+               üstüne arama sonuçları birleştirilir; aynı cari iki kez görünmez. -->
           <Select
             v-model="form.cariId"
             :options="efektifCariler"
@@ -22,6 +26,7 @@
             :disabled="!!props.cari"
             :placeholder="$t('tahsilat.cariSecin')"
             class="w-full"
+            @filter="cariOnerileriAra"
             @change="cariDegisti"
           />
         </FormField>
@@ -237,6 +242,7 @@ import { useI18n } from 'vue-i18n'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { tahsilatAPI, bankaAPI, posAPI, kasaAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { useCariOnerileri } from '../composables/useCariOnerileri.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
 import FormField from './FormField.vue'
 
@@ -251,18 +257,42 @@ const props = defineProps({
 })
 
 const efektifCariler = computed(() => {
-  let liste = props.cariler.map((c) => ({ ...c, ad: c.ad || c.cariAd }))
-  if (props.cari && !liste.find((c) => c.cariId === props.cari.id)) {
+  // Dışarıdan gelen liste (tahsilat özeti) fatura ve tutar taşıdığı için önceliklidir.
+  const map = new Map()
+  for (const c of props.cariler) {
+    const cariId = c.cariId || c.id
+    map.set(cariId, { ...c, ad: c.ad || c.cariAd, cariId })
+  }
+  // Sunucu aramasından gelenler tutarsız olabilir; yalnızca dışarıdan
+  // gelmeyenleri ekle, böylece fatura verisi ezilmez.
+  for (const c of cariOnerileri.value) {
+    if (!map.has(c.id)) {
+      map.set(c.id, { cariId: c.id, ad: c.ad, faturalar: [], toplamAlacak: 0 })
+    }
+  }
+  if (props.cari && !map.has(props.cari.id)) {
     const faturalar = props.cari.acikFaturalar || []
     const toplam = faturalar.length
       ? faturalar.reduce((s, f) => s + (Number(f.kalanTutar) || 0), 0)
       : Math.abs(Number(props.cari.bakiye) || 0)
-    liste = [...liste, { cariId: props.cari.id, ad: props.cari.ad, toplamAlacak: toplam, faturalar }]
+    map.set(props.cari.id, { cariId: props.cari.id, ad: props.cari.ad, toplamAlacak: toplam, faturalar })
   }
-  return liste
+  return [...map.values()]
 })
 
 const emit = defineEmits(['update:visible', 'kaydedildi'])
+
+// Select'in filtrelemesi sunucuya gider; PrimeVue'nin kendi filtresi yalnızca
+// gelen sonuçlar üzerinde çalışır (fatura tutarlarını bozmamak için).
+const { oneriler: cariOnerileri, ara: cariOnerileriAra, hemenAra: cariOnerileriYukle } = useCariOnerileri()
+
+watch(
+  () => props.visible,
+  (acik) => {
+    if (acik) cariOnerileriYukle()
+  },
+  { immediate: true }
+)
 
 const { t } = useI18n()
 const toastBildirim = useToastBildirim()

@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { formatCurrency, formatPara, formatDate, formatDateTime, durumLabel, getLocalDateString } from '../format.js'
+import {
+  formatCurrency,
+  formatPara,
+  formatDate,
+  formatDateTime,
+  durumLabel,
+  getLocalDateString,
+  vadeRiskSinifi
+} from '../format.js'
 
 describe('format.js', () => {
   it('formatCurrency handles null/undefined/NaN', () => {
@@ -73,5 +81,51 @@ describe('format.js', () => {
     expect(getLocalDateString(null)).toBe('')
     expect(getLocalDateString(undefined)).toBe(bugun)
     expect(getLocalDateString('gecersiz')).toBe('')
+  })
+})
+
+// Esikler backend kovalariyla ayni olmali: <=0 vadesi gelmemis, <=30, <=60, <=90, uzeri.
+describe('vadeRiskSinifi', () => {
+  it('makine-okunur gun alanini kullanir', () => {
+    expect(vadeRiskSinifi({ gun: 0 })).toBe('risk-yok')
+    expect(vadeRiskSinifi({ gun: -5 })).toBe('risk-yok')
+    expect(vadeRiskSinifi({ gun: 1 })).toBe('risk-az')
+    expect(vadeRiskSinifi({ gun: 30 })).toBe('risk-az')
+    expect(vadeRiskSinifi({ gun: 31 })).toBe('risk-orta')
+    expect(vadeRiskSinifi({ gun: 60 })).toBe('risk-orta')
+    expect(vadeRiskSinifi({ gun: 61 })).toBe('risk-yuksek')
+    expect(vadeRiskSinifi({ gun: 365 })).toBe('risk-yuksek')
+  })
+
+  // Regresyon: "0-30 Gün" kovasi vadesi 1-30 gün gecmis alacaklari icerir ve
+  // daha once risk-yok (yesil) renklendiriliyordu.
+  it('vadesi gecmis kayitlari risk-yok olarak isaretlemez', () => {
+    expect(vadeRiskSinifi({ gun: 30, aralik: '0-30 Gün' })).toBe('risk-az')
+    expect(vadeRiskSinifi({ gun: 1, aralik: '0-30 Gün' })).not.toBe('risk-yok')
+    expect(vadeRiskSinifi({ gun: 0, aralik: 'Vadesi Gelmemiş' })).toBe('risk-yok')
+  })
+
+  it('gosterim metni uyumsuz olsa da gun alani esas alinir', () => {
+    expect(vadeRiskSinifi({ gun: 75, aralik: 'Vadesi Gelmemiş' })).toBe('risk-yuksek')
+    expect(vadeRiskSinifi({ gun: 0, aralik: '90+ Gün' })).toBe('risk-yok')
+  })
+
+  it('string gun degerlerini kabul eder', () => {
+    expect(vadeRiskSinifi({ gun: '45' })).toBe('risk-orta')
+    expect(vadeRiskSinifi({ gun: '0' })).toBe('risk-yok')
+  })
+
+  it('gun yoksa gosterim metnine duser (eski API uyumlulugu)', () => {
+    expect(vadeRiskSinifi({ aralik: 'Vadesi Gelmemiş' })).toBe('risk-yok')
+    expect(vadeRiskSinifi({ aralik: '0-30 Gün' })).toBe('risk-az')
+    expect(vadeRiskSinifi({ aralik: '31-60 Gün' })).toBe('risk-orta')
+    expect(vadeRiskSinifi({ aralik: '61-90 Gün' })).toBe('risk-yuksek')
+    expect(vadeRiskSinifi({ aralik: '90+ Gün' })).toBe('risk-yuksek')
+  })
+
+  it('eksik satirda risk-yuksek doner (temkinli varsayilan)', () => {
+    expect(vadeRiskSinifi(undefined)).toBe('risk-yuksek')
+    expect(vadeRiskSinifi({})).toBe('risk-yuksek')
+    expect(vadeRiskSinifi({ gun: null })).toBe('risk-yuksek')
   })
 })

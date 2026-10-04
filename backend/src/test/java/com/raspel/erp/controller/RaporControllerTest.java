@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.hamcrest.Matchers.containsString;
 import com.raspel.erp.controller.sistem.RaporController;
 
 @WebMvcTest(RaporController.class)
@@ -96,12 +97,70 @@ class RaporControllerTest {
 
     @Test
     void shouldGetYaslandirma() throws Exception {
-        var list = List.of(RaporDTO.YaslandirmaDTO.builder().cariAd("Müşteri").bakiye(BigDecimal.valueOf(10000)).gun(45).aralik("31-60 Gün").build());
-        when(raporService.yaslandirmaRaporu(any())).thenReturn(list);
+        var satir = RaporDTO.YaslandirmaDTO.builder()
+                .cariHesapId(3L).cariAd("Müşteri")
+                .kovalar(new java.util.LinkedHashMap<>(java.util.Map.of(
+                        "VADEDI_GELMEMIS", BigDecimal.valueOf(6000),
+                        "GUN_0_30", BigDecimal.ZERO,
+                        "GUN_31_60", BigDecimal.valueOf(4000),
+                        "GUN_61_90", BigDecimal.ZERO,
+                        "GUN_90_PLUS", BigDecimal.ZERO)))
+                .toplam(BigDecimal.valueOf(10000))
+                .gecikmisTutar(BigDecimal.valueOf(4000))
+                .enFazlaGecikmeGun(45)
+                .ortalamaGecikmeGun(45.0)
+                .build();
+        var rapor = RaporDTO.YaslandirmaRaporDTO.builder()
+                .satirlar(List.of(satir))
+                .referansTarih(java.time.LocalDate.of(2026, 3, 15))
+                .ozet(RaporDTO.YaslandirmaOzetDTO.builder()
+                        .kovalar(new java.util.LinkedHashMap<>(java.util.Map.of(
+                                "VADEDI_GELMEMIS", BigDecimal.valueOf(6000),
+                                "GUN_0_30", BigDecimal.ZERO,
+                                "GUN_31_60", BigDecimal.valueOf(4000),
+                                "GUN_61_90", BigDecimal.ZERO,
+                                "GUN_90_PLUS", BigDecimal.ZERO)))
+                        .toplam(BigDecimal.valueOf(10000))
+                        .gecikmisTutar(BigDecimal.valueOf(4000))
+                        .cariSayisi(1)
+                        .kovaSirasi(RaporService.YASLANDIRMA_KOVALARI)
+                        .build())
+                .build();
+        when(raporService.yaslandirmaRaporu(any(), any())).thenReturn(rapor);
 
         mockMvc.perform(get("/api/raporlar/yaslandirma").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].cariAd").value("Müşteri"));
+                .andExpect(jsonPath("$.satirlar[0].cariAd").value("Müşteri"))
+                .andExpect(jsonPath("$.satirlar[0].kovalar.GUN_31_60").value(4000))
+                .andExpect(jsonPath("$.satirlar[0].gecikmisTutar").value(4000))
+                .andExpect(jsonPath("$.ozet.cariSayisi").value(1))
+                .andExpect(jsonPath("$.referansTarih").value("2026-03-15"));
+    }
+
+    @Test
+    void shouldGetYaslandirmaPdf() throws Exception {
+        var rapor = RaporDTO.YaslandirmaRaporDTO.builder()
+                .satirlar(List.of(RaporDTO.YaslandirmaDTO.builder()
+                        .cariHesapId(3L).cariAd("Müşteri")
+                        .kovalar(new java.util.LinkedHashMap<>(java.util.Map.of(
+                                "VADEDI_GELMEMIS", BigDecimal.valueOf(6000),
+                                "GUN_0_30", BigDecimal.ZERO,
+                                "GUN_31_60", BigDecimal.valueOf(4000),
+                                "GUN_61_90", BigDecimal.ZERO,
+                                "GUN_90_PLUS", BigDecimal.ZERO)))
+                        .toplam(BigDecimal.valueOf(10000))
+                        .gecikmisTutar(BigDecimal.valueOf(4000))
+                        .enFazlaGecikmeGun(45)
+                        .build()))
+                .referansTarih(java.time.LocalDate.of(2026, 3, 15))
+                .ozet(RaporDTO.YaslandirmaOzetDTO.builder().build())
+                .build();
+        when(raporService.yaslandirmaRaporu(any(), any())).thenReturn(rapor);
+        when(pdfRaporService.tabloRaporu(anyString(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/raporlar/yaslandirma/pdf").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", containsString("yaslandirma-2026-03-15.pdf")));
     }
 
     @Test

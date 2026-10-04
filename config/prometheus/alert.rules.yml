@@ -104,3 +104,202 @@ groups:
         annotations:
           summary: "RabbitMQ kuyruk birikmesi (> 1000 mesaj)"
           description: "Kuyrukta işlenmeyi bekleyen mesaj sayısı 1000'i aştı; tüketici yavaş olabilir."
+
+      # Kaba kuvvet (brute force) tespiti. Metrik KullaniciService.girisSayaci
+      # tarafindan uretilir; etiketlerde kullanici adi YOKTUR (PII + kardinalite).
+      - alert: LoginFailuresSpike
+        expr: sum(rate(raspel_giris_deneme_total{sonuc!="basarili"}[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Yoğun başarısız giriş denemesi"
+          description: "5 dakikada dakika başına 1'den fazla başarısız giriş denemesi. Olası kaba kuvvet saldırısı veya yaygın şifre hatası."
+      - alert: LoginFailuresCritical
+        expr: sum(rate(raspel_giris_deneme_total{sonuc!="basarili"}[5m])) > 10
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kritik: çok yüksek başarısız giriş denemesi"
+          description: "Dakikada 10+ başarısız giriş denemesi. Saldırı olasılığı yüksek; hesap kilitleme ve IP engelleme değerlendirilmeli."
+
+      # Yedekleme sagligi (BackupService). durum: 0=OK, 1=UYARI, 2=KRITIK.
+      # durum yalnizca VAR OLAN yedegi anlatir; "hic yedek alinmadi" durumu
+      # raspel_yedek_son == 0 ile bildirilir. Eşikler tam esittir (>= degil),
+      # aksi halde durum=2 iken iki alarm birlikte tetiklenir (gurultu).
+      - alert: BackupFailed
+        expr: increase(raspel_yedek_islem_total{sonuc="hata"}[1h]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Yedekleme hatası"
+          description: "Son 1 saatte yedek alma işlemi başarısız oldu. {{ $labels.tur }} tipindeki yedek güncellenmedi."
+
+      - alert: BackupStaleOrCorrupt
+        expr: raspel_yedek_durum == 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Yedek bayat veya bozuk"
+          description: "Son yedek 48 saatten eski ya da gzip bütünlük kontrolü başarısız."
+
+      - alert: BackupCritical
+        expr: raspel_yedek_durum == 2
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kritik: yedek çok eski veya bozuk"
+          description: "Son yedek 168 saatten eski veya yedek dosyası bozuk. Veri kaybı riski."
+
+      # Yedek butunlugu: dosya sisteminde yedek bulunmamasi.
+      - alert: BackupFileMissing
+        expr: raspel_yedek_son == 0
+        for: 30m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Hiç başarılı yedek kaydı yok"
+          description: "Uygulama açıldığından beri başarılı bir yedek alma işlemi kaydedilmedi (0 değeri)."
+
+      # PostgreSQL tarafı (postgres-exporter). DB havuzu dolduğunda HikariCP
+      # uygulama tarafinda gorunur; burada DB'nin kendi limitine yakinlastigi
+      # (max_connections) erken uyari verilir.
+      - alert: PostgresConnectionsHigh
+        expr: sum(pg_stat_activity_count) by (instance) / on(instance) pg_settings_max_connections > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL bağlantı kullanımı yüksek (%80+)"
+          description: "Aktif bağlantılar max_connections değerinin %80'ini aştı."
+
+      - alert: PostgresConnectionsCritical
+        expr: sum(pg_stat_activity_count) by (instance) / on(instance) pg_settings_max_connections > 0.95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kritik: PostgreSQL bağlantı limiti dolmak üzere"
+          description: "Aktif bağlantılar max_connections değerinin %95'ine ulaştı; yeni bağlantılar reddedilebilir."
+
+      # Uzun suren kilitler: uzun sorgular/degisiklikler tuketiciyi bloklar.
+      - alert: PostgresLongRunningTransaction
+        expr: pg_stat_activity_max_tx_duration{state="active"} > 300
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL'de uzun süren transaction (> 5 dk)"
+          description: "En uzun aktif transaction 5 dakikayı aştı; VACUUM gecikebilir ve tablo kilitlenebilir."
+
+      # Veritabani buyume. NOT: node_filesystem_*{mountpoint="/var/lib/postgresql/data"}
+      # calismaz; node_exporter container icinde HOST mount'larini raporlar ve
+      # postgres volume'unu gormez. Kapasite icin tek kaynak host disk alarmlari
+      # (HighDiskUsage / CriticalDiskUsage) ve backup dosya boyutudur.
+      - alert: DatabaseSizeLarge
+        expr: pg_database_size_bytes{datname="postgres"} > 53687091200
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Veritabanı 50 GB üzerinde"
+          description: "postgres veritabanı 50 GB'ı aştı. Yedek süresi ve geri yükleme penceresi uzayabilir; arşiv/partition planı değerlendirilmeli."
+
+      # URI bazli gecikme. Genel p95 alarmi tum uclari toplar; yavaslamanin hangi
+      # endpointte oldugunu gormek zorlastirir. Bu alarmlar 'uri' etiketi basina
+      # ayri hesaplanir. Actuator/scrape ucari gurultu kaynagi oldugu icin haric.
+      - alert: SlowEndpointLatency
+        expr: >-
+          histogram_quantile(0.95,
+            sum(rate(http_server_requests_seconds_bucket{uri!~"/actuator.*|/metrics|/api/.*/dosya|/api/.*/pdf"}[10m])) by (le, uri)
+          ) > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Yavaş endpoint p95 > 2s: {{ $labels.uri }}"
+          description: "{{ $labels.uri }} endpointinin p95 gecikmesi 10 dakikadır 2 saniyenin üzerinde."
+
+      - alert: CriticalEndpointLatency
+        expr: >-
+          histogram_quantile(0.95,
+            sum(rate(http_server_requests_seconds_bucket{uri!~"/actuator.*|/metrics|/api/.*/dosya|/api/.*/pdf"}[10m])) by (le, uri)
+          ) > 5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kritik endpoint gecikmesi p95 > 5s: {{ $labels.uri }}"
+          description: "{{ $labels.uri }} endpointinin p95 gecikmesi 5 dakikadır 5 saniyenin üzerinde."
+
+      # Tek bir endpointin surekli 5xx vermesi (genel hata orani Alarm'i bunu
+      # yutabilir; oran dusuk olsa bile o islev tamamen bozuk olabilir).
+      - alert: EndpointServerErrors
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5..", uri!~"/actuator.*|/metrics"}[10m])) by (uri) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Endpoint sürekli 5xx dönüyor: {{ $labels.uri }}"
+          description: "{{ $labels.uri }} dakikada 0.1+ sunucu hatası döndürüyor."
+
+      # Traefik upstream hatalari (502/503/504) - backend coktan yavaslamis veya
+      # coklanmis olabilir; backend metrikleri yeterli degilse bu erken uyarir.
+      - alert: TraefikUpstreamFailure
+        expr: sum(rate(traefik_service_requests_total{code=~"50[234]"}[5m])) by (service) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Traefik upstream hatası: {{ $labels.service }}"
+          description: "{{ $labels.service }} servisinde dakikada 0.5+ 502/503/504 yanıtı."
+
+      # ---------- Zamanlanmis gorevler (B2) ----------
+      # 16 @Scheduled gorev vardi ve hicbiri olculmuyordu. Cron sessizce
+      # basarisiz oldugunda (disk dolu, ag hatasi, veri hatasi) tek belirti
+      # log dosyasinda kaliyordu.
+
+      - alert: SchedulerJobFailure
+        expr: increase(raspel_job_calisma_total{sonuc="hata"}[1h]) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Zamanlanmis gorev basarisiz: {{ $labels.ad }}"
+          description: "{{ $labels.ad }} gorevi son 1 saatte en az bir kez hata verdi. Gorev loglarini kontrol edin."
+
+      - alert: SchedulerJobSilent
+        # Yedekleme 24 saatte bir, gunluk ozet/raporlar 24 saatte bir calisir.
+        # 26 saat icinde hicbir calisma yoksa cron sessizce durmus demektir
+        # (uygulama yeniden baslatildiginda veya istisna olustugunda).
+        expr: (time() - raspel_job_son_calisma{ad=~"BackupService.dailyAutoBackup|TekrarlayanFaturaService.*|GunlukOzetService.*"}) > 93600
+        for: 30m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Zamanlanmis gorev sessizce durdu: {{ $labels.ad }}"
+          description: "{{ $labels.ad }} gorevi 26 saatten uzun suredir calismadi. Cron ifadesi veya uygulama sagligini kontrol edin."
+
+      - alert: SchedulerJobSlow
+        expr: raspel_job_sure_seconds_max{quantile="0.5"} > 600
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Zamanlanmis gorev yavas: {{ $labels.ad }}"
+          description: "{{ $labels.ad }} gorevi medyan {{ $value }} saniye suruyor; diger gorevleri bloklayabilir."
+
+      - alert: BackupStale
+        # Yedekleme 24 saatte bir calisir; 30 saat icinde basarili yedek yoksa
+        # yedekleme sessizce durmustur veya disk doludur.
+        expr: (time() - raspel_yedek_son) > 108000
+        for: 30m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Yedekleme 30 saattir tamamlanmadi"
+          description: "Son basarili yedekleme 30 saatten eski. Disk alani ve backup job loglarini kontrol edin."

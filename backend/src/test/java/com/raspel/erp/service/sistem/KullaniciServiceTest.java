@@ -9,6 +9,8 @@ import com.raspel.erp.entity.sistem.Kullanici;
 import com.raspel.erp.repository.sistem.KullaniciRepository;
 import com.raspel.erp.repository.sistem.SirketRepository;
 import com.raspel.erp.util.TotpUtil;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,7 +27,10 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import com.raspel.erp.exception.BusinessException;
+
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
@@ -53,6 +58,10 @@ class KullaniciServiceTest {
     private EmailService emailService;
     @Mock
     private com.raspel.erp.service.sistem.AuditLogService auditLogService;
+    // KullaniciService giris denemelerini sayar (raspel.giris.deneme). Provider
+    // null donerse metrik atlanir; testte bos provider yeterlidir.
+    @Mock
+    private org.springframework.beans.factory.ObjectProvider<io.micrometer.core.instrument.MeterRegistry> meterRegistryProvider;
 
     @InjectMocks
     private KullaniciService kullaniciService;
@@ -69,11 +78,121 @@ class KullaniciServiceTest {
         return k;
     }
 
-    @Test
+@Test
     void tumunuGetir_nullSirketBosDoner() {
         Page<KullaniciDTO> result = kullaniciService.tumunuGetir(null, Pageable.unpaged());
         assertTrue(result.isEmpty());
         verify(kullaniciRepository, never()).findAll(any(Pageable.class));
+    }
+
+    // ------------------------------------------------------------------
+    // REDTEAM H-1/H-2 regresyonu: platform geneli erisim kontrolu
+    //
+    // CANLI KANIT: "ZZTEST Sirket B"nin ADMIN'i (sirket 99) GET /api/backups ile
+    // TUM sirketlerin (RasPel Test dahil) veritabani yedeklerini listeledi ve
+    // indirebildi; ayrica klasor=backups ile presigned URL aldi. Yedek tek DB
+    // dump'u oldugu icin icinde TUM tenant'larin verisi vardir. Bu yuzden bu
+    // islemler sirket basina ADMIN degil, PLATFORM YONETICISI seviyesinde
+    // korunmalidir.
+    // ------------------------------------------------------------------
+
+    private void kimlikBagla(Kullanici k) {
+        var auth = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                k.getUsername(), null,
+                List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                        "ROLE_" + k.getRole())));
+        org.springframework.security.core.context.SecurityContextHolder
+                .getContext().setAuthentication(auth);
+    }
+
+    @AfterEach
+    void securityContextTemizle() {
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    @DisplayName("H-1: beyaz listedeki ADMIN platform yoneticisidir")
+    void platformYoneticisiMi_beyazListedekiAdminTrue() {
+        Kullanici admin = createKullanici(1L);
+        admin.setUsername("admin");
+        admin.setRole("ADMIN");
+        when(kullaniciRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+        kimlikBagla(admin);
+
+        assertTrue(kullaniciService.platformYoneticisiMi());
+        kullaniciService.platformYoneticisiGerekir("test");
+    }
+
+    @Test
+    @DisplayName("H-1: ADMIN olsa bile beyaz listede yoksa erisim reddedilir")
+    void platformYoneticisiMi_beyazListedeOlmayanAdminReddedilir() {
+        // CANLI KANIT: "ZZTEST Sirket B"nin ADMIN'i (zzadmin_b) beyaz listede
+        // olmadigi icin artik platform islemlerine erisemez.
+        Kullanici k = createKullanici(9901L);
+        k.setUsername("zzadmin_b");
+        k.setRole("ADMIN");
+        // Beyaz liste kontrolunden elenir; DB'ye gidilmez.
+        lenient().when(kullaniciRepository.findByUsername("zzadmin_b")).thenReturn(Optional.of(k));
+        kimlikBagla(k);
+
+        assertFalse(kullaniciService.platformYoneticisiMi(),
+                "Sirket admin'i platform yoneticisi sayilmamali (canli kanit: yedek sizintisi)");
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> kullaniciService.platformYoneticisiGerekir("yedek listeleme"));
+    }
+
+    @Test
+    @DisplayName("H-1: USER/DRIVER/SAHA platform yoneticisi DEGILDIR")
+    void platformYoneticisiMi_adminOlmayanReddedilir() {
+        for (String rol : List.of("USER", "DRIVER", "SAHA", "MUHASEBE")) {
+            Kullanici k = createKullanici(2L);
+            k.setRole(rol);
+            // ADMIN yetkisi olmadigi icin kod DB'ye hic gitmeden reddeder;
+            // stub yine de hazir bekletilir (asiri kesinlik birakmamak icin).
+            lenient().when(kullaniciRepository.findByUsername(k.getUsername())).thenReturn(Optional.of(k));
+            kimlikBagla(k);
+
+            assertFalse(kullaniciService.platformYoneticisiMi(),
+                    rol + " rolundeki kullanici platform yoneticisi sayilmamali");
+            assertThrows(com.raspel.erp.exception.BusinessException.class,
+                    () -> kullaniciService.platformYoneticisiGerekir("yedek listeleme"));
+        }
+    }
+
+    @Test
+    @DisplayName("H-1: pasif (active=false) beyaz listeli ADMIN reddedilir")
+    void platformYoneticisiMi_pasifAdminReddedilir() {
+        Kullanici admin = createKullanici(1L);
+        admin.setUsername("admin");
+        admin.setRole("ADMIN");
+        admin.setActive(false);
+        when(kullaniciRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+        kimlikBagla(admin);
+
+        assertFalse(kullaniciService.platformYoneticisiMi(),
+                "Devre disi birakilmis hesap platform islemi yapmamali");
+    }
+
+    @Test
+    @DisplayName("H-1: oturum yoksa erisim reddedilir (fail-closed)")
+    void platformYoneticisiMi_oturumYoksaReddedilir() {
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+
+        assertFalse(kullaniciService.platformYoneticisiMi());
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> kullaniciService.platformYoneticisiGerekir("yedek indirme"));
+    }
+
+    @Test
+    @DisplayName("H-1: DB'de olmayan kullanici fail-closed reddedilir")
+    void platformYoneticisiMi_kullaniciBilinmiyorReddedilir() {
+        var auth = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                "admin", null,
+                List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN")));
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);
+        when(kullaniciRepository.findByUsername("admin")).thenReturn(Optional.empty());
+
+        assertFalse(kullaniciService.platformYoneticisiMi());
     }
 
     @Test
@@ -189,10 +308,78 @@ class KullaniciServiceTest {
                 () -> kullaniciService.guncelle(5L, KullaniciDTO.builder().displayName("X").build()));
     }
 
-    @Test
+@Test
     void guncelle_throwsWhenNotFound() {
         when(kullaniciRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> kullaniciService.guncelle(99L, new KullaniciDTO()));
+    }
+
+    // ------------------------------------------------------------------
+    // REDTEAM C9 regresyonu: sifre degisimi token iptal etmiyordu.
+    //
+    // CANLI KANIT: PUT /api/kullanicilar/9905 ile sifre degistirildi -> HTTP 200,
+    // ancak token_version 0'da kaldi ve SIFRE DEGISIMINDEN ONCE alinan eski token
+    // hala HTTP 200 donuyordu. Sifre degistirilince tum oturumlarin aninda
+    // sonlanmasi gerekir.
+    // ------------------------------------------------------------------
+
+    @Test
+    @DisplayName("C9: sifre degisimi tokenVersion'i artirir (eski token'lar iptal edilir)")
+    void guncelle_sifreDegisimiTokenVersionArtirir() {
+        Kullanici existing = createKullanici(1L);
+        existing.setSirketId(1L);
+        existing.setTokenVersion(0L);
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(tenantChecker.getCurrentSirketId()).thenReturn(1L);
+        when(kullaniciRepository.save(any(Kullanici.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        KullaniciDTO dto = KullaniciDTO.builder()
+                .password("YeniCokGucluSifre123!")
+                .build();
+        kullaniciService.guncelle(1L, dto);
+
+        assertEquals(Long.valueOf(1L), existing.getTokenVersion(),
+                "Sifre degisimi tokenVersion artirmaliydi (canli kanit: 0'da kalmisti)");
+    }
+
+    @Test
+    @DisplayName("C9: sirket uyeligi degisimi de tokenVersion'i artirir")
+    void guncelle_sirketUyeligiDegisimiTokenVersionArtirir() {
+        Kullanici existing = createKullanici(1L);
+        existing.setSirketId(1L);
+        existing.setSirketler(new java.util.HashSet<>(java.util.Set.of(
+                com.raspel.erp.entity.sistem.Sirket.builder().id(1L).build())));
+        existing.setTokenVersion(0L);
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(tenantChecker.getCurrentSirketId()).thenReturn(1L);
+        when(sirketRepository.findById(anyLong())).thenReturn(Optional.of(
+                com.raspel.erp.entity.sistem.Sirket.builder().id(2L).build()));
+        when(kullaniciRepository.save(any(Kullanici.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        KullaniciDTO dto = KullaniciDTO.builder()
+                .sirketIds(List.of(1L, 2L))
+                .build();
+        kullaniciService.guncelle(1L, dto);
+
+        assertEquals(Long.valueOf(1L), existing.getTokenVersion(),
+                "Sirket uyeligi degisimi tokenVersion artirmaliydi");
+    }
+
+    @Test
+    @DisplayName("C9: sifre degismiyorsa tokenVersion artmaz (kullaniciyi gereksiz kilitlemez)")
+    void guncelle_sifreDegismiyorsaTokenVersionArtmaz() {
+        Kullanici existing = createKullanici(1L);
+        existing.setSirketId(1L);
+        existing.setTokenVersion(0L);
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(tenantChecker.getCurrentSirketId()).thenReturn(1L);
+        when(kullaniciRepository.save(any(Kullanici.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        KullaniciDTO dto = KullaniciDTO.builder().displayName("Yeni Gorunen Ad").build();
+        kullaniciService.guncelle(1L, dto);
+
+        assertEquals(Long.valueOf(0L), existing.getTokenVersion(),
+                "Profil guncellemesi mevcut oturumlari kilitlememeli");
     }
 
     @Test
@@ -255,11 +442,77 @@ class KullaniciServiceTest {
     void giris_throwsWhenInactive() {
         Kullanici k = createKullanici(1L);
         k.setActive(false);
+        k.setPassword("encoded");
         when(kullaniciRepository.findByUsername("testuser1")).thenReturn(Optional.of(k));
+        when(passwordEncoder.matches("pass", "encoded")).thenReturn(true);
         LoginRequest req = new LoginRequest();
         req.setUsername("testuser1");
         req.setPassword("pass");
         assertThrows(RuntimeException.class, () -> kullaniciService.giris(req));
+    }
+
+    // ---------- B2h: kullanici numaralandirmasi (enumeration) ve zamanlama ----------
+
+    /**
+     * Kullanıcı adı varlığını sızdırmaz: kullanıcı yok / pasif / yanlış şifre
+     * durumlarının ÜÇÜ de aynı mesajı döner.
+     */
+    @Test
+    void giris_yoksaPasifseVeHataliSifredeAyniMesajiDoner() {
+        // 1) Kullanıcı yok
+        when(kullaniciRepository.findByUsername("yok")).thenReturn(Optional.empty());
+        var hataYok = assertThrows(BusinessException.class, () -> kullaniciService.giris(
+                LoginRequest.builder().username("yok").password("p").build()));
+
+        // 2) Var ama pasif (şifre DOĞRU olsa bile)
+        Kullanici pasif = createKullanici(2L);
+        pasif.setActive(false);
+        pasif.setPassword("encoded");
+        when(kullaniciRepository.findByUsername("pasif")).thenReturn(Optional.of(pasif));
+        when(passwordEncoder.matches("dogru", "encoded")).thenReturn(true);
+        var hataPasif = assertThrows(BusinessException.class, () -> kullaniciService.giris(
+                LoginRequest.builder().username("pasif").password("dogru").build()));
+
+        // 3) Var, aktif, şifre yanlış
+        Kullanici aktif = createKullanici(3L);
+        aktif.setPassword("encoded");
+        when(kullaniciRepository.findByUsername("aktif")).thenReturn(Optional.of(aktif));
+        when(passwordEncoder.matches("yanlis", "encoded")).thenReturn(false);
+        var hataSifre = assertThrows(BusinessException.class, () -> kullaniciService.giris(
+                LoginRequest.builder().username("aktif").password("yanlis").build()));
+
+        assertEquals(hataYok.getMessage(), hataPasif.getMessage(),
+                "Pasif kullanıcı mesajı diğerlerinden ayırt edilememeli");
+        assertEquals(hataYok.getMessage(), hataSifre.getMessage(),
+                "Hatalı şifre mesajı diğerlerinden ayırt edilememeli");
+        assertFalse(hataPasif.getMessage().toLowerCase().contains("aktif"),
+                "Hata mesajı 'aktif' bilgisini sızdırmamalı");
+    }
+
+    /**
+     * Zamanlama eşitlemesi: kullanıcı bulunamadığında da BCrypt karşılaştırması
+     * çağrılır. Aksi halde "kullanıcı yok" isteği ~1 ms, gerçek şifre kontrolü
+     * ~100 ms sürer ve fark kullanıcı adlarını numaralandırmaya yeter.
+     */
+    @Test
+    void giris_kullaniciBulunamayincaBcryptDogrulamaYapar() {
+        when(kullaniciRepository.findByUsername("yok")).thenReturn(Optional.empty());
+
+        assertThrows(BusinessException.class, () -> kullaniciService.giris(
+                LoginRequest.builder().username("yok").password("p").build()));
+
+        verify(passwordEncoder).matches(eq("p"), anyString());
+    }
+
+    /** Kullanıcı yoksa deneme yapılmasa bile BCrypt çağrılır (null şifre dâhil). */
+    @Test
+    void giris_kullaniciBulunamayincaNullSifreDahilGuvenli() {
+        when(kullaniciRepository.findByUsername("yok")).thenReturn(Optional.empty());
+
+        assertThrows(BusinessException.class, () -> kullaniciService.giris(
+                LoginRequest.builder().username("yok").password(null).build()));
+
+        verify(passwordEncoder).matches(eq(""), anyString());
     }
 
     @Test
@@ -570,5 +823,74 @@ class KullaniciServiceTest {
 
         assertThrows(com.raspel.erp.exception.BusinessException.class,
                 () -> kullaniciService.oturumUzat(2L, "eski"));
+    }
+
+    // Kaba kuvvet tespiti icin giriş denemesi sayaci uretilmelidir. Kullanici adi
+    // etiket olarak KULLANILMAZ (PII + kardinalite); yalnizca sonuc etiketi vardir.
+    @Test
+    void giris_sayacBasarisizDenemeleriEtiketler() {
+        io.micrometer.core.instrument.MeterRegistry registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
+        when(meterRegistryProvider.getIfAvailable()).thenReturn(registry);
+        Kullanici k = createKullanici(1L);
+        k.setPassword("$2a$10$encoded");
+        when(kullaniciRepository.findByUsername("admin")).thenReturn(Optional.of(k));
+        when(passwordEncoder.matches("wrong", "$2a$10$encoded")).thenReturn(false);
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () -> kullaniciService.giris(
+                com.raspel.erp.dto.sistem.LoginRequest.builder().username("admin").password("wrong").build()));
+
+        double hatali = registry.counter("raspel.giris.deneme", "sonuc", "hatali_sifre").count();
+        assertEquals(1.0, hatali);
+        assertNull(registry.find("raspel.giris.deneme").tags("sonuc", "admin").counter(),
+                "Kullanici adi etiket olarak kullanilmamali (PII/kardinalite)");
+    }
+
+    @Test
+    void giris_sayacKullaniciBulunamadiVePasifKullanici() {
+        io.micrometer.core.instrument.MeterRegistry registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
+        when(meterRegistryProvider.getIfAvailable()).thenReturn(registry);
+        when(kullaniciRepository.findByUsername("yok")).thenReturn(Optional.empty());
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () -> kullaniciService.giris(
+                com.raspel.erp.dto.sistem.LoginRequest.builder().username("yok").password("x").build()));
+        assertEquals(1.0, registry.counter("raspel.giris.deneme", "sonuc", "kullanici_yok").count());
+
+Kullanici pasif = createKullanici(2L);
+        pasif.setActive(false);
+        pasif.setPassword("encoded");
+        when(kullaniciRepository.findByUsername("pasif")).thenReturn(Optional.of(pasif));
+        // Pasiflik kontrolü şifre doğrulamasINDAN sonra yapılır (numaralandırma).
+        when(passwordEncoder.matches("x", "encoded")).thenReturn(true);
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () -> kullaniciService.giris(
+                com.raspel.erp.dto.sistem.LoginRequest.builder().username("pasif").password("x").build()));
+        assertEquals(1.0, registry.counter("raspel.giris.deneme", "sonuc", "pasif").count());
+    }
+
+    @Test
+    void giris_sayacBasariliGiris() {
+        io.micrometer.core.instrument.MeterRegistry registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
+        when(meterRegistryProvider.getIfAvailable()).thenReturn(registry);
+        Kullanici k = createKullanici(1L);
+        k.setPassword("$2a$10$encoded");
+        when(kullaniciRepository.findByUsername("admin")).thenReturn(Optional.of(k));
+        when(passwordEncoder.matches("dogru", "$2a$10$encoded")).thenReturn(true);
+
+        kullaniciService.giris(com.raspel.erp.dto.sistem.LoginRequest.builder()
+                .username("admin").password("dogru").build());
+
+        assertEquals(1.0, registry.counter("raspel.giris.deneme", "sonuc", "basarili").count());
+    }
+
+    // Metrik opsiyoneldir: MeterRegistry bean'i yoksa giris akisi calismaya devam etmelidir.
+    @Test
+    void giris_registryYoksaHataVermez() {
+        when(meterRegistryProvider.getIfAvailable()).thenReturn(null);
+        Kullanici k = createKullanici(1L);
+        k.setPassword("$2a$10$encoded");
+        when(kullaniciRepository.findByUsername("admin")).thenReturn(Optional.of(k));
+        when(passwordEncoder.matches("dogru", "$2a$10$encoded")).thenReturn(true);
+
+        assertNotNull(kullaniciService.giris(com.raspel.erp.dto.sistem.LoginRequest.builder()
+                .username("admin").password("dogru").build()));
     }
 }

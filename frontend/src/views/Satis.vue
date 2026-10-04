@@ -430,86 +430,109 @@
         v-if="satisModu === 'SATIS'"
         class="opsiyon-bolum"
       >
-        <summary><i class="pi pi-wallet" /> {{ t('satis.tahsilatOpsiyon') }}</summary>
-        <div class="form-grid-2">
-          <div class="form-group">
-            <label>{{ t('hizliSatis.odeme') }}</label>
-            <SelectButton
-              v-model="odemeDurumu"
-              :options="odemeDurumSecenekleri"
-              option-label="label"
-              option-value="value"
-              :allow-empty="false"
-              class="w-full"
-            />
-          </div>
-          <div class="form-group">
-            <label>{{ t('hizliSatis.odenenTutar') }}</label>
-            <InputNumber
-              v-model="odenenTutar"
-              :min="0"
-              :max="genelToplam"
-              mode="currency"
-              currency="TRY"
-              locale="tr-TR"
-              class="w-full"
-            />
-          </div>
-        </div>
-        <div
-          v-if="odemeDurumu !== 'yok'"
-          class="form-grid-2"
-        >
-          <div class="form-group">
-            <label>{{ t('hizliSatis.odemeYontemi') }}</label>
-            <Dropdown
-              v-model="odemeYontemi"
-              :options="odemeYontemListesi"
-              option-label="label"
-              option-value="value"
-              class="w-full"
-            />
-          </div>
-          <div class="form-group">
-            <label>{{ t('hizliSatis.kasa') }}</label>
-            <Dropdown
-              v-model="seciliKasa"
-              :options="kasalar"
-              option-label="ad"
-              option-value="id"
-              show-clear
-              class="w-full"
-            />
-          </div>
-        </div>
-        <div
-          v-if="odemeDurumu !== 'yok' && (odemeYontemi === 'KART' || odemeYontemi === 'HAVALE')"
-          class="form-grid-2"
-        >
-          <div class="form-group">
-            <label>{{ t('hizliSatis.bankaSecin') }}</label>
-            <Dropdown
-              v-model="seciliBanka"
-              :options="bankalar"
-              option-label="ad"
-              option-value="id"
-              show-clear
-              class="w-full"
-            />
+        <summary>
+          <span class="opsiyon-ikon opsiyon-ikon-odeme">
+            <i class="pi pi-wallet" />
+          </span>
+          <span class="opsiyon-baslik">
+            <strong>{{ t('satis.tahsilatOpsiyon') }}</strong>
+            <small>{{ t('hizliSatis.odeme') }}</small>
+          </span>
+          <span
+            v-if="odemeDurumu !== 'yok'"
+            class="opsiyon-ozet"
+          >{{ formatCurrency(odenenTutar || 0) }}</span>
+          <i class="pi katlanir-ok opsiyon-ok" />
+        </summary>
+        <div class="opsiyon-govde">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label>{{ t('hizliSatis.odeme') }}</label>
+              <SelectButton
+                v-model="odemeDurumu"
+                :options="odemeDurumSecenekleri"
+                option-label="label"
+                option-value="value"
+                :allow-empty="false"
+                class="w-full"
+              />
+            </div>
+            <div class="form-group">
+              <label>{{ t('hizliSatis.odenenTutar') }}</label>
+              <InputNumber
+                v-model="odenenTutar"
+                :min="0"
+                :max="genelToplam"
+                mode="currency"
+                currency="TRY"
+                locale="tr-TR"
+                class="w-full"
+              />
+            </div>
           </div>
           <div
-            v-if="odemeYontemi === 'KART'"
-            class="form-group"
+            v-if="odemeDurumu !== 'yok'"
+            class="form-grid-2"
           >
-            <label>{{ t('hizliSatis.posTerminali') }}</label>
-            <Dropdown
-              v-model="seciliPos"
-              :options="posTerminalleri"
-              option-label="ad"
-              option-value="id"
-              show-clear
-              class="w-full"
-            />
+            <div class="form-group">
+              <label>{{ t('hizliSatis.odemeYontemi') }}</label>
+              <Dropdown
+                v-model="odemeYontemi"
+                :options="odemeYontemListesi"
+                option-label="label"
+                option-value="value"
+                class="w-full"
+              />
+            </div>
+            <div class="form-group">
+              <label>{{ t('hizliSatis.kasa') }}</label>
+              <Dropdown
+                v-model="seciliKasa"
+                :options="kasalar"
+                option-label="ad"
+                option-value="id"
+                show-clear
+                class="w-full"
+              />
+            </div>
+          </div>
+          <div
+            v-if="odemeDurumu !== 'yok' && (odemeYontemi === 'KART' || odemeYontemi === 'HAVALE')"
+            class="form-grid-2"
+          >
+            <div class="form-group">
+              <label>{{ t('hizliSatis.bankaSecin') }}</label>
+              <Dropdown
+                v-model="seciliBanka"
+                :options="bankalar"
+                option-label="ad"
+                option-value="id"
+                show-clear
+                class="w-full"
+              />
+            </div>
+            <div
+              v-if="odemeYontemi === 'KART'"
+              class="form-group"
+            >
+              <label>{{ t('hizliSatis.posTerminali') }}</label>
+              <Dropdown
+                v-model="seciliPos"
+                :options="posTerminalleri"
+                option-label="ad"
+                option-value="id"
+                show-clear
+                class="w-full"
+              />
+            </div>
+          </div>
+          <div
+            v-if="odemeDurumu !== 'yok'"
+            class="opsiyon-kalan"
+          >
+            <i class="pi pi-info-circle" />
+            <span>{{ t('hizliSatis.kalan') }}:</span>
+            <strong>{{ formatCurrency(Math.max(genelToplam - (odenenTutar || 0), 0)) }}</strong>
           </div>
         </div>
       </details>
@@ -519,51 +542,95 @@
         v-if="satisModu === 'SATIS'"
         class="opsiyon-bolum"
       >
-        <summary><i class="pi pi-truck" /> {{ t('satis.teslimatOpsiyon') }}</summary>
-        <div class="form-grid-2">
-          <div class="form-group">
-            <label>{{ t('hizliSatis.sofor') }}</label>
-            <Dropdown
-              v-model="seciliSofor"
-              :options="soforler"
-              option-label="ad"
-              option-value="id"
-              filter
-              show-clear
-              :loading="soforlerYukleniyor"
+        <summary>
+          <span class="opsiyon-ikon opsiyon-ikon-teslimat">
+            <i class="pi pi-truck" />
+          </span>
+          <span class="opsiyon-baslik">
+            <strong>{{ t('satis.teslimatOpsiyon') }}</strong>
+            <small>{{ t('hizliSatis.sofor') }}</small>
+          </span>
+          <span
+            v-if="seciliSofor"
+            class="opsiyon-ozet"
+          >{{ seciliSofor.ad }}</span>
+          <i class="pi katlanir-ok opsiyon-ok" />
+        </summary>
+        <div class="opsiyon-govde">
+          <p class="opsiyon-ipucu">
+            <i class="pi pi-info-circle" /> {{ t('hizliSatis.teslimatIpucu') }}
+          </p>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label>{{ t('hizliSatis.sofor') }}</label>
+              <Dropdown
+                v-model="seciliSofor"
+                :options="soforler"
+                option-label="ad"
+                option-value="id"
+                filter
+                show-clear
+                :loading="soforlerYukleniyor"
+                class="w-full"
+              >
+                <template #option="s">
+                  <div class="opsiyon-personel">
+                    <i class="pi pi-user" />
+                    <span>{{ s.option.ad }}</span>
+                    <i
+                      v-if="s.option.rol && s.option.rol !== 'DRIVER'"
+                      class="pi pi-exclamation-triangle opsiyon-uyari"
+                      :title="t('hizliSatis.soforRolUyari')"
+                    />
+                    <span
+                      v-if="s.option.bekleyenTeslimatSayisi"
+                      class="opsiyon-yuk"
+                    >{{ s.option.bekleyenTeslimatSayisi }}</span>
+                  </div>
+                </template>
+              </Dropdown>
+            </div>
+            <div class="form-group">
+              <label>{{ t('hizliSatis.teslimDurumu') }}</label>
+              <Dropdown
+                v-model="teslimDurumu"
+                :options="teslimDurumSecenekleri"
+                option-label="label"
+                option-value="value"
+                class="w-full"
+              />
+            </div>
+          </div>
+          <div
+            v-if="seciliSofor"
+            class="opsiyon-secili-kart"
+          >
+            <span class="opsiyon-secili-ikon"><i class="pi pi-truck" /></span>
+            <div class="opsiyon-secili-metin">
+              <strong>{{ seciliSofor.ad }}</strong>
+              <small>{{ t('hizliSatis.teslimDurumu') }}: {{ teslimDurumu }}</small>
+            </div>
+          </div>
+          <div
+            v-if="seciliSofor"
+            class="form-group"
+          >
+            <label>{{ t('hizliSatis.teslimatAdresi') }} <span class="zorunlu">*</span></label>
+            <InputText
+              v-model="teslimatAdresi"
               class="w-full"
             />
           </div>
-          <div class="form-group">
-            <label>{{ t('hizliSatis.teslimDurumu') }}</label>
-            <Dropdown
-              v-model="teslimDurumu"
-              :options="teslimDurumSecenekleri"
-              option-label="label"
-              option-value="value"
+          <div
+            v-if="seciliSofor"
+            class="form-group"
+          >
+            <label>{{ t('hizliSatis.teslimNotu') }}</label>
+            <InputText
+              v-model="teslimNotu"
               class="w-full"
             />
           </div>
-        </div>
-        <div
-          v-if="seciliSofor"
-          class="form-group"
-        >
-          <label>{{ t('hizliSatis.teslimatAdresi') }} <span class="zorunlu">*</span></label>
-          <InputText
-            v-model="teslimatAdresi"
-            class="w-full"
-          />
-        </div>
-        <div
-          v-if="seciliSofor"
-          class="form-group"
-        >
-          <label>{{ t('hizliSatis.teslimNotu') }}</label>
-          <InputText
-            v-model="teslimNotu"
-            class="w-full"
-          />
         </div>
       </details>
 
@@ -591,8 +658,8 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { faturaAPI, teklifAPI, kasaAPI, bankaAPI, posAPI, teslimatAPI, cariHesapAPI } from '../api/index.js'
-import { useCariHesapStore } from '../stores/cariHesapStore.js'
+import { faturaAPI, teklifAPI, kasaAPI, bankaAPI, posAPI, teslimatAPI } from '../api/index.js'
+import { useCariOnerileri } from '../composables/useCariOnerileri.js'
 import { useStokStore } from '../stores/stokStore.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useRouter, useRoute } from 'vue-router'
@@ -605,7 +672,7 @@ import KpiKart from '../components/KpiKart.vue'
 import AppDialog from '../components/AppDialog.vue'
 import { formatCurrency, formatPara, getLocalDateString, durumLabel as durumLabelUtil } from '../utils/format.js'
 import { kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
-import { satisPayloadUret } from '../utils/satisPayload.js'
+import { satisPayloadUret, normalizeKalem } from '../utils/satisPayload.js'
 import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
@@ -613,7 +680,6 @@ const confirm = useConfirm()
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
-const cariHesapStore = useCariHesapStore()
 const stokStore = useStokStore()
 const authStore = useAuthStore()
 const { sirketLogosu } = useMarka()
@@ -653,22 +719,7 @@ const satisForm = ref({
 
 // Musteri secimi: sunucu tarafli arama (tum carileri yuklemek yerine).
 const musteriSecim = ref(null)
-const musteriOnerileri = ref([])
-let musteriAramaZamanlayici = null
-const musteriAra = (event) => {
-  const q = (event?.query || '').trim()
-  if (musteriAramaZamanlayici) clearTimeout(musteriAramaZamanlayici)
-  musteriAramaZamanlayici = setTimeout(async () => {
-    try {
-      const params = { page: 0, size: 20 }
-      if (q) params.search = q
-      const r = await cariHesapAPI.filtreli(params)
-      musteriOnerileri.value = unwrapList(r)
-    } catch {
-      musteriOnerileri.value = []
-    }
-  }, 250)
-}
+const { oneriler: musteriOnerileri, ara: musteriAra } = useCariOnerileri()
 const musteriSecildi = (event) => {
   const c = event?.value
   if (c) satisForm.value.cariHesapId = c.id
@@ -751,7 +802,10 @@ const tarihParametreleri = () => {
 
 onMounted(async () => {
   // Store'lar hata firlatir; bir hata digerlerini engellemesin.
-  await Promise.allSettled([satislariYukle(), ozetiYukle(), cariHesapStore.getAllCariHesaplar(), stokStore.getAll()])
+  // `getAllCariHesaplar()` kaldirildi: bu view'da musteri secici sunucu
+  // aramalı (useCariOnerileri) ve liste hicbir yerde okunmuyordu; istek ayrica
+  // parametresiz oldugu icin 50 kayitlik tavana takiliyordu.
+  await Promise.allSettled([satislariYukle(), ozetiYukle(), stokStore.getAll()])
   opsiyonVerileriniYukle()
   // FaturaDetay'dan "Duzenle" ile gelindiyse ilgili satisi duzenleme modunda ac.
   const duzenleId = Number(route.query.duzenle)
@@ -920,13 +974,56 @@ const kalemEkle = (row) => satisForm.value.kalemler.push(row)
 
 // Satir icinde stok secilince satiri stok bilgisiyle doldurur (KDV: stokta
 // tanimliysa o, tanimli degilse 0 kalir).
+//
+// ONCE `if (!k.birimFiyat)` kosulu vardi: kullanici fiyati elle yazip sonra
+// urunu degistirdiginde ESKI fiyat yeni urunun fiyatiyla birlikte kaliyordu
+// (sessiz yanlis fiyat). Artik urun degisiyorsa fiyat/KDV yeni urune gore
+// yenilenir; elle girilmis bir fiyat varsa kullaniciya sorulur.
 const stokSatirSecildi = ({ index, stok }) => {
   const k = satisForm.value.kalemler[index]
   if (!k || !stok) return
-  k.stokId = stok.id
-  k.aciklama = stok.ad
-  if (!k.birimFiyat) k.birimFiyat = stok.satisFiyati || stok.fiyat || 0
-  if (stok.kdvOrani != null) k.kdvOrani = Number(stok.kdvOrani)
+  const urunDegisti = k.stokId != null && k.stokId !== stok.id
+  const eskiFiyat = k.birimFiyat
+  const yeniFiyat = stok.satisFiyati || stok.fiyat || 0
+
+  const uygula = () => {
+    k.stokId = stok.id
+    k.aciklama = stok.ad
+    k.birimFiyat = yeniFiyat
+    if (stok.kdvOrani != null) k.kdvOrani = Number(stok.kdvOrani)
+  }
+
+  if (!urunDegisti) {
+    uygula()
+    return
+  }
+  // Fiyat elle degistirilmis mi? Sifir degilse ve stok listesinde degisse
+  // kullanici karar versin.
+  const elleFiyatVar = Number(eskiFiyat) > 0 && Number(eskiFiyat) !== Number(yeniFiyat)
+  if (!elleFiyatVar) {
+    uygula()
+    return
+  }
+  confirm.require({
+    message: t('satis.urunDegistiFiyatSorusu', {
+      eski: formatCurrency(eskiFiyat),
+      yeni: formatCurrency(yeniFiyat)
+    }),
+    header: t('satis.urunDegistiBaslik'),
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: t('satis.yeniFiyatiKullan'),
+    rejectLabel: t('satis.eskiFiyatiKoru'),
+    accept: () => {
+      uygula()
+      toastBildirim.basarili(t('satis.fiyatYenilendi', { fiyat: formatCurrency(yeniFiyat) }))
+    },
+    reject: () => {
+      // Fiyat korunur ama urun degisir; bilincli bir tercih.
+      k.stokId = stok.id
+      k.aciklama = stok.ad
+      if (stok.kdvOrani != null) k.kdvOrani = Number(stok.kdvOrani)
+    }
+  })
 }
 
 const araToplam = computed(() =>
@@ -1005,13 +1102,21 @@ const satisiTamamla = async () => {
         tur: 'SATIS',
         durum: 'TASLAK',
         aciklama: satisForm.value.aciklama,
-        kalemler: satisForm.value.kalemler.map((k) => ({
-          stokId: k.stokId,
-          aciklama: k.ad || k.aciklama || '',
-          miktar: k.miktar,
-          birimFiyat: k.birimFiyat,
-          kdvOrani: k.kdvOrani
-        }))
+        kalemler: satisForm.value.kalemler.map((k) => {
+          // Form satirlari `adet`/`aciklama` tasir; Teklif API'si ise `miktar`
+          // bekler. Dogrudan k.miktar okunuyordu ve her teklif kalemi
+          // undefined miktar ile kaydediliyordu. normalizeKalem tek kanonik
+          // esleme ve KDV/tutar hesabini birlikte saglar.
+          const n = normalizeKalem(k)
+          return {
+            stokId: n.stokId,
+            aciklama: n.aciklama,
+            miktar: n.adet,
+            birimFiyat: n.birimFiyat,
+            iskontoOrani: n.iskontoOrani,
+            kdvOrani: n.kdvOrani
+          }
+        })
       })
       toastBildirim.basarili(t('satis.teklifKaydedildiTekliflerde'))
       showSatisDialog.value = false
@@ -1362,16 +1467,8 @@ h1 {
   border-radius: 12px;
   padding: 16px;
 }
-.urun-ekle-satir {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 1fr) minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: end;
-}
-.urun-ekle-btn {
-  display: flex;
-  align-items: flex-end;
-}
+/* Hızlı kalem ekleme satırı artık `FaturaKalemleri` içinde
+   (`.hizli-kalem`) ve tablonun ÜSTÜNDE; `.urun-ekle-satir` ölüydü. */
 .kalem-bolum {
   display: flex;
   flex-direction: column;
@@ -1379,6 +1476,232 @@ h1 {
 }
 .kalem-tablo {
   overflow-x: auto;
+}
+
+/* Opsiyonel bloklar (Tahsilat / Teslimat): kart gorunumlu, ikonlu baslikli.
+   Onceki durumda bu sinif hic stil almadigi icin tarayici varsayilani
+   (capraz isaretli duz <details>) gosteriliyordu. */
+.opsiyon-bolum {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-secondary);
+  overflow: hidden;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.opsiyon-bolum[open] {
+  border-color: var(--accent-border);
+  box-shadow: var(--elev-1, 0 2px 10px rgba(0, 0, 0, 0.12));
+}
+.opsiyon-bolum > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  transition: background 0.18s ease;
+}
+.opsiyon-bolum > summary::-webkit-details-marker {
+  display: none;
+}
+.opsiyon-bolum > summary:hover {
+  background: var(--bg-muted, rgba(148, 163, 184, 0.08));
+}
+.opsiyon-bolum > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.opsiyon-ikon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  font-size: 14px;
+}
+.opsiyon-ikon-odeme {
+  background: var(--success-soft);
+  color: var(--success);
+  border: 1px solid var(--success-border);
+}
+.opsiyon-ikon-teslimat {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent-soft-strong);
+}
+.opsiyon-baslik {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+.opsiyon-baslik strong {
+  color: var(--text-primary);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.opsiyon-baslik small {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.opsiyon-ozet {
+  max-width: 46%;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-soft-strong);
+  color: var(--accent);
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.opsiyon-ok {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  transition: transform 0.2s ease;
+}
+.opsiyon-bolum[open] .opsiyon-ok {
+  transform: rotate(90deg);
+}
+.opsiyon-govde {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-card);
+}
+.opsiyon-ipucu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 9px 11px;
+  border-left: 3px solid var(--accent-border);
+  border-radius: 0 8px 8px 0;
+  background: var(--bg-muted, rgba(148, 163, 184, 0.08));
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.opsiyon-ipucu i {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.opsiyon-kalan {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--accent-border);
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.opsiyon-kalan i {
+  color: var(--accent);
+}
+.opsiyon-kalan strong {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.opsiyon-personel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+.opsiyon-personel > span:not(.opsiyon-yuk) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.opsiyon-personel i {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.opsiyon-personel .opsiyon-uyari {
+  margin-left: auto;
+  color: var(--warning);
+}
+.opsiyon-personel .opsiyon-yuk {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: 11px;
+  font-weight: 700;
+}
+.opsiyon-personel .opsiyon-uyari + .opsiyon-yuk {
+  margin-left: 0;
+}
+.opsiyon-secili-kart {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--accent-soft-strong);
+  border-radius: 10px;
+  background: var(--accent-soft);
+}
+.opsiyon-secili-ikon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-contrast, #04211d);
+  font-size: 13px;
+}
+.opsiyon-secili-metin {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.opsiyon-secili-metin strong {
+  color: var(--text-primary);
+  font-size: 13.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.opsiyon-secili-metin small {
+  color: var(--text-secondary);
+  font-size: 11.5px;
+}
+.opsiyon-bolum .zorunlu {
+  color: var(--danger);
+}
+@media (max-width: 640px) {
+  .opsiyon-bolum > summary {
+    padding: 10px 12px;
+  }
+  .opsiyon-ozet {
+    max-width: 34%;
+  }
 }
 .bolum-etiket {
   color: var(--text-muted);
@@ -1448,23 +1771,9 @@ h1 {
   font-weight: 600;
   cursor: pointer;
 }
-.musteri-opsiyon {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-}
-.musteri-opsiyon-ad {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.musteri-opsiyon-detay {
-  font-size: 11.5px;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
+/* NOT: `.musteri-opsiyon*` kurallari `assets/app.css` icinde tanimlidir.
+   AutoComplete paneli body'ye teleport edilir; scoped CSS paneldeki
+   ogelere ulusmaz, bu yuzden burada yazilan kurallar uygulanmazdi. */
 .satis-detay-drawer :deep(.p-drawer-content) {
   padding-top: 0;
 }

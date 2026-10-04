@@ -4,6 +4,7 @@ import com.raspel.erp.dto.sistem.VeriAktarimDTO;
 import com.raspel.erp.dto.sistem.VeriAktarimSonucDTO;
 import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.finans.CariHesap;
+import com.raspel.erp.entity.sistem.Kullanici;
 import com.raspel.erp.entity.sistem.Sirket;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -32,12 +33,66 @@ public class VeriAktarimService {
     private final CariHesapRepository cariHesapRepository;
     private final SirketRepository sirketRepository;
     private final com.raspel.erp.config.TenantChecker tenantChecker;
+    private final com.raspel.erp.repository.sistem.KullaniciRepository kullaniciRepository;
 
+    /**
+     * REDTEAM H-3: Kontrol {@code &&} ile yazılmıştı ve yalnızca "iki şirket de
+     * benim şirketim DEĞİLSE" durumunda reddediyordu. Sonuç: bir şirketin ADMIN'i
+     * {@code hedefSirketId} = kendi şirketi verdiğinde KAYNAK şirket hiç
+     * kontrol edilmeden geçiyordu. Testte kanıtlandı: Şirket B admin'i
+     * {@code kaynakSirketId=4 & hedefSirketId=99} ile Şirket A'nın 10 stok ve
+     * 9 cari kaydını okuyabildi (ve `aktarimYap` ile kopyalayabilirdi).
+     *
+     * <p>DÜZELTME: Kaynak VE hedef şirketin ikisi de çağıranın üyeliği
+     * doğrulanır. ADMIN rolü bu projede platform geneli yönetici kabul edildiği
+     * için muaf tutulur (mevcut tasarımın değişmez kuralı).
+     */
     private void tenantDogrula(Long kaynakSirketId, Long hedefSirketId) {
         Long mevcut = tenantChecker.getCurrentSirketId();
-        if (mevcut != null && !mevcut.equals(kaynakSirketId) && !mevcut.equals(hedefSirketId)) {
-            throw new BusinessException("Aktarim yalnizca kendi sirketinizle yapilabilir");
+        if (mevcut == null) {
+            throw new BusinessException("Şirket bağlamı olmadan veri aktarımı yapılamaz");
         }
+        if (kaynakSirketId.equals(hedefSirketId)) {
+            throw new BusinessException("Kaynak ve hedef şirket aynı olamaz");
+        }
+String username = currentUsername();
+        if (username == null || username.isBlank()) {
+            throw new BusinessException("Oturum bulunamadı");
+        }
+        var kullanici = kullaniciRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı: " + username));
+        if ("ADMIN".equals(kullanici.getRole())) {
+            // Platform yöneticisi: tüm şirketlere erişebilir (tasarım kuralı).
+            return;
+        }
+        // Aktif şirket (JWT bağlamı) her zaman üyeliğin bir parçası olmalıdır.
+        Long aktifSirket = mevcut;
+        uyelikDogrula(kullanici, kaynakSirketId, "kaynak");
+        uyelikDogrula(kullanici, hedefSirketId, "hedef");
+        if (!aktifSirket.equals(kaynakSirketId) && !aktifSirket.equals(hedefSirketId)) {
+            throw new BusinessException("Aktif şirket, aktarıma taraf olmalıdır");
+        }
+    }
+
+    private void uyelikDogrula(Kullanici k, Long sirketId, String rol) {
+        boolean uye = sirketId != null && sirketId.equals(k.getSirketId());
+        if (!uye && k.getSirketler() != null) {
+            uye = k.getSirketler().stream()
+                    .anyMatch(s -> s.getId().equals(sirketId));
+        }
+        if (!uye) {
+            throw new BusinessException(capitalize(rol) + " şirkete erişiminiz yok: " + sirketId);
+        }
+    }
+
+    private String currentUsername() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication();
+        return auth != null ? auth.getName() : null;
+    }
+
+    private static String capitalize(String s) {
+        return s == null || s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
     @Transactional

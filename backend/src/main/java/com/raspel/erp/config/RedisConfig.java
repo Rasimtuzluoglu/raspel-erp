@@ -8,12 +8,14 @@ import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.interceptor.CacheErrorHandler;
 import org.springframework.cache.interceptor.SimpleCacheErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 
@@ -60,11 +62,55 @@ public class RedisConfig implements org.springframework.cache.annotation.Caching
         return builder -> builder
                 // KEYS komutu kapalı Redis'te temizliğin SCAN ile yapılmasını sağlar.
                 .cacheWriter(new ScanRedisCacheWriter(connectionFactory))
+                .cacheDefaults(defaultCacheConfig)
                 .withCacheConfiguration("dashboard", defaultCacheConfig.entryTtl(Duration.ofMinutes(2)))
                 .withCacheConfiguration("cariHesaplar", defaultCacheConfig.entryTtl(Duration.ofMinutes(10)))
                 .withCacheConfiguration("faturalar", defaultCacheConfig.entryTtl(Duration.ofMinutes(5)))
                 .withCacheConfiguration("stoklar", defaultCacheConfig.entryTtl(Duration.ofMinutes(10)))
                 .withCacheConfiguration("lookup", defaultCacheConfig.entryTtl(Duration.ofMinutes(30)));
+    }
+
+    /**
+     * Redis cache yöneticisi: tenant izole adlandırma sarmalayıcısıyla birlikte.
+     *
+     * <p><b>Neden elle kuruluyor?</b> {@code @Primary} bir {@code CacheManager}
+     * tanımlamak Spring Boot'un otomatik yapılandırmasını devre dışı bırakır;
+     * otomatik yönetici bir bean OLARAK var olmadığı için onu
+     * {@code ObjectProvider} ile almak dairesel bağımlılık üretir. Bu yüzden
+     * temel yönetici doğrudan kurulur, sonra {@link TenantCacheManager} ile
+     * sarılır. Böylece:
+     * <ul>
+     *   <li>{@code lookup} ve {@code dashboard} fiziksel adları
+     *       {@code <ad>:t<sirketId>} olur; {@code @CacheEvict(allEntries = true)}
+     *       yalnızca o şirketin verisini siler.</li>
+     *   <li>Redis yoksa (test/dev profili) bellek içi cache'e düşülür; uygulama
+     *       ayaga kalkmaya devam eder.</li>
+     * </ul>
+     */
+    @Bean
+    @org.springframework.context.annotation.Primary
+    public CacheManager cacheManager(TenantChecker tenantChecker,
+                                      org.springframework.beans.factory.ObjectProvider<
+                                              org.springframework.data.redis.connection.RedisConnectionFactory> connectionFactory,
+                                      RedisCacheConfiguration defaultCacheConfig) {
+        var cf = connectionFactory.getIfAvailable();
+        if (cf == null) {
+            log.warn("Redis baglantisi yok; bellek ici cache kullanilacak (tenant izole adlandirma aktif).");
+            return new TenantCacheManager(tenantChecker,
+                    new org.springframework.cache.concurrent.ConcurrentMapCacheManager());
+        }
+        RedisCacheManager temel = RedisCacheManager.builder(cf)
+                .cacheWriter(new ScanRedisCacheWriter(cf))
+                .cacheDefaults(defaultCacheConfig)
+                // Statik TTL'ler cacheManagerCustomizer ile ayni degerleri kullanir.
+                .withCacheConfiguration("dashboard", defaultCacheConfig.entryTtl(Duration.ofMinutes(2)))
+                .withCacheConfiguration("cariHesaplar", defaultCacheConfig.entryTtl(Duration.ofMinutes(10)))
+                .withCacheConfiguration("faturalar", defaultCacheConfig.entryTtl(Duration.ofMinutes(5)))
+                .withCacheConfiguration("stoklar", defaultCacheConfig.entryTtl(Duration.ofMinutes(10)))
+                .withCacheConfiguration("lookup", defaultCacheConfig.entryTtl(Duration.ofMinutes(30)))
+                .transactionAware()
+                .build();
+        return new TenantCacheManager(tenantChecker, temel);
     }
 
     /**

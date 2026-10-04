@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import com.raspel.erp.entity.sistem.Donem;
@@ -154,10 +155,63 @@ public class RaporController {
     }
 
     @GetMapping("/yaslandirma")
-    @Operation(summary = "Yaşlandırma raporu", description = "Cari hesap yaşlandırma raporunu getirir")
-    public ResponseEntity<List<RaporDTO.YaslandirmaDTO>> yaslandirma(HttpServletRequest request) {
+    @Operation(summary = "Yaşlandırma raporu",
+            description = "Cari hesap yaşlandırma raporunu kova matrisi olarak getirir. `referansTarih` verilmezse bugün esas alınır.")
+    public ResponseEntity<RaporDTO.YaslandirmaRaporDTO> yaslandirma(
+            HttpServletRequest request,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate referansTarih) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(raporService.yaslandirmaRaporu(sirketId));
+        return ResponseEntity.ok(raporService.yaslandirmaRaporu(sirketId, referansTarih));
+    }
+
+    @GetMapping("/yaslandirma/pdf")
+    @Operation(summary = "Yaşlandırma raporu PDF", description = "Vade yaşlandırma raporunu kova matrisi olarak PDF üretir")
+    public ResponseEntity<byte[]> yaslandirmaPdf(
+            HttpServletRequest request,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate referansTarih) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        RaporDTO.YaslandirmaRaporDTO rapor = raporService.yaslandirmaRaporu(sirketId, referansTarih);
+        List<String> kovalar = RaporService.YASLANDIRMA_KOVALARI;
+
+        String[] basliklar = new String[kovalar.size() + 4];
+        basliklar[0] = "Cari";
+        for (int i = 0; i < kovalar.size(); i++) {
+            basliklar[i + 1] = yaslandirmaKovaEtiketi(kovalar.get(i));
+        }
+        basliklar[kovalar.size() + 1] = "Toplam";
+        basliklar[kovalar.size() + 2] = "Gecikmiş";
+        basliklar[kovalar.size() + 3] = "Maks. Gun";
+
+        List<String[]> satirlar = new ArrayList<>();
+        for (RaporDTO.YaslandirmaDTO s : rapor.getSatirlar()) {
+            String[] satir = new String[basliklar.length];
+            satir[0] = s.getCariAd();
+            for (int i = 0; i < kovalar.size(); i++) {
+                satir[i + 1] = formatTutar(s.getKovalar().get(kovalar.get(i)));
+            }
+            satir[kovalar.size() + 1] = formatTutar(s.getToplam());
+            satir[kovalar.size() + 2] = formatTutar(s.getGecikmisTutar());
+            satir[kovalar.size() + 3] = String.valueOf(s.getEnFazlaGecikmeGun());
+            satirlar.add(satir);
+        }
+
+        byte[] pdf = pdfRaporService.tabloRaporu("VADE YASLANDIRMA - " + rapor.getReferansTarih(), basliklar, satirlar);
+        return pdfResponse("yaslandirma-" + rapor.getReferansTarih() + ".pdf", pdf);
+    }
+
+    /** Kova anahtarını PDF başlığı için okunur metne çevirir. */
+    private String yaslandirmaKovaEtiketi(String kova) {
+        return switch (kova) {
+            case "VADEDI_GELMEMIS" -> "Vadesi Gelmemis";
+            case "GUN_0_30" -> "0-30 Gun";
+            case "GUN_31_60" -> "31-60 Gun";
+            case "GUN_61_90" -> "61-90 Gun";
+            default -> "90+ Gun";
+        };
+    }
+
+    private String formatTutar(BigDecimal v) {
+        return v == null ? "-" : String.format("%,.2f", v);
     }
 
     @GetMapping("/kdv-beyanname")

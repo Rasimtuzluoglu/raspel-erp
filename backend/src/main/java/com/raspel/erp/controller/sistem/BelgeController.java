@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -49,6 +50,16 @@ public class BelgeController {
 
     private final BelgeRepository belgeRepository;
     private final DosyaDepolamaService dosyaDepolama;
+    private final com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
+    private final com.raspel.erp.repository.ticaret.SiparisRepository siparisRepository;
+    private final com.raspel.erp.repository.finans.CariHesapRepository cariHesapRepository;
+    private final com.raspel.erp.repository.envanter.StokRepository stokRepository;
+    private final com.raspel.erp.repository.ik.PersonelRepository personelRepository;
+
+    /** Belge iliştirilebilecek kayıt türleri (beyaz liste). */
+    private static final Set<String> IZIN_VERILEN_ENTITY_ADLARI = Set.of(
+            "Fatura", "Siparis", "CariHesap", "Stok", "Personel"
+    );
 
     @PostMapping("/yukle")
     @Operation(summary = "Belge yükle", description = "Bir kayda (fatura, sipariş vb.) dosya iliştirir")
@@ -58,6 +69,13 @@ public class BelgeController {
                                    HttpServletRequest request) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Dosya boş"));
+        }
+        // entityAdi beyaz liste ile sinirlandirilir: aksi halde istenen kayda
+        // belge iliştirmek serbest bir metin alani olurdu.
+        String normalizeEdilmisAd = entityAdi == null ? "" : entityAdi.trim();
+        if (!IZIN_VERILEN_ENTITY_ADLARI.contains(normalizeEdilmisAd)) {
+            log.warn("Belge yukleme reddedildi - bilinmeyen entityAdi: {}", entityAdi);
+            return ResponseEntity.badRequest().body(Map.of("error", "Geçersiz kayıt türü"));
         }
         String contentType = file.getContentType();
         String orjinalAd = file.getOriginalFilename() != null ? file.getOriginalFilename() : "dosya";
@@ -75,11 +93,19 @@ public class BelgeController {
             return ResponseEntity.badRequest().body(Map.of("error", "Dosya içeriği uzantısıyla uyuşmuyor"));
         }
         Long sirketId = (Long) request.getAttribute("sirketId");
+        // Hedef kaydın bu şirkete ait olduğu doğrulanır. Doğrulanmazsa bir kullanıcı
+        // başka şirketin faturasına belge iliştirebilirdi (veri bütünlüğü + belge
+        // listelemesi sızıntısı).
+        if (!hedefKayitBuSirketeAitMi(normalizeEdilmisAd, entityId, sirketId)) {
+            log.warn("Belge yukleme reddedildi - kayit tenant'a ait degil: {}/{} sirketId={}",
+                    normalizeEdilmisAd, entityId, sirketId);
+            return ResponseEntity.notFound().build();
+        }
         try {
             String filename = dosyaDepolama.kaydet(BELGE_KLASOR, file);
             String url = "/api/belgeler/indir/" + filename;
             Belge belge = belgeRepository.save(Belge.builder()
-                    .entityAdi(entityAdi).entityId(entityId)
+                    .entityAdi(normalizeEdilmisAd).entityId(entityId)
                     .dosyaAdi(orjinalAd).url(url).sirketId(sirketId)
                     .build());
 
@@ -88,6 +114,28 @@ public class BelgeController {
             log.error("Belge yüklenemedi", e);
             return ResponseEntity.internalServerError().body(Map.of("error", "Dosya yüklenemedi"));
         }
+    }
+
+    /**
+     * Belgenin iliştirileceği kaydın bu şirkete ait olduğunu doğrular.
+     * Tenant bağlamı yoksa (dahili çağrı) doğrulama yapılamaz.
+     */
+    private boolean hedefKayitBuSirketeAitMi(String entityAdi, Long entityId, Long sirketId) {
+        if (sirketId == null) return false;
+        if (entityId == null) return false;
+        return switch (entityAdi) {
+            case "Fatura" -> faturaRepository.findById(entityId)
+                    .map(f -> sirketId.equals(f.getSirketId())).orElse(false);
+            case "Siparis" -> siparisRepository.findById(entityId)
+                    .map(f -> sirketId.equals(f.getSirketId())).orElse(false);
+            case "CariHesap" -> cariHesapRepository.findById(entityId)
+                    .map(f -> sirketId.equals(f.getSirketId())).orElse(false);
+            case "Stok" -> stokRepository.findById(entityId)
+                    .map(f -> sirketId.equals(f.getSirketId())).orElse(false);
+            case "Personel" -> personelRepository.findById(entityId)
+                    .map(f -> sirketId.equals(f.getSirketId())).orElse(false);
+            default -> false;
+        };
     }
 
     @GetMapping("/kayit/{entityAdi}/{entityId}")
@@ -136,16 +184,26 @@ public class BelgeController {
         }
         return ResponseEntity.ok()
                 .contentType(mediaType)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                // `inline` + `nosniff` yoksa tarayıcı içeriği yorumlayabilir
+                // (ör. text/html yorumlanan bir dosya). Ek olarak tahmin edilemeyen
+                // dosya adı ile gönderilir.
+                .header("X-Content-Type-Options", "nosniff")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
                 .body(dosya.icerik());
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Belge sil", description = "Belgeyi siler")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<Void> sil(@PathVariable Long id, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Belge belge = belgeRepository.findById(id).orElse(null);
-        if (belge == null || (belge.getSirketId() != null && !belge.getSirketId().equals(sirketId))) {
+        // Tenant izolasyonu: sadece "bu şirkete ait" kontrolü yapılıyordu ve
+        // sırketId NULL olan eski kayıtlarda kontrol tamamen atlanıyordu; ayrıca
+        // sınıf seviyesindeki yetki DRIVER rolünü de kapsadığı için şoför tüm
+        // belgeleri silebiliyordu.
+        if (belge == null || !Objects.equals(belge.getSirketId(), sirketId)) {
+            log.warn("Belge silme reddedildi - tenant uyumsuz veya bulunamadı: id={} sirketId={}", id, sirketId);
             return ResponseEntity.notFound().build();
         }
         if (belge.getUrl() != null && belge.getUrl().contains("/")) {

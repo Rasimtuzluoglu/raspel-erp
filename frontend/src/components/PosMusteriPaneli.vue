@@ -2,18 +2,21 @@
   <div>
     <!-- Adim 1: Musteri -->
     <div class="pos-bolum">
-      <div
+      <button
+        type="button"
         class="pos-bolum-baslik katlanir-baslik"
         :aria-expanded="musteriAcik"
         :title="musteriAcik ? t('hizliSatis.bolumKapat') : t('hizliSatis.bolumAc')"
         @click="$emit('update:musteriAcik', !musteriAcik)"
       >
-        <i class="pi pi-user" /> {{ t('hizliSatis.musteri') }}
+        <span class="katlanir-sol">
+          <i class="pi pi-user" /> {{ t('hizliSatis.musteri') }}
+        </span>
         <i
           class="pi katlanir-ok"
           :class="musteriAcik ? 'pi-chevron-down' : 'pi-chevron-right'"
         />
-      </div>
+      </button>
       <div
         v-show="musteriAcik"
         class="customer-field"

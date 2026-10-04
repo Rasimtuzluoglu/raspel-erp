@@ -19,6 +19,15 @@ public class MaasBordro {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * İyimser kilitleme. Bu kolon olmadan {@code kasaOdemeYap} içindeki
+     * "zaten ödendi mi" kontrolü iki eşzamanlı istekte ikisini de geçiyor ve
+     * bordro ÜÇ KEZ kasadan düşülerek ödeniyordu.
+     */
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "personel_id", nullable = false)
     private Personel personel;

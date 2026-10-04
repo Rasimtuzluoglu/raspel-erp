@@ -19,7 +19,15 @@ public interface SifreSifirlaTokenRepository extends JpaRepository<SifreSifirlaT
     @Query("DELETE FROM SifreSifirlaToken t WHERE t.sonKullanma < :esik OR t.kullanildi = true")
     int eskiTokenlariTemizle(@Param("esik") LocalDateTime esik);
 
-    @Modifying
+    /**
+     * Kullanıcının tüm şifre sıfırlama token'larını geçersiz kılar.
+     *
+     * <p><b>clearAutomatically:</b> bulk UPDATE persistence context'i
+     * güncellemez. Aynı transaction içinde token okunmuşsa ve sonra flush
+     * olursa {@code kullanildi=false} geri yazılır, yani TOKEN YENİDEN
+     * KULLANILABİLİR hale gelirdi (şifre sıfırlama tek kullanımlı olmalı).
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE SifreSifirlaToken t SET t.kullanildi = true WHERE t.kullaniciId = :kullaniciId AND t.kullanildi = false")
     int kullaniciTokenlariniGecersizKil(@Param("kullaniciId") Long kullaniciId);
 }

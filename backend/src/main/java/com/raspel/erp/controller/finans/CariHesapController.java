@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.raspel.erp.util.CsvGuvenliUtil;
 import com.raspel.erp.entity.finans.CariHesap;
 
 /**
@@ -71,38 +72,34 @@ public class CariHesapController {
     }
     
     @GetMapping("/export/csv")
-    @Operation(summary = "Cari hesapları CSV dışa aktar", description = "Cari hesapları CSV dosyası olarak dışa aktarır")
-    public ResponseEntity<byte[]> cariHesaplarCsv(HttpServletRequest request) {
+    @Operation(summary = "Cari hesapları CSV dışa aktar",
+            description = "Cari hesapları CSV olarak dışa aktarır. `ids` verilirse yalnızca seçili kayıtlar aktarılır.")
+    public ResponseEntity<byte[]> cariHesaplarCsv(
+            @RequestParam(required = false) List<Long> ids,
+            HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        log.info("GET /api/cari-hesaplar/export/csv - CSV dışa aktarım, sirketId: {}", sirketId);
-        List<CariHesapDTO> liste = cariHesapService.tumCariHesaplariGetir(sirketId,
-                org.springframework.data.domain.PageRequest.of(0, MAX_CSV_ROWS)).getContent();
+        List<CariHesapDTO> liste = cariHesapService.disaAktarimListesi(sirketId, ids, MAX_CSV_ROWS);
+        log.info("GET /api/cari-hesaplar/export/csv - sirketId: {}, satir: {}, secili: {}",
+                sirketId, liste.size(), ids != null ? ids.size() : 0);
 
         StringBuilder csv = new StringBuilder();
         csv.append("ID,Ad,Vergi Numarası,Telefon,Bakiye\n");
         for (CariHesapDTO c : liste) {
             csv.append(c.getId()).append(",")
-               .append("\"").append(csvSafe(c.getAd())).append("\",")
-               .append("\"").append(csvSafe(c.getVergiNumarasi())).append("\",")
-               .append("\"").append(csvSafe(c.getTelefon())).append("\",")
+               .append("\"").append(CsvGuvenliUtil.deger(c.getAd())).append("\",")
+               .append("\"").append(CsvGuvenliUtil.deger(c.getVergiNumarasi())).append("\",")
+               .append("\"").append(CsvGuvenliUtil.deger(c.getTelefon())).append("\",")
                .append(c.getBakiye() != null ? c.getBakiye() : "0").append("\n");
         }
 
         byte[] bytes = csv.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("text/csv; charset=UTF-8"));
-        headers.setContentDisposition(org.springframework.http.ContentDisposition.attachment().filename("cari-hesaplar.csv").build());
+        String dosyaAdi = (ids != null && !ids.isEmpty()) ? "cari-hesaplari-secim.csv" : "cari-hesaplar.csv";
+        headers.setContentDisposition(org.springframework.http.ContentDisposition.attachment().filename(dosyaAdi).build());
         return ResponseEntity.ok().headers(headers).body(bytes);
     }
 
-    private String csvSafe(String value) {
-        if (value == null) return "";
-        String escaped = value.replace("\"", "\"\"");
-        if (escaped.startsWith("=") || escaped.startsWith("+") || escaped.startsWith("-") || escaped.startsWith("@")) {
-            escaped = "'" + escaped;
-        }
-        return escaped;
-    }
 
     @GetMapping("/search")
     @Operation(summary = "Cari hesap ara", description = "Cari hesapları ada göre arar")
@@ -131,7 +128,7 @@ public class CariHesapController {
 
     @PostMapping
     @Operation(summary = "Yeni cari hesap oluştur", description = "Yeni bir cari hesap oluşturur")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE') or @yetkiKontrol.kontrol(authentication, 'CARI_WRITE')")
     public ResponseEntity<CariHesapDTO> cariHesapOlustur(@RequestBody @jakarta.validation.Valid CariHesapDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         log.info("POST /api/cari-hesaplar - Yeni cari hesap oluşturuluyor: {}, sirketId: {}", dto.getAd(), sirketId);
@@ -141,7 +138,7 @@ public class CariHesapController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Cari hesap güncelle", description = "Cari hesap bilgilerini günceller")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE') or @yetkiKontrol.kontrol(authentication, 'CARI_WRITE')")
     public ResponseEntity<CariHesapDTO> cariHesapGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid CariHesapDTO dto) {
         log.info("PUT /api/cari-hesaplar/{} - Cari hesap güncelleniyor", id);
         CariHesapDTO guncellenenCariHesap = cariHesapService.cariHesapGuncelle(id, dto);
@@ -149,8 +146,8 @@ public class CariHesapController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Cari hesap sil", description = "Cari hesabı siler (yalnızca ADMIN)")
-    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Cari hesap sil", description = "Cari hesabı siler (ADMIN veya CARI_DELETE yetkisi)")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'CARI_DELETE')")
     public ResponseEntity<Void> cariHesapSil(@PathVariable Long id) {
         log.info("DELETE /api/cari-hesaplar/{} - Cari hesap siliniliyor", id);
         cariHesapService.cariHesapSil(id);

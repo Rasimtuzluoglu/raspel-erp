@@ -19,7 +19,9 @@ describe('Diyalog ve sayfa duzeni', () => {
     cy.contains('button', 'Yeni Satış').click()
     cy.get('.app-dialog').should('be.visible')
     yatayTasmaYok('.app-dialog .p-dialog-content')
-    cy.get('.app-dialog .urun-ekle-satir').should('exist')
+    // Hızlı kalem ekleme satırı `FaturaKalemleri` içinde (`.hizli-kalem`) ve
+    // tablonun üstünde; eski `.urun-ekle-satir` adı component'e taşırken kalmıştı.
+    cy.get('.app-dialog .hizli-kalem').should('be.visible')
     cy.get('.app-dialog .p-dialog-footer').should('be.visible')
     cy.get('.app-dialog .p-dialog-footer button').should('have.length.at.least', 2)
   })

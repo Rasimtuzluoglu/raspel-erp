@@ -371,6 +371,8 @@
             "
             class="w-full"
             :force-selection="false"
+            :loading="cariOnerileriYukleniyor"
+            dropdown
             @complete="cariAra($event)"
             @option-select="cariSecildi"
           >
@@ -696,12 +698,13 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useI18n } from 'vue-i18n'
 import { useFaturaStore } from '../stores/faturaStore.js'
 import { useAuthStore } from '../stores/authStore.js'
+import { useCariOnerileri, cariHesapCoz } from '../composables/useCariOnerileri.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import { useDovizStore } from '../stores/dovizStore.js'
 
 const dovizStore = useDovizStore()
-import { faturaAPI, excelAPI, pdfAPI, personelAPI, depoAPI, teslimatAPI, cariHesapAPI } from '../api/index.js'
+import { faturaAPI, excelAPI, pdfAPI, personelAPI, depoAPI, teslimatAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { useTaslakKayit } from '../composables/useTaslakKayit.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
@@ -907,7 +910,7 @@ onMounted(async () => {
   try {
     await Promise.all([
       loadFaturalar(0, sayfaBoyutu.value),
-      cariHesapStore.getAllCariHesaplar(),
+      // Cari secici sunucu aramali; 50 kayitlik onbellek gerekmiyor.
       stokStore.getAll({ size: 1000 }),
       personelListesiniYukle(),
       depolarıYukle(),
@@ -921,15 +924,7 @@ onMounted(async () => {
   // Cari ekranından gelen "Yeni Fatura" kısayolu: cariId query'si varsa cariyi seçip dialog aç
   if (route.query.cariId) {
     const cariId = Number(route.query.cariId)
-    let cari = cariHesapStore?.cariHesaplar?.find((c) => c.id === cariId)
-    if (!cari) {
-      try {
-        const r = await cariHesapAPI.getById(cariId)
-        cari = r.data
-      } catch {
-        cari = null
-      }
-    }
+    let cari = await cariHesapCoz(cariId, cariHesapStore?.cariHesaplar)
     if (cari) {
       openCreateDialog()
       seciliCariNesnesi.value = cari
@@ -1081,24 +1076,10 @@ const urunEkleKalem = () => {
 }
 
 const seciliCariNesnesi = ref(null)
-const cariOnerileri = ref([])
-
-const cariAra = (event) => {
-  const q = (event.query || '').toLowerCase().trim()
-  const kaynak = cariHesapStore?.cariHesaplar || []
-  if (!q) {
-    cariOnerileri.value = kaynak.slice(0, 20)
-    return
-  }
-  cariOnerileri.value = kaynak
-    .filter(
-      (c) =>
-        c.ad?.toLowerCase().includes(q) ||
-        c.vergiNumarasi?.toLowerCase().includes(q) ||
-        c.telefon?.toLowerCase().includes(q)
-    )
-    .slice(0, 20)
-}
+// Cari secici sunucu aramali. Once `cariHesapStore.cariHesaplar` (50 kayitlik
+// tavan) icinde istemci tarafi filtreleniyordu; 50. kayittan sonraki cariler
+// fatura satirina hic atanamiyordu, kullaniciya bos liste gorunuyordu.
+const { ara: cariAra, oneriler: cariOnerileri, yukleniyor: cariOnerileriYukleniyor } = useCariOnerileri()
 
 const cariSecildi = (event) => {
   form.value.cariHesapId = event.value?.id || null
@@ -1293,9 +1274,12 @@ const openCreateDialog = () => {
   showDialog.value = true
 }
 
-const editFatura = (fatura) => {
+const editFatura = async (fatura) => {
   editingId.value = fatura.id
-  seciliCariNesnesi.value = cariHesapStore?.cariHesaplar?.find((c) => c.id === fatura.cariHesapId) || null
+  // Duzenlemede once onbellek, olmazsa tek kayit: liste 50 kayitla sinirli
+  // oldugu icin cari o listede yoksa kutu bos gorunur ve kayit kurtulamazdi.
+  seciliCariNesnesi.value =
+    (await cariHesapCoz(fatura.cariHesapId, cariHesapStore?.cariHesaplar)) || { id: fatura.cariHesapId, ad: fatura.cariHesapAd }
   form.value = {
     cariHesapId: fatura.cariHesapId,
     tur: fatura.tur,

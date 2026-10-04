@@ -151,7 +151,7 @@
                 </div>
                 <span class="mock-qty">82</span>
               </div>
-              <div class="mock-stock-row">
+              <div class="mock-stock-row mock-row-low">
                 <span class="mock-thumb" />
                 <div class="mock-stock-info">
                   <span class="mock-line w45" />
@@ -160,7 +160,7 @@
                     style="width: 24%"
                   /></span>
                 </div>
-                <span class="mock-qty low">24</span>
+                <span class="mock-qty low"><i class="pi pi-exclamation-triangle mock-low-uyari" />24</span>
               </div>
               <div class="mock-stock-row">
                 <span class="mock-thumb" />
@@ -515,7 +515,13 @@ const sec = (id) => {
 .w70 { width: 70%; }
 .w85 { width: 85%; }
 .accent { background: var(--giris-tint-55, rgba(16, 185, 129,0.55)); }
-.low { background: rgba(16, 185, 129, 0.75) !important; }
+/* NOT: `.low` bir uyari semantigi tasir, aksan degil. Kapsam `.mock-bar > i` ile
+   sinirlandirilir; boylece sinif sayinin kendisine tasmaz ve `.mock-qty.low`
+   sifirlamasi (background:none) calisir. Onceki tek kural `!important` ile yesil
+   aksan kullaniyordu; bu, alttaki amber `color` ile celisip zemini yasiyordu. */
+.mock-bar > i.low {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24) !important;
+}
 
 /* Panel */
 .mock-kpi-row {
@@ -647,6 +653,21 @@ const sec = (id) => {
 .mock-qty.low {
   color: #f59e0b;
   background: none;
+}
+/* Dusuk stok satiri yalnizca renkle degil, satir ici ipucuyla da ayrilsin: renk
+   tek basina (ve ozellikle duz-koyu temada) yeterli bir sinyal degildir. */
+.mock-row-low {
+  margin: -5px -7px;
+  padding: 5px 7px;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.09);
+  box-shadow: inset 2px 0 0 rgba(245, 158, 11, 0.75);
+}
+.mock-low-uyari {
+  font-size: 9px;
+  margin-right: 3px;
+  vertical-align: -1px;
+  color: #f59e0b;
 }
 
 /* AI */

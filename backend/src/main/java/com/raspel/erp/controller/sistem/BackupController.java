@@ -22,12 +22,19 @@ import java.util.Map;
 @PreAuthorize("hasRole('ADMIN')")
 public class BackupController {
 
+    // REDTEAM H-1: Bu controller'daki TÜM uçlar veritabanının tamamını etkiler.
+    // Yedek = tek DB dump'u olduğu için İÇİNDE TÜM ŞİRKETLERİN VERİSİ vardır.
+    // Sınıf seviyesindeki @PreAuthorize("hasRole('ADMIN')") yalnızca ŞİRKET BAŞINA
+    // ADMIN rolünü kontrol ediyordu. Testte kanıtlandı: "ZZTEST Sirket B"nin
+    // ADMIN'i, "RasPel Test" dahil TÜM şirketlerin yedeklerini listeleyip
+    // indirebiliyordu. Guard her uçta tekrar çağrılır (klasör düzeyinde değil).
     private final BackupService backupService;
     private final KullaniciService kullaniciService;
 
     @PostMapping("/manual")
     @Operation(summary = "Manuel yedek al", description = "Veritabanının manuel yedeğini alır")
     public ResponseEntity<Map<String, Object>> manualBackup(@RequestParam(defaultValue = "DAILY") String type) {
+        kullaniciService.platformYoneticisiGerekir("manuel yedek alma");
         String filename = backupService.manualBackup(type);
         return ResponseEntity.ok(Map.of(
                 "message", "Yedekleme başarıyla tamamlandı",
@@ -39,12 +46,14 @@ public class BackupController {
     @GetMapping
     @Operation(summary = "Yedek listesini getir", description = "Mevcut tüm yedek dosyalarını listeler")
     public ResponseEntity<List<Map<String, Object>>> listBackups() {
+        kullaniciService.platformYoneticisiGerekir("yedek listeleme");
         return ResponseEntity.ok(backupService.listBackups());
     }
 
     @GetMapping("/download/{filename:.+}")
     @Operation(summary = "Yedek dosyasını indir", description = "Belirtilen yedek dosyasını indirir")
     public ResponseEntity<byte[]> downloadBackup(@PathVariable String filename) {
+        kullaniciService.platformYoneticisiGerekir("yedek indirme");
         byte[] data = backupService.downloadBackup(filename);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
@@ -55,7 +64,7 @@ public class BackupController {
     @DeleteMapping("/{filename:.+}")
     @Operation(summary = "Yedek dosyasını sil", description = "Belirtilen yedek dosyasını siler")
     public ResponseEntity<Void> deleteBackup(@PathVariable String filename) {
-        backupService.deleteBackup(filename);
+        kullaniciService.platformYoneticisiGerekir("yedek silme");
         return ResponseEntity.noContent().build();
     }
 
@@ -64,6 +73,7 @@ public class BackupController {
     public ResponseEntity<Map<String, Object>> restoreBackup(@PathVariable String filename,
                                                              @RequestBody Map<String, String> body,
                                                              HttpServletRequest request) {
+        kullaniciService.platformYoneticisiGerekir("yedekten geri yukleme");
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         kullaniciService.sifreDogrula(kullaniciId, body == null ? null : body.get("sifre"));
         backupService.restoreBackup(filename);
@@ -94,12 +104,14 @@ public class BackupController {
     @PostMapping("/cloud-config")
     @Operation(summary = "Bulut yedekleme yapılandırmasını kaydet", description = "Bulut sağlayıcı ayarlarını günceller")
     public ResponseEntity<Map<String, Object>> saveCloudConfig(@RequestBody Map<String, Object> config) {
+        kullaniciService.platformYoneticisiGerekir("bulut yedekleme yapilandirmasi");
         return ResponseEntity.ok(backupService.saveCloudConfig(config));
     }
 
     @PostMapping("/cloud-sync")
     @Operation(summary = "Bulut senkronizasyonunu başlat", description = "Yedekleri şifrelenmiş olarak bulut deposuna aktarır")
     public ResponseEntity<Map<String, Object>> syncToCloud(@RequestParam(required = false) String filename) {
+        kullaniciService.platformYoneticisiGerekir("bulut yedekleme");
         return ResponseEntity.ok(backupService.syncToCloud(filename));
     }
 }

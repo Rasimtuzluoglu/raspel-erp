@@ -1,10 +1,11 @@
 <template>
   <div class="donemler-sayfasi">
-    <div class="sayfa-baslik">
-      <h1 class="page-title">
-        {{ t('donemler.title') }}
-      </h1>
-      <div class="baslik-aksiyon">
+    <PageHeader
+      :title="t('donemler.title')"
+      :subtitle="t('donemler.aciklama')"
+      icon="pi pi-calendar"
+    >
+      <template #actions>
         <Dropdown
           v-model="seciliSirketId"
           :options="sirketler"
@@ -12,12 +13,13 @@
           option-value="id"
           :placeholder="t('donemler.sirketSecin')"
           class="sirket-dropdown"
-          @change="donemleriYukle"
+          @change="sirketDegisti"
         />
         <Button
           :label="t('donemler.yilSonuKapat')"
           icon="pi pi-lock"
-          severity="warning"
+          severity="warn"
+          outlined
           :disabled="!seciliSirketId"
           @click="kapanisDialog = true"
         />
@@ -27,106 +29,142 @@
           :disabled="!seciliSirketId"
           @click="dialogAc"
         />
+      </template>
+    </PageHeader>
+
+    <div class="kpi-serit">
+      <div class="kpi-kart">
+        <span class="kpi-ikon toplam"><i class="pi pi-calendar" /></span>
+        <span class="kpi-metin">
+          <small>{{ t('donemler.kpiToplam') }}</small>
+          <strong>{{ donemler.length }}</strong>
+        </span>
+      </div>
+      <div class="kpi-kart">
+        <span class="kpi-ikon aktif"><i class="pi pi-check-circle" /></span>
+        <span class="kpi-metin">
+          <small>{{ t('donemler.kpiAktif') }}</small>
+          <strong>{{ istatistik.aktifAdet }}</strong>
+        </span>
+      </div>
+      <div class="kpi-kart">
+        <span class="kpi-ikon kilitli"><i class="pi pi-lock" /></span>
+        <span class="kpi-metin">
+          <small>{{ t('donemler.kpiKilitli') }}</small>
+          <strong>{{ istatistik.kilitliAdet }}</strong>
+        </span>
+      </div>
+      <div class="kpi-kart">
+        <span class="kpi-ikon kapanis"><i class="pi pi-history" /></span>
+        <span class="kpi-metin">
+          <small>{{ t('donemler.kpiSonKapanis') }}</small>
+          <strong>{{ sonKapanisYili || '-' }}</strong>
+        </span>
       </div>
     </div>
 
-    <DataTable
-      :value="donemler"
-      striped-rows
-      responsive-layout="scroll"
-      :loading="yukleniyor"
+    <div
+      v-if="seciliSirketId && !yukleniyor && donemler.length === 0"
+      class="donem-bos"
     >
-      <template #empty>
-        <EmptyState />
-      </template>
-      <Column
-        field="id"
-        header="#"
-        style="width: 60px"
-      />
-      <Column
-        field="ad"
-        :header="t('donemler.donemAdi')"
-        sortable
-      />
-      <Column
-        field="baslangic"
-        :header="t('donemler.baslangic')"
+      <i class="pi pi-calendar-times" />
+      <p>{{ t('donemler.kayitYok') }}</p>
+    </div>
+
+    <div
+      v-else
+      class="donem-izgara"
+    >
+      <article
+        v-for="d in donemler"
+        :key="d.id"
+        class="donem-kart"
+        :class="{ 'donem-kart-aktif': d.aktif, 'donem-kart-kilitli': d.kilitli }"
       >
-        <template #body="{ data }">
-          {{ data.baslangic }}
-        </template>
-      </Column>
-      <Column
-        field="bitis"
-        :header="t('donemler.bitis')"
-      >
-        <template #body="{ data }">
-          {{ data.bitis }}
-        </template>
-      </Column>
-      <Column
-        field="aktif"
-        :header="t('common.status')"
-      >
-        <template #body="{ data }">
-          <div class="durum-hucre">
+        <header class="donem-kart-ust">
+          <span class="donem-no">#{{ d.id }}</span>
+          <div class="donem-rozetler">
             <Tag
-              :value="data.aktif ? t('donemler.aktif') : t('donemler.pasif')"
-              :severity="data.aktif ? 'success' : 'danger'"
+              v-if="d.aktif"
+              :value="t('donemler.aktif')"
+              severity="success"
+              icon="pi pi-check-circle"
             />
             <Tag
-              v-if="data.kilitli"
+              v-else
+              :value="t('donemler.pasif')"
+              severity="danger"
+            />
+            <Tag
+              v-if="d.kilitli"
               :value="t('donemler.kilitli')"
-              severity="warning"
+              severity="warn"
               icon="pi pi-lock"
             />
           </div>
-        </template>
-      </Column>
-      <Column
-        :header="t('donemler.islem')"
-        style="width: 170px"
-      >
-        <template #body="{ data }">
-          <Button
-            v-if="!data.aktif"
-            icon="pi pi-check-circle"
-            class="p-button-rounded p-button-text p-button-success"
-            :title="t('donemler.aktifYap')"
-            @click="aktifYap(data)"
-          />
-          <Button
-            v-if="!data.kilitli"
-            icon="pi pi-lock"
-            class="p-button-rounded p-button-text p-button-warning"
-            :title="t('donemler.kilitle')"
-            @click="kilitle(data)"
-          />
-          <Button
-            v-else
-            icon="pi pi-lock-open"
-            class="p-button-rounded p-button-text p-button-secondary"
-            :title="t('donemler.kilidiAc')"
-            @click="kilidiAc(data)"
-          />
-          <Button
-            icon="pi pi-pencil"
-            :aria-label="$t('common.edit')"
-            class="p-button-rounded p-button-text"
-            :disabled="data.kilitli"
-            @click="dialogAc(data)"
-          />
-          <Button
-            icon="pi pi-trash"
-            :aria-label="$t('common.delete')"
-            class="p-button-rounded p-button-text p-button-danger"
-            :disabled="data.kilitli"
-            @click="sil(data)"
-          />
-        </template>
-      </Column>
-    </DataTable>
+        </header>
+
+        <h3 class="donem-ad">
+          {{ d.ad }}
+        </h3>
+
+        <div class="donem-aralik">
+          <span class="donem-tarih">
+            <i class="pi pi-calendar" /> {{ formatTarih(d.baslangic) }}
+          </span>
+          <span class="donem-tire">→</span>
+          <span class="donem-tarih">
+            <i class="pi pi-flag" /> {{ formatTarih(d.bitis) }}
+          </span>
+        </div>
+
+        <div class="donem-kart-alt">
+          <span class="donem-gun">
+            <i class="pi pi-clock" /> {{ gunSayisi(d) }} {{ t('donemler.gun') }}
+          </span>
+          <div class="donem-eylemler">
+            <Button
+              v-if="!d.aktif"
+              icon="pi pi-check-circle"
+              class="p-button-rounded p-button-text p-button-success"
+              :title="t('donemler.aktifYap')"
+              :aria-label="t('donemler.aktifYap')"
+              @click="aktifYap(d)"
+            />
+            <Button
+              v-if="!d.kilitli"
+              icon="pi pi-lock"
+              class="p-button-rounded p-button-text p-button-warn"
+              :title="t('donemler.kilitle')"
+              :aria-label="t('donemler.kilitle')"
+              @click="kilitle(d)"
+            />
+            <Button
+              v-else
+              icon="pi pi-lock-open"
+              class="p-button-rounded p-button-text p-button-secondary"
+              :title="t('donemler.kilidiAc')"
+              :aria-label="t('donemler.kilidiAc')"
+              @click="kilidiAc(d)"
+            />
+            <Button
+              icon="pi pi-pencil"
+              :aria-label="t('common.edit')"
+              class="p-button-rounded p-button-text"
+              :disabled="d.kilitli"
+              @click="dialogAc(d)"
+            />
+            <Button
+              icon="pi pi-trash"
+              :aria-label="t('common.delete')"
+              class="p-button-rounded p-button-text p-button-danger"
+              :disabled="d.kilitli"
+              @click="sil(d)"
+            />
+          </div>
+        </div>
+      </article>
+    </div>
 
     <Dialog
       v-model:visible="kapanisDialog"
@@ -256,8 +294,10 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { donemAPI, sirketAPI } from '../api/index.js'
 import { useI18n } from 'vue-i18n'
-import { getLocalDateString, formatTarihSaat } from '../utils/format.js'
+import { getLocalDateString, formatTarih, formatTarihSaat } from '../utils/format.js'
 import { useAuthStore } from '../stores/authStore.js'
+import PageHeader from '../components/PageHeader.vue'
+import { computed } from 'vue'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { t } = useI18n()
@@ -421,6 +461,35 @@ const kaydet = async () => {
   kaydediliyor.value = false
 }
 
+const sirketDegisti = async () => {
+  kapanisForm.value.yil = new Date().getFullYear()
+  kapanisForm.value.ozet = ''
+  await donemleriYukle()
+  await kapanislariYukle()
+}
+
+// Dönem listesinden türeyen özetler (KPI şeridi).
+const istatistik = computed(() => ({
+  aktifAdet: donemler.value.filter((d) => d.aktif).length,
+  kilitliAdet: donemler.value.filter((d) => d.kilitli).length
+}))
+
+const sonKapanisYili = computed(() => {
+  if (!kapanislar.value.length) return null
+  return kapanislar.value
+    .map((k) => Number(k.yil))
+    .filter((y) => Number.isFinite(y))
+    .sort((a, b) => b - a)[0] ?? null
+})
+
+// Dönemin kaç gün sürdüğü (aralık günleri dahil). Geçersiz tarih → null.
+const gunSayisi = (d) => {
+  const b = new Date(d.baslangic)
+  const s = new Date(d.bitis)
+  if (Number.isNaN(b.getTime()) || Number.isNaN(s.getTime()) || s < b) return '—'
+  return Math.round((s - b) / 86400000) + 1
+}
+
 const sil = (data) => {
   confirm.require({
     message: t('common.confirmDelete'),
@@ -445,26 +514,197 @@ const sil = (data) => {
 .donemler-sayfasi {
   padding: 0;
 }
-.sayfa-baslik {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-.sayfa-baslik h1 {
-  margin: 0;
-}
-.baslik-aksiyon {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-}
 .sirket-dropdown {
   min-width: min(200px, 100%);
 }
+.w-full {
+  width: 100%;
+}
+
+/* KPI şeridi: toplam / aktif / kilitli / son kapanış */
+.kpi-serit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.kpi-kart {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-card);
+  min-width: 0;
+}
+.kpi-ikon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 11px;
+  font-size: 16px;
+}
+.kpi-ikon.toplam {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent-soft-strong);
+}
+.kpi-ikon.aktif {
+  background: var(--success-soft);
+  color: var(--success);
+  border: 1px solid var(--success-border);
+}
+.kpi-ikon.kilitli {
+  background: var(--warning-soft);
+  color: var(--warning);
+  border: 1px solid var(--warning-border);
+}
+.kpi-ikon.kapanis {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.kpi-metin {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.kpi-metin small {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.kpi-metin strong {
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Dönem kart ızgarası */
+.donem-izgara {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+.donem-kart {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-card);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+.donem-kart:hover {
+  border-color: var(--accent-border);
+  box-shadow: var(--elev-1, 0 2px 10px rgba(0, 0, 0, 0.12));
+  transform: translateY(-2px);
+}
+.donem-kart-aktif {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, var(--accent-soft) 0%, var(--bg-card) 55%);
+}
+.donem-kart-kilitli {
+  opacity: 0.82;
+}
+.donem-kart-ust {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.donem-no {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.donem-rozetler {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.donem-ad {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.donem-aralik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+}
+.donem-tarih {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.donem-tarih i {
+  color: var(--text-muted);
+  font-size: 11.5px;
+}
+.donem-tire {
+  color: var(--text-muted);
+}
+.donem-kart-alt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.donem-gun {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.donem-eylemler {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.donem-bos {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 48px 20px;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  color: var(--text-muted);
+  text-align: center;
+}
+.donem-bos i {
+  font-size: 2.2rem;
+}
+.donem-bos p {
+  margin: 0;
+  font-size: 14px;
+}
+
 .form-grid {
   display: flex;
   flex-direction: column;
@@ -479,14 +719,6 @@ const sil = (data) => {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
-}
-.w-full {
-  width: 100%;
-}
-.durum-hucre {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
 }
 .kapanis-uyari {
   margin-bottom: 16px;
@@ -519,5 +751,9 @@ const sil = (data) => {
 }
 .kapanis-not {
   color: var(--text-secondary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

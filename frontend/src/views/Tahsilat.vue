@@ -359,7 +359,7 @@
 
     <TahsilatGirDialog
       v-model:visible="tahsilatDialogAcik"
-      :cariler="dialogCariler"
+      :cariler="ozet?.cariler || []"
       :baslangic-cari-id="seciliCariId"
       @kaydedildi="kaydetSonrasi"
     />
@@ -369,7 +369,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
-import { tahsilatAPI, cariHesapAPI } from '../api/index.js'
+import { tahsilatAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
 import TahsilatGirDialog from '../components/TahsilatGirDialog.vue'
@@ -384,17 +384,10 @@ const ozet = ref(null)
 const genisletilenler = ref([])
 const tahsilatDialogAcik = ref(false)
 const seciliCariId = ref(null)
-const tumCariler = ref([])
 
-// Faturası olmayan cariler için de (avans/genel tahsilat) seçim listesi.
-const dialogCariler = computed(() => {
-  const mevcut = (ozet.value?.cariler || []).map((c) => ({ ...c, cariId: c.cariId || c.id }))
-  const idler = new Set(mevcut.map((c) => c.cariId))
-  const ek = tumCariler.value
-    .filter((c) => !idler.has(c.id))
-    .map((c) => ({ cariId: c.id, ad: c.ad, faturalar: [], toplamAlacak: 0 }))
-  return [...mevcut, ...ek]
-})
+// Faturası olmayan cariler için seçim listesi dialoga taşındı: `TahsilatGirDialog`
+// cari seçicisini sunucudan arıyor. Sayfa açılışında `getAll({ size: 1000 })`
+// ile 1000 kayıt çekiliyordu ve 1000. cari sonrası seçilemiyordu.
 
 const gecmis = ref([])
 const gecmisYukleniyor = ref(false)
@@ -529,18 +522,7 @@ const ara = (cari) => {
 }
 
 onMounted(async () => {
-  await Promise.allSettled([
-    yukle(),
-    gecmisYukle(),
-    cariHesapAPI
-      .getAll({ size: 1000 })
-      .then((r) => {
-        tumCariler.value = unwrapList(r)
-      })
-      .catch(() => {
-        tumCariler.value = []
-      })
-  ])
+  await Promise.allSettled([yukle(), gecmisYukle()])
   // Faturlar/Satislar satirindan "Tahsilat Al" ile gelindiyse cari on secili acilir.
   const qCari = Number(route?.query?.cariId)
   if (qCari) tahsilatGir({ cariId: qCari })

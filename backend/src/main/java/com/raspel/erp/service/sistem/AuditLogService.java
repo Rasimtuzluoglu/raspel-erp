@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -34,19 +36,35 @@ public class AuditLogService {
                 .entityId(entityId).aciklama(aciklama).ipAdresi(ipAdresi).detay(detay).build());
     }
 
-    /**
-     * Finansal kayıt silmelerinde zengin denetim izi bırakır: silinen tutar/tür/cari gibi
-     * detaylar AOP kaydının yanı sıra aciklama alanına yazılır (Denetim ekranında görünür).
-     */
-    public void finansalSilmeLog(String entityAdi, Long entityId, String detay) {
+/**
+ * Finansal kayıt silmelerinde zengin denetim izi bırakır: silinen tutar/tür/cari gibi
+ * detaylar AOP kaydının yanı sıra aciklama alanına yazılır (Denetim ekranında görünür).
+ *
+ * <p><b>Transaction izolasyonu:</b> {@code REQUIRES_NEW} ile ayrı transaction'da
+ * yazılır. Bu metot, kaydı silen iş transaction'ının İÇİNDEN çağrılıyor
+ * (CariHesapService, MuhasebeService, KasaService, HareketService). Varsayılan
+ * propagation ile denetim kaydı iş transaction'ına katılırdı; işlem rollback
+ * olursa "bu kaydı silme denemesi" izi de geri alınırdı — yani denetim izinde
+ * silme girişimi hiç görünmezdi. Finansal denetim izi iş başarısından bağımsız
+ * olmalıdır.
+ */
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+public void finansalSilmeLog(String entityAdi, Long entityId, String detay) {
         try {
             HttpServletRequest req = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
             Long kullaniciId = (Long) req.getAttribute("kullaniciId");
             Long sirketId = (Long) req.getAttribute("sirketId");
             log(kullaniciId, sirketId, "SIL", entityAdi, entityId, detay,
                     com.raspel.erp.util.IstekYardimci.istemciIp(req));
-        } catch (Exception ignored) {
-            // Request context yoksa (test/dahili çağrı) denetim kaydı atlanır
+        } catch (IllegalStateException e) {
+            // Request context yok (scheduler/dahili çağrı) — kayıt yine de yazılır,
+            // yalnızca aktör bilgisi boş kalır.
+            log.warn("Finansal silme denetimi request bağlamı olmadan yazıldı ({}:{}): {}",
+                    entityAdi, entityId, e.getMessage());
+            log(null, null, "SIL", entityAdi, entityId, detay, null);
+        } catch (Exception e) {
+            // Denetim yazımı asla sessizce yutulmaz; en azından ERROR seviyesinde iz bırak.
+            log.error("Finansal silme denetim kaydı yazılamadı ({}:{})", entityAdi, entityId, e);
         }
     }
 

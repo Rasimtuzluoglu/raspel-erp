@@ -5,6 +5,13 @@ describe('Fatura Yönetimi', () => {
   ]
 
   beforeEach(() => {
+    // Genel yakalayici EN BASA tanimlanir: Cypress aynı istege birden fazla
+    // intercept uygulandığında EN SON tanımlananı seçer. Sonda kalsaydı
+    // `/api/kullanicilar/ben` mock'unu gölgeler, `kullanici` bir DİZİ olur,
+    // `isAdmin` false düşer ve `/faturalar/:id` yönlendirmesi `/yetki-reddi`ye
+    // gider.
+    cy.intercept('GET', '/api/**', { statusCode: 200, body: [] }).as('catchAll')
+
     cy.intercept('POST', '/api/kullanicilar/giris', {
       statusCode: 200,
       body: { id: 1, username: 'admin', displayName: 'Admin', role: 'ADMIN', token: 'test-token', twoFactorGerekli: false, sirketler: [{ id: 1, ad: 'Test Şirketi' }], sirketId: 1, sirketAdi: 'Test Şirketi' }
@@ -26,7 +33,6 @@ describe('Fatura Yönetimi', () => {
       statusCode: 200,
       body: { toplamCariSayisi: 0, toplamBakiye: 0, toplamFatura: 0, toplamStok: 0, sonHareketler: [], enCokSatanlar: [] }
     }).as('dashboard')
-    cy.intercept('GET', '/api/**', { statusCode: 200, body: [] }).as('catchAll')
     cy.intercept('GET', '/api/faturalar?*', { statusCode: 200, body: faturalarMock }).as('faturalar')
     cy.intercept('GET', '/api/faturalar/1', {
       statusCode: 200,

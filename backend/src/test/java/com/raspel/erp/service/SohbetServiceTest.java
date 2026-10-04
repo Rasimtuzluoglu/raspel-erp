@@ -16,6 +16,7 @@ import com.raspel.erp.repository.ticaret.FaturaRepository;
 import com.raspel.erp.service.sistem.SohbetService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -25,9 +26,12 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -89,25 +93,58 @@ class SohbetServiceTest {
 
     @Test
     void aiSorgula_ciroIntent() {
-        CariHesap cari = new CariHesap();
-        cari.setId(10L);
-        cari.setAd("ABC Ltd.");
-
-        Fatura f = new Fatura();
-        f.setId(100L);
-        f.setTur(Fatura.FaturaTur.SATIS);
-        f.setDurum(Fatura.FaturaDurum.KESILDI);
-        f.setGenelToplam(BigDecimal.valueOf(150000));
-        f.setTarih(LocalDate.now());
-        f.setCariHesap(cari);
-
-        when(faturaRepository.findBySirketIdOrderByTarihDesc(1L)).thenReturn(List.of(f));
+        when(faturaRepository.cariBazindaCiroTop(eq(1L), any(), any(), any()))
+                .thenReturn(List.of(Map.of("cariAd", "ABC Ltd.", "ciro", BigDecimal.valueOf(150000))));
 
         AISorguSonucDTO res = sohbetService.aiSorgula("Bu ay en çok ciro yapan müşterilerimiz kimler?", 1L);
         assertEquals("CIRO_MUSTERI", res.getIntent());
         assertEquals("bar", res.getGrafikTipi());
         assertNotNull(res.getTabloVerisi());
         assertFalse(res.getTabloVerisi().isEmpty());
+        assertTrue(res.getCevapMetni().contains("150000"));
+        // Ciro veritabaninda gruplanir; tum faturalar cekilmez.
+        verify(faturaRepository, never()).findBySirketIdOrderByTarihDesc(any());
+    }
+
+    @Test
+    void aiSorgula_ciroIntent_tarihAraligiSorguyaGecer() {
+        when(faturaRepository.cariBazindaCiroTop(eq(1L), any(), any(), any()))
+                .thenReturn(List.of(Map.of("cariAd", "ABC Ltd.", "ciro", BigDecimal.valueOf(150000))));
+
+        LocalDate bugun = LocalDate.now();
+        AISorguSonucDTO res = sohbetService.aiSorgula("Bu ay en çok ciro yapan müşterilerimiz kimler?", 1L);
+
+        assertEquals("CIRO_MUSTERI", res.getIntent());
+        verify(faturaRepository).cariBazindaCiroTop(eq(1L),
+                eq(bugun.withDayOfMonth(1)), eq(bugun.withDayOfMonth(bugun.lengthOfMonth())), any());
+    }
+
+    @Test
+    void aiSorgula_ciroIntent_tarihAraligiYoksaNullGecer() {
+        when(faturaRepository.cariBazindaCiroTop(eq(1L), isNull(), isNull(), any()))
+                .thenReturn(List.of(Map.of("cariAd", "ABC Ltd.", "ciro", BigDecimal.valueOf(150000))));
+
+        AISorguSonucDTO res = sohbetService.aiSorgula("En çok ciro yapan müşterilerimiz kimler?", 1L);
+
+        assertEquals("CIRO_MUSTERI", res.getIntent());
+        verify(faturaRepository).cariBazindaCiroTop(eq(1L), isNull(), isNull(), any());
+    }
+
+    @Test
+    void aiSorgula_ciroIntent_enFazla5MusteriDoner() {
+        List<Map<String, Object>> cok = new java.util.ArrayList<>();
+        for (int i = 1; i <= 9; i++) {
+            cok.add(Map.of("cariAd", "M" + i, "ciro", BigDecimal.valueOf(1000 - i)));
+        }
+        when(faturaRepository.cariBazindaCiroTop(eq(1L), isNull(), isNull(), any())).thenReturn(cok);
+
+        AISorguSonucDTO res = sohbetService.aiSorgula("En çok ciro yapan müşterilerimiz kimler?", 1L);
+
+        assertEquals(5, res.getTabloVerisi().size());
+        ArgumentCaptor<org.springframework.data.domain.Pageable> captor =
+                ArgumentCaptor.forClass(org.springframework.data.domain.Pageable.class);
+        verify(faturaRepository).cariBazindaCiroTop(eq(1L), isNull(), isNull(), captor.capture());
+        assertEquals(5, captor.getValue().getPageSize(), "Ciro listesi sunucuda 5 kayitla sinirlandirilmalidir");
     }
 
     @Test
@@ -124,11 +161,33 @@ class SohbetServiceTest {
         f.setVadeTarihi(LocalDate.now().plusDays(5));
         f.setCariHesap(cari);
 
-        when(faturaRepository.findBySirketIdOrderByTarihDesc(1L)).thenReturn(List.of(f));
+        when(faturaRepository.vadesiAraliktakiFaturalar(eq(1L), any(), any())).thenReturn(List.of(f));
 
         AISorguSonucDTO res = sohbetService.aiSorgula("Gelecek hafta vadesi gelen ödemeler ve tahsilatlar neler?", 1L);
         assertEquals("VADESI_GELEN", res.getIntent());
         assertEquals("doughnut", res.getGrafikTipi());
+        assertTrue(res.getCevapMetni().contains("50000"));
+        // 15 gunluk pencere veritabaninda uygulanir.
+        verify(faturaRepository).vadesiAraliktakiFaturalar(eq(1L), eq(LocalDate.now()), eq(LocalDate.now().plusDays(15)));
+        verify(faturaRepository, never()).findBySirketIdOrderByTarihDesc(any());
+    }
+
+    @Test
+    void aiSorgula_vadeIntent_vadesiOlmayanFaturaAtlanir() {
+        Fatura f = new Fatura();
+        f.setId(102L);
+        f.setTur(Fatura.FaturaTur.SATIS);
+        f.setDurum(Fatura.FaturaDurum.KESILDI);
+        f.setGenelToplam(BigDecimal.valueOf(1000));
+        f.setTarih(null);
+        f.setVadeTarihi(null);
+
+        when(faturaRepository.vadesiAraliktakiFaturalar(eq(1L), any(), any())).thenReturn(List.of(f));
+
+        AISorguSonucDTO res = sohbetService.aiSorgula("Vadesi gelen ödemeler neler?", 1L);
+
+        assertEquals("VADESI_GELEN", res.getIntent());
+        assertTrue(res.getTabloVerisi().isEmpty());
     }
 
     @Test

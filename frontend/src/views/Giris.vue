@@ -15,7 +15,9 @@
       <div class="sahne-parilti p2" />
     </div>
 
-    <!-- Giris yapiliyor: sirket logolu markali karsilama (logo sicramasini onler) -->
+    <!-- Giris yapiliyor: sirket logolu markali karsilama (logo sicramasini onler).
+         Altindaki tum icerik `inert` ile etkilesime kapanir; bu katmanin kendisi
+         de olaylari yutar, boylece karsilama surece hicbir tiklamayla iptal olmaz. -->
     <Transition name="gy-fade">
       <div
         v-if="girisYapiliyor"
@@ -23,6 +25,12 @@
         role="status"
         aria-live="polite"
         :aria-busy="!karsilamaHazir"
+        @click.prevent.stop
+        @pointerdown.prevent.stop
+        @pointerup.prevent.stop
+        @mousedown.prevent.stop
+        @mouseup.prevent.stop
+        @contextmenu.prevent.stop
       >
         <div class="gy-kutu">
           <div
@@ -64,7 +72,10 @@
       </div>
     </Transition>
 
-    <div class="giris-split-wrapper">
+    <div
+      class="giris-split-wrapper"
+      :inert="girisYapiliyor || undefined"
+    >
       <!-- SOL BÖLÜM: Kurumsal Hero & Özellik Vitrini (Masaüstü) -->
       <GirisHeroPaneli
         :rotate-index="rotateIndex"
@@ -496,7 +507,7 @@ const girisToken = ref('')
 const girisYapiliyor = ref(false)
 // Markali karsilama aninin minimum gosterim suresi (ag hizindan bagimsiz).
 // Sirket logosu musteriye "ozel" hissettirecek kadar gorunur ama bekletmez.
-const KARSILAMA_MIN_MS = 1700
+const KARSILAMA_MIN_MS = 1500
 // Basari tikinden sonra yonlendirme oncesi kisa bekleme.
 const KARSILAMA_CIKIS_MS = 300
 const karsilamaSirketAdi = ref('')
@@ -1097,6 +1108,14 @@ const tumAdimlariSifirla = () => {
   box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.65);
   overflow: hidden;
   animation: sahneGiris 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+/* Karsilama sirasinda form/hero tamamen etkilesime kapanir. `inert` destekleyen
+   tarayicilarda zaten fare + klavye engelli; bu kural desteklemeyenler icin yedek. */
+.giris-split-wrapper[inert] {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  filter: saturate(0.85);
 }
 @keyframes sahneGiris {
   from { opacity: 0; transform: translateY(20px) scale(0.985); }
@@ -1770,7 +1789,10 @@ const tumAdimlariSifirla = () => {
   }
 }
 
-/* Giris yapiliyor katmani: sirket logolu markali karsilama */
+/* Giris yapiliyor katmani: sirket logolu markali karsilama.
+   Not: pointer-events burada ACIK kalmalidir; katman click/pointer olaylarini
+   yutarak arkadaki icerige tiklamayi engeller. Kapatma yalnizca hata ya da
+   basarili yonlendirme ile mumkun. */
 .giris-yukleniyor {
   position: fixed;
   inset: 0;
@@ -1782,6 +1804,12 @@ const tumAdimlariSifirla = () => {
     radial-gradient(60% 60% at 50% 42%, var(--giris-tint-30, rgba(20, 184, 166, 0.3)), transparent 70%),
     var(--bg-header, rgba(10, 14, 20, 0.86));
   backdrop-filter: blur(8px);
+  pointer-events: auto;
+  touch-action: none;
+  overscroll-behavior: contain;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: progress;
 }
 .gy-kutu {
   display: flex;

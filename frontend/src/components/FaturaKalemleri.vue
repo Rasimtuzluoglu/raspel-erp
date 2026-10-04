@@ -1,5 +1,69 @@
 <template>
   <div class="kalem-bilesen">
+    <!-- Tek ekleme yolu: hizli kalem ekleme satiri.
+         LISTENIN USTUNDE: once tablonun altindaydi ve kalem sayisi arttikca
+         ekran disina kasiyordu; her kalem eklemeden sonra asagi kaydirmak
+         gerekiyordu. -->
+    <div class="hizli-kalem">
+      <div class="hizli-kalem-baslik">
+        <i class="pi pi-plus-circle" /> {{ $t('faturaKalemleri.hizliEkle') }}
+      </div>
+      <div class="hizli-kalem-grid">
+        <AutoComplete
+          ref="hizliStokAuto"
+          v-model="yeni.stok"
+          :suggestions="oneriler"
+          option-label="etiket"
+          :placeholder="$t('faturaKalemleri.stokAra')"
+          class="hizli-stok"
+          :force-selection="false"
+          :panel-style="PANEL_STILI"
+          :scroll-height="PANEL_YUKSEKLIGI"
+          dropdown
+          @complete="onAra($event)"
+          @option-select="stokSecildi"
+        >
+          <template #option="slotProps">
+            <div class="stok-opsiyon">
+              <span class="stok-opsiyon-kod">{{ stokKoduGoster(slotProps.option.stok) }}</span>
+              <span class="stok-opsiyon-ad">{{ slotProps.option.stok.ad }}</span>
+              <span class="stok-opsiyon-fiyat">{{ formatCurrency(stokSatisFiyati(slotProps.option.stok)) }}</span>
+            </div>
+          </template>
+        </AutoComplete>
+        <InputNumber
+          v-model="yeni.adet"
+          :min="1"
+          :placeholder="$t('faturaKalemleri.adetZorunlu')"
+          class="hizli-adet sayi-girdi"
+          @focus="sec($event)"
+          @keyup.enter="kalemEkle"
+        />
+        <InputNumber
+          v-model="yeni.fiyat"
+          :min="0"
+          :min-fraction-digits="2"
+          :max-fraction-digits="2"
+          :placeholder="$t('faturaKalemleri.birimFiyatZorunlu')"
+          class="hizli-fiyat sayi-girdi"
+          @focus="sec($event)"
+          @keyup.enter="kalemEkle"
+        />
+        <Dropdown
+          v-model="yeni.kdv"
+          :options="kdvSecenekleri"
+          class="hizli-kdv"
+        />
+        <Button
+          :label="$t('faturaKalemleri.ekle')"
+          icon="pi pi-plus"
+          class="p-button-success hizli-ekle-btn"
+          @click="kalemEkle"
+        />
+      </div>
+      <small class="hizli-kalem-ipucu">{{ $t('faturaKalemleri.hizliEkleIpucu') }}</small>
+    </div>
+
     <!-- Kalem listesi: genis ekranda tablo, dar ekranda kart -->
     <div
       v-if="!darEkran"
@@ -20,7 +84,10 @@
             {{ s.index + 1 }}
           </template>
         </Column>
-        <Column :header="$t('faturaKalemleri.aciklamaZorunlu')">
+        <Column
+          :header="$t('faturaKalemleri.aciklamaZorunlu')"
+          :style="{ minWidth: ACIKLAMA_MIN_GENISLIK }"
+        >
           <template #body="s">
             <!-- Stok arama destegi verilirse AutoComplete ile stok kodu/adi aranir;
                  secilince satir stok bilgisiyle (emit) doldurulur. -->
@@ -32,10 +99,25 @@
               :placeholder="$t('faturaKalemleri.aciklamaPlaceholder')"
               class="w-full"
               :force-selection="false"
+              :panel-style="PANEL_STILI"
+              :scroll-height="PANEL_YUKSEKLIGI"
               dropdown
               @complete="onAra($event)"
               @option-select="(e) => $emit('stok-sec', { index: s.index, stok: e.value.stok })"
-            />
+            >
+              <!-- Oneri satiri: kod + ad + fiyat. PrimeVue varsayilaninda oge
+                   `white-space:nowrap; overflow:hidden` oldugu icin ve panel
+                   genisligi input genisligine esit oldugu icin ham etiket
+                   ("[STK-1] Urun Adi") kelime ortasından kesiliyordu.
+                   Sx icinde `min-width:0` + ellipsis sart. -->
+              <template #option="slotProps">
+                <div class="stok-opsiyon">
+                  <span class="stok-opsiyon-kod">{{ stokKoduGoster(slotProps.option.stok) }}</span>
+                  <span class="stok-opsiyon-ad">{{ slotProps.option.stok.ad }}</span>
+                  <span class="stok-opsiyon-fiyat">{{ formatCurrency(stokSatisFiyati(slotProps.option.stok)) }}</span>
+                </div>
+              </template>
+            </AutoComplete>
             <InputText
               v-else
               v-model="s.data.aciklama"
@@ -160,10 +242,20 @@
             :placeholder="$t('faturaKalemleri.aciklamaPlaceholder')"
             class="w-full"
             :force-selection="false"
+            :panel-style="PANEL_STILI"
+            :scroll-height="PANEL_YUKSEKLIGI"
             dropdown
             @complete="onAra($event)"
             @option-select="(e) => $emit('stok-sec', { index: idx, stok: e.value.stok })"
-          />
+          >
+            <template #option="slotProps">
+              <div class="stok-opsiyon">
+                <span class="stok-opsiyon-kod">{{ stokKoduGoster(slotProps.option.stok) }}</span>
+                <span class="stok-opsiyon-ad">{{ slotProps.option.stok.ad }}</span>
+                <span class="stok-opsiyon-fiyat">{{ formatCurrency(stokSatisFiyati(slotProps.option.stok)) }}</span>
+              </div>
+            </template>
+          </AutoComplete>
           <InputText
             v-else
             v-model="k.aciklama"
@@ -233,62 +325,14 @@
       </div>
     </div>
 
-    <!-- Tek ekleme yolu: hizli kalem ekleme satiri -->
-    <div class="hizli-kalem">
-      <div class="hizli-kalem-baslik">
-        <i class="pi pi-plus-circle" /> {{ $t('faturaKalemleri.hizliEkle') }}
-      </div>
-      <div class="hizli-kalem-grid">
-        <AutoComplete
-          v-model="yeni.stok"
-          :suggestions="oneriler"
-          option-label="etiket"
-          :placeholder="$t('faturaKalemleri.stokAra')"
-          class="hizli-stok"
-          :force-selection="false"
-          dropdown
-          @complete="onAra($event)"
-          @option-select="stokSecildi"
-        >
-          <template #option="slotProps">
-            <div class="stok-opsiyon">
-              <span class="stok-opsiyon-kod">{{ slotProps.option.stok.stokKodu || slotProps.option.stok.barkod }}</span>
-              <span class="stok-opsiyon-ad">{{ slotProps.option.stok.ad }}</span>
-              <span class="stok-opsiyon-fiyat">{{ formatCurrency(slotProps.option.stok.satisFiyati || slotProps.option.stok.fiyat) }}</span>
-            </div>
-          </template>
-        </AutoComplete>
-        <InputNumber
-          v-model="yeni.adet"
-          :min="1"
-          :placeholder="$t('faturaKalemleri.adetZorunlu')"
-          class="hizli-adet sayi-girdi"
-          @focus="sec($event)"
-          @keyup.enter="kalemEkle"
-        />
-        <InputNumber
-          v-model="yeni.fiyat"
-          :min="0"
-          :min-fraction-digits="2"
-          :max-fraction-digits="2"
-          :placeholder="$t('faturaKalemleri.birimFiyatZorunlu')"
-          class="hizli-fiyat sayi-girdi"
-          @focus="sec($event)"
-          @keyup.enter="kalemEkle"
-        />
-        <Dropdown
-          v-model="yeni.kdv"
-          :options="kdvSecenekleri"
-          class="hizli-kdv"
-        />
-        <Button
-          :label="$t('faturaKalemleri.ekle')"
-          icon="pi pi-plus"
-          class="p-button-success hizli-ekle-btn"
-          @click="kalemEkle"
-        />
-      </div>
-      <small class="hizli-kalem-ipucu">{{ $t('faturaKalemleri.hizliEkleIpucu') }}</small>
+    <!-- Stok secilmeden yazilan aciklamalar: kayit sirasinda stokId=null kalir
+         ve stok hareketi olusmaz. Kullaniciya acikca bildirilir. -->
+    <div
+      v-if="stokSecsizKalemler.length"
+      class="stok-secsi-uyari"
+    >
+      <i class="pi pi-exclamation-triangle" />
+      <span>{{ $t('faturaKalemleri.stokSecsizKalemUyarisi', { adet: stokSecsizKalemler.length }) }}</span>
     </div>
 
     <div class="summary-box">
@@ -306,7 +350,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { formatCurrency } from '../utils/format.js'
 import { kalemTutar } from '../utils/faturaHesapla.js'
 import { stokAPI } from '../api/index.js'
@@ -329,8 +373,20 @@ const props = defineProps({
 
 const emit = defineEmits(['add', 'remove', 'stok-sec'])
 
+// AutoComplete paneli PrimeVue'da input ile AYNI genislikte olur
+// (overlay.style.minWidth = getOuterWidth(target)). Tablodaki aciklama kolonu
+// daraldiginda panel de daralir ve urun adi kesisir. Panel icin taban bir
+// genislik veriyoruz; ekranda yer varsa ozellikle genisler.
+const ACIKLAMA_MIN_GENISLIK = '260px'
+const PANEL_STILI = { minWidth: '340px' }
+const PANEL_YUKSEKLIGI = '320px'
+
 const oneriler = ref([])
 let aramaZamanlayici = null
+const hizliStokAuto = ref(null)
+
+const stokKoduGoster = (stok) => stok?.stokKodu || stok?.barkod || ''
+const stokSatisFiyati = (stok) => stok?.satisFiyati || stok?.fiyat || 0
 
 // Aktif kalem listesinin (props) ilk gecerli KDV varsayilaniyla baslamasi icin.
 const yeni = reactive({ stok: null, adet: 1, fiyat: 0, kdv: props.kdvVarsayilan })
@@ -412,7 +468,16 @@ const kalemEkle = () => {
   yeni.stok = null
   yeni.adet = 1
   yeni.fiyat = 0
+  // Odak urun alanina doner: ardisik kalem eklemede her seferinde fare ile
+  // alana tiklamak zorunda kalmasin diye.
+  nextTick(() => hizliStokAuto.value?.focus?.())
 }
+
+// Kac kalemde stok secilmeden serbest metin birakildi? Satis kaydinda
+// stokId=null satirlar olusurdu ve nedeni kullaniciya hic belli olmuyordu.
+const stokSecsizKalemler = computed(() =>
+  (props.kalemler || []).filter((k) => !k.stokId && k.aciklama && k.aciklama.trim())
+)
 
 // Satiri kopyala: mevcut degerler korunur, kayit kimligi tasinmaz (yeni satir).
 const cogalt = (kalem) => {
@@ -478,27 +543,25 @@ const cogalt = (kalem) => {
   color: var(--text-muted);
   font-size: 11.5px;
 }
-.stok-opsiyon {
+/* NOT: `.stok-opsiyon*` kurallari BURADA degil, `assets/app.css` icinde
+   tanimlidir. AutoComplete paneli body'ye teleport edilir; scoped CSS
+   bilesenin data-v ozelligi eklenmedigi icin panel ici bu kurallar
+   uygulanmazdi (urun adi yine kesisik gorunuyordu). */
+.stok-secsi-uyari {
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 100%;
-}
-.stok-opsiyon-kod {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
-}
-.stok-opsiyon-ad {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.stok-opsiyon-fiyat {
-  font-size: 12px;
+  margin-top: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 12.5px;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+.stok-secsi-uyari i {
+  color: #f59e0b;
 }
 
 /* Dar ekran kart duzeni */

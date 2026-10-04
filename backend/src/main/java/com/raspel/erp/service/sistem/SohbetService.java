@@ -39,6 +39,7 @@ public class SohbetService {
     private final AiConfigService aiConfigService;
     private final LlmClientService llmClientService;
     private final DosyaDepolamaService dosyaDepolama;
+    private final com.raspel.erp.config.TenantChecker tenantChecker;
 
     private static final String DOSYA_KLASOR = "sohbet";
     private static final java.util.Set<String> IZINLI_UZANTILAR = java.util.Set.of(
@@ -142,19 +143,17 @@ public class SohbetService {
 
         // 1. Ciro & En Çok Satış Yapılan Müşteriler
         if ("CIRO_MUSTERI".equals(intent)) {
-            List<Fatura> faturalar = faturaRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
-                    .filter(f -> f.getTur() == Fatura.FaturaTur.SATIS && f.getDurum() == Fatura.FaturaDurum.KESILDI)
-                    .filter(f -> aralik == null || (f.getTarih() != null && !f.getTarih().isBefore(aralik[0]) && !f.getTarih().isAfter(aralik[1])))
-                    .collect(Collectors.toList());
+            // Ciro toplami veritabaninda cari bazinda gruplanir ve ust N kayit
+            // alinir; boylece sirketin tum faturalari bellege cekilmez.
+            LocalDate bas = aralik != null ? aralik[0] : null;
+            LocalDate bit = aralik != null ? aralik[1] : null;
+            List<Map<String, Object>> satirlar = faturaRepository
+                    .cariBazindaCiroTop(sirketId, bas, bit, org.springframework.data.domain.PageRequest.of(0, 5));
 
-            Map<String, BigDecimal> cariCiro = new LinkedHashMap<>();
-            for (Fatura f : faturalar) {
-                String cariAd = f.getCariHesap() != null ? f.getCariHesap().getAd() : "Genel Satış";
-                BigDecimal tutar = f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO;
-                cariCiro.merge(cariAd, tutar, BigDecimal::add);
-            }
-
-            List<Map.Entry<String, BigDecimal>> sirali = cariCiro.entrySet().stream()
+            List<Map.Entry<String, BigDecimal>> sirali = satirlar.stream()
+                    .map(r -> Map.entry(
+                            String.valueOf(r.get("cariAd")),
+                            (BigDecimal) r.get("ciro")))
                     .sorted(Map.Entry.<String, BigDecimal>comparingByValue().reversed()
                             .thenComparing(Map.Entry.comparingByKey()))
                     .limit(5)
@@ -191,12 +190,12 @@ public class SohbetService {
 
         // 2. Vadesi Gelen Ödemeler & Tahsilatlar
         if ("VADESI_GELEN".equals(intent)) {
-            List<Fatura> faturalar = faturaRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
-                    .filter(f -> f.getDurum() == Fatura.FaturaDurum.KESILDI)
-                    .collect(Collectors.toList());
-
             LocalDate bugun = LocalDate.now();
             LocalDate gelecekHafta = bugun.plusDays(15);
+
+            // Onceki davranis sirketin tum kesilmis faturalarini cekip Java'da
+            // 15 gunluk pencereyi filtreliyordu. Filtre artik veritabaninda.
+            List<Fatura> faturalar = faturaRepository.vadesiAraliktakiFaturalar(sirketId, bugun, gelecekHafta);
 
             List<Map<String, Object>> tablo = new ArrayList<>();
             BigDecimal toplamAlacak = BigDecimal.ZERO;
@@ -204,20 +203,19 @@ public class SohbetService {
 
             for (Fatura f : faturalar) {
                 LocalDate vade = f.getVadeTarihi() != null ? f.getVadeTarihi() : f.getTarih();
-                if (vade != null && !vade.isBefore(bugun) && !vade.isAfter(gelecekHafta)) {
-                    String tip = f.getTur() == Fatura.FaturaTur.SATIS ? "Tahsilat (Giriş)" : "Ödeme (Çıkış)";
-                    BigDecimal tutar = f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO;
-                    if (f.getTur() == Fatura.FaturaTur.SATIS) toplamAlacak = toplamAlacak.add(tutar);
-                    else toplamBorc = toplamBorc.add(tutar);
+                if (vade == null) continue;
+                String tip = f.getTur() == Fatura.FaturaTur.SATIS ? "Tahsilat (Giriş)" : "Ödeme (Çıkış)";
+                BigDecimal tutar = f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO;
+                if (f.getTur() == Fatura.FaturaTur.SATIS) toplamAlacak = toplamAlacak.add(tutar);
+                else toplamBorc = toplamBorc.add(tutar);
 
-                    tablo.add(satir(
-                            "faturaNo", f.getFaturaNumarasi() != null ? f.getFaturaNumarasi() : ("#" + f.getId()),
-                            "cari", f.getCariHesap() != null ? f.getCariHesap().getAd() : "-",
-                            "vade", vade.toString(),
-                            "tur", tip,
-                            "tutar", paraMetni(tutar)
-                    ));
-                }
+                tablo.add(satir(
+                        "faturaNo", f.getFaturaNumarasi() != null ? f.getFaturaNumarasi() : ("#" + f.getId()),
+                        "cari", f.getCariHesap() != null ? f.getCariHesap().getAd() : "-",
+                        "vade", vade.toString(),
+                        "tur", tip,
+                        "tutar", paraMetni(tutar)
+                ));
             }
             tablo.sort(Comparator.comparing(m -> String.valueOf(m.get("vade"))));
 
@@ -429,13 +427,17 @@ public class SohbetService {
         try {
             StringBuilder sb = new StringBuilder();
 
-            List<Fatura> faturalar = faturaRepository.findBySirketIdOrderByTarihDesc(sirketId).stream()
-                    .filter(f -> f.getDurum() == Fatura.FaturaDurum.KESILDI)
-                    .collect(Collectors.toList());
-            int satisSayisi = (int) faturalar.stream().filter(f -> f.getTur() == Fatura.FaturaTur.SATIS).count();
-            BigDecimal satisToplam = faturalar.stream().filter(f -> f.getTur() == Fatura.FaturaTur.SATIS)
-                    .map(f -> f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            // Kesilmis fatura adedi ve ciro toplami veritabaninda tur bazinda
+            // gruplanir; tum faturalar bellege cekilmez.
+            List<Map<String, Object>> faturaOzeti = faturaRepository.kesilmisFaturaOzetiByTur(sirketId);
+            long satisSayisi = 0;
+            BigDecimal satisToplam = BigDecimal.ZERO;
+            for (Map<String, Object> satir : faturaOzeti) {
+                if (Fatura.FaturaTur.SATIS.name().equals(String.valueOf(satir.get("tur")))) {
+                    satisSayisi = ((Number) satir.get("adet")).longValue();
+                    satisToplam = (BigDecimal) satir.get("ciro");
+                }
+            }
 
             List<Kasa> kasalar = kasaRepository.findBySirketIdOrderByAd(sirketId);
             List<Banka> bankalar = bankaRepository.findBySirketIdOrderByAd(sirketId);
@@ -508,9 +510,13 @@ public class SohbetService {
         // Resim uzantilari icin icerik imzasi dogrulanir (stored XSS/polyglot engeli).
         boolean resim = java.util.Set.of(".jpg", ".jpeg", ".png", ".webp", ".gif").contains(ext);
         try {
+            // Tenant klasörü (bkz. SohbetOdaService.dosyaYukle): düz `sohbet/`
+            // klasörü cross-tenant okumaya açıktı.
+            Long sirketId = tenantChecker.getCurrentSirketId();
+            String klasor = sirketId != null ? DOSYA_KLASOR + "/s" + sirketId : DOSYA_KLASOR;
             String filename = resim
-                    ? dosyaDepolama.kaydetResimDogrulamali(DOSYA_KLASOR, file)
-                    : dosyaDepolama.kaydet(DOSYA_KLASOR, file);
+                    ? dosyaDepolama.kaydetResimDogrulamali(klasor, file)
+                    : dosyaDepolama.kaydet(klasor, file);
             return "/api/uploads/sohbet/" + filename;
         } catch (java.io.IOException e) {
             throw new com.raspel.erp.exception.BusinessException("Dosya yüklenemedi");

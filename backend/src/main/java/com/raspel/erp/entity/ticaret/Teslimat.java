@@ -21,6 +21,13 @@ public class Teslimat {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Optimistik kilitleme. Kolon olmadan iki şoför aynı anda teslim edebiliyor, TeslimatDurumLog'a iki çelişkili satır düşüyordu.
+     */
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     @Column(name = "sirket_id")
     private Long sirketId;
 

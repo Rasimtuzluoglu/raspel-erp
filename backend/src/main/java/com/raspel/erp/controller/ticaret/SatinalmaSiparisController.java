@@ -40,6 +40,7 @@ public class SatinalmaSiparisController {
 
     @PostMapping
     @Operation(summary = "Yeni satın alma siparişi oluştur", description = "Yeni bir satın alma siparişi oluşturur")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SATINALMA_WRITE')")
     public ResponseEntity<SatinalmaSiparisDTO> olustur(@Valid @RequestBody SatinalmaSiparisDTO dto,
                                                        jakarta.servlet.http.HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
@@ -48,18 +49,21 @@ public class SatinalmaSiparisController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Satın alma siparişi güncelle", description = "Satın alma siparişi bilgilerini günceller")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SATINALMA_WRITE')")
     public ResponseEntity<SatinalmaSiparisDTO> guncelle(@PathVariable Long id, @Valid @RequestBody SatinalmaSiparisDTO dto) {
         return ResponseEntity.ok(satinalmaSiparisService.guncelle(id, dto));
     }
 
     @PutMapping("/{id}/durum")
     @Operation(summary = "Satın alma siparişi durum güncelle", description = "Satın alma siparişi durumunu günceller")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SATINALMA_WRITE')")
     public ResponseEntity<SatinalmaSiparisDTO> durumGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body) {
         return ResponseEntity.ok(satinalmaSiparisService.durumGuncelle(id, body.getDurum()));
     }
 
     @PostMapping("/{id}/faturaya-cevir")
     @Operation(summary = "Alış faturasına dönüştür", description = "Satın alma siparişini alış faturasına dönüştürür (stok artar)")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SATINALMA_WRITE')")
     public ResponseEntity<com.raspel.erp.dto.ticaret.FaturaDTO> faturayaCevir(@PathVariable Long id, jakarta.servlet.http.HttpServletRequest request) {
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         String displayName = (String) request.getAttribute("displayName");
@@ -67,8 +71,8 @@ public class SatinalmaSiparisController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Satın alma siparişi sil", description = "Satın alma siparişini siler (yalnızca ADMIN)")
-    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Satın alma siparişi sil", description = "Satın alma siparişini siler")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SATINALMA_DELETE')")
     public ResponseEntity<Void> sil(@PathVariable Long id) {
         satinalmaSiparisService.sil(id);
         return ResponseEntity.noContent().build();

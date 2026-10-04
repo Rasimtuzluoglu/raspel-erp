@@ -93,7 +93,7 @@ public class MasrafService {
 
         odemeIsle(kaydedilen);
         otomatikMuhasebeService.masrafIsle(kaydedilen);
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
         return entityToDTO(kaydedilen);
     }
 
@@ -120,7 +120,7 @@ public class MasrafService {
         otomatikMuhasebeService.kaynakFisIptal(kaydedilen.getSirketId(),
                 com.raspel.erp.service.muhasebe.OtomatikMuhasebeService.KAYNAK_MASRAF, kaydedilen.getId());
         otomatikMuhasebeService.masrafIsle(kaydedilen);
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
         return entityToDTO(kaydedilen);
     }
 
@@ -136,7 +136,7 @@ public class MasrafService {
         otomatikMuhasebeService.kaynakFisIptal(m.getSirketId(),
                 com.raspel.erp.service.muhasebe.OtomatikMuhasebeService.KAYNAK_MASRAF, m.getId());
         masrafRepository.deleteById(id);
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
     }
 
     /** Masraf ödemesi: seçilen kasa/banka hesabından çıkış işlenir. */

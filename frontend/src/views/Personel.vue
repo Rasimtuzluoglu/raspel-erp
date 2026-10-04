@@ -102,6 +102,7 @@
                 :title="t('personel.izinEkle')"
                 @click="izinDialogAc(data)"
               />
+              v-permission="'IK_DELETE'"
               <Button
                 icon="pi pi-trash"
                 :aria-label="$t('common.delete')"

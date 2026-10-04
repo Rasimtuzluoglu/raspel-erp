@@ -95,20 +95,29 @@ public class DepoService {
         depoRepository.deleteById(id);
     }
 
-    @Transactional(readOnly = true)
+    /**
+ * Depodaki stok kırılımı.
+ *
+ * <p>Tenant izolasyonu: depoyu yükleyip {@code tenantChecker.check} çağırmak
+ * zorunlu. Bu kontrol olmadan başka bir şirketin depo id'si bilindiğinde o
+ * depodaki stok adları, kodları, birimleri ve miktarları okunabiliyordu
+ * (cross-tenant IDOR). Yazma yolları ({@link #stokEkle}, {@link #stokCikar})
+ * kontrol ediyordu; okuma yolu atlıyordu.
+ */
+@Transactional(readOnly = true)
     public List<DepoStokDTO> depoStoklari(Long depoId) {
-        Long sirketId = depoRepository.findById(depoId).map(Depo::getSirketId).orElse(null);
-        List<com.raspel.erp.entity.envanter.Stok> tumStoklar = sirketId != null
-                ? stokRepository.findBySirketIdOrderByAd(sirketId)
-                : List.of();
+        Depo depo = depoRepository.findById(depoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Depo", depoId));
+        tenantChecker.check(depo.getSirketId(), "Depo");
+        List<com.raspel.erp.entity.envanter.Stok> tumStoklar = stokRepository.findBySirketIdOrderByAd(depo.getSirketId());
         Map<Long, String> stokHaritasi = tumStoklar.stream()
-                .collect(Collectors.toMap(s -> s.getId(), s -> s.getAd()));
+                .collect(Collectors.toMap(s -> s.getId(), s -> s.getAd(), (a, b) -> a));
         Map<Long, String> stokKodHaritasi = tumStoklar.stream()
                 .filter(s -> s.getStokKodu() != null)
-                .collect(Collectors.toMap(s -> s.getId(), s -> s.getStokKodu()));
+                .collect(Collectors.toMap(s -> s.getId(), s -> s.getStokKodu(), (a, b) -> a));
         Map<Long, String> birimHaritasi = tumStoklar.stream()
                 .filter(s -> s.getBirim() != null)
-                .collect(Collectors.toMap(s -> s.getId(), s -> s.getBirim()));
+                .collect(Collectors.toMap(s -> s.getId(), s -> s.getBirim(), (a, b) -> a));
 
         return depoStokRepository.findByDepoId(depoId).stream()
                 .map(ds -> DepoStokDTO.builder()

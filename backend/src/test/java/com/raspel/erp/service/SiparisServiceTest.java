@@ -48,6 +48,8 @@ class SiparisServiceTest {
     @Mock private com.raspel.erp.config.CacheYardimci cacheYardimci;
     @Mock private com.raspel.erp.service.sistem.DonemService donemService;
     @Mock private com.raspel.erp.repository.muhasebe.IrsaliyeRepository irsaliyeRepository;
+    @Mock private com.raspel.erp.repository.sistem.KullaniciRepository kullaniciRepository;
+    @Mock private com.raspel.erp.service.ticaret.TeslimatService teslimatService;
     @InjectMocks private SiparisService siparisService;
 
     private Siparis createSiparis(Long id) {
@@ -112,6 +114,42 @@ class SiparisServiceTest {
     void durumGuncelle_throwsWhenNotFound() {
         when(siparisRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> siparisService.durumGuncelle(99L, "SIPARIS"));
+    }
+
+    // soforAta icindeki teslimat kaydi ayni @Transactional'a katilir. Beklenmeyen
+    // bir hata yutulursa rollback zaten isaretlenmis olur ve commit aninda
+    // UnexpectedRollbackException firlatilir; ayrica kullaniciya basarili sonuc
+    // donerken teslimat kaydi hic olusmaz. Bu yuzden yalnizca eszamanli kayit
+    // (unique kisit) durumu yutulur.
+    @Test
+    void soforAta_teslimatKaydiBeklenmeyenHataIseYutulmaz() {
+        Siparis s = createSiparis(1L);
+        when(siparisRepository.findById(1L)).thenReturn(Optional.of(s));
+        when(siparisRepository.save(any(Siparis.class))).thenReturn(s);
+        when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.sistem.Kullanici.builder().id(5L).role("DRIVER").displayName("Ali").build()));
+        when(teslimatService.gecerliSurucu(any())).thenReturn(true);
+        doThrow(new IllegalStateException("beklenmeyen hata"))
+                .when(teslimatService).siparisTeslimatiUpsert(eq(1L), eq(5L), any(), any(), any());
+
+        assertThrows(IllegalStateException.class, () -> siparisService.soforAta(1L, 5L, 1L));
+    }
+
+    @Test
+    void soforAta_eszamanliTeslimatKaydiYutulur() {
+        Siparis s = createSiparis(1L);
+        when(siparisRepository.findById(1L)).thenReturn(Optional.of(s));
+        when(siparisRepository.save(any(Siparis.class))).thenReturn(s);
+        when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.sistem.Kullanici.builder().id(5L).role("DRIVER").displayName("Ali").build()));
+        when(teslimatService.gecerliSurucu(any())).thenReturn(true);
+        doThrow(new org.springframework.dao.DataIntegrityViolationException("duplicate key"))
+                .when(teslimatService).siparisTeslimatiUpsert(eq(1L), eq(5L), any(), any(), any());
+
+        SiparisDTO sonuc = siparisService.soforAta(1L, 5L, 1L);
+
+        assertEquals(5L, sonuc.getDriverId());
+        assertEquals("Ali", sonuc.getDriverAd());
     }
 
     @Test

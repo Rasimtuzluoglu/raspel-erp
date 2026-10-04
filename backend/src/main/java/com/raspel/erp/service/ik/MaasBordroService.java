@@ -156,8 +156,19 @@ public class MaasBordroService {
         return net.signum() < 0 ? BigDecimal.ZERO : net;
     }
 
-    /** Kasadan net maas odemesi yapar; idempotenttir (zaten odendiyse tekrar odemez). */
-    private MaasBordro kasaOdemeYap(MaasBordro bordro, Long kasaId) {
+    /**
+     * Kasadan net maas ödemesi yapar; idempotenttir (zaten ödendiyse tekrar ödemez).
+     *
+     * <p><b>Yarış koşulu:</b> Önceden "zaten ödendi mi" kontrolü, kasa kilidi
+     * alınmadan ve bordro satırı kilitlenmeden yapılıyordu. İki eşzamanlı istek
+     * ikisini de geçiyor, ikisi de kasadan düşüyor ve iki kasa hareketi yazıyordu.
+     * Artık bordro satırı önce {@code findByIdForUpdate} ile kilitleniyor;
+     * kontrol kilit alındıktan sonra yapılıyor.
+     */
+    private MaasBordro kasaOdemeYap(MaasBordro kilitliBordro, Long kasaId) {
+        // Kilitli satırı yeniden oku: çağıranın nesnesi bayat olabilir.
+        MaasBordro bordro = maasBordroRepository.findByIdForUpdate(kilitliBordro.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("MaasBordro", kilitliBordro.getId()));
         if ("ODENDI".equals(bordro.getOdemeDurumu())) {
             throw new com.raspel.erp.exception.BusinessException("Bu bordro zaten ödenmiş.");
         }

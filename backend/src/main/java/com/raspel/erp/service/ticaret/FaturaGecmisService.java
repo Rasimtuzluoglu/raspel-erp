@@ -18,6 +18,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,6 +33,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class FaturaGecmisService {
+
+    /**
+     * PDF/Excel dışa aktarımında işlenecek en fazla geçmiş kayıt sayısı.
+     * Bellek taşmasını (OOM) önler; aşılırsa {@code log.warn} ile bildirilir.
+     */
+    static final int MAKSI_RAPOR_SATIR = 10_000;
 
     private static final int OZET_LIMIT = 450;
     private static final Set<String> IZLENEN_ALANLAR = Set.of(
@@ -166,9 +173,24 @@ public class FaturaGecmisService {
                 .map(this::dto).collect(Collectors.toList());
     }
 
-    /** Rapor: filtrelenmiş işlem/yazdırma geçmişi (fatura bilgileriyle). */
-    @Transactional(readOnly = true)
-    public List<com.raspel.erp.dto.ticaret.FaturaGecmisRaporDTO> rapor(Long sirketId, LocalDate baslangic,
+/**
+ * Rapor: filtrelenmiş işlem/yazdırma geçmişi (fatura bilgileriyle).
+ *
+ * <p><b>SATIR TAVANI (OOM koruması):</b> Bu metot PDF/Excel dışa aktarımı
+ * için kullanılır ve döndürdüğü kayıtların tamamını belleğe alıyordu. Tarih
+ * aralığı verilmediğinde <b>tüm geçmiş</b> yükleniyordu; birkaç yıllık veriyle
+ * bu yüz binlerce satır DTO'ya çevrilip PDF'e basılıyor, JVM heap'i
+ * tükeniyordu (OutOfMemoryError). Üstelik hiçbir filtre de yoksa tablo
+ * tamamen taranıyordu.
+ *
+ * <p>Artık en fazla {@link #MAKSI_RAPOR_SATIR} kayıt işlenir; tavan
+ * aşıldığında {@code log.warn} ile bildirilir (sessizce kırpma yapılmaz).
+ * Kullanıcı PDF/Excel'de satır sayısını ve uyarıyı görebilir; tam veri
+ * için tarih aralığı kullanılmalıdır. Liste ekranı zaten sayfalı uçtan
+ * ({@link #raporSayfali}) çalışır ve bu tavan ona uygulanmaz.
+ */
+@Transactional(readOnly = true)
+public List<com.raspel.erp.dto.ticaret.FaturaGecmisRaporDTO> rapor(Long sirketId, LocalDate baslangic,
                                                                        LocalDate bitis, String olay,
                                                                        Long kullaniciId, String tur, String q) {
         if (sirketId == null) return List.of();
@@ -192,7 +214,17 @@ public class FaturaGecmisService {
         var sirala = org.springframework.data.domain.Sort.by(
                 org.springframework.data.domain.Sort.Order.desc("tarih"),
                 org.springframework.data.domain.Sort.Order.desc("id"));
-        List<FaturaGecmis> kayitlar = faturaGecmisRepository.findAll(spec, sirala);
+        // Tavan: en fazla MAKSI_RAPOR_SATIR kayit. Sonraki sayfayi da bir sorguyla
+        // kontrol ederek "kirpildi" bilgisini kesinlestiriyoruz (sessiz veri kaybi yok).
+        org.springframework.data.domain.Page<FaturaGecmis> sayfa = faturaGecmisRepository
+                .findAll(spec, org.springframework.data.domain.PageRequest.of(0, MAKSI_RAPOR_SATIR + 1, sirala));
+        List<FaturaGecmis> kayitlar = sayfa.getContent();
+        if (kayitlar.size() > MAKSI_RAPOR_SATIR) {
+            log.warn("Fatura gecmis raporu satir tavana takildi: {} kayit islendi (tavan: {}). "
+                            + "Tarih araligi daraltarak tum veriye ulasabilirsiniz.",
+                    MAKSI_RAPOR_SATIR, MAKSI_RAPOR_SATIR);
+            kayitlar = new ArrayList<>(kayitlar.subList(0, MAKSI_RAPOR_SATIR));
+        }
         if (kayitlar.isEmpty()) return List.of();
         List<Long> faturaIds = kayitlar.stream().map(FaturaGecmis::getFaturaId).distinct().toList();
         Map<Long, Fatura> faturaMap = faturaRepository.findAllById(faturaIds).stream()

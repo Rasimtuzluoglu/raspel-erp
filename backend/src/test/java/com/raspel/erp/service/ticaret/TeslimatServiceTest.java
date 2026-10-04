@@ -183,6 +183,38 @@ class TeslimatServiceTest {
         verify(durumLogRepository).save(argThat(l -> "BEKLEMEDE".equals(l.getOncekiDurum()) && "YOLDA".equals(l.getYeniDurum())));
     }
 
+    // durumGuncelle hem teslimat satirini hem de denetim izi olan durum logunu yazar.
+    // @Transactional olmazsa bu iki yazma ayri ayri otomatik-commit olur ve biri
+    // basarisiz oldugunda tutarsiz durum birakilir. 4 argumanli overload da
+    // self-invocation ile Spring proxy'sini atladigi icin asil metot islemli olmalidir.
+    @Test
+    void durumGuncelle_islemAnnosasyonuMevcut() throws Exception {
+        java.lang.reflect.Method asil = TeslimatService.class
+                .getMethod("durumGuncelle", Long.class, String.class, String.class, Long.class, Long.class);
+        org.springframework.transaction.annotation.Transactional tx =
+                asil.getAnnotation(org.springframework.transaction.annotation.Transactional.class);
+        assertNotNull(tx, "durumGuncelle(id, durum, sebep, sirketId, kullaniciId) @Transactional olmali");
+        assertFalse(tx.readOnly(), "durumGuncelle yazma yaptigi icin readOnly olmamali");
+    }
+
+    @Test
+    void durumGuncelle_iptalSebebiZorunluVeNotaYazilir() {
+        Teslimat t = Teslimat.builder().id(1L).sirketId(1L).driverId(5L).durum("YOLDA").notlar("Onceki not").build();
+        when(teslimatRepository.findById(1L)).thenReturn(Optional.of(t));
+        when(kullaniciRepository.findById(99L)).thenReturn(Optional.of(Kullanici.builder().id(99L).role("USER").build()));
+        when(teslimatRepository.save(any(Teslimat.class))).thenReturn(t);
+
+        BusinessException hata = assertThrows(BusinessException.class,
+                () -> teslimatService.durumGuncelle(1L, "IPTAL", "  ", 1L, 99L));
+        assertTrue(hata.getMessage().contains("sebep"));
+
+        teslimatService.durumGuncelle(1L, "IPTAL", "Müşteri reddetti", 1L, 99L);
+
+        assertTrue(t.getNotlar().contains("İptal sebebi: Müşteri reddetti"));
+        assertNull(t.getTeslimTarihi(), "IPTAL durumunda teslim tarihi temizlenmeli");
+        verify(durumLogRepository, times(1)).save(any());
+    }
+
     @Test
     void fotoYukle_urlAyarlar() throws Exception {
         Teslimat t = Teslimat.builder().id(1L).sirketId(1L).driverId(5L).durum("BEKLEMEDE").build();

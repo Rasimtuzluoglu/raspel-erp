@@ -2,8 +2,10 @@ package com.raspel.erp.service.sistem;
 
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.util.AesGcmUtil;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,6 +22,8 @@ import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
@@ -88,6 +92,56 @@ public class BackupService {
     private final DosyaDepolamaService dosyaDepolama;
     private final JdbcTemplate jdbcTemplate;
 
+    /**
+     * Yedekleme metrikleri. Alan enjeksiyonu ve null toleransi kullanilir:
+     * testlerde servis dogrudan {@code new BackupService(dataSource, ...)} ile
+     * kuruldugu icin MeterRegistry bean'i bulunmayabilir.
+     *
+     * <p>Uretilen metrikler:
+     * <ul>
+     *   <li>{@code raspel.yedek.islem} (counter, etiket: tur, sonuc)</li>
+     *   <li>{@code raspel.yedek.durum} (gauge: 0=OK, 1=UYARI, 2=KRITIK)</li>
+     *   <li>{@code raspel.yedek.son} (gauge: son basarili yedegin epoch saniyesi)</li>
+     * </ul>
+     * config/prometheus/alert.rules.yml bunlari kullanir; boylece sessizce
+     * duran yedekleme (cron sessizce basarisiz oldugunda) alarm uretir.
+     */
+    @Autowired(required = false)
+    private MeterRegistry meterRegistry;
+
+    private static final String METRIK_ISLEM = "raspel.yedek.islem";
+    private static final String METRIK_DURUM = "raspel.yedek.durum";
+    private static final String METRIK_SON = "raspel.yedek.son";
+
+    /** Gauge degerleri. MeterRegistry basina bir kez kaydedilir. */
+    private final java.util.concurrent.atomic.AtomicLong sonYedekEpochSaniye = new java.util.concurrent.atomic.AtomicLong(0L);
+    private final java.util.concurrent.atomic.AtomicInteger yedekDurumu = new java.util.concurrent.atomic.AtomicInteger(0);
+    private volatile MeterRegistry kayitliRegistry;
+
+    /** Etiketlerde dosya adi KULLANILMAZ: yedek dosya adlari zaman damgalidir ve kardinaliteyi patlatir. */
+    private void yedekSayaci(String type, String sonuc) {
+        if (meterRegistry == null) return;
+        meterRegistry.counter(METRIK_ISLEM, "tur", type, "sonuc", sonuc).increment();
+    }
+
+    /**
+     * Gauge'lari registry'ye kaydeder ve degerleri gunceller.
+     * Kayit registry basina bir kez yapilir: ayni registry'de ayni gauge'i tekrar
+     * kaydetmek hata verir, statik bir cache de farkli registry'lerde (testler,
+     * coklu context) yanlis registry'ye baglanir.
+     */
+    private void durumGuncelle(int durum, Long sonBasariliEpochSaniye) {
+        MeterRegistry registry = meterRegistry;
+        if (registry == null) return;
+        if (kayitliRegistry != registry) {
+            registry.gauge(METRIK_DURUM, yedekDurumu);
+            registry.gauge(METRIK_SON, sonYedekEpochSaniye);
+            kayitliRegistry = registry;
+        }
+        if (sonBasariliEpochSaniye != null) sonYedekEpochSaniye.set(sonBasariliEpochSaniye);
+        yedekDurumu.set(durum);
+    }
+
     private static final Map<String, Object> CONFIG_VARSAYILAN = Map.of(
             "provider", "MINIO",
             "bucketName", "",
@@ -117,6 +171,13 @@ public class BackupService {
         } catch (java.io.IOException ignored) {
         }
         log.info("BackupService initialized. Dir: {}, retentionDays: {}, autoCron: {}", backupDir, retentionDays, autoCron);
+        // Gauge'lari baslangicta kaydet. Tembel kayit durumunda metrik, ilk
+        // yedekDogrulama() calismasina (gunluk 04:30) kadar HIC bulunamaz ve
+        // "hiç yedek alınmadı" alarmı (raspel_yedek_son == 0) sessizce calismaz.
+        // Baslangic degeri 0: "hic yedek yok" durumu raspel_yedek_son == 0
+        // tarafindan bildirilir; durum gauge'i yalnizca VAR OLAN yedegin
+        // butunluk/yas durumunu anlatir. Boylece tek alarm uretilir, ucu degil.
+        durumGuncelle(0, null);
     }
 
     // ------------------------------------------------------------------
@@ -201,9 +262,14 @@ public class BackupService {
             if (otomatikBulutSenkronAktif()) {
                 bulutaAktar(outputFile, filename);
             }
+            yedekSayaci(type, "basarili");
+            durumGuncelle(0, System.currentTimeMillis() / 1000);
             return filename;
         } catch (Exception e) {
             log.error("Backup failed", e);
+            // Zamanlanmis gorevler bu hatayi yutar; metrik olmadan cron sessizce
+            // basarisiz olur ve yedek bayatlayana kadar kimse fark etmez.
+            yedekSayaci(type, "hata");
             throw new RuntimeException("Backup failed: " + e.getMessage());
         }
     }
@@ -610,7 +676,15 @@ public class BackupService {
         }
     }
 
-    @Scheduled(cron = "0 0 3 ? * SUN")
+    /**
+     * Yedekleme cron'ları birbirinden ayrıldı.
+     *
+     * <p>Önceden günlük/haftalık/aylık/yıllık yedeklerin <b>dördü de 03:00</b>'te
+     * tetikleniyordu; pazar günü + ayın 1'i + yılın 1'i aynı saate denk geldiğinde
+     * dört tam yedek arka arkaya çalışıyor, disk ve CPU doyuyor, işler birbirini
+     * bekliyordu. Saatler 10'ar dakika arayla açıldı.
+     */
+    @Scheduled(cron = "${app.backup.weekly-cron:0 20 3 ? * SUN}")
     @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "backupWeekly", lockAtMostFor = "PT30M", lockAtLeastFor = "PT1M")
     public void weeklyAutoBackup() {
         if (!yedekKilidiniAl()) return;
@@ -623,7 +697,7 @@ public class BackupService {
         }
     }
 
-    @Scheduled(cron = "0 0 3 1 * ?")
+    @Scheduled(cron = "${app.backup.monthly-cron:0 30 3 1 * ?}")
     @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "backupMonthly", lockAtMostFor = "PT30M", lockAtLeastFor = "PT1M")
     public void monthlyAutoBackup() {
         if (!yedekKilidiniAl()) return;
@@ -636,7 +710,7 @@ public class BackupService {
         }
     }
 
-    @Scheduled(cron = "0 0 3 1 1 ?")
+    @Scheduled(cron = "${app.backup.yearly-cron:0 40 3 1 1 ?}")
     @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "backupYearly", lockAtMostFor = "PT30M", lockAtLeastFor = "PT1M")
     public void yearlyAutoBackup() {
         if (!yedekKilidiniAl()) return;
@@ -717,6 +791,7 @@ public class BackupService {
             sonuc.put("durum", "KRITIK");
             sonuc.put("mesaj", "Hiç yedek bulunamadı");
             sonuc.put("toplamYedek", 0);
+            durumGuncelle(2, null);
             return sonuc;
         }
         Map<String, Object> latest = backups.get(0);
@@ -744,6 +819,7 @@ public class BackupService {
         sonuc.put("yasSaat", yasSaat);
         sonuc.put("butunluk", butunluk);
         sonuc.put("toplamYedek", backups.size());
+        durumGuncelle("KRITIK".equals(durum) ? 2 : "UYARI".equals(durum) ? 1 : 0, lastModified / 1000);
         return sonuc;
     }
 

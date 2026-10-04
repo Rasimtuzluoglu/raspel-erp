@@ -1,6 +1,7 @@
 package com.raspel.erp.service;
 
 import com.raspel.erp.dto.ik.MaasBordroDTO;
+import com.raspel.erp.entity.finans.Kasa;
 import com.raspel.erp.entity.ik.MaasBordro;
 import com.raspel.erp.entity.ik.Personel;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -127,5 +128,96 @@ class MaasBordroServiceTest {
         MaasBordroDTO dto = MaasBordroDTO.builder().brutMaas(new BigDecimal("100")).build();
         assertThrows(com.raspel.erp.exception.BusinessException.class,
                 () -> maasBordroService.guncelle(1L, dto));
+    }
+
+    private Kasa kasa(String bakiye) {
+        Kasa k = new Kasa();
+        k.setId(5L);
+        k.setSirketId(1L);
+        k.setBakiye(new BigDecimal(bakiye));
+        return k;
+    }
+
+    /**
+     * C3 (çift ödeme yarışı): ödeme kontrolü KASA kilidi alınmadan ÖNCE
+     * çalışıyordu. İki eşzamanlı istek ikisi de "ödenmemiş" görüp ikisi de
+     * kasadan düşüyordu. Artık bordro satırı önce kilitleniyor.
+     */
+    @Test
+    void ode_bordroyuKilitliOkurVeOder() {
+        MaasBordro onayli = createBordro(1L);
+        onayli.setDurum("ONAYLANDI");
+        Kasa k = kasa("100000");
+        when(maasBordroRepository.findById(1L)).thenReturn(Optional.of(onayli));
+        when(maasBordroRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(onayli));
+        when(kasaRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(k));
+        when(maasBordroRepository.save(any(MaasBordro.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        maasBordroService.ode(1L, 5L);
+
+        verify(maasBordroRepository).findByIdForUpdate(1L);
+        verify(kasaRepository).findByIdForUpdate(5L);
+        assertEquals(0, new BigDecimal("79000").compareTo(k.getBakiye()));
+        assertEquals("ODENDI", onayli.getOdemeDurumu());
+        assertEquals(5L, onayli.getOdemeKasaId());
+        verify(kasaHareketRepository).save(any());
+    }
+
+    /** C3: zaten ödenmiş bordro ikinci kez ödenemez (kasa hareketi yazılmaz). */
+    @Test
+    void ode_zatenOdenmisBordroReddedilir() {
+        MaasBordro onayli = createBordro(1L);
+        onayli.setDurum("ONAYLANDI");
+        onayli.setOdemeDurumu("ODENDI");
+        when(maasBordroRepository.findById(1L)).thenReturn(Optional.of(onayli));
+        when(maasBordroRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(onayli));
+
+        var hata = assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> maasBordroService.ode(1L, 5L));
+
+        assertTrue(hata.getMessage().toLowerCase().contains("zaten"));
+        verify(kasaRepository, never()).findByIdForUpdate(any());
+        verify(kasaHareketRepository, never()).save(any());
+    }
+
+    /**
+     * C3 yarış senaryosunun deterministik simülasyonu: kilitli okuma "ödenmiş"
+     * satırı döndürürse ikinci istek kasa hiç kilitlemeden reddedilir.
+     */
+    @Test
+    void ode_ikinciEşzamanliIstekKasaDokunmadanReddedilir() {
+        MaasBordro çağıranınOkudugu = createBordro(1L);
+        çağıranınOkudugu.setDurum("ONAYLANDI");
+        MaasBordro bayatKopya = createBordro(1L);
+        bayatKopya.setDurum("ONAYLANDI");
+        bayatKopya.setOdemeDurumu("ODENDI"); // ilk istek tamamlanmış
+
+        when(maasBordroRepository.findById(1L)).thenReturn(Optional.of(çağıranınOkudugu));
+        when(maasBordroRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(bayatKopya));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> maasBordroService.ode(1L, 5L));
+        verify(kasaRepository, never()).findByIdForUpdate(any());
+    }
+
+    /** C3: kasa seçilmeden ödeme yapılamaz. */
+    @Test
+    void ode_kasaSecilmedenHataVerir() {
+        MaasBordro onayli = createBordro(1L);
+        onayli.setDurum("ONAYLANDI");
+        when(maasBordroRepository.findById(1L)).thenReturn(Optional.of(onayli));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> maasBordroService.ode(1L, null));
+    }
+
+    /** C3: onaylanmamış bordro ödenemez. */
+    @Test
+    void ode_onaylanmamisBordroReddedilir() {
+        when(maasBordroRepository.findById(1L)).thenReturn(Optional.of(createBordro(1L)));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> maasBordroService.ode(1L, 5L));
+        verify(maasBordroRepository, never()).findByIdForUpdate(any());
     }
 }

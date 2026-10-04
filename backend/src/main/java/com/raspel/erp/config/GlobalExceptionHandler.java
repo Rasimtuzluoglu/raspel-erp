@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,8 +38,20 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
+    private static final String MB = "MB";
+
     private final ObjectProvider<HataLogRepository> hataLogRepositoryProvider;
     private final ObjectProvider<HataBildirimService> hataBildirimServiceProvider;
+
+    /**
+     * Yukleme limitleri yapilandirmadan okunur; boylece mesaj yapilandirmayla
+     * eszamanli kalir (sabit yazilmis bir MB degeri limit degistiginde yaniltir).
+     */
+    @Value("${spring.servlet.multipart.max-file-size:10MB}")
+    private String maksDosyaBoyutu;
+
+    @Value("${spring.servlet.multipart.max-request-size:20MB}")
+    private String maksIstekBoyutu;
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleResourceNotFound(ResourceNotFoundException e) {
@@ -135,8 +148,22 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<Map<String, Object>> handleMaxUpload(MaxUploadSizeExceededException e) {
         log.warn("Upload limit aşıldı: {}", e.getMessage());
+        // Istek seviyesi limit (dosya + alanlar) asildiginda Spring dosya sinirindan
+        // daha kucuk bir dosyayi da reddedebilir; bu yuzden tek bir MB yazmak yaniltir.
+        String mesaj = "Yüklenen dosya çok büyük. Dosya başına en fazla " + mb(maksDosyaBoyutu)
+                + " olabilir (toplam istek limiti: " + mb(maksIstekBoyutu) + ").";
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
-                .body(buildBody("Yüklenen dosya çok büyük. En fazla 5MB olabilir.", HttpStatus.PAYLOAD_TOO_LARGE));
+                .body(buildBody(mesaj, HttpStatus.PAYLOAD_TOO_LARGE));
+    }
+
+    /** "10MB" -> "10 MB"; ayristirilamazsa deger oldugu gibi kullanilir. */
+    private String mb(String deger) {
+        if (deger == null || deger.isBlank()) return "10 " + MB;
+        String temiz = deger.trim().toUpperCase();
+        if (temiz.endsWith(MB)) {
+            return temiz.substring(0, temiz.length() - MB.length()).trim() + " " + MB;
+        }
+        return temiz;
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)

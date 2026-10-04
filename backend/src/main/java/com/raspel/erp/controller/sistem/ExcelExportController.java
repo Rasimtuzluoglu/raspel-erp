@@ -152,12 +152,20 @@ public class ExcelExportController {
         var list = stokService.tumunuGetir(sirketId, MAX_EXPORT_PAGE).getContent();
         var rows = list.stream().map(s -> {
             Map<String, Object> m = new LinkedHashMap<>();
-            m.put("ID", s.getId()); m.put("Ad", s.getAd()); m.put("Barkod", s.getBarkod());
-            m.put("Kategori", s.getKategori()); m.put("Birim", s.getBirim()); m.put("Miktar", s.getMiktar());
+            m.put("ID", s.getId()); m.put("Ad", s.getAd()); m.put("Stok Kodu", s.getStokKodu()); m.put("Barkod", s.getBarkod());
+            // Sınıflandırma alanları Excel'e de yazılır: `/api/import/stok` bu
+            // kolonları okuyor, böylece dışa aktar → içe aktar turunda veri kaybı
+            // olmaz. Önceden yalnız Kategori export edildiği için üretim tipi,
+            // marka ve stok kodu geri yüklenemiyordu.
+            m.put("Kategori", s.getKategori());
+            m.put("StokGrubu", s.getStokGrubu());
+            m.put("Marka", s.getMarka());
+            m.put("Birim", s.getBirim()); m.put("Miktar", s.getMiktar());
             m.put("Alış Fiyat", s.getFiyat()); m.put("Satış Fiyat", s.getSatisFiyati());
             return m;
         }).toList();
-        return excel("Stoklar", new String[]{"ID", "Ad", "Barkod", "Kategori", "Birim", "Miktar", "Alış Fiyat", "Satış Fiyat"}, rows);
+        return excel("Stoklar", new String[]{"ID", "Ad", "Stok Kodu", "Barkod", "Kategori", "StokGrubu",
+                "Marka", "Birim", "Miktar", "Alış Fiyat", "Satış Fiyat"}, rows);
     }
 
     @GetMapping("/personel")

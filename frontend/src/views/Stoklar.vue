@@ -245,7 +245,7 @@
         :current-page-report-template="'{totalRecords} ' + $t('common.recordsWord') + ' · {first}-{last}'"
         data-key="id"
         striped-rows
-        sort-field="miktar"
+        sort-field="stokGrubu"
         :sort-order="1"
         class="p-datatable-sm"
         :global-filter-fields="['ad', 'stokKodu', 'birim']"
@@ -258,7 +258,7 @@
           <span class="grup-baslik">
             <i class="pi pi-sitemap" />
             {{ slotProps.data.stokGrubu || t('stoklar.grupsuz') }}
-            <span class="grup-adet">{{ grupAdetleri[slotProps.data.stokGrubu || ''] || 0 }}</span>
+            <span class="grup-adet">{{ grupAdetleri[slotProps.data.stokGrubu || ''] ?? '' }}</span>
           </span>
         </template>
         <template #header>
@@ -338,13 +338,18 @@
             </div>
           </div>
         </template>
+        <!-- Satira tiklamak detay dialogunu acar. Bileşenlerin (genişletme oku,
+             secim kutusu) kendi tiklamaları bu akışı tetiklememeli; aksi
+             halde "⋮" menusunu acmak istemek detayi da acardi. -->
         <Column
           expander
           style="width: 3rem"
+          @click.stop
         />
         <Column
           selection-mode="multiple"
           header-style="width: 2.5rem"
+          @click.stop
         />
         <Column
           :header="t('stoklar.colGorsel')"
@@ -548,7 +553,7 @@
         @sil="confirmDel"
       />
       <Message
-        v-if="filtrelenmisStoklar && filtrelenmisStoklar.length === 0"
+        v-if="!loading && stokStore.stoklar.length === 0"
         severity="info"
         :text="t('stoklar.eslesenYok')"
         class="full-width"
@@ -640,20 +645,27 @@
           </div>
           <div class="form-grup">
             <label>{{ t('stoklar.kategori') }}</label>
-            <InputText
+            <AutoComplete
               v-model="form.kategori"
+              :suggestions="kategoriOnerileri"
               :placeholder="t('stoklar.kategoriPlaceholder')"
               class="w-full"
+              :force-selection="false"
+              dropdown
             />
+            <small class="alan-ipucu">{{ t('stoklar.kategoriIpucu') }}</small>
           </div>
         </div>
         <div class="form-row">
           <div class="form-grup">
             <label>{{ t('stoklar.stokGrubu') }}</label>
-            <InputText
+            <AutoComplete
               v-model="form.stokGrubu"
+              :suggestions="stokGruplari"
               :placeholder="t('stoklar.stokGrubuPlaceholder')"
               class="w-full"
+              :force-selection="false"
+              dropdown
             />
             <small class="alan-ipucu">{{ t('stoklar.stokGrubuIpucu') }}</small>
           </div>
@@ -787,11 +799,16 @@
             <label>{{ t('stoklar.tedarikci') }}</label>
             <Dropdown
               v-model="form.tedarikciId"
-              :options="cariHesapStore?.cariHesaplar || []"
+              :options="tedarikciOnerileri"
               option-label="ad"
               option-value="id"
               :placeholder="t('stoklar.tedarikciSecin')"
               class="w-full"
+              show-clear
+              filter
+              filter-by="ad,vergiNumarasi,telefon"
+              :loading="tedarikciOnerileriYukleniyor"
+              @filter="tedarikciAra"
             />
           </div>
           <div class="form-grup">
@@ -927,7 +944,6 @@
       v-model:depo-id="hareketForm.depoId"
       v-model:aciklama="hareketForm.aciklama"
       :baslik="hareketBaslik"
-      :cari-hesaplar="cariHesapStore?.cariHesaplar || []"
       :depolar="depolar"
       :loading="saving"
       @kaydet="saveHareket"
@@ -1017,7 +1033,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useI18n } from 'vue-i18n'
 import { useStokStore } from '../stores/stokStore.js'
-import { useCariHesapStore } from '../stores/cariHesapStore.js'
+import { useCariOnerileri } from '../composables/useCariOnerileri.js'
 import { stokAPI, excelAPI, uploadAPI, depoAPI, raporAPI } from '../api/index.js'
 import { unwrapList } from '../api/utils/unwrap.js'
 import EmptyState from '../components/EmptyState.vue'
@@ -1041,7 +1057,6 @@ const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { t } = useI18n()
 const stokStore = useStokStore()
-const cariHesapStore = useCariHesapStore()
 
 useKisayollar({
   yeni: () => openDialog(),
@@ -1129,7 +1144,7 @@ const barkodUretTek = async (stok) => {
     const adet = data?.uretildi || 0
     if (adet > 0) {
       toastBildirim.basarili(t('stoklar.barkodUretildi', { n: adet }))
-      await stokStore.getAll({ size: 1000 })
+      await stoklariYukle()
     } else {
       toastBildirim.uyari(t('stoklar.barkodZatenVar'))
     }
@@ -1146,7 +1161,7 @@ const barkodUretToplu = async () => {
     const adet = data?.uretildi || 0
     if (adet > 0) {
       toastBildirim.basarili(t('stoklar.barkodUretildi', { n: adet }))
-      await stokStore.getAll({ size: 1000 })
+      await stoklariYukle()
       seciliStoklar.value = []
     } else {
       toastBildirim.uyari(t('stoklar.barkodZatenVar'))
@@ -1243,16 +1258,36 @@ watch(grupla, (v) => {
 })
 const fiyatListeleri = ref({})
 
-// Stok grubu: aynı grup adındaki ürünler toplu fiyat güncellemede hedeflenir.
+// Gruba göre gruplama / toplu fiyat hedefleri için kullanılan değerler.
+// ÖNCE `stokStore.stoklar` üzerinden hesaplanıyordu; liste sunucu tarafında
+// sayfalanıyor (25 satır), dolayısıyla çipler sayfa değişince kayboluyor,
+// grup başlığındaki sayaç yanlış oluyor ve 7. sayfadaki gruba ulaşılamıyordu.
+// Artık sunucudan TÜM katalog dağılımı gelir.
+const gruplamaDagilimi = ref({ kategoriler: [], stokGruplari: [] })
+
+const gruplamaDagilimiYukle = async () => {
+  try {
+    const r = await stokAPI.gruplamaDagilimi()
+    gruplamaDagilimi.value = {
+      kategoriler: r.data?.kategoriler || [],
+      stokGruplari: r.data?.stokGruplari || []
+    }
+  } catch {
+    /* dağılım alınamadı: çipler boş kalır, liste etkilenmez */
+  }
+}
+
 const stokGruplari = computed(() =>
-  [...new Set((stokStore.stoklar || []).map((s) => s.stokGrubu).filter(Boolean))]
-    .sort((a, b) => a.localeCompare(b, 'tr'))
+  (gruplamaDagilimi.value.stokGruplari || []).map((g) => g.deger).filter(Boolean)
 )
+const kategoriOnerileri = computed(() =>
+  (gruplamaDagilimi.value.kategoriler || []).map((g) => g.deger).filter(Boolean)
+)
+
 const grupAdetleri = computed(() => {
   const harita = {}
-  for (const s of (stokStore.stoklar || [])) {
-    const anahtar = s.stokGrubu || ''
-    harita[anahtar] = (harita[anahtar] || 0) + 1
+  for (const g of gruplamaDagilimi.value.stokGruplari || []) {
+    if (g?.deger) harita[g.deger] = g.adet
   }
   return harita
 })
@@ -1296,32 +1331,17 @@ const depoDagilimYukle = async () => {
 
 const hareketBaslik = computed(() => (hareketTur.value === 'GIRIS' ? t('stoklar.hareketGiris') : t('stoklar.hareketCikis')))
 
+// Toplu fiyat diyaloğundaki üretim tipi seçenekleri de tüm katalogdan gelir.
 const stokGrubuOnerileri = computed(() => {
   const q = String(filtreStokGrubu.value || '').toLowerCase()
-  const degerler = [...new Set(stokStore.stoklar.map((s) => s.stokGrubu).filter(Boolean))]
-  return degerler
-    .filter((g) => g.toLowerCase().includes(q))
-    .sort((a, b) => a.localeCompare(b, 'tr'))
+  return stokGruplari.value.filter((g) => g.toLowerCase().includes(q))
 })
 
-const filtrelenmisStoklar = computed(() => {
-  return stokStore.stoklar.filter((s) => {
-    const q = filtreArama.value.toLowerCase()
-    if (
-      filtreArama.value &&
-      !s.ad?.toLowerCase().includes(q) &&
-      !s.stokKodu?.toLowerCase().includes(q) &&
-      !s.barkod?.toLowerCase().includes(q)
-    )
-      return false
-    if (filtreKategori.value && s.kategori !== filtreKategori.value) return false
-    if (filtreMarka.value && !s.marka?.toLowerCase().includes(filtreMarka.value.toLowerCase())) return false
-    if (filtreStokGrubu.value && s.stokGrubu !== filtreStokGrubu.value) return false
-    if (filtreMinFiyat.value != null && (s.fiyat || 0) < filtreMinFiyat.value) return false
-    if (filtreMaxFiyat.value != null && (s.fiyat || 0) > filtreMaxFiyat.value) return false
-    return true
-  })
-})
+// Not: `filtrelenmisStoklar` kaldırıldı. Liste sunucu tarafında sayfalanıyor ve
+// filtreler `stoklariYukle()` ile sunucuya gönderiliyor; aynı filtreleri client'da
+// tekrar uygulamak yalnızca o SAYFA satırlarını etkiliyordu (kategori/üretim tipi
+// karşılaştırması ayrıca büyük/küçük harfe duyarlıydı). Boş sonuç kontrolü artık
+// doğrudan gelen satır sayısına bakıyor.
 
 const stoklariYukle = async () => {
   const params = { page: stokSayfa.value, size: stokSayfaBoyutu.value }
@@ -1352,13 +1372,25 @@ const filtreDegisti = () => {
 
 const kritikAdet = computed(() => stokStore.stoklar.filter((s) => s.minMiktar && s.miktar <= s.minMiktar).length)
 
+// Tedarikci secici sunucu aramali ve yalnizca tedarikci/"her ikisi" turune
+// filtreli. Once `getAllCariHesaplar()` ile ilk 50 kayit cekiliyordu; 50.
+// kayittan sonraki bir tedarikci stoga atanamadan sessizce kayboluyordu.
+// Backend `tur` filtresi "Her Ikisi" kayitlarini da dahil eder.
+const {
+  oneriler: tedarikciOnerileri,
+  ara: tedarikciAra,
+  hemenAra: tedarikciOnerileriYukle,
+  yukleniyor: tedarikciOnerileriYukleniyor
+} = useCariOnerileri({ ekParams: { tur: 'Tedarikci' } })
+
 onMounted(async () => {
   // Bir yukleme hatasi digerini engellemesin (store'lar hata firlatir).
   await Promise.allSettled([
     stoklariYukle(),
-    cariHesapStore.getAllCariHesaplar(),
+    tedarikciOnerileriYukle(),
     depoAPI.getAll({ size: 500 }).then((r) => { depolar.value = unwrapList(r) }),
-    depoDagilimYukle()
+    depoDagilimYukle(),
+    gruplamaDagilimiYukle()
   ])
 })
 
@@ -1377,15 +1409,12 @@ const filtreTemizle = () => {
 const stokSec = async (s) => {
   seciliStok.value = s
   seciliStokId.value = s.id
-  try {
-    const r = await stokAPI.getHareketler(s.id)
-    stokHareketler.value = r.data
-  } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || t('stoklar.hareketYuklenemedi'))
-  }
   detailStok.value = s
   showDetailDialog.value = true
-  stokHareketleriYukle(s.id)
+  // Tek istek: hem yan panel (`StokHareketBolum`) hem detay dialogu aynı listeyi
+  // gösteriyor. Önceden burada `getHareketler` çağrılıp ardından
+  // `stokHareketleriYukle` ile aynı uç ikinci kez isteniyordu.
+  await stokHareketleriYukle(s.id)
 }
 
 const openDialog = () => {
@@ -1521,7 +1550,7 @@ const saveStok = async () => {
     }
     formTemizle()
     showDialog.value = false
-    await stokStore.getAll()
+    await stoklariYukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('stoklar.islemBasarisiz'))
   } finally {
@@ -1634,6 +1663,18 @@ const batchCsvExport = () => {
   URL.revokeObjectURL(url)
 }
 
+// Hareket sonrası tekrar yükleme: tablo sunucu sayfalı (`filtreli`), seçili
+// stok da tekil. Önceden `getAll({ size: 1000 })` çağrılıyordu; `getAll` ve
+// `filtreli` aynı store dizisini yazdığı için tablo 1000 satıra düşüyor, aktif
+// kategori/marka/depo/arama filtreleri ve paginator kayboluyordu.
+const hareketSonrasiYenile = async () => {
+  const sr = await stokAPI.getById(seciliStokId.value)
+  seciliStok.value = sr.data
+  detailStok.value = sr.data
+  await stokHareketleriYukle(seciliStokId.value)
+  await stoklariYukle()
+}
+
 const saveHareket = async () => {
   if (!hareketForm.value.miktar || hareketForm.value.miktar <= 0) {
     toastBildirim.uyari(t('stoklar.gecerliMiktar'))
@@ -1649,9 +1690,7 @@ const saveHareket = async () => {
       depoId: hareketForm.value.depoId,
       aciklama: hareketForm.value.aciklama
     })
-    const [hr, sr] = await Promise.all([stokAPI.getHareketler(seciliStokId.value), stokStore.getAll({ size: 1000 })])
-    stokHareketler.value = hr.data
-    seciliStok.value = sr.find((s) => s.id === seciliStokId.value)
+    await hareketSonrasiYenile()
     depoDagilimYukle()
     showHareketDialog.value = false
     toastBildirim.basarili(t('stoklar.hareketEklendi'))
@@ -1672,9 +1711,7 @@ const delHareket = (id) => {
     accept: async () => {
       try {
         await stokAPI.deleteHareket(id)
-        const [hr, sr] = await Promise.all([stokAPI.getHareketler(seciliStokId.value), stokStore.getAll({ size: 1000 })])
-        stokHareketler.value = hr.data
-        seciliStok.value = sr.find((s) => s.id === seciliStokId.value)
+        await hareketSonrasiYenile()
         toastBildirim.basarili(t('stoklar.hareketSilindi'))
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || err?.message || t('stoklar.silmeBasarisiz'))
@@ -1702,7 +1739,7 @@ const batchFiyatUygula = async () => {
       oran: batchFiyatForm.value.oran
     })
     const guncellenen = r.data?.etkilenenStokSayisi || r.data?.guncellenen || 0
-    await stokStore.getAll({ size: 1000 })
+    await stoklariYukle()
     batchFiyatDialog.value = false
     toastBildirim.basarili(t('stoklar.fiyatGuncellendi', { n: guncellenen }))
   } catch (e) {
@@ -1728,12 +1765,16 @@ const excelIndir = async () => {
   }
 }
 
+// Hareket listesi hem yan panelde (`StokHareketBolum`) hem detay dialogunda
+// (`StokDetayDialog`) gösteriliyor; ikisi de aynı veriyi okuyor.
 const stokHareketleriYukle = async (stokId) => {
   hareketlerYukleniyor.value = true
   hareketler.value = []
+  stokHareketler.value = []
   try {
     const r = await stokAPI.getHareketler(stokId)
     hareketler.value = r.data
+    stokHareketler.value = r.data
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('stoklar.hareketYuklenemedi'))
   } finally {

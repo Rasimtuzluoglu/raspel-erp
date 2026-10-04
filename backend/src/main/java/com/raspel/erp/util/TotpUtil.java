@@ -31,16 +31,40 @@ public final class TotpUtil {
         return generateCounterCode(base32Secret, counter);
     }
 
-    public static boolean validate(String base32Secret, String code, long timestampMillis) {
-        if (base32Secret == null || code == null) return false;
-        String normalized = code.trim();
-        for (long drift = -1; drift <= 1; drift++) {
-            long counter = timestampMillis / 1000 / TIME_STEP_SECONDS + drift;
-            String expected = generateCounterCode(base32Secret, counter);
-            if (constantTimeEquals(expected, normalized)) return true;
+/**
+ * TOTP doğrulamasının sonucunu kod ile birlikte döndürür. Replay koruması için
+ * eşleşen zaman adımı ({@code counter}) sonucu içinde taşınır.
+ */
+public record DogrulamaSonucu(boolean gecerli, long counter) {
+    public static final DogrulamaSonucu BASARISIZ = new DogrulamaSonucu(false, -1L);
+}
+
+public static boolean validate(String base32Secret, String code, long timestampMillis) {
+    return dogrula(base32Secret, code, timestampMillis).gecerli();
+}
+
+/**
+ * Kodu doğrular ve hangi zaman adımına denk geldiğini döndürür.
+ *
+ * <p><b>Replay koruması:</b> Doğrulama penceresi ±1 adım (±30 sn) olduğu için
+ * geçerli bir kod 90 saniye boyunca tekrar tekrar kabul ediliyordu. Bir dinleyen
+ * (ör. ekran görüntüsü, shoulder surfing) aynı kodu tekrar kullanarak 2FA'yı
+ * atlayabiliyordu. Çağıran, dönen {@code counter} değerini kullanıcıda saklayıp
+ * sonraki doğrulamalarda aynı adımı reddetmelidir
+ * ({@code KullaniciService.ikiFaktorKodDogrula}).
+ */
+public static DogrulamaSonucu dogrula(String base32Secret, String code, long timestampMillis) {
+    if (base32Secret == null || code == null) return DogrulamaSonucu.BASARISIZ;
+    String normalized = code.trim();
+    for (long drift = -1; drift <= 1; drift++) {
+        long counter = timestampMillis / 1000 / TIME_STEP_SECONDS + drift;
+        String expected = generateCounterCode(base32Secret, counter);
+        if (constantTimeEquals(expected, normalized)) {
+            return new DogrulamaSonucu(true, counter);
         }
-        return false;
     }
+    return DogrulamaSonucu.BASARISIZ;
+}
 
     private static String generateCounterCode(String base32Secret, long counter) {
         try {

@@ -77,7 +77,11 @@ export default defineConfig(({ mode }) => ({
   ].filter(Boolean),
   server: {
     port: 5173,
-    host: 'localhost',
+    // `localhost` Windows'ta once IPv6'ya (::1) cozumleniyor, Cypress ise
+    // baseUrl'de IPv4 (127.0.0.1) kullaniyor; sunucu yalnizca ::1'e baglaninca
+    // E2E testleri ERR_CONNECTION_REFUSED ile kalkiyordu. Her iki istemci de
+    // IPv4 kullansin diye sunucuyu acikca 127.0.0.1'e bagliyoruz.
+    host: '127.0.0.1',
     proxy: {
       '/api': {
         target: 'http://localhost:8081',

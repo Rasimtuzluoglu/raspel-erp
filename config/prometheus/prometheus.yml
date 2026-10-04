@@ -34,3 +34,9 @@ scrape_configs:
   - job_name: 'node'
     static_configs:
       - targets: ['raspel-node-exporter:9100']
+
+  # Veritabani metrikleri (baglanti, kilit, replika gecikmesi, tablo buyume).
+  # Hedef docker-compose.yml icindeki postgres-exporter servisidir.
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['raspel-postgres-exporter:9187']

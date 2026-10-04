@@ -41,6 +41,7 @@
           style="width: 80px"
         >
           <template #body="s">
+            v-permission="'STOK_DELETE'"
             <Button
               icon="pi pi-trash"
               :aria-label="$t('common.delete')"

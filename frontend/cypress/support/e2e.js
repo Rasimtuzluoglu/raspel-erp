@@ -2,6 +2,13 @@
 // Tum API'ler mock'lanir (backend gerekmez). Ortak giris akisi tek komutta toplanmistir.
 
 Cypress.Commands.add('apiMocklariKur', () => {
+  // Genel yakalayici EN BASA tanimlanir. Cypress aynı isteğe birden fazla
+  // intercept uygulandığında EN SON tanımlananı seçer (tanımlama sırasının
+  // tersten çalışması). Bu satır sonda iken `/api/**` catch-all'i
+  // `/api/kullanicilar/ben`, `/api/dashboard` ve `/api/yetkiler/*`
+  // mock'larını gölgeliyor, hepsi `[]` dönüyor ve giriş akışı kırılıyordu.
+  cy.intercept('GET', '/api/**', { statusCode: 200, body: [] }).as('catchAll')
+
   cy.intercept('POST', '/api/kullanicilar/giris', {
     statusCode: 200,
     body: { girisToken: 'test-token', twoFactorGerekli: false, sirketler: [{ id: 1, ad: 'Test Şirketi' }] }
@@ -32,8 +39,6 @@ Cypress.Commands.add('apiMocklariKur', () => {
     statusCode: 200,
     body: { toplamCariSayisi: 0, toplamBakiye: 0, toplamFatura: 0, toplamStok: 0, sonHareketler: [], enCokSatanlar: [] }
   }).as('dashboard')
-  // Genel yakalayici: tanimlanmamis GET istekleri bos dizi donsun
-  cy.intercept('GET', '/api/**', { statusCode: 200, body: [] }).as('catchAll')
 })
 
 Cypress.Commands.add('girisYap', () => {

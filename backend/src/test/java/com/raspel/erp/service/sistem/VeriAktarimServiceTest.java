@@ -9,6 +9,7 @@ import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.repository.envanter.StokRepository;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.sistem.SirketRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,17 +44,92 @@ class VeriAktarimServiceTest {
     @Mock
     private com.raspel.erp.config.TenantChecker tenantChecker;
 
+    @Mock
+    private com.raspel.erp.repository.sistem.KullaniciRepository kullaniciRepository;
+
     @InjectMocks
     private VeriAktarimService veriAktarimService;
 
     private Sirket kaynakSirket;
     private Sirket hedefSirket;
+    private org.springframework.security.core.Authentication eskiAuth;
 
     @BeforeEach
     void setUp() {
         kaynakSirket = Sirket.builder().id(1L).ad("Kaynak Sirket").build();
         hedefSirket = Sirket.builder().id(2L).ad("Hedef Sirket").build();
-        lenient().when(tenantChecker.getCurrentSirketId()).thenReturn(null);
+
+        // REDTEAM H-3 düzeltmesi: tenantDogrula artık (a) şirket bağlamı olmazsa
+        // hata veriyor ve (b) çağıran kullanıcının KAYNAK ve HEDEF şirketin ikisine
+        // de üye olduğunu doğruluyor. Testler bu yeni sözleşmeye göre kurulur.
+        eskiAuth = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication();
+        var auth = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                "admin", null, java.util.List.of(
+                        new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN")));
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);
+
+        lenient().when(tenantChecker.getCurrentSirketId()).thenReturn(1L);
+        lenient().when(kullaniciRepository.findByUsername("admin")).thenReturn(Optional.of(
+                com.raspel.erp.entity.sistem.Kullanici.builder()
+                        .id(1L).username("admin").role("ADMIN").sirketId(1L).build()));
+    }
+
+    @AfterEach
+    void tearDown() {
+        org.springframework.security.core.context.SecurityContextHolder
+                .getContext().setAuthentication(eskiAuth);
+    }
+
+    /** REDTEAM H-3 regresyonu: üye olmadığı şirketin verisi okunamamalı. */
+    @Test
+    void onizleme_uyesiOlmadigiSirketiReddeder() {
+        var auth = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                "user_b", null, java.util.List.of(
+                        new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER")));
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);
+        when(kullaniciRepository.findByUsername("user_b")).thenReturn(Optional.of(
+                com.raspel.erp.entity.sistem.Kullanici.builder()
+                        .id(2L).username("user_b").role("USER").sirketId(2L).build()));
+
+        BusinessException hata = assertThrows(BusinessException.class,
+                () -> veriAktarimService.onizleme(1L, 2L));
+        assertTrue(hata.getMessage().contains("Kaynak"));
+        verify(sirketRepository, never()).findById(any());
+    }
+
+    /** REDTEAM H-3 regresyonu: aktif şirket taraf değilse reddedilmeli. */
+    @Test
+    void aktarimYap_aktifSirketTarafDegilseReddeder() {
+        var auth = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                "user", null, java.util.List.of(
+                        new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER")));
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);
+        when(kullaniciRepository.findByUsername("user")).thenReturn(Optional.of(
+                com.raspel.erp.entity.sistem.Kullanici.builder()
+                        .id(3L).username("user").role("USER").sirketId(3L).build()));
+
+        VeriAktarimDTO dto = VeriAktarimDTO.builder()
+                .kaynakSirketId(1L)
+                .hedefSirketId(2L)
+                .build();
+
+        assertThrows(BusinessException.class, () -> veriAktarimService.aktarimYap(dto));
+        verify(sirketRepository, never()).findById(any());
+    }
+
+    /** REDTEAM H-3 regresyonu: şirket bağlamı yoksa fail-open olmamalı. */
+    @Test
+    void aktarimYap_sirketBaglamiYoksaReddeder() {
+        when(tenantChecker.getCurrentSirketId()).thenReturn(null);
+
+        VeriAktarimDTO dto = VeriAktarimDTO.builder()
+                .kaynakSirketId(1L)
+                .hedefSirketId(2L)
+                .build();
+
+        assertThrows(BusinessException.class, () -> veriAktarimService.aktarimYap(dto));
+        verify(sirketRepository, never()).findById(any());
     }
 
     @Test
@@ -147,19 +223,27 @@ class VeriAktarimServiceTest {
 
     @Test
     void aktarimYap_ayniSirketHata() {
-        when(sirketRepository.findById(1L)).thenReturn(Optional.of(kaynakSirket));
-
         VeriAktarimDTO dto = VeriAktarimDTO.builder()
                 .kaynakSirketId(1L)
                 .hedefSirketId(1L)
                 .build();
 
         assertThrows(BusinessException.class, () -> veriAktarimService.aktarimYap(dto));
+        verify(sirketRepository, never()).findById(any());
     }
 
     @Test
     void aktarimYap_baskaSirketAktariminiReddeder() {
+        // REDTEAM H-3: Aktif şirket (3) ne kaynak (1) ne hedef (2); kullanıcı da
+        // bu şirketlere üye değil -> aktarım başlamadan reddedilmeli.
+        var auth = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                "user_3", null, java.util.List.of(
+                        new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER")));
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);
         when(tenantChecker.getCurrentSirketId()).thenReturn(3L);
+        when(kullaniciRepository.findByUsername("user_3")).thenReturn(Optional.of(
+                com.raspel.erp.entity.sistem.Kullanici.builder()
+                        .id(3L).username("user_3").role("USER").sirketId(3L).build()));
 
         VeriAktarimDTO dto = VeriAktarimDTO.builder()
                 .kaynakSirketId(1L)

@@ -139,12 +139,33 @@
           </span>
           <span class="p-input-icon-left arama-kutusu">
             <i class="pi pi-search" />
-            <InputText
-              ref="aramaInputRef"
-              v-model="seriNoArama"
+            <!-- Sunucu taraflı yazarken arama (typeahead). Önceden bu kutu kart
+                 ızgarasını yalnızca YÜKLÜ 50 üründe filtreliyordu; katalog
+                 büyüdükçe ürünler hiç bulunamıyordu. -->
+            <AutoComplete
+              ref="urunAraAutoRef"
+              v-model="urunOneri"
+              :suggestions="urunOnerileri"
+              option-label="ad"
               :placeholder="t('hizliSatis.aramaPlaceholder')"
               class="w-full"
-            />
+              :min-length="2"
+              :delay="250"
+              :force-selection="false"
+              :panel-style="{ minWidth: '380px' }"
+              :scroll-height="'320px'"
+              dropdown
+              @complete="urunOneriAra"
+              @option-select="urunOneriSecildi"
+            >
+              <template #option="slotProps">
+                <div class="urun-oneri">
+                  <span class="urun-oneri-ad">{{ slotProps.option.ad }}</span>
+                  <span class="urun-oneri-kod">{{ slotProps.option.stokKodu || slotProps.option.barkod || '' }}</span>
+                  <span class="urun-oneri-fiyat">{{ formatCurrency(satisFiyati(slotProps.option)) }}</span>
+                </div>
+              </template>
+            </AutoComplete>
           </span>
           <button
             type="button"
@@ -404,6 +425,9 @@
               :vurgulu-id="vurguluId"
               :suruklenen-idx="suruklenenIdx"
               :geri-al-sepet="geriAlSepet"
+              :geri-al-satir="!!geriAlSatir"
+              :urun-degistir-satir="urunDegistirSatir"
+              :urun-onerileri="urunDegistirOnerileri"
               :kayitli-sepet-var="kayitliSepetVar"
               :detay-acik="detayAcik"
               :toplam-ft3="toplamFt3"
@@ -416,6 +440,11 @@
               @yukle="sepetYukle"
               @temizle="sepetiGeriAlinabilirTemizle()"
               @geri-al="sepetGeriAl"
+              @satir-geri-al="geriAlSatirYap"
+              @urun-degistir-ac="urunDegistirAc"
+              @urun-degistir-ara="urunDegistirAra"
+              @urun-degistir-sec="urunDegistirSec"
+              @urun-degistir-vazgec="urunDegistirKapat"
               @sil="sepetSil"
               @miktar-azalt="miktarAzalt"
               @miktar-artir="(i) => sepet[i].miktar++"
@@ -748,7 +777,6 @@ import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useAuthStore } from '../stores/authStore.js'
-import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useStokStore } from '../stores/stokStore.js'
 import { useMarka } from '../composables/useMarka.js'
 import { useI18n } from 'vue-i18n'
@@ -760,6 +788,7 @@ import PosUrunKarti from '../components/PosUrunKarti.vue'
 import PosOdemePaneli from '../components/PosOdemePaneli.vue'
 import PosSepetPaneli from '../components/PosSepetPaneli.vue'
 import PosMusteriPaneli from '../components/PosMusteriPaneli.vue'
+import { useCariOnerileri, cariHesapCoz } from '../composables/useCariOnerileri.js'
 import { faturaAPI, cariHesapAPI, stokAPI, kasaAPI, bankaAPI, sirketAPI, posAPI, teslimatAPI } from '../api/index.js'
 import { useOfflineSatisKuyrugu } from '../composables/useOfflineSatisKuyrugu.js'
 import SelectButton from 'primevue/selectbutton'
@@ -775,7 +804,6 @@ import { useConfirm } from 'primevue/useconfirm'
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const authStore = useAuthStore()
-const cariHesapStore = useCariHesapStore()
 const stokStore = useStokStore()
 const offlineKuyruk = useOfflineSatisKuyrugu()
 const { t } = useI18n()
@@ -835,7 +863,7 @@ const handlePosKeys = (e) => {
     return
   }
   if (e.key === 'F3') {
-    e.preventDefault(); odakla(aramaInputRef); return
+    e.preventDefault(); odaklaUrunArama(); return
   }
   if (e.key === 'F4') {
     e.preventDefault()
@@ -990,7 +1018,6 @@ onUnmounted(() => {
 
 const sirketAdi = computed(() => authStore.sirketAdi || '')
 
-const seriNoArama = ref('')
 const siralama = ref('ad')
 const gosterilenAdet = ref(60)
 const globalBarkod = ref('')
@@ -999,7 +1026,7 @@ const scannerAcik = ref(false)
 const filtrePopover = ref(null)
 const tercihPopover = ref(null)
 const barkodInputRef = ref(null)
-const aramaInputRef = ref(null)
+const urunAraAutoRef = ref(null)
 const musteriPaneliRef = ref(null)
 const aktifSatir = ref(-1)
 const sepetListeRef = ref(null)
@@ -1088,7 +1115,6 @@ watch(musteriModu, (mod) => {
     musteriGiris.value = ''
   }
 })
-const musteriOnerileri = ref([])
 const yeniMusteriDialog = ref(false)
 const yeniMusteri = ref({ ad: '', telefon: '', email: '', adres: '', vergiNo: '', tur: 'Musteri' })
 const musteriKaydediliyor = ref(false)
@@ -1422,18 +1448,6 @@ const filtrelenmisUrunler = computed(() => {
     list = list.filter((u) => Number(u.miktar || 0) > 0)
   }
 
-  if (seriNoArama.value) {
-    const q = seriNoArama.value.toLowerCase()
-    list = list.filter(
-      (u) =>
-        u.ad?.toLowerCase().includes(q) ||
-        u.stokKodu?.toLowerCase().includes(q) ||
-        u.barkod?.toLowerCase().includes(q) ||
-        u.seriNo?.toLowerCase().includes(q) ||
-        u.stokGrubu?.toLowerCase().includes(q)
-    )
-  }
-
   return [...list].sort((a, b) => {
     if (siralama.value === 'fiyat') return (satisFiyati(b) || 0) - (satisFiyati(a) || 0)
     if (siralama.value === 'stok') return (b.miktar || 0) - (a.miktar || 0)
@@ -1441,11 +1455,14 @@ const filtrelenmisUrunler = computed(() => {
   })
 })
 
-// Kademeli gösterim: binlerce üründe ilk 60 kart çizilir, "Daha fazla" ile artırılır.
+// Kademeli gösterim: ilk 60 kart çizilir, "Daha fazla" ile artırılır.
 const gorunenUrunler = computed(() => filtrelenmisUrunler.value.slice(0, gosterilenAdet.value))
 
 // Filtre/sıralama değişince kademeli gösterim baştan başlar.
-watch([seriNoArama, filtreKategori, filtreMarka, filtreStokGrubu, sadeceStokta, siralama], () => {
+// NOT: `seriNoArama` artık kart ızgarasını DEĞİL, sunucu taraflı typeahead'ı
+// besler; ızgara sadece kategori/marka/stokGrubu filtreleriyle daralır. Önceden
+// buradaki serbest metin filtresi yalnızca ilk 50 üründe çalışıyordu.
+watch([filtreKategori, filtreMarka, filtreStokGrubu, sadeceStokta, siralama], () => {
   gosterilenAdet.value = 60
 })
 
@@ -1486,6 +1503,157 @@ const urunKartiTikla = (u) => {
   sepeteEkle(u)
 }
 
+// ---------------------------------------------------------------------------
+// Sunucu taraflı ürün araması (typeahead)
+// ---------------------------------------------------------------------------
+// Önceki davranış: ara kutusu YÜKLENMİŞ 50 ürünü client-side filtreliyordu.
+// Katalog 50'yi aşınca ürünler hiç bulunamıyordu. Artık sunucu sorgulanıyor.
+const urunOneri = ref(null)
+const urunOnerileri = ref([])
+let urunOneriZamanlayici = null
+let urunOneriSeq = 0
+
+const urunOneriAra = (event) => {
+  const q = (event?.query || '').trim()
+  clearTimeout(urunOneriZamanlayici)
+  if (q.length < 2) {
+    urunOnerileri.value = []
+    return
+  }
+  // Gecikmeyi biz yönetiyoruz: AutoComplete'un kendi delay'i ile birlikte
+  // çift istek olmasın.
+  urunOneriZamanlayici = setTimeout(async () => {
+    const seq = ++urunOneriSeq
+    try {
+      const r = await stokAPI.satisOnerileri(q, 20)
+      // Yavaş yanıtlar yarış koşulunu bozmasın.
+      if (seq !== urunOneriSeq) return
+      urunOnerileri.value = Array.isArray(r.data) ? r.data : (r.data?.content || [])
+    } catch {
+      if (seq === urunOneriSeq) urunOnerileri.value = []
+    }
+  }, 250)
+}
+
+const urunOneriSecildi = (event) => {
+  const u = event?.value
+  urunOneri.value = null
+  urunOnerileri.value = []
+  if (!u) return
+  if (stokYokMu(u)) {
+    toastBildirim.uyari(t('hizliSatis.stokYokUyari', { ad: u.ad }))
+    return
+  }
+  sepeteEkle(u)
+  // Ardışık ürün eklemede odak alanda kalsın.
+  nextTick(() => odaklaUrunArama())
+}
+
+const odaklaUrunArama = () => {
+  const el = urunAraAutoRef.value?.$el || urunAraAutoRef.value
+  el?.querySelector?.('input')?.focus?.()
+}
+
+// ---------------------------------------------------------------------------
+// Sepette ürün değiştirme
+// ---------------------------------------------------------------------------
+// Yanlış ürün seçildiyse satır silip yeniden eklemek adedi ve seçili fiyat tipini
+// kaybettiriyordu. Artık satır yerinde değiştirilir; adet korunur, fiyat tipi
+// yeni ürünün listesinde varsa ona göre güncellenir.
+const urunDegistirSatir = ref(-1)
+const urunDegistirOnerileri = ref([])
+let urunDegistirZamanlayici = null
+let urunDegistirSeq = 0
+
+const urunDegistirAc = (idx) => {
+  const kalem = sepet.value[idx]
+  if (!kalem) return
+  urunDegistirSatir.value = idx
+  urunDegistirOnerileri.value = []
+  aktifSatir.value = idx
+}
+
+const urunDegistirKapat = () => {
+  urunDegistirSatir.value = -1
+  urunDegistirOnerileri.value = []
+  clearTimeout(urunDegistirZamanlayici)
+}
+
+const urunDegistirAra = (event) => {
+  const q = (event?.query || '').trim()
+  clearTimeout(urunDegistirZamanlayici)
+  if (q.length < 2) {
+    urunDegistirOnerileri.value = []
+    return
+  }
+  urunDegistirZamanlayici = setTimeout(async () => {
+    const seq = ++urunDegistirSeq
+    try {
+      const r = await stokAPI.satisOnerileri(q, 20)
+      if (seq !== urunDegistirSeq) return
+      urunDegistirOnerileri.value = Array.isArray(r.data) ? r.data : (r.data?.content || [])
+    } catch {
+      if (seq === urunDegistirSeq) urunDegistirOnerileri.value = []
+    }
+  }, 250)
+}
+
+const urunDegistirSec = async ({ idx, urun }) => {
+  const kalem = sepet.value[idx]
+  urunDegistirKapat()
+  if (!kalem || !urun) return
+  if (urun.id === kalem.id) return
+
+  // Aynı ürün sepette zaten varsa miktarları birleştir, ayrı satır açma.
+  const varOlanIndex = sepet.value.findIndex((i, i2) => i2 !== idx && i.id === urun.id)
+  if (varOlanIndex >= 0) {
+    sepet.value[varOlanIndex].miktar += kalem.miktar
+    sepetSil(idx)
+    satiriVurgula(urun.id)
+    toastBildirim.basarili(t('hizliSatis.urunBirlestirildi', { ad: urun.ad }))
+    return
+  }
+
+  const seciliTip = kalem.fiyatTipi
+  const stdFiyat = Number(urun.satisFiyati || urun.fiyat || 0)
+
+  // Ürün kimliğini ve özelliklerini değiştir; MİKTAR KORUNUR.
+  kalem.id = urun.id
+  kalem.ad = urun.ad
+  kalem.stokKodu = urun.stokKodu
+  kalem.barkod = urun.barkod
+  kalem.kdvOrani = urun.kdvOrani != null ? Number(urun.kdvOrani) : 0
+  kalem.birim = urun.birim || kalem.birim
+  kalem.birimHacim = urun.birimHacim || kalem.birimHacim
+  kalem.agirlik = Number(urun.agirlik) || 0
+  kalem.sonAldigiFiyat = null
+  kalem.sonAldigiTarih = null
+
+  // Fiyat listesi yeni ürüne göre; aynı fiyat tipi varsa o korunur, yoksa ilk
+  // fiyat seçilir. sepete ekleme ile aynı mantık.
+  let fiyatlar = [
+    { ad: t('hizliSatis.fiyatPerakende'), fiyat: stdFiyat },
+    { ad: t('hizliSatis.fiyatToptan'), fiyat: Math.round(stdFiyat * 0.9 * 100) / 100 },
+    { ad: t('hizliSatis.fiyatOzel'), fiyat: Math.round(stdFiyat * 0.8 * 100) / 100 }
+  ]
+  const tckilen = await urunFiyatlariniYukleTek(urun)
+  if (tckilen && tckilen.length > 0) fiyatlar = tckilen
+
+  // Kullanıcı bu arada satırı sildiyse/başka ürün çevirdiyse dokunma.
+  const guncel = sepet.value[idx]
+  if (!guncel || guncel.id !== urun.id) return
+
+  guncel.fiyatlar = fiyatlar
+  if (fiyatlar.some((f) => f.ad === seciliTip)) {
+    guncel.fiyatTipi = seciliTip
+    guncel.fiyat = fiyatlar.find((f) => f.ad === seciliTip).fiyat
+  } else {
+    guncel.fiyatTipi = fiyatlar[0].ad
+    guncel.fiyat = fiyatlar[0].fiyat
+  }
+  satiriVurgula(urun.id)
+}
+
 
 const simdikiTarih = computed(() => formatDateTime(new Date()))
 
@@ -1493,7 +1661,9 @@ const simdikiTarih = computed(() => formatDateTime(new Date()))
 onMounted(async () => {
   try {
     await Promise.all([
-      cariHesapStore.getAllCariHesaplar(),
+      // POS musteri secici sunucu aramali; 50 kayitlik onbellek yerine ilk
+      // sayfa onerileri yukleniyor, sonraki aramalar sunucuya gidiyor.
+      musteriOnerileriYukle(),
       stokStore.getAll(),
       soforleriYukle(),
       cokSatanlariYukle(),
@@ -1504,17 +1674,19 @@ onMounted(async () => {
     ])
     kayitliSepetVar.value = !!localStorage.getItem('raspel_kayitli_sepet')
     await fisAyarlariSunucudanYukle()
-    degisimSorgusunuUygula()
+    await degisimSorgusunuUygula()
   } catch (e) {
     // Kullanici bos urun listesi gorup "urun yok" sanmasin; yukleme hatasini bildir.
     toastBildirim.hata(e?.response?.data?.message || t('hizliSatis.yuklemeHatasi'))
   }
 })
 
-const degisimSorgusunuUygula = () => {
+const degisimSorgusunuUygula = async () => {
   const qCari = route.query.cariHesapId
   if (qCari) {
-    const c = cariHesapStore.cariHesaplar?.find((x) => String(x.id) === String(qCari))
+    // Once onbellek, olmazsa tek kayit: liste 50 kayitla sinirli oldugu icin
+    // cari listede yoksa musteri sessizce secilmemis kaliyordu.
+    const c = await cariHesapCoz(qCari, musteriOnerileri.value)
     if (c) seciliMusteri.value = c
   }
   if (route.query.degisim) {
@@ -1601,19 +1773,10 @@ watch([seciliSofor, seciliMusteri], () => {
   if (adres) teslimatAdresi.value = adres
 })
 
-const musteriAra = (event) => {
-  const query = event.query
-  const kaynak = cariHesapStore?.cariHesaplar || []
-  if (!query) {
-    musteriOnerileri.value = kaynak.slice(0, 20)
-    return
-  }
-  const q = query.toLowerCase()
-  musteriOnerileri.value = kaynak.filter(
-      (c) => c.ad?.toLowerCase().includes(q) || c.vergiNo?.toLowerCase().includes(q) || c.telefon?.includes(query)
-    )
-    .slice(0, 20)
-}
+// POS musteri secici sunucu aramali. Once 50 kayitlik onbellek istemci
+// tarafindan filtreleniyordu; kasa basinda 50'den fazla cari olan isletmede
+// musterinin bulunmamasi kullaniciyi "yeni cari" yoluna zorluyordu.
+const { oneriler: musteriOnerileri, ara: musteriAra, hemenAra: musteriOnerileriYukle } = useCariOnerileri()
 
 const musteriSec = (event) => {
   seciliMusteri.value = event.value
@@ -1806,13 +1969,51 @@ const sepeteCariFiyatUygula = async () => {
   }))
 }
 
-const miktarAzalt = (idx) => {
-  if (sepet.value[idx].miktar > 1) sepet.value[idx].miktar--
-  else sepetSil(idx)
+// Satır silme: aktifSatir bir İNDEKS. splice sonrası geride kalıyor ve
+// Delete/Enter/Alt+↑↓ gibi klavye kısayolları yanlış satıra yönleniyordu.
+const sepetSil = (idx) => {
+  if (idx < 0 || idx >= sepet.value.length) return
+  sepet.value.splice(idx, 1)
+  if (sepet.value.length === 0) aktifSatir.value = -1
+  else if (aktifSatir.value > idx) aktifSatir.value -= 1
+  else if (aktifSatir.value === idx) aktifSatir.value = Math.min(idx, sepet.value.length - 1)
 }
 
-const sepetSil = (idx) => {
-  sepet.value.splice(idx, 1)
+const miktarAzalt = (idx) => {
+  const satir = sepet.value[idx]
+  if (!satir) return
+  if (satir.miktar > 1) {
+    satir.miktar--
+    return
+  }
+  // Miktar 1'de "-": satırı doğrudan silmek, kasada farkında olmadan veri
+  // kaybına yol açıyordu. Satır kaldırılır ama geri al bar'ı çıkar.
+  geriAlSatirKaydet(idx)
+  sepetSil(idx)
+}
+
+// Silinen satırı kısa süre geri alınabilir tutar (sepet geneli geri alma ile
+// aynı 8 sn pencere).
+const geriAlSatir = ref(null)
+let geriAlSatirZamanlayici = null
+const GERI_AL_PENCERE_MS = 8000
+
+const geriAlSatirKaydet = (idx) => {
+  const kalem = sepet.value[idx]
+  if (!kalem) return
+  geriAlSatir.value = { kalem: { ...kalem }, idx }
+  clearTimeout(geriAlSatirZamanlayici)
+  geriAlSatirZamanlayici = setTimeout(() => { geriAlSatir.value = null }, GERI_AL_PENCERE_MS)
+}
+
+const geriAlSatirYap = () => {
+  if (!geriAlSatir.value) return
+  const { kalem, idx } = geriAlSatir.value
+  const hedef = Math.min(Math.max(idx, 0), sepet.value.length)
+  sepet.value.splice(hedef, 0, kalem)
+  aktifSatir.value = hedef
+  geriAlSatir.value = null
+  clearTimeout(geriAlSatirZamanlayici)
 }
 
 const fisiYazdir = (gercekFaturaNo, fiyatliOverride = null) => {
@@ -2163,6 +2364,8 @@ const sepetiGeriAlinabilirTemizle = () => {
   }
   sepet.value = []
   aktifSatir.value = -1
+  geriAlSatir.value = null
+  clearTimeout(geriAlSatirZamanlayici)
 }
 const sepetGeriAl = () => {
   if (!geriAlSepet.value) return
@@ -2182,6 +2385,9 @@ const yeniSatisaBasla = () => {
 const sepetiTemizle = () => {
   sepet.value = []
   geriAlSepet.value = null
+  geriAlSatir.value = null
+  clearTimeout(geriAlSatirZamanlayici)
+  aktifSatir.value = -1
   seciliMusteri.value = null
   musteriGiris.value = ''
   seciliSofor.value = null
@@ -2225,53 +2431,11 @@ const sepetiTemizle = () => {
   padding: 11px 15px;
 }
 /* Bolum basliklari */
-.pos-buyuk .pos-bolum-baslik,
-.pos-buyuk .katlanir-baslik {
-  font-size: 16px;
-}
 .pos-buyuk .product-header h3 {
   font-size: 18px;
 }
-/* Sepet */
-.pos-buyuk .sepet-tutar {
-  font-size: 16px;
-}
-.pos-buyuk .sepet-son-alis {
-  font-size: 15px;
-}
-.pos-buyuk .sepet-item {
-  padding: 14px 0;
-}
-/* Ozet ve tutarlar */
-.pos-buyuk .ozet-satir,
-.pos-buyuk .odeme-kalan {
-  font-size: 16px;
-}
-.pos-buyuk .odenen-satir label {
-  font-size: 15px;
-}
-.pos-buyuk .genel-toplam-deger {
-  font-size: 24px;
-}
-.pos-buyuk .kalan-deger {
-  font-size: 17px;
-}
-/* Odeme yontemleri */
-.pos-buyuk .odeme-yontem-btn {
-  font-size: 14px;
-  padding: 11px 6px;
-}
-.pos-buyuk .odeme-yontem-btn i {
-  font-size: 20px;
-}
-/* Musteri */
-.pos-buyuk .musteri-option,
-.pos-buyuk .secili-musteri-ad {
-  font-size: 15px;
-}
-.pos-buyuk .musteri-option-detay {
-  font-size: 13px;
-}
+/* NOT: Sepet / musteri / odeme panelinin buyuk yazi olcekleri
+   `assets/pos-panels.css` icinde (`.pos-container.pos-buyuk ...`). */
 /* Gunluk satislar */
 .pos-buyuk :deep(.gunluk-satis-cari) {
   font-size: 14px;
@@ -2465,10 +2629,12 @@ const sepetiTemizle = () => {
   }
 }
 
+/* Kaynak deger: POS govdesi iki sutun (urun / siparis). Dikey kilit C1 blogunda
+   eklenir; buradaki gap ortak olcek, C1 blogu tekrar tanimlamaz. */
 .pos-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(340px, 30vw, 420px);
-  gap: 16px;
+  gap: 14px;
   align-items: stretch;
 }
 .pos-left {
@@ -2481,100 +2647,10 @@ const sepetiTemizle = () => {
   gap: 12px;
 }
 
-.siparis-kart :deep(.p-card-content) {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-.pos-bolum {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.pos-bolum + .pos-bolum {
-  border-top: 1px solid var(--border);
-  padding-top: 18px;
-}
-.pos-bolum-baslik {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-.pos-bolum-baslik i {
-  color: var(--accent);
-  font-size: 14px;
-}
-.pos-bolum-baslik.sepet-baslik {
-  justify-content: space-between;
-}
-
-/* Katlanabilir bolum basligi */
-.katlanir-baslik {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-height: 40px;
-  padding: 6px 4px;
-  border: none;
-  background: transparent;
-  color: var(--text-primary);
-  font: inherit;
-  font-weight: 700;
-  font-size: inherit;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: background 0.15s;
-}
-.katlanir-baslik:hover {
-  background: var(--bg-secondary);
-}
-.katlanir-baslik:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-.katlanir-baslik-inline {
-  width: auto;
-  flex: 1;
-  min-width: 0;
-  justify-content: flex-start;
-}
-.katlanir-sol {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-.katlanir-sol i {
-  color: var(--accent);
-  font-size: 14px;
-}
-.katlanir-ok {
-  color: var(--text-secondary) !important;
-  font-size: 12px !important;
-}
-.katlanir-rozet {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent);
-  background: var(--accent-soft);
-  padding: 2px 8px;
-  border-radius: 10px;
-  text-transform: none;
-  letter-spacing: 0;
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+/* NOT: Siparis paneli bilesenlerinin (PosMusteriPaneli / PosSepetPaneli /
+   PosOdemePaneli) stilleri `assets/pos-panels.css` icindedir. Scoped CSS
+   cocuk bilesenlere ulusmadigi icin burada tekrar tanimlanamaz.
+   .p-card-content yerlesimi C1 blogunda tek kez tanimlanir. */
 
 /* Sticky Satisi Tamamla */
 .sticky-tamamla {
@@ -3005,525 +3081,11 @@ const sepetiTemizle = () => {
   margin-bottom: 8px;
 }
 
-.customer-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.teslim-eden-alan {
-  margin-bottom: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-.teslim-eden-alan label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.teslim-eden-alan .zorunlu {
-  color: var(--danger);
-}
-.teslimat-ipucu {
-  margin: 0 0 4px;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--text-muted);
-}
-.teslim-durum-secim :deep(.p-selectbutton) {
-  display: flex;
-  flex-wrap: wrap;
-}
-.personel-opsiyon {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-width: 0;
-}
-.personel-opsiyon > span:not(.sofor-bekleyen):not(.sofor-rol-uyari) {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.personel-opsiyon i {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-.personel-opsiyon .sofor-bekleyen {
-  margin-left: auto;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 999px;
-  background: var(--warning-soft);
-  color: var(--warning);
-  font-size: 11px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.personel-opsiyon .sofor-rol-uyari {
-  margin-left: auto;
-  color: var(--warning);
-  font-size: 12px;
-}
-.personel-opsiyon .sofor-rol-uyari + .sofor-bekleyen {
-  margin-left: 0;
-}
-.anlik-musteri {
-  margin-bottom: 4px;
-}
-.musteri-modu {
-  display: flex;
-}
-.musteri-modu .p-selectbutton .p-button {
-  flex: 1;
-  justify-content: center;
-}
-.musteri-option {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.musteri-option-detay {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-.secili-musteri-chip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-soft-strong);
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-size: 13px;
-}
-.secili-musteri-chip i {
-  color: var(--accent);
-  font-size: 14px;
-}
-.secili-musteri-ad {
-  flex: 1;
-  color: var(--text-primary);
-  font-weight: 500;
-}
-.secili-musteri-sil {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 13px;
-  padding: 2px;
-}
-.secili-musteri-sil:hover {
-  color: var(--danger);
-}
 
-.sepet-bolum {
-  max-height: 350px;
-  overflow-y: auto;
-}
-.sepet-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-.sepet-baslik-btnler {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.sepet-bos {
-  text-align: center;
-  padding: 20px;
-  color: var(--text-muted);
-  font-size: 13px;
-}
-.sepet-item {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-}
-.sepet-item.aktif-satir {
-  background: var(--info-soft);
-  box-shadow: inset 3px 0 0 var(--accent, var(--accent));
-  border-radius: 8px;
-}
-.sepet-item:last-child {
-  border-bottom: none;
-}
-.sepet-ust {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-.sepet-kod {
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  background: var(--bg-secondary);
-  padding: 2px 6px;
-  border-radius: 5px;
-  white-space: nowrap;
-  max-width: 90px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex-shrink: 0;
-}
-.sepet-ad {
-  flex: 1;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text-primary);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.sepet-sil {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.pos-buyuk .sepet-kod {
-  font-size: 13px;
-}
-.pos-buyuk .sepet-ad {
-  font-size: 16px;
-}
-.pos-buyuk .sepet-sil {
-  width: 42px;
-  height: 42px;
-  font-size: 19px;
-}
-.sepet-sil:hover {
-  background: var(--danger-soft);
-  color: var(--danger);
-}
-.sepet-kontroller {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  min-width: 0;
-}
-.sepet-adet-grup {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-.adet-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.adet-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.sepet-adet-input {
-  width: clamp(44px, 7vw, 52px);
-  text-align: center;
-  font-weight: 700;
-  font-size: 14px;
-  height: 34px;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0 4px;
-  outline: none;
-}
-/* Buyuk yazi modu: adet/fiyat kontrolleri daha da buyuk */
-.pos-buyuk .adet-btn {
-  width: 42px;
-  height: 42px;
-  font-size: 19px;
-}
-.pos-buyuk .sepet-adet-input {
-  width: clamp(52px, 8vw, 62px);
-  height: 42px;
-  font-size: 17px;
-}
-/* Mobil: POS adet/fiyat kontrolleri dokunma hedefi >=40px */
-@media (max-width: 900px) {
-  .adet-btn {
-    width: 40px;
-    height: 40px;
-  }
-  .sepet-adet-input,
-  .fiyat-giris-input {
-    height: 40px;
-    font-size: 14px;
-  }
-}
-.odeme-yontem-grid {
-  display: flex;
-  gap: 6px;
-}
-.taksit-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px;
-  border: 1px solid rgba(139, 92, 246, 0.3);
-  border-radius: 10px;
-  background: rgba(139, 92, 246, 0.08);
-  margin-top: 8px;
-}
-.odeme-yontem-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 4px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: 600;
-  transition: all 0.15s;
-}
-.odeme-yontem-btn:hover {
-  border-color: var(--accent);
-}
-.odeme-yontem-btn.active {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-.odeme-yontem-btn i {
-  font-size: 16px;
-}
-.para-ustu {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 8px;
-  padding: 8px 12px;
-  background: var(--success-soft);
-  border: 1px solid var(--success-border);
-  border-radius: 8px;
-  font-size: 14px;
-}
-.para-ustu strong {
-  color: var(--success);
-  font-size: 16px;
-}
-.musteri-bakiye-uyari {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-}
-.musteri-bakiye-uyari.danger {
-  background: var(--danger-soft);
-  color: var(--danger);
-  border: 1px solid var(--danger-border);
-}
-.musteri-bakiye-uyari.warn {
-  background: var(--warning-soft);
-  color: var(--warning);
-  border: 1px solid rgba(245, 158, 11, 0.25);
-}
-.musteri-bakiye-uyari.info {
-  background: var(--accent-soft);
-  color: var(--accent);
-  border: 1px solid var(--accent-soft-strong);
-}
-.degisim-bilgi {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 6px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  background: var(--accent-soft);
-  color: var(--accent);
-  border: 1px solid var(--accent-soft-strong);
-}
-.degisim-bilgi span {
-  flex: 1;
-}
-.degisim-kapat {
-  background: none;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  padding: 2px;
-  display: inline-flex;
-}
-.gunluk-baslik {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 10px;
-}
-.sepet-birimfiyat {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-left: auto;
-}
-.sepet-tutar {
-  font-size: 13px;
-  font-weight: 700;
-  min-width: 60px;
-  text-align: right;
-}
-.sepet-son-alis {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-  padding: 5px 8px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  background: var(--warning-soft);
-  border: 1px solid var(--warning-border);
-  border-radius: 8px;
-}
-.sepet-son-alis i {
-  font-size: 12px;
-  color: var(--warning);
-}
-.sepet-son-alis strong {
-  color: var(--accent);
-}
-
-.ozet-satir {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 0;
-  font-size: 13px;
-}
-.ozet-indirim {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.indirim-input {
-  width: 100px;
-}
-.ozet-ayrac {
-  border: none;
-  border-top: 1px solid var(--border);
-  margin: 6px 0;
-}
-.ozet-detay-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 34px;
-  padding: 4px 6px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 12.5px;
-  font-weight: 600;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: color 0.15s, background 0.15s;
-}
-.ozet-detay-btn:hover {
-  color: var(--text-primary);
-  background: var(--bg-secondary);
-}
-.pos-buyuk .ozet-detay-btn {
-  font-size: 15px;
-  min-height: 40px;
-}
-.ozet-genel {
-  border-top: 2px solid var(--border);
-  margin-top: 4px;
-  padding-top: 8px;
-}
-.genel-toplam-deger {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--accent);
-}
-
-.siparis-kart :deep(.p-selectbutton) {
-  display: flex;
-}
-.siparis-kart :deep(.p-selectbutton .p-button) {
-  flex: 1;
-  font-size: 12px;
-}
-.odenen-satir {
-  margin-top: 8px;
-}
-.odenen-satir label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 4px;
-}
-.pos-komisyon-not {
-  display: block;
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--text-muted);
-  line-height: 1.4;
-}
-.odeme-durum {
-  margin-top: 8px;
-}
-.odeme-durum :deep(.p-tag) {
-  justify-content: center;
-}
-.odeme-kalan {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 0;
-  font-size: 13px;
-}
-.kalan-deger {
-  font-weight: 700;
-  color: var(--accent);
-}
+/* NOT: Musteri / teslimat / sepet / odeme paneli stilleri artik
+   `assets/pos-panels.css` dosyasindadir (bilesenlere scoped CSS ile
+   ulasilamadigi icin tasinmistir). Burada yalnizca POS sayfasina
+   ait duzen kurallari kalir. */
 
 .fis-card :deep(.p-card-content) {
   padding: 0;
@@ -3551,6 +3113,8 @@ const sepetiTemizle = () => {
   transform: rotate(180deg);
 }
 .fis-detay-ozet .katlanir-ok {
+  color: var(--text-secondary);
+  font-size: 12px;
   transition: transform 0.15s ease;
 }
 .fis-card-header {
@@ -3613,31 +3177,6 @@ const sepetiTemizle = () => {
   color: var(--danger);
 }
 
-.fiyat-tip-select {
-  flex: 1;
-  min-width: 0;
-  height: 26px;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 11px;
-  padding: 0 4px;
-  outline: none;
-}
-.fiyat-giris-input {
-  width: 68px;
-  height: 26px;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 12px;
-  padding: 0 4px;
-  text-align: right;
-  outline: none;
-}
-
 @media (max-width: 1280px) {
   /* Dar dizustu/tablet: sag sutun alta iner; sabit 400px yerine tam genislik. */
   .pos-body {
@@ -3697,10 +3236,6 @@ const sepetiTemizle = () => {
   border-color: var(--accent-border);
   background: var(--accent-soft);
 }
-.pos-body {
-  gap: 14px;
-  align-items: start;
-}
 .pos-arac-cubugu {
   gap: 10px;
   padding: 12px;
@@ -3720,22 +3255,6 @@ const sepetiTemizle = () => {
 }
 :deep(.siparis-kart .p-card-content) {
   padding: 0;
-}
-.sepet-item {
-  border-radius: 10px;
-}
-.sepet-item.aktif-satir {
-  background: var(--accent-soft);
-  box-shadow: inset 3px 0 0 var(--accent);
-}
-.odeme-yontem-btn {
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  transition: border-color var(--dur-fast, 0.15s) ease, background var(--dur-fast, 0.15s) ease, transform var(--dur-fast, 0.15s) ease;
-}
-.odeme-yontem-btn:hover {
-  border-color: var(--accent-border);
-  transform: translateY(-1px);
 }
 .sticky-tamamla {
   border-radius: 12px;
@@ -3854,14 +3373,6 @@ const sepetiTemizle = () => {
   font-weight: 700;
 }
 
-/* Odeme yontemi secili */
-.odeme-yontem-btn.aktif {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-weight: 700;
-}
-
 /* ======================= C1: VIEWPORT'A BAGLI KASA =======================
    Sayfa scroll'u kaldirilir; sol urun alani ve sag siparis paneli kendi
    scroll'une sahip; toplam/odeme/tamamla sagda sabit (sticky) kalir. */
@@ -3880,7 +3391,6 @@ const sepetiTemizle = () => {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
-  align-items: stretch;
 }
 .pos-left {
   display: flex;
@@ -3925,19 +3435,16 @@ const sepetiTemizle = () => {
   min-height: 0;
   flex: 1 1 auto;
 }
+/* Siparis paneli icerigi: dikey akis + kendi kaydirma. Tek tanim; C1
+   viewport kilidi bu duzeni kurar. */
 .siparis-kart :deep(.p-card-content) {
   display: flex;
   flex-direction: column;
+  gap: 18px;
   min-height: 0;
   flex: 1 1 auto;
   overflow-y: auto;
-}
-.sepet-bolum {
-  max-height: none !important;
-}
-.sepet-icerik {
-  max-height: none !important;
-  overflow: visible;
+  overscroll-behavior: contain;
 }
 .sticky-tamamla {
   position: sticky;
@@ -3964,74 +3471,15 @@ const sepetiTemizle = () => {
   }
 }
 
-/* C2: sepete yeni eklenen satir vurgusu */
-.sepet-item.yeni-satir {
-  animation: sepetPulse 0.7s ease;
-}
-@keyframes sepetPulse {
-  0% {
-    background: var(--accent-soft-strong);
-  }
-  100% {
-    background: transparent;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .sepet-item.yeni-satir {
-    animation: none;
-  }
+/* NOT: Sepet paneli kurallari (sepet-bolum / sepet-icerik / sepet-baslik-toggle /
+   geri-al-bar / adet kontrolleri / hizli nakit) `assets/pos-panels.css`
+   icindedir. Burada yalnizca kart ici kaydirma davranisi duzenlenir. */
+.pos-container :deep(.sepet-bolum),
+.pos-container :deep(.sepet-icerik) {
+  max-height: none;
 }
 
-/* C3: dokunma hedefleri + sepet basligi + geri al */
-.sepet-baslik-toggle {
-  background: none;
-  border: none;
-  color: var(--text-primary);
-  font-weight: 700;
-  cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 8px;
-  font-size: 14px;
-  text-align: left;
-}
-.sepet-baslik-toggle:hover {
-  background: var(--bg-muted, rgba(148, 163, 184, 0.08));
-}
-.geri-al-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 12px;
-  margin: 6px 0;
-  border-radius: 10px;
-  background: var(--warning-soft);
-  border: 1px solid var(--warning-border);
-  color: var(--warning);
-  font-size: 12.5px;
-  font-weight: 600;
-}
-.geri-al-bar button {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--accent-border);
-  background: var(--bg-card);
-  color: var(--accent);
-  font-weight: 700;
-  cursor: pointer;
-}
-.adet-btn,
-.sepet-adet-input,
-.fiyat-tip-select,
-.fiyat-giris-input {
-  min-height: 40px;
-}
-.adet-btn {
-  min-width: 40px;
-}
+/* Sepet/odeme paneli kurallari -> assets/pos-panels.css (bilesen kapsami). */
 .filtre-alan-toggle {
   display: flex;
   align-items: center;
@@ -4041,51 +3489,6 @@ const sepetiTemizle = () => {
 }
 .kategori-cip-daha {
   border-style: dashed;
-}
-
-/* Hizli nakit + surukle-birak */
-.hizli-nakit {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-.hizli-nakit-btn {
-  flex: 1 1 auto;
-  min-width: 52px;
-  min-height: 38px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--bg-card);
-  color: var(--text-primary);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  cursor: pointer;
-  transition: all var(--dur-fast, 0.15s) ease;
-}
-.hizli-nakit-btn:hover {
-  border-color: var(--accent-border);
-  color: var(--accent);
-}
-.hizli-nakit-btn.tam {
-  background: var(--accent-soft);
-  color: var(--accent);
-  border-color: var(--accent-border);
-}
-.sepet-tutamac {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  flex-shrink: 0;
-  color: var(--text-muted);
-  cursor: grab;
-}
-.sepet-tutamac:active {
-  cursor: grabbing;
-}
-.sepet-item.surukleniyor {
-  opacity: 0.5;
 }
 </style>
 

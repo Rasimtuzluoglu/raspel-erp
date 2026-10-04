@@ -7,6 +7,18 @@ export const stokAPI = {
   ara(q) {
     return apiClient.get('/stoklar/ara', { params: { q } })
   },
+  // Satış ekranı (typeahead) için sınırlı öneri. `ara` kullanılmaz: limiti
+  // yok ve LIKE '%q%' ile tüm katalogu tarar; `ara` ayrıca stok listesini
+  // üzerine yazar.
+  satisOnerileri(q, limit = 20) {
+    return apiClient.get('/stoklar/satis-onerileri', { params: { q, limit } })
+  },
+  // Kategori / üretim tipi değerleri + ürün sayıları (tüm katalog).
+  // Liste çipleri ve toplu fiyat hedef listesi bunu kullanır; sayfa verisinden
+  // hesaplanırsa çipler kaybolur ve sayaçlar yanlış olur.
+  gruplamaDagilimi() {
+    return apiClient.get('/stoklar/gruplama-dagilimi')
+  },
   barkodIleBul(kod) {
     return apiClient.get(`/stoklar/barkod/${encodeURIComponent(kod)}`)
   },

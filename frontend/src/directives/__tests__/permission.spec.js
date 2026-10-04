@@ -9,21 +9,23 @@ describe('v-permission Directive', () => {
     setActivePinia(createPinia())
   })
 
+  const bilesen = (kod) => ({
+    template: `<div><div id="test-el" v-permission="'${kod}'">İçerik</div></div>`
+  })
+
+  const bagla = (b) => mount(b, {
+    global: {
+      directives: {
+        permission: permissionDirective
+      }
+    }
+  })
+
   it('keeps element in DOM if user has permission', () => {
     const authStore = useAuthStore()
     authStore.kullanici = { role: 'ADMIN' }
 
-    const Component = {
-      template: `<div id="test-el" v-permission="'fatura:sil'">İçerik</div>`
-    }
-
-    const wrapper = mount(Component, {
-      global: {
-        directives: {
-          permission: permissionDirective
-        }
-      }
-    })
+    const wrapper = bagla(bilesen('FATURA_DELETE'))
 
     expect(wrapper.find('#test-el').exists()).toBe(true)
   })
@@ -31,19 +33,34 @@ describe('v-permission Directive', () => {
   it('removes element from DOM if user lacks permission', () => {
     const authStore = useAuthStore()
     authStore.kullanici = { role: 'USER' }
-    authStore.yetkiler = ['fatura:oku']
+    authStore.yetkiler = ['FATURA_READ']
+    authStore.yetkiYuklendi = true
 
-    const Component = {
-      template: `<div><div id="test-el" v-permission="'fatura:sil'">İçerik</div></div>`
-    }
+    const wrapper = bagla(bilesen('FATURA_DELETE'))
 
-    const wrapper = mount(Component, {
-      global: {
-        directives: {
-          permission: permissionDirective
-        }
-      }
-    })
+    expect(wrapper.find('#test-el').exists()).toBe(false)
+  })
+
+  it('keeps element while permissions are still loading', () => {
+    // Yetkiler sunucudan okunana kadar hiçbir şey gizlenmez; aksi halde
+    // menü ve butonlar yüklenme sırasında anlık olarak kaybolur.
+    const authStore = useAuthStore()
+    authStore.kullanici = { role: 'USER' }
+    authStore.yetkiler = []
+    authStore.yetkiYuklendi = false
+
+    const wrapper = bagla(bilesen('FATURA_DELETE'))
+
+    expect(wrapper.find('#test-el').exists()).toBe(true)
+  })
+
+  it('removes element after permissions load without the code', () => {
+    const authStore = useAuthStore()
+    authStore.kullanici = { role: 'USER' }
+    authStore.yetkiler = ['CARI_READ']
+    authStore.yetkiYuklendi = true
+
+    const wrapper = bagla(bilesen('STOK_DELETE'))
 
     expect(wrapper.find('#test-el').exists()).toBe(false)
   })

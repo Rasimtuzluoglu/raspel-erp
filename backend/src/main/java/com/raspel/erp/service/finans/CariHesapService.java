@@ -36,6 +36,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -72,14 +73,30 @@ public class CariHesapService {
 
     // ---------- CARİYE ÖZEL FİYAT ----------
 
-    @Transactional(readOnly = true)
+    /**
+     * Cariye özel fiyat listesi.
+     *
+     * <p>Tenant izolasyonu: yazma yolu ({@link #cariFiyatKaydet}) cariyi yükleyip
+     * {@code tenantChecker.check} çağırıyordu, okuma yolu çağırmıyordu. Bu
+     * boşluk sayesinde herhangi bir {@code USER} rolündeki kullanıcı başka bir
+     * şirketin cari id'sini bilerek o cariye özel fiyatlarını ve bağlı stok
+     * adlarını/kodlarını okuyabiliyordu (cross-tenant IDOR).
+     */
+@Transactional(readOnly = true)
     public List<CariFiyatDTO> cariFiyatlari(Long cariHesapId) {
-        List<CariFiyat> fiyatlar = cariFiyatRepository.findByCariHesapIdOrderByStokId(cariHesapId);
-        Map<Long, Stok> stokMap = fiyatlar.stream().map(CariFiyat::getStokId).distinct()
-                .filter(java.util.Objects::nonNull)
-                .collect(Collectors.toList()).isEmpty() ? Map.of()
-                : stokRepository.findAllById(fiyatlar.stream().map(CariFiyat::getStokId).distinct().collect(Collectors.toList()))
-                        .stream().collect(Collectors.toMap(Stok::getId, s -> s));
+        List<CariFiyat> fiyatlar;
+        Long sirketId = tenantChecker.getCurrentSirketId();
+        if (sirketId == null) {
+            // Dahili çağrı (request bağlamı yok): tenant filtresi uygulanamaz.
+            fiyatlar = cariFiyatRepository.findByCariHesapIdOrderByStokId(cariHesapId);
+        } else {
+            fiyatlar = cariFiyatRepository.findBySirketIdAndCariHesapIdOrderByStokId(sirketId, cariHesapId);
+        }
+        if (fiyatlar.isEmpty()) return List.of();
+        Map<Long, Stok> stokMap = stokRepository
+                .findAllById(fiyatlar.stream().map(CariFiyat::getStokId).distinct()
+                        .filter(java.util.Objects::nonNull).collect(Collectors.toList()))
+                .stream().collect(Collectors.toMap(Stok::getId, s -> s, (a, b) -> a));
         return fiyatlar.stream().map(f -> {
             Stok s = stokMap.get(f.getStokId());
             return CariFiyatDTO.builder()
@@ -125,11 +142,32 @@ public class CariHesapService {
     }
 
     /**
+     * Dışa aktarma için cari listesi.
+     *
+     * <p>{@code ids} verilirse YALNIZCA o kayıtlar aktarılır (toplu seçimden
+     * gelen "CSV Aktar" aksiyonu). Verilmezse tüm şirket kayıtları döner.
+     * Tenant izolasyonu zorunludur: başka şirketin id'si listelenebilseydi
+     * sızıntı olurdu.
+     */
+    public List<CariHesapDTO> disaAktarimListesi(Long sirketId, List<Long> ids, int maxSatir) {
+        if (ids != null && !ids.isEmpty()) {
+            return cariHesapRepository.findBySirketIdAndIdIn(sirketId, ids).stream()
+                    .sorted(Comparator.comparing(CariHesap::getId))
+                    .map(this::entityDTOyeCevir)
+                    .collect(Collectors.toList());
+        }
+        return cariHesapRepository.findBySirketId(sirketId,
+                        org.springframework.data.domain.PageRequest.of(0, maxSatir))
+                .map(this::entityDTOyeCevir)
+                .getContent();
+    }
+
+    /**
      * Sunucu tarafında filtrelenmiş, aranmış ve sayfalanmış cari listesi.
      */
     public Page<CariHesapDTO> filtreli(Long sirketId, String q, String tur, String bakiyeYonu, Pageable pageable) {
-        String arama = bosIseNull(q);
-        if (arama != null) arama = "%" + arama.toLowerCase() + "%";
+        // Joker karakterler kaçışlanır; 1 karakterli arama reddedilir.
+        String arama = com.raspel.erp.util.AramaTemizleyici.like(q);
         return cariHesapRepository.filtreli(sirketId, arama, bosIseNull(tur), bosIseNull(bakiyeYonu), pageable)
                 .map(this::entityDTOyeCevir);
     }
@@ -302,7 +340,7 @@ public class CariHesapService {
         // Atomik artirma: es zamanli islemlerde oku-degistir-yaz kaynakli
         // OptimisticLockingFailureException olusmaz.
         cariHesapRepository.bakiyeArttir(cariHesapId, tutar);
-        cacheYardimci.temizle("cariHesaplar", "dashboard");
+        cacheYardimci.commitSonrasiTemizle("cariHesaplar", "dashboard");
     }
     
 
@@ -343,12 +381,28 @@ public class CariHesapService {
 
     /** Cari listesi için istatistik özeti (toplam kayıt, alacaklı, borçlu). */
     @Transactional(readOnly = true)
+    /**
+     * Cari listesi KPI özeti.
+     *
+     * <p>BAKİYE İŞARET KURALI (tüm modüllerde aynı): <b>negatif bakiye = cari
+     * bize borçlu (alacak)</b>, pozitif bakiye = biz cariye borçluyuz.
+     * Kaynak: {@code FaturaService.cariBakiyeGuncelle} — satış faturası tutarı
+     * negatife çevirerek bakiyeye ekler.
+     *
+     * <p>ÖNCE {@code alacakli} pozitif, {@code borclu} negatif toplamı
+     * döndürüyordu; yani etiketler ters yönü gösteriyordu: "Alacaklı" kartı
+     * bizim cariye olan borçlarımızı listeliyordu.
+     */
     public Map<String, Object> ozet(Long sirketId) {
         Map<String, Object> ozet = new LinkedHashMap<>();
         ozet.put("toplamKayit", cariHesapRepository.countBySirketId(sirketId));
-        ozet.put("alacakli", cariHesapRepository.toplamPozitifBakiyeBySirketId(sirketId));
-        ozet.put("borclu", cariHesapRepository.toplamNegatifBakiyeBySirketId(sirketId).abs());
+        ozet.put("alacakli", bosMuMu(cariHesapRepository.toplamNegatifBakiyeBySirketId(sirketId)).abs());
+        ozet.put("borclu", bosMuMu(cariHesapRepository.toplamPozitifBakiyeBySirketId(sirketId)));
         return ozet;
+    }
+
+    private BigDecimal bosMuMu(BigDecimal v) {
+        return v != null ? v : BigDecimal.ZERO;
     }
 
     /**

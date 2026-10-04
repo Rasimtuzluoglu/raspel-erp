@@ -1,5 +1,11 @@
 describe('Navigation', () => {
   beforeEach(() => {
+    // Genel yakalayici EN BASA tanimlanir: Cypress aynı istege birden fazla
+    // intercept uygulandığında EN SON tanımlananı seçer. Sonda kalsaydı
+    // `/api/kullanicilar/ben` mock'unu gölgeler ve menü/gizli öğe kontrolleri
+    // yanlış kullanıcı durumu üzerinden koşardı.
+    cy.intercept('GET', '/api/**', { statusCode: 200, body: [] }).as('catchAll')
+
     cy.intercept('POST', '/api/kullanicilar/giris', {
       statusCode: 200,
       body: {
@@ -29,7 +35,6 @@ describe('Navigation', () => {
       statusCode: 200,
       body: { toplamCariSayisi: 0, toplamBakiye: 0, toplamFatura: 0, toplamStok: 0, aylikGelirGider: [], sonHareketler: [], enCokSatanlar: [] }
     }).as('dashboard')
-    cy.intercept('GET', '/api/**', { statusCode: 200, body: [] }).as('catchAll')
 
     cy.window().then((win) => {
       win.localStorage.setItem('raspel_erp_gelismis_mod', 'true')

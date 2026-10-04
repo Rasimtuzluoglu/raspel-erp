@@ -191,6 +191,10 @@
           option-value="id"
           :placeholder="t('hareketler.cariHesapSeciniz')"
           class="w-full"
+          filter
+          filter-by="ad,vergiNumarasi,telefon"
+          :loading="cariSecenekleriYukleniyor"
+          @filter="cariAra"
         />
       </div>
 
@@ -302,7 +306,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { useCariHesapStore } from '../stores/cariHesapStore.js'
+import { useCariOnerileri } from '../composables/useCariOnerileri.js'
 import { useHareketStore } from '../stores/hareketStore.js'
 import { hareketAPI, faturaAPI, excelAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
@@ -312,7 +316,6 @@ import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
-const cariHesapStore = useCariHesapStore()
 const hareketStore = useHareketStore()
 const { t } = useI18n()
 
@@ -409,9 +412,11 @@ const odemeSekliLabel = (val) => {
   return item ? item.label : String(code)
 }
 
-const cariHesapSecenekleri = computed(() => {
-  return cariHesapStore?.cariHesaplar || []
-})
+// Cari secenekleri sunucu aramali. Once `getAllCariHesaplar()` ile ilk 50
+// kayit cekiliyordu ve dropdown filtresiz oldugu icin 50. kayittan sonraki
+// cariler hic secilemiyordu (cari alani zorunlu oldugu icin kayit engelleniyordu).
+const { oneriler: cariHesapSecenekleri, ara: cariAra, hemenAra: cariSecenekleriniYukle, yukleniyor: cariSecenekleriYukleniyor } =
+  useCariOnerileri()
 
 onMounted(async () => {
   await loadData()
@@ -420,9 +425,9 @@ onMounted(async () => {
 const loadData = async () => {
   loading.value = true
   try {
-    await cariHesapStore.getAllCariHesaplar()
-    const hareketler = await hareketStore.getAllHareketler()
-    tumHareketler.value = hareketler
+    // Dropdown okunmadan once ilk sayfa yuklenmeli, aksi halde aciilis bos gorunur.
+    const [, hareketler] = await Promise.allSettled([cariSecenekleriniYukle(), hareketStore.getAllHareketler()])
+    if (hareketler.status === 'fulfilled') tumHareketler.value = hareketler.value
   } catch (err) {
     error.value = t('hareketler.hataYukleme')
     toastBildirim.hata(t('hareketler.hataYukleme'))

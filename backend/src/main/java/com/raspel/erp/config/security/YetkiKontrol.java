@@ -28,13 +28,27 @@ public class YetkiKontrol {
         if (admin) return true;
         try {
             var kullanici = kullaniciRepository.findByUsername(authentication.getName()).orElse(null);
-            if (kullanici == null || kullanici.getRole() == null) return false;
+            if (kullanici == null || kullanici.getRole() == null) {
+                log.warn("Yetki kontrolü: kullanıcı veya rol bilgisi yok ({} / {}), yetki {} reddedildi",
+                        authentication.getName(), kullanici == null ? "yok" : "rol yok", kod);
+                return false;
+            }
             var rol = rolRepository.findByAd(kullanici.getRole()).orElse(null);
-            if (rol == null) return false;
+            if (rol == null) {
+                // Fail-closed (güvenli) ama TEŞHİS EDİLEBİLİR olmalı. `sistem.rol`
+                // tablosu seed verisiz kurulduğunda (ya da seed job'ı çalışmadığında)
+                // yetkisi olan kullanıcılar da sessizce reddediliyordu ve nedeni
+                // yalnızca log.warn ile belli oluyordu.
+                log.warn("Yetki kontrolü: '{}' rolü sistem.rol tablosunda tanımlı değil. "
+                                + "Yetki {} reddedildi. Migration seed'inin çalıştığından emin olun.",
+                        kullanici.getRole(), kod);
+                return false;
+            }
             return rol.getYetkiler().stream()
                     .anyMatch(y -> kod.equalsIgnoreCase(y.getKod()));
         } catch (Exception e) {
-            log.warn("Yetki kodu kontrol edilemedi ({}): {}", kod, e.getMessage());
+            // DB kesintisi tüm yazma işlemlerini kilitler; en azından teşhis edilebilir olsun.
+            log.error("Yetki kodu kontrol edilemedi ({}), kullanıcı: {}", kod, authentication.getName(), e);
             return false;
         }
     }

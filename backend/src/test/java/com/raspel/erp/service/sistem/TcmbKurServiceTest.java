@@ -1,6 +1,7 @@
 package com.raspel.erp.service.sistem;
 
 import com.raspel.erp.entity.finans.DovizKuru;
+import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.repository.finans.DovizKuruRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,9 @@ class TcmbKurServiceTest {
 
     @BeforeEach
     void setUp() {
-        tcmbKurService = new TcmbKurService(dovizKuruRepository);
+        // Spy: `tcmbKurlariniGuncelle` gercek ag cagrisi yapmasin diye boslanir.
+        tcmbKurService = spy(new TcmbKurService(dovizKuruRepository));
+        lenient().doNothing().when(tcmbKurService).tcmbKurlariniGuncelle();
         // cevir_* testleri findAll üzerinden çalışır; bugünün kuru var sayılır (ağ çağrısı tetiklenmez)
         lenient().when(dovizKuruRepository.countByTarih(any())).thenReturn(1L);
     }
@@ -66,6 +69,8 @@ class TcmbKurServiceTest {
                 .thenReturn(java.util.Optional.of(kur("USD", "34.50")));
         BigDecimal sonuc = tcmbKurService.cevir(new BigDecimal("3450"), "TRY", "USD");
         assertEquals(0, new BigDecimal("100.0000").compareTo(sonuc));
+        // TRY taban birim: yenileme tetiklenmemeli.
+        verify(tcmbKurService, never()).tcmbKurlariniGuncelle();
     }
 
     @Test
@@ -78,11 +83,58 @@ class TcmbKurServiceTest {
         assertEquals(0, new BigDecimal("110.1449").compareTo(sonuc));
     }
 
+    /**
+     * C2 (fail-closed): bilinmeyen/kursuz para birimi artık 1:1 kabul edilmiyor.
+     * Önceden sessizce kur=1 dönüyordu; "100 USD" yerine 100 TRY muhasebeye
+     * yazılıyordu. Artık işlem durdurulur.
+     */
     @Test
-    void cevir_bilinmeyenKodBireDoner() {
-        // Kaynak kod bulunamazsa 1 (TRY gibi) kabul edilir; hedef TRY -> tutar aynen doner.
-        BigDecimal sonuc = tcmbKurService.cevir(new BigDecimal("100"), "XXX", "TRY");
-        assertEquals(0, new BigDecimal("100.0000").compareTo(sonuc));
+    void cevir_bilinmeyenKodHataVerir() {
+        when(dovizKuruRepository.findFirstByDovizKoduOrderByTarihDesc("XXX"))
+                .thenReturn(java.util.Optional.empty());
+        var hata = assertThrows(BusinessException.class,
+                () -> tcmbKurService.cevir(new BigDecimal("100"), "XXX", "TRY"));
+        assertTrue(hata.getMessage().contains("XXX"));
+        // Kodsuz kod tespit edilince bir kez yenileme denenir, sonra hata verilir.
+        verify(tcmbKurService, times(1)).tcmbKurlariniGuncelle();
+    }
+
+    /** C2: TRY -> TRY kur sorgusuz 1:1 geçer (kayıt aranmaz). */
+    @Test
+    void cevir_tryToTryKurSorgulanmaz() {
+        BigDecimal sonuc = tcmbKurService.cevir(new BigDecimal("100"), "TRY", "TRY");
+        assertEquals(0, new BigDecimal("100").compareTo(sonuc));
+        verifyNoInteractions(dovizKuruRepository);
+    }
+
+    /** C2: ayni para birimi 1:1 gecer; kur tablosu/yenileme hic devreye girmez. */
+    @Test
+    void cevir_ayniKodKurTablosuBoskenDahilCalisir() {
+        BigDecimal sonuc = tcmbKurService.cevir(new BigDecimal("100"), "USD", "USD");
+        assertEquals(0, new BigDecimal("100").compareTo(sonuc));
+        verifyNoInteractions(dovizKuruRepository);
+        verify(tcmbKurService, never()).tcmbKurlariniGuncelle();
+    }
+
+    /** C2: hedef kod kurali yoksa da sessizce 1:1 olmaz. */
+    @Test
+    void cevir_hedefKoduKursuzHataVerir() {
+        when(dovizKuruRepository.findFirstByDovizKoduOrderByTarihDesc("USD"))
+                .thenReturn(java.util.Optional.of(kur("USD", "34.50")));
+        when(dovizKuruRepository.findFirstByDovizKoduOrderByTarihDesc("CHF"))
+                .thenReturn(java.util.Optional.empty());
+        var hata = assertThrows(BusinessException.class,
+                () -> tcmbKurService.cevir(new BigDecimal("100"), "USD", "CHF"));
+        assertTrue(hata.getMessage().contains("CHF"));
+    }
+
+    /** C2: kod normalizasyonu (bos -> hata). */
+    @Test
+    void cevir_bosKodHataVerir() {
+        assertThrows(BusinessException.class,
+                () -> tcmbKurService.cevir(new BigDecimal("100"), " ", "TRY"));
+        assertThrows(BusinessException.class,
+                () -> tcmbKurService.cevir(new BigDecimal("100"), "USD", null));
     }
 
     @Test

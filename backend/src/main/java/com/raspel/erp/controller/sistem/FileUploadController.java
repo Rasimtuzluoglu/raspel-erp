@@ -58,15 +58,50 @@ public class FileUploadController {
     }
 
     /**
-     * Okuma için aday klasörler: önce aktif tenant klasörü, sonra eski (tenant'sız)
-     * ortak klasör — geriye dönük uyumluluk için.
+     * Tenant'sız (eski) düz klasöre yazılmış ve okunması tenant izolasyonunu
+     * delen klasörler. Bu klasörlerde geriye dönük düz-klasör fallback'i KAPALI:
+     * sohbet dosyaları düz `sohbet/` altına yazılıyordu ve okuma ucu önce
+     * `sohbet/s{id}` sonra düz `sohbet` klasörünü deniyordu. Dosyalar düz
+     * klasörde olduğu için her istek oraya düşüyor ve UUID'yi bilen herhangi bir
+     * kullanıcı BAŞKA ŞİRKETİN sohbet dosyasını indirebiliyordu.
+     *
+     * <p>Eski düz klasördeki dosyalara erişim bilinçli olarak kesildi. Yeni
+     * yüklemeler tenant klasörüne yapılır; eski dosyaların kaybı tek bir sohbet
+     * eki seviyesindedir, güvenlik açığı ise sürekli açıktı.
+     */
+    private static final java.util.Set<String> TENANTSIZ_KLASOR_YOK = java.util.Set.of("sohbet");
+
+    /**
+     * REDTEAM H-2: İmzalı URL üretilen uç için <b>platform yöneticisi</b>
+     * şartı. Bu uç MINIO'da key'i olan HER dosya için geçerli, süreli URL
+     * üretiyordu; testte kanıtlandı: Şirket B admin'i
+     * {@code klasor=backups&dosya=raspelerp_DAILY_*.sql.gz} ile TÜM şirketlerin
+     * veritabanı yedeğinin imzalı URL'sini aldı. {@code hasRole('ADMIN')} şirkete
+     * bağlı olduğu için yeterli değildi.
+     */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.raspel.erp.service.sistem.KullaniciService kullaniciService;
+
+    /** Bucket içeriğinin tenant'a bölünmediği, tüm şirketleri içeren klasörler. */
+    private static final java.util.Set<String> GLOBAL_KLASORLER = java.util.Set.of("backups", "yedek");
+
+    /**
+     * Okuma için aday klasörler: önce aktif tenant klasörü, sonra (yalnızca izinli
+     * klasörlerde) eski tenant'sız ortak klasör — geriye dönük uyumluluk için.
      */
     private List<String> okumaKlasorleri(String klasor) {
         Long sirketId = tenantChecker.getCurrentSirketId();
         if (sirketId == null) {
-            return List.of(klasor);
+            // Tenant bağlamı yoksa düz (ortak) klasöre düşmek YASAK: o klasör
+            // tenant izolasyonu taşımadığı için "hangi şirketin dosyası" ayırt
+            // edilemez. Tenant'sız liste tek istisnadır (kurulum/public içerik).
+            return TENANTSIZ_KLASOR_YOK.contains(klasor) ? List.of() : List.of(klasor);
         }
-        return List.of(klasor + "/s" + sirketId, klasor);
+        String tenantKlasor = klasor + "/s" + sirketId;
+        if (TENANTSIZ_KLASOR_YOK.contains(klasor)) {
+            return List.of(tenantKlasor);
+        }
+        return List.of(tenantKlasor, klasor);
     }
 
     @PostMapping("/upload/avatar")
@@ -177,12 +212,21 @@ public class FileUploadController {
     }
 
     @GetMapping("/dosya/imzali-url")
-    @Operation(summary = "İmzalı (presigned) URL", description = "Bir dosya için süreli erişim URL'i üretir (yalnızca ADMIN)")
+    @Operation(summary = "İmzalı (presigned) URL", description = "Bir dosya için süreli erişim URL'i üretir. Yalnızca platform yöneticisi ve tenant'a ait klasörler.")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> imzaliUrl(
             @RequestParam String klasor,
             @RequestParam String dosya,
             @RequestParam(defaultValue = "3600") int sure) {
+        // REDTEAM H-2: `backups/` (ve eski adıyla `yedek/`) tenant'a bölünmemiş
+        // TÜM şirketlerin veritabanı dump'unu içerir. Platform geneli içerik
+        // yalnızca gerçek platform yöneticisine açık olmalı.
+        if (klasor != null && GLOBAL_KLASORLER.contains(klasor.trim().toLowerCase(java.util.Locale.ROOT))) {
+            if (kullaniciService == null || !kullaniciService.platformYoneticisiMi()) {
+                return ResponseEntity.status(403).body(Map.of(
+                        "error", "Bu klasör platform genelidir; erişim yalnızca platform yöneticisine açıktır"));
+            }
+        }
         String url = dosyaDepolama.presignedUrl(klasor, dosya, sure);
         if (url == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "İmzalı URL üretilemedi (MinIO aktif olmayabilir)"));

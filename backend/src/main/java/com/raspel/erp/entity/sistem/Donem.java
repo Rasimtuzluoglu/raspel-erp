@@ -17,6 +17,13 @@ public class Donem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Optimistik kilitleme. Kolon olmadan eşzamanlı kilitleme/çözme istekleri son yazanı kazanıyor, dönem yanlış durumda kalıyordu.
+     */
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     @Column(name = "sirket_id", nullable = false)
     private Long sirketId;
 

@@ -1,6 +1,7 @@
 package com.raspel.erp.service.sistem;
 
 import com.raspel.erp.entity.finans.DovizKuru;
+import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.repository.finans.DovizKuruRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -136,30 +137,61 @@ public class TcmbKurService {
 
     public BigDecimal cevir(BigDecimal tutar, String kaynakKod, String hedefKod) {
         if (tutar == null || tutar.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO;
-        if (kaynakKod.equalsIgnoreCase(hedefKod)) return tutar;
+        String kaynak = normalizeKod(kaynakKod);
+        String hedef = normalizeKod(hedefKod);
+        if (kaynak.equals(hedef)) return tutar;
 
-        // Bugunun kuru yoksa tazele (liste ekranindaki garantiyle ayni).
-        if (dovizKuruRepository.countByTarih(LocalDate.now()) == 0) {
+        // Kur kaydı hiç yoksa tek seferlik yenileme denenir. `countByTarih` TÜM
+        // para birimlerinin satır sayısını döndürdüğü için burada yalnızca
+        // kaynak/ hedef kodlara bakmak gerekir: sadece USD kaydı varken CHF
+        // faturası "bugünün kurları var" diye geçiyor ve 1:1 kabul ediliyordu.
+        // TRY taban birim olduğu için sorgulanmaz (kur her zaman 1).
+        boolean kaynakKurVar = "TRY".equals(kaynak) || kaynakKur(kaynak) != null;
+        boolean hedefKurVar = "TRY".equals(hedef) || kaynakKur(hedef) != null;
+        if (!kaynakKurVar || !hedefKurVar) {
             tcmbKurlariniGuncelle();
         }
 
-        BigDecimal kaynakRateInTry = kurTry(kaynakKod);
-        BigDecimal hedefRateInTry = kurTry(hedefKod);
-        if (hedefRateInTry.signum() == 0) hedefRateInTry = BigDecimal.ONE;
+        BigDecimal kaynakRateInTry = kurTry(kaynak);
+        BigDecimal hedefRateInTry = kurTry(hedef);
+        // Artık null gelemez; yine de savunma olarak guard bırakılıyor.
+        if (hedefRateInTry.signum() == 0) {
+            throw new BusinessException(hedef + " için geçerli bir kur bulunamadı; işlem iptal edildi");
+        }
 
         BigDecimal tryValue = tutar.multiply(kaynakRateInTry);
         return tryValue.divide(hedefRateInTry, 4, RoundingMode.HALF_UP);
     }
 
+    /** Para birimi kodunu büyük harfe çevirip boşsa hata verir. */
+    private String normalizeKod(String kod) {
+        if (kod == null || kod.isBlank()) {
+            throw new BusinessException("Para birimi kodu zorunludur");
+        }
+        return kod.trim().toUpperCase(Locale.ROOT);
+    }
+
+    /** Kod için daha önce yüklenmiş bir kur satırı var mı (tarih filtresiz). */
+    private DovizKuru kaynakKur(String kod) {
+        return dovizKuruRepository.findFirstByDovizKoduOrderByTarihDesc(kod).orElse(null);
+    }
+
     /**
-     * Bir doviz kodunun TRY karsiligi (en yeni tarihli kayit). Tüm tabloyu belleğe
-     * yuklemek yerine yalnizca ilgili kodu sorgular; kayit yoksa 1 (TRY gibi) doner.
+     * Bir doviz kodunun TRY karsiligi (en yeni tarihli kayit).
+     *
+     * <p><b>Kritik:</b> eski uygulama kayit yoksa sessizce {@code 1} donuyordu.
+     * {@code Fatura.paraBirimi} serbest metin oldugu icin kur tablosunda olmayan
+     * bir kod ("CHF", "JPY", hatta yazim hatasi "USDD") faturanin TL karsiligini
+     * 1:1 aliyordu: 1.000 CHF kayitta 1.000 TL olarak gorunuyordu. Ne exception
+     * ne log ne uyari uretiliyordu. Artik bilinmeyen/kursuz para birimi
+     * islemi durdurur.
      */
     private BigDecimal kurTry(String kod) {
-        if (kod == null || kod.equalsIgnoreCase("TRY")) return BigDecimal.ONE;
-        return dovizKuruRepository.findFirstByDovizKoduOrderByTarihDesc(kod.toUpperCase(Locale.ROOT))
-                .map(k -> k.getSatisKuru() != null ? k.getSatisKuru() : BigDecimal.ONE)
-                .orElse(BigDecimal.ONE);
+        if (kod == null || kod.isBlank() || kod.equals("TRY")) return BigDecimal.ONE;
+        return dovizKuruRepository.findFirstByDovizKoduOrderByTarihDesc(kod)
+                .map(k -> k.getSatisKuru())
+                .orElseThrow(() -> new BusinessException(
+                        kod + " için kur kaydı bulunamadı. Döviz kurlarını güncelleyip tekrar deneyin."));
     }
 
     private String getTagValue(String tag, Element element) {

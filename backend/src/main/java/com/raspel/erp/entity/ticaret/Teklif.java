@@ -18,6 +18,13 @@ public class Teklif {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Optimistik kilitleme. Kolon olmadan eşzamanlı revizyonlar uk_teklif_no_sirket_rev kısıtını ihlal edebiliyordu.
+     */
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     @Column(name = "teklif_no", nullable = false, length = 50)
     private String teklifNo;
 

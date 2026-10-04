@@ -23,6 +23,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -43,6 +44,8 @@ import com.raspel.erp.repository.envanter.StokFiyatRepository;
 @RequiredArgsConstructor
 @Slf4j
 public class StokService {
+
+    private static final BigDecimal YUZ = BigDecimal.valueOf(100);
 
     private final StokRepository stokRepository;
     private final StokHareketRepository stokHareketRepository;
@@ -151,20 +154,67 @@ public class StokService {
     @Transactional(readOnly = true)
     public Page<StokDTO> filtreli(Long sirketId, String q, String kategori, String marka,
                                   String stokGrubu, BigDecimal minFiyat, BigDecimal maxFiyat, Long depoId, Pageable pageable) {
-        Page<Stok> page = stokRepository.filtreli(sirketId, likeDeseni(q), bosIseNull(kategori),
-                likeDeseni(marka), bosIseNull(stokGrubu), minFiyat, maxFiyat, depoId, pageable);
+        Page<Stok> page = stokRepository.filtreli(sirketId, likeDeseni(q), esitMiDeseni(kategori),
+                likeDeseni(marka), esitMiDeseni(stokGrubu), minFiyat, maxFiyat, depoId, pageable);
         Map<Long, String> tedarikciAdlari = tedarikciAdlari(page.getContent());
         Map<Long, List<StokFiyatDTO>> fiyatlar = fiyatHaritasi(page.getContent());
         return page.map(s -> entityToDTO(s, tedarikciAdlari, fiyatlar));
+    }
+
+    /**
+     * Kategori ve üretim tipi dağılımı (değer + ürün sayısı), tüm katalogdan.
+     * Liste ekranındaki grup çipleri ve toplu fiyat seçenekleri bu veriyi
+     * kullanır; önceden sayfa satırlarından hesaplandığı için hem eksik hem
+     * yanlış bilgi gösteriyordu.
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> gruplamaDagilimi(Long sirketId) {
+        Map<String, Object> sonuc = new java.util.LinkedHashMap<>();
+        if (sirketId == null) {
+            sonuc.put("kategoriler", List.of());
+            sonuc.put("stokGruplari", List.of());
+            return sonuc;
+        }
+        sonuc.put("kategoriler", dagilimHaritasi(stokRepository.kategoriDagilimi(sirketId)));
+        sonuc.put("stokGruplari", dagilimHaritasi(stokRepository.stokGrubuDagilimi(sirketId)));
+        return sonuc;
+    }
+
+    private List<Map<String, Object>> dagilimHaritasi(List<Object[]> satirlar) {
+        List<Map<String, Object>> liste = new ArrayList<>();
+        for (Object[] satir : satirlar) {
+            String deger = (String) satir[0];
+            if (deger == null || deger.isBlank()) continue;
+            Map<String, Object> m = new java.util.LinkedHashMap<>();
+            m.put("deger", deger);
+            m.put("adet", satir[1] instanceof Number n ? n.longValue() : 0L);
+            liste.add(m);
+        }
+        return liste;
     }
 
     private String bosIseNull(String s) {
         return (s == null || s.isBlank()) ? null : s;
     }
 
+    /**
+     * Sınıflandırma filtresi (kategori / üretim tipi) karşılaştırma değeri.
+     * Sorgu tarafı `lower(kolon) = :deger` ile karşılaştırdığı için gelen metin
+     * de küçük harfe indirilir; aksi halde "Gıda" seçilip 0 kayıt dönüyordu.
+     */
+    private String esitMiDeseni(String s) {
+        return bosIseNull(s) == null ? null : s.trim().toLowerCase(java.util.Locale.forLanguageTag("tr"));
+    }
+
+    /**
+     * LIKE deseni üretir: joker karakterler kaçışlanır, minimum uzunluk uygulanır.
+     *
+     * <p>Eski uygulama {@code "%" + s + "%"} idi; kullanıcı "%" yazdığında tüm
+     * stok tablosu dönerdi. Ayrıca 1 karakterli arama neredeyse tüm kayıtları
+     * getiriyordu.
+     */
     private String likeDeseni(String s) {
-        if (s == null || s.isBlank()) return null;
-        return "%" + s.toLowerCase() + "%";
+        return com.raspel.erp.util.AramaTemizleyici.like(s);
     }
 
     @Transactional(readOnly = true)
@@ -382,16 +432,50 @@ public class StokService {
             } else {
                 maliyetService.cikisIsle(s, fark.abs(), yeniMiktar, s.getSirketId(), "DUZELTME", null);
             }
-            cacheYardimci.temizle("stoklar", "dashboard");
+            cacheYardimci.commitSonrasiTemizle("stoklar", "dashboard");
         }
 
         Stok kaydedilen = stokRepository.save(s);
         return entityToDTO(kaydedilen, tekTedarikciAdi(kaydedilen));
     }
 
-    @CacheEvict(value = "stoklar", allEntries = true)
+    /**
+ * Toplu fiyat güncelleme: tüm stokların fiyatını yüzde oranında artırır/azaltır.
+ *
+ * <p><b>DÜZELTMELER:</b>
+ * <ol>
+ *   <li>{@code double} carpan yerine {@link BigDecimal} kullanılıyordu. double
+ *       1.1 gibi katsayıları ikili (binary) temsil edemez; {@code BigDecimal.valueOf(carpan)}
+ *       her satırda ölçek kaymasına yol açabiliyordu (ör. 100,00 x 1.15 ->
+ *       114,99999999999999).</li>
+ *   <li>Oran doğrulanmıyordu. Negatif oran (ör. -200) "AZALT" yönünde fiyatı
+ *       <b>iki katından fazla artırma</b> gibi değil, tersine işaretli üretebiliyor;
+ *       "ARTIR" yönünde -100 oranı fiyatı sıfırlıyor, -150 oranı <b>negatif
+ *       fiyat</b> üretiyordu. Negatif fiyat stoğu raporları ve maliyet
+ *       hesaplarını bozuyor.</li>
+ * </ol>
+ */
+@CacheEvict(value = "stoklar", allEntries = true)
     public int topluFiyatGuncelle(com.raspel.erp.dto.envanter.TopluFiyatDTO dto, Long sirketId) {
         if (sirketId == null) throw new BusinessException("Şirket bilgisi eksik");
+
+        // DTO orani Double birlestir: once String'e, sonra BigDecimal'e cevir.
+        // Double uzerinden direkt carpim yapmamak icin (binary temsil hatasi).
+        BigDecimal oran = dto.getOran() == null ? BigDecimal.ZERO
+                : new BigDecimal(String.valueOf(dto.getOran()));
+        if (oran.signum() < 0) {
+            throw new BusinessException("Oran negatif olamaz. Azaltmak için yönü AZALT seçiniz.");
+        }
+        if (oran.compareTo(YUZ) > 0) {
+            // AZALT yönünde %100'den büyük oran fiyati negatife cevirir.
+            throw new BusinessException("Azaltma oranı %100'den büyük olamaz.");
+        }
+        boolean azalt = "AZALT".equalsIgnoreCase(dto.getYon());
+        // Yüzde hesabı ölçekli: oran 2 ondalık, bölme 10 ondalık.
+        BigDecimal carpan = azalt
+                ? BigDecimal.ONE.subtract(oran.divide(YUZ, 10, java.math.RoundingMode.HALF_UP))
+                : BigDecimal.ONE.add(oran.divide(YUZ, 10, java.math.RoundingMode.HALF_UP));
+
         List<Stok> hedef = stokRepository.findBySirketIdOrderByAd(sirketId, Pageable.unpaged()).getContent();
         hedef = hedef.stream()
                 .filter(s -> dto.getKategori() == null || dto.getKategori().isBlank() || dto.getKategori().equals(s.getKategori()))
@@ -399,22 +483,20 @@ public class StokService {
                 .filter(s -> dto.getMarka() == null || dto.getMarka().isBlank() || dto.getMarka().equals(s.getMarka()))
                 .collect(Collectors.toList());
 
-        double oran = dto.getOran() != null ? dto.getOran() : 0;
-        double carpan = "AZALT".equalsIgnoreCase(dto.getYon()) ? (1 - oran / 100) : (1 + oran / 100);
-
         for (Stok s : hedef) {
-            if (s.getFiyat() != null) {
-                s.setFiyat(s.getFiyat().multiply(BigDecimal.valueOf(carpan))
-                        .setScale(2, java.math.RoundingMode.HALF_UP));
-            }
-            if (s.getSatisFiyati() != null) {
-                s.setSatisFiyati(s.getSatisFiyati().multiply(BigDecimal.valueOf(carpan))
-                        .setScale(2, java.math.RoundingMode.HALF_UP));
-            }
+            s.setFiyat(carpazFiyat(s.getFiyat(), carpan));
+            s.setSatisFiyati(carpazFiyat(s.getSatisFiyati(), carpan));
         }
         stokRepository.saveAll(hedef);
-        cacheYardimci.temizle("stoklar", "dashboard");
+        cacheYardimci.commitSonrasiTemizle("stoklar", "dashboard");
         return hedef.size();
+    }
+
+    /** Carpan uygulanmiş fiyat; negatif sonuc sifira daraltilir (veri kaybi olmaz). */
+    private BigDecimal carpazFiyat(BigDecimal fiyat, BigDecimal carpan) {
+        if (fiyat == null) return null;
+        BigDecimal sonuc = fiyat.multiply(carpan).setScale(2, java.math.RoundingMode.HALF_UP);
+        return sonuc.signum() < 0 ? BigDecimal.ZERO.setScale(2) : sonuc;
     }
 
     @CacheEvict(value = "stoklar", allEntries = true)
@@ -435,8 +517,9 @@ public class StokService {
         Stok stok = stokRepository.findById(stokId)
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", stokId));
         tenantChecker.check(stok.getSirketId(), "Stok");
-        return stokHareketRepository.findByStokIdOrderByHareketTarihiDesc(stokId)
-                .stream().map(h -> hareketToDTO(h, Map.of(), Map.of())).collect(Collectors.toList());
+        // zenginlestir kullanilir: depo/seri adlari tek sorguda toplu cozulur.
+        // Bos map gecilirse hareketToDTO her satir icin ayri findByid cagirir (N+1).
+        return zenginlestir(stokHareketRepository.findByStokIdOrderByHareketTarihiDesc(stokId));
     }
 
     @Transactional(readOnly = true)
@@ -473,6 +556,19 @@ public class StokService {
 
         BigDecimal miktar = dto.getMiktar();
         BigDecimal eskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
+
+        // REDTEAM C3: miktar negatif gonderilirse "yetersiz stok" kontrolu gecer
+        // ve GIRIS dalinda stok ARTAR (100 -> 5100). DTO @DecimalMin ekledi ama
+        // bu metot ic sistemlerden de cagrildigi icin servis katmaninda da
+        // guvenli kalmasi gerekiyor (savunma derinligi).
+        if (miktar == null || miktar.signum() <= 0) {
+            throw new BusinessException("Miktar pozitif olmalıdır. Yön bilgisi için 'tur' alanını kullanın.");
+        }
+        if (!"CIKIS".equals(dto.getTur()) && !"GIRIS".equals(dto.getTur())
+                && !"DUZELTME".equals(dto.getTur())) {
+            throw new BusinessException("Geçersiz hareket türü: " + dto.getTur());
+        }
+
         if ("CIKIS".equals(dto.getTur())) {
             if (stok.getMiktar().compareTo(miktar) < 0)
                 throw new BusinessException("Yetersiz stok! Mevcut: " + stok.getMiktar() + ", Çıkış: " + miktar);
@@ -503,7 +599,7 @@ public class StokService {
                 "CIKIS".equals(dto.getTur()) ? miktar.negate() : miktar);
         StokHareketDTO sonuc = hareketToDTO(stokHareketRepository.save(h));
         kritikStokBildirimiGonder(stok);
-        cacheYardimci.temizle("stoklar", "dashboard");
+        cacheYardimci.commitSonrasiTemizle("stoklar", "dashboard");
         return sonuc;
     }
 
@@ -567,7 +663,7 @@ public class StokService {
                     "CIKIS".equals(h.getTur()) ? h.getMiktar() : h.getMiktar().negate());
         }
         stokHareketRepository.deleteById(hareketId);
-        cacheYardimci.temizle("stoklar", "dashboard");
+        cacheYardimci.commitSonrasiTemizle("stoklar", "dashboard");
     }
 
     @Transactional(readOnly = true)
@@ -577,6 +673,62 @@ public class StokService {
     public BigDecimal toplamStokMiktari(Long sirketId) {
         BigDecimal toplam = stokRepository.toplamMiktarBySirketId(sirketId);
         return toplam != null ? toplam : BigDecimal.ZERO;
+    }
+
+    /**
+     * Satış ekranı için yazarken ürün önerisi (typeahead).
+     *
+     * <p>Mevcut {@link #ara(String, Long)} bu iş için kullanılmaz: tam barkod
+     * sonuç vermeyince {@code LIKE '%q%'} ile tüm katalogu tarıyor ve LİMİT
+     * YOK. Kasada tek harf yazınca binlerce kayıt dönüyordu.
+     *
+     * <p>Önce tam barkod/stok kodu eşleşmesi denenir (barkod okutma akışı tek
+     * sonuç vermeli); bu bir eşleşme bulunamazsa genel öneri listesi döner.
+     *
+     * @param limit en fazla kaç öneri döneceği (üst sınırlanır)
+     */
+    @Transactional(readOnly = true)
+    public List<StokDTO> satisOnerileri(String q, Long sirketId, Integer limit) {
+        if (sirketId == null) return List.of();
+        String temiz = q == null ? "" : q.trim();
+        if (temiz.isEmpty()) return List.of();
+        int adet = limit == null || limit <= 0 ? 20 : Math.min(limit, 50);
+
+        // Barkod/stok kodu okutma akisi: tam eslesme varsa SADECE o doner.
+        // (Barkod alaninda birden fazla satir donmesi kasa operatorunu yaniltir.)
+        Optional<Stok> tam = stokRepository.findBySirketIdAndBarkod(sirketId, temiz)
+                .stream().findFirst();
+        if (tam.isEmpty()) {
+            tam = stokRepository.findBySirketIdAndStokKodu(sirketId, temiz);
+        }
+        if (tam.isPresent()) {
+            List<Stok> tek = List.of(tam.get());
+            return List.of(entityToDTO(tam.get(), tedarikciAdlari(tek), fiyatHaritasi(tek)));
+        }
+
+        String kucuk = temiz.toLowerCase(java.util.Locale.forLanguageTag("tr"));
+        List<Stok> bulunan = stokRepository.satisOnerileri(sirketId, temiz,
+                kucuk + "%", "%" + kucuk + "%",
+                org.springframework.data.domain.PageRequest.of(0, adet));
+        if (bulunan.isEmpty()) return List.of();
+        // Oncelik sirasi: tam eslesme -> ad oneki -> icinde gecen.
+        bulunan.sort(java.util.Comparator
+                .comparingInt((Stok s) -> tamEslesmeMi(s, temiz) ? 0 : adOnekiMi(s, kucuk) ? 1 : 2)
+                .thenComparing(Stok::getAd, java.util.Comparator.nullsLast(String::compareToIgnoreCase)));
+        // Toplu fiyat/tedarikci haritalari: kalem basina sorgu yapmaz (N+1 yok).
+        Map<Long, String> tedarikciler = tedarikciAdlari(bulunan);
+        Map<Long, List<StokFiyatDTO>> fiyatlar = fiyatHaritasi(bulunan);
+        return bulunan.stream()
+                .map(s -> entityToDTO(s, tedarikciler, fiyatlar))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    private boolean tamEslesmeMi(Stok s, String q) {
+        return q.equals(s.getBarkod()) || q.equals(s.getStokKodu());
+    }
+
+    private boolean adOnekiMi(Stok s, String kucukQ) {
+        return s.getAd() != null && s.getAd().toLowerCase(java.util.Locale.forLanguageTag("tr")).startsWith(kucukQ);
     }
 
     @Transactional(readOnly = true)

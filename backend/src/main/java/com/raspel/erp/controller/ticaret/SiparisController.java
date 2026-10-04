@@ -41,6 +41,7 @@ public class SiparisController {
 
     @PostMapping
     @Operation(summary = "Yeni sipariş oluştur", description = "Yeni bir sipariş oluşturur")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SIPARIS_WRITE')")
     public ResponseEntity<SiparisDTO> olustur(HttpServletRequest request, @Valid @RequestBody SiparisDTO dto) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         SiparisDTO olusan = com.raspel.erp.support.MukerrerKayitRetry.calistir(
@@ -51,19 +52,21 @@ public class SiparisController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Sipariş güncelle", description = "Sipariş bilgilerini günceller")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SIPARIS_WRITE')")
     public ResponseEntity<SiparisDTO> guncelle(@PathVariable Long id, @Valid @RequestBody SiparisDTO dto) {
         return ResponseEntity.ok(siparisService.guncelle(id, dto));
     }
 
     @PutMapping("/{id}/durum")
     @Operation(summary = "Sipariş durum güncelle", description = "Sipariş durumunu günceller")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SIPARIS_WRITE')")
     public ResponseEntity<SiparisDTO> durumGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body) {
         return ResponseEntity.ok(siparisService.durumGuncelle(id, body.getDurum()));
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Sipariş sil", description = "Siparişi siler (yalnızca ADMIN)")
-    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Sipariş sil", description = "Siparişi siler")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SIPARIS_DELETE')")
     public ResponseEntity<Void> sil(@PathVariable Long id) {
         siparisService.sil(id);
         return ResponseEntity.noContent().build();
@@ -71,6 +74,7 @@ public class SiparisController {
 
     @PostMapping("/{id}/sofor-ata")
     @Operation(summary = "Siparişe şoför ata", description = "Siparişe şoför atar ve Teslimatlar'a yansıtır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SIPARIS_WRITE')")
     public ResponseEntity<SiparisDTO> soforAta(
             @PathVariable Long id,
             @RequestBody(required = false) Map<String, Object> govde,

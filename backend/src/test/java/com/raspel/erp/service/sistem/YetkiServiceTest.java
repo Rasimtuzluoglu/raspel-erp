@@ -7,6 +7,7 @@ import com.raspel.erp.repository.sistem.YetkiRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -61,5 +62,157 @@ class YetkiServiceTest {
         assertNotNull(result);
         assertEquals(1, result.getYetkiler().size());
         verify(rolRepository, times(1)).save(mockRol);
+    }
+
+    /** Yetki kodu üretir (kayıtta id atanmadığı için findById yerine findAll kullanılır). */
+    private Yetki yetki(String kod) {
+        return Yetki.builder().kod(kod).modul("Test").aciklama(kod).build();
+    }
+
+    @Test
+    void tumRolleriGetir_RolTablosuBos_VarsayilanRolleriKurar() {
+        when(rolRepository.findAll()).thenReturn(List.of());
+        when(yetkiRepository.findAll()).thenReturn(List.of(yetki("STOK_READ"), yetki("STOK_WRITE"), yetki("STOK_DELETE")));
+        when(rolRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+
+        List<Rol> roller = yetkiService.tumRolleriGetir();
+
+        // ADMIN + USER + SAHA + DRIVER
+        assertEquals(4, roller.size());
+        Rol admin = roller.stream().filter(r -> "ADMIN".equals(r.getAd())).findFirst().orElseThrow();
+        Rol user = roller.stream().filter(r -> "USER".equals(r.getAd())).findFirst().orElseThrow();
+        assertEquals(3, admin.getYetkiler().size());
+        // USER yalnızca READ/WRITE alır; silme yetkisi verilmez.
+        assertEquals(2, user.getYetkiler().size());
+        assertTrue(user.getYetkiler().stream().allMatch(y -> y.getKod().endsWith("_READ") || y.getKod().endsWith("_WRITE")));
+    }
+
+    @Test
+    void tumRolleriGetir_EksikSahaVeSoforRolleriniOlusturur() {
+        Rol admin = Rol.builder().id(1L).ad("ADMIN").yetkiler(new HashSet<>(Set.of(yetki("STOK_READ")))).build();
+        Rol user = Rol.builder().id(2L).ad("USER").yetkiler(new HashSet<>()).build();
+        when(rolRepository.findAll())
+                .thenReturn(List.of(admin, user))                       // ilk çağrı: mevcut roller
+                .thenReturn(List.of(admin, user));                      // sonraki çağrı: findAll tekrarı
+        when(yetkiRepository.findAll()).thenReturn(List.of(
+                yetki("STOK_READ"), yetki("SIPARIS_READ"), yetki("CARI_READ"), yetki("FATURA_READ"), yetki("IK_READ")));
+        when(rolRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+
+        yetkiService.tumRolleriGetir();
+
+        ArgumentCaptor<List<Rol>> captor = ArgumentCaptor.forClass(List.class);
+        verify(rolRepository).saveAll(captor.capture());
+        List<Rol> eklenen = captor.getValue();
+        assertEquals(2, eklenen.size());
+        assertTrue(eklenen.stream().anyMatch(r -> "SAHA".equals(r.getAd())));
+        assertTrue(eklenen.stream().anyMatch(r -> "DRIVER".equals(r.getAd())));
+    }
+
+    @Test
+    void tumRolleriGetir_MevcutRolVarsaEklememeYapar() {
+        Rol admin = Rol.builder().id(1L).ad("ADMIN").yetkiler(new HashSet<>()).build();
+        Rol saha = Rol.builder().id(3L).ad("SAHA").yetkiler(new HashSet<>()).build();
+        Rol driver = Rol.builder().id(4L).ad("DRIVER").yetkiler(new HashSet<>()).build();
+        when(rolRepository.findAll()).thenReturn(List.of(admin, saha, driver));
+        when(yetkiRepository.findAll()).thenReturn(List.of(yetki("STOK_READ")));
+
+        yetkiService.tumRolleriGetir();
+
+        verify(rolRepository, never()).saveAll(anyList());
+    }
+
+    // ---------- C8: seed kontrolu (sistem.yetki bos tabloda kalirsa) ----------
+
+    /**
+     * C8: `sistem.yetki` tablosu bos oldugunda USER rolunun tum yazma uclari
+     * 403 donuyordu (YetkiKontrol fail-closed + CROSS JOIN bos tabloya yaziyordu).
+     * Acilis seed'i bos tabloyu doldurur.
+     */
+    @Test
+    void seedKontrolu_bosYetkiTablosunuDoldurur() {
+        when(yetkiRepository.findAll()).thenReturn(List.of());
+        when(rolRepository.findAll()).thenReturn(List.of());
+        when(yetkiRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+        when(rolRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+
+        yetkiService.seedKontrolu();
+
+        verify(yetkiRepository).saveAll(anyList());
+        verify(rolRepository).saveAll(anyList());
+    }
+
+    /** C8: rol tablosu bos olmasa da eksik roller tamamlanir. */
+    @Test
+    void seedKontrolu_eksikRolleriTamamlar() {
+        when(yetkiRepository.findAll()).thenReturn(List.of(yetki("STOK_READ")));
+        when(rolRepository.findAll()).thenReturn(List.of(Rol.builder().id(1L).ad("ADMIN").yetkiler(new HashSet<>()).build()));
+
+        yetkiService.seedKontrolu();
+
+        verify(rolRepository).saveAll(anyList());
+    }
+
+/** C8: veriler zaten doluysa hicbir sey yazilmaz (idempotent). */
+    @Test
+    void seedKontrolu_doluVerideYazmaYapar() {
+        List<Yetki> tumYetkiler = tumVarsayilanYetkiler();
+        List<Rol> roller = new ArrayList<>();
+        // Varsayilan roller + kullanımda olan operasyonel roller (SAHA, DRIVER).
+        for (String ad : List.of("ADMIN", "USER", "MUHASEBE", "SATIS", "DEPO",
+                "PERSONEL", "SAHA", "DRIVER")) {
+            roller.add(Rol.builder().id((long) roller.size() + 1L).ad(ad).yetkiler(new HashSet<>()).build());
+        }
+        when(yetkiRepository.findAll()).thenReturn(tumYetkiler);
+        when(rolRepository.findAll()).thenReturn(roller);
+
+        yetkiService.seedKontrolu();
+
+        verify(yetkiRepository, never()).saveAll(anyList());
+        verify(rolRepository, never()).saveAll(anyList());
+    }
+
+    /**
+     * C8: eksik kod tamamlama yalnızca eksikleri yazar. Karşılaştırma için
+     * tüm liste yeniden kaydedilmemelidir (var olan kodlar UNIQUE ihlali/veri
+     * kaybı riski taşır).
+     */
+    @Test
+    void seedKontrolu_yalnizcaEksikKoduYazar() {
+        List<Yetki> mevcut = new ArrayList<>(tumVarsayilanYetkiler());
+        Yetki silinecek = mevcut.remove(0);
+        when(yetkiRepository.findAll()).thenReturn(mevcut);
+        when(rolRepository.findAll()).thenReturn(List.of(Rol.builder().id(1L).ad("ADMIN").yetkiler(new HashSet<>()).build()));
+
+        yetkiService.seedKontrolu();
+
+        ArgumentCaptor<List<Yetki>> captor = ArgumentCaptor.forClass(List.class);
+        verify(yetkiRepository).saveAll(captor.capture());
+        List<Yetki> yazilan = captor.getValue();
+        assertEquals(1, yazilan.size());
+        assertEquals(silinecek.getKod(), yazilan.get(0).getKod());
+    }
+
+    /** C8: seed hatasinda uygulama ayaga kalkar, hata loglanir (fail-open). */
+    @Test
+    void seedKontrolu_hataDurumundaYutulur() {
+        when(yetkiRepository.findAll()).thenThrow(new RuntimeException("tablo yok"));
+
+        assertDoesNotThrow(() -> yetkiService.seedKontrolu());
+
+        verify(rolRepository, never()).saveAll(anyList());
+    }
+
+/** Yardimci: servisin urettigi tum varsayilan yetki kodlari. */
+    private List<Yetki> tumVarsayilanYetkiler() {
+        when(yetkiRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+        when(rolRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+        yetkiService.seedKontrolu();
+        ArgumentCaptor<List<Yetki>> captor = ArgumentCaptor.forClass(List.class);
+        verify(yetkiRepository).saveAll(captor.capture());
+        List<Yetki> kodlar = new ArrayList<>(captor.getValue());
+        // Yardimci metodun kendi cagrilari biriktirmesin: sonraki testler kendi
+        // seedKontrolu cagrilarini dogrulasin.
+        clearInvocations(yetkiRepository, rolRepository);
+        return kodlar;
     }
 }

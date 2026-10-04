@@ -9,6 +9,7 @@ import com.raspel.erp.entity.envanter.ReceteKalem;
 import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.envanter.UretimEmri;
 import com.raspel.erp.exception.BusinessException;
+import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.envanter.ReceteKalemRepository;
 import com.raspel.erp.repository.envanter.ReceteRepository;
 import com.raspel.erp.repository.envanter.StokHareketRepository;
@@ -43,6 +44,7 @@ class UretimServiceTest {
     @Mock private com.raspel.erp.service.sube.DepoStokService depoStokService;
     @Mock private com.raspel.erp.service.envanter.StokSeriService stokSeriService;
     @Mock private com.raspel.erp.service.envanter.MaliyetService maliyetService;
+    @Mock private com.raspel.erp.config.TenantChecker tenantChecker;
     @InjectMocks private UretimService uretimService;
 
     private Stok stok(Long id, String ad, String miktar) {
@@ -68,7 +70,7 @@ class UretimServiceTest {
         Stok hammadde = stok(1L, "MDF", "10");
         Stok mamul = stok(10L, "Masa", "0");
 
-        when(uretimEmriRepository.findById(1L)).thenReturn(Optional.of(emri));
+        when(uretimEmriRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(emri));
         when(receteRepository.findFirstBySirketIdAndUrunId(1L, 10L)).thenReturn(Optional.of(recete));
         when(receteKalemRepository.findByReceteId(5L)).thenReturn(List.of(kalem));
         when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(hammadde));
@@ -90,7 +92,7 @@ class UretimServiceTest {
         ReceteKalem kalem = ReceteKalem.builder().id(1L).receteId(5L).hammaddeId(1L).miktar(new BigDecimal("3")).build();
         Stok hammadde = stok(1L, "MDF", "10");
 
-        when(uretimEmriRepository.findById(1L)).thenReturn(Optional.of(emri));
+        when(uretimEmriRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(emri));
         when(receteRepository.findFirstBySirketIdAndUrunId(1L, 10L)).thenReturn(Optional.of(recete));
         when(receteKalemRepository.findByReceteId(5L)).thenReturn(List.of(kalem));
         when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(hammadde));
@@ -127,6 +129,48 @@ class UretimServiceTest {
         assertThrows(BusinessException.class, () -> uretimService.emirBaslat(1L, 1L, 5L));
     }
 
+    /**
+     * C3: emir tamamlamada emri KİLİTLİ okumak zorunlu. Kilit olmadan iki
+     * eşzamanlı istek ikisi de geçer, hammadde iki kez tüketilir ve mamul
+     * iki kez üretilir.
+     */
+    @Test
+    void emirTamamla_emriKilitliOkur() {
+        UretimEmri emri = UretimEmri.builder().id(1L).sirketId(1L).urunId(10L)
+                .miktar(BigDecimal.ONE).durum("URETIMDE").build();
+        Recete recete = Recete.builder().id(5L).sirketId(1L).ad("Masa").urunId(10L).build();
+        ReceteKalem kalem = ReceteKalem.builder().id(1L).receteId(5L).hammaddeId(1L).miktar(BigDecimal.ONE).build();
+        Stok hammadde = stok(1L, "MDF", "10");
+        Stok mamul = stok(10L, "Masa", "0");
+
+        when(uretimEmriRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(emri));
+        when(receteRepository.findFirstBySirketIdAndUrunId(1L, 10L)).thenReturn(Optional.of(recete));
+        when(receteKalemRepository.findByReceteId(5L)).thenReturn(List.of(kalem));
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(hammadde));
+        when(stokRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(mamul));
+
+        uretimService.emirTamamla(1L, 1L, null, null);
+
+        verify(uretimEmriRepository).findByIdForUpdate(1L);
+        verify(uretimEmriRepository, never()).findById(1L);
+        // C1/C3: emrin tenant'ı doğrulanır.
+        verify(tenantChecker).check(1L, "Uretim Emri");
+    }
+
+    /** C3: başka şirketin emri tamamlanamaz. */
+    @Test
+    void emirTamamla_baskaSirketEmriReddedilir() {
+        UretimEmri emri = UretimEmri.builder().id(1L).sirketId(2L).urunId(10L)
+                .miktar(BigDecimal.ONE).durum("URETIMDE").build();
+        when(uretimEmriRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(emri));
+        doThrow(new ResourceNotFoundException("Uretim Emri")).when(tenantChecker).check(2L, "Uretim Emri");
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> uretimService.emirTamamla(1L, 1L, null, null));
+        // Hiçbir stok hareketi yazılmamalı.
+        verify(stokHareketRepository, never()).save(any());
+    }
+
     @Test
     void emirTamamla_kismiUretimVeFire() {
         UretimEmri emri = UretimEmri.builder().id(1L).sirketId(1L).urunId(10L)
@@ -136,7 +180,7 @@ class UretimServiceTest {
         Stok hammadde = stok(1L, "MDF", "100");
         Stok mamul = stok(10L, "Masa", "0");
 
-        when(uretimEmriRepository.findById(1L)).thenReturn(Optional.of(emri));
+        when(uretimEmriRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(emri));
         when(receteRepository.findFirstBySirketIdAndUrunId(1L, 10L)).thenReturn(Optional.of(recete));
         when(receteKalemRepository.findByReceteId(5L)).thenReturn(List.of(kalem));
         when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(hammadde));

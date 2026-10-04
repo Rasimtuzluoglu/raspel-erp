@@ -43,6 +43,7 @@
         <span class="p-input-icon-left">
           <i class="pi pi-search" />
           <InputText
+            ref="aramaGirdiRef"
             v-model="aramaMetni"
             :placeholder="t('cariHesaplar.aramaPlaceholder')"
             @input="ara"
@@ -71,11 +72,11 @@
         <strong>{{ cariOzet.toplamKayit ?? cariHesapStore.toplamKayit }}</strong>
       </div>
       <div class="istatistik-kutu">
-        <span>{{ t('cariHesaplar.alacakli') }}</span>
+        <span>{{ t('cariHesaplar.bizeAlacakli') }}</span>
         <strong class="positive">{{ formatCurrency(cariOzet.alacakli ?? 0) }}</strong>
       </div>
       <div class="istatistik-kutu">
-        <span>{{ t('cariHesaplar.borclu') }}</span>
+        <span>{{ t('cariHesaplar.bizeBorclu') }}</span>
         <strong class="negative">{{ formatCurrency(cariOzet.borclu ?? 0) }}</strong>
       </div>
     </div>
@@ -223,18 +224,38 @@
         />
         <Column
           v-if="kolonlar[7].visible"
+          field="temsilciAd"
+          :header="t('cariHesaplar.satisTemsilcisi')"
+          style="width: 140px"
+        >
+          <template #body="slotProps">
+            <!-- Temsilci performans raporu bu alana göre gruplar; atanmamış
+                 cariler raporda tek satırda toplanıyor. -->
+            <span v-if="slotProps.data.temsilciAd">{{ slotProps.data.temsilciAd }}</span>
+            <span
+              v-else
+              class="gizli-veri"
+            >-</span>
+          </template>
+        </Column>
+        <Column
+          v-if="kolonlar[8].visible"
           field="bakiye"
           :header="t('cariHesaplar.bakiye')"
           class="sayisal"
           style="width: 140px"
         >
           <template #body="slotProps">
+            <!-- Bakiye işareti kuralı: negatif = cari bize borçlu (ALACAK).
+                 Önceden `>= 0` kontrolü borçlu müşteriyi kırmızı "alacak"
+                 rozetiyle gösteriyordu. -->
             <span
               class="bakiye-rozet gizli-veri"
-              :class="slotProps.data.bakiye >= 0 ? 'alacak' : 'borc'"
+              :class="borcluMu(slotProps.data.bakiye) ? 'borc' : 'alacak'"
+              :title="borcluMu(slotProps.data.bakiye) ? t('cariHesaplar.bizeBorclu') : t('cariHesaplar.bizeAlacakli')"
             >
-              <i :class="slotProps.data.bakiye >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
-              {{ formatCurrency(slotProps.data.bakiye) }}
+              <i :class="borcluMu(slotProps.data.bakiye) ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
+              {{ formatCurrency(Math.abs(slotProps.data.bakiye || 0)) }}
             </span>
           </template>
         </Column>
@@ -521,6 +542,25 @@
           <div class="form-section-title">
             {{ t('cariHesaplar.ekBilgiler') }}
           </div>
+          <!-- Satis temsilcisi: temsilci performans raporu bu alana gore gruplar.
+               Once yazma yolu yoktu, alan her zaman null kaldi ve rapor tek
+               satirda "temsilci atanmamis" donuyordu. -->
+          <div class="form-group">
+            <label for="temsilciId">{{ t('cariHesaplar.satisTemsilcisi') }}</label>
+            <Dropdown
+              id="temsilciId"
+              v-model="form.temsilciId"
+              :options="temsilciSecenekleri"
+              option-label="ad"
+              option-value="id"
+              :placeholder="t('cariHesaplar.temsilciSeciniz')"
+              class="w-full"
+              show-clear
+              filter
+              filter-by="ad,email"
+              :loading="temsilcilerYukleniyor"
+            />
+          </div>
           <div class="form-group">
             <label for="notlar">{{ t('cariHesaplar.notlar') }}</label>
             <Textarea
@@ -670,7 +710,10 @@
           </template>
         </AppDataTable>
 
-        <TabView class="cari-sekmeler">
+        <TabView
+          class="cari-sekmeler"
+          @update:active-index="cariSekmeDegisti"
+        >
           <TabPanel :header="t('cariHesaplar.gecmisFaturalarTab')">
             <div
               v-if="cariFaturalar && cariFaturalar.length > 0"
@@ -750,14 +793,20 @@
                 />
               </div>
               <div class="ozel-fiyat-ekle">
+                <!-- Sunucu aramali stok secici. Sayfa acilisinda 1000 kayit
+                     cekiliyordu, ama bu dropdown yalnizca "Ozel Fiyatlar"
+                     sekmesine girildiginde gorunuyor; 1000. stoktan sonrasi
+                     zaten secilemiyordu. -->
                 <Dropdown
                   v-model="ozelFiyatStok"
-                  :options="stokSecenekleri"
+                  :options="stokOnerileri"
                   option-label="ad"
                   option-value="id"
                   :placeholder="t('cariHesaplar.urunSec')"
                   filter
+                  filter-by="ad,stokKodu,barkod"
                   class="ozel-fiyat-stok-select"
+                  @filter="stokAra"
                 />
                 <InputNumber
                   v-model="ozelFiyatTutar"
@@ -989,7 +1038,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useRouter } from 'vue-router'
-import { excelAPI, hareketAPI, notAPI, faturaAPI, stokAPI, cariHesapAPI, uploadAPI } from '../api/index.js'
+import { excelAPI, hareketAPI, notAPI, faturaAPI, stokAPI, cariHesapAPI, uploadAPI, kullaniciAPI } from '../api/index.js'
 import { resimDogrula } from '../utils/dosyaDogrula.js'
 import { resimSikistir } from '../utils/resimSikistir.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
@@ -1028,6 +1077,7 @@ const varsayilanKolonlar = computed(() => [
   { field: 'telefon', header: t('cariHesaplar.telefon') },
   { field: 'krediLimiti', header: t('cariHesaplar.krediLimiti') },
   { field: 'odemeVadesi', header: t('cariHesaplar.vadeGun') },
+  { field: 'temsilciAd', header: t('cariHesaplar.satisTemsilcisi') },
   { field: 'bakiye', header: t('cariHesaplar.bakiye') }
 ])
 const kolonlar = computed(() =>
@@ -1046,7 +1096,14 @@ useKisayollar({
   iptal: () => {
     showDialog.value = false
   },
-  kaydet: () => saveCariHesap()
+  kaydet: () => saveCariHesap(),
+  // Ctrl+K: arama kutusuna odaklan. Önceden placeholder'da "Ctrl+F" yazıyordu
+  // ama hiçbir kısayol bağlı değildi (tarayıcının kendi bul işlevi açılıyordu).
+  ara: () => {
+    const el = aramaGirdiRef.value?.$el || aramaGirdiRef.value
+    el?.focus?.()
+    el?.select?.()
+  }
 })
 
 const showDialog = ref(false)
@@ -1061,6 +1118,7 @@ const cariHareketlerYukleniyor = ref(false)
 const selectedCariHesaplar = ref([])
 const selectedCariHesap = ref(null)
 const aramaMetni = ref('')
+const aramaGirdiRef = ref(null)
 let aramaZamanlayici = null
 onUnmounted(() => {
   if (aramaZamanlayici) clearTimeout(aramaZamanlayici)
@@ -1075,9 +1133,16 @@ const cariTurSecenekleri = computed(() => [
   { label: t('cariTur.herIkisi'), value: 'Her Ikisi' }
 ])
 const bakiyeFiltreleri = computed(() => [
-  { label: t('cariHesaplar.alacakli'), value: 'alacak' },
-  { label: t('cariHesaplar.borclu'), value: 'borc' }
+  { label: t('cariHesaplar.bizeAlacakli'), value: 'alacak' },
+  { label: t('cariHesaplar.bizeBorclu'), value: 'borc' }
 ])
+
+/**
+ * Bakiye işareti kuralı (backend ile aynı): negatif = cari bize borçlu.
+ * @param {number|null} bakiye
+ * @returns {boolean} true → bize borçlu (borç)
+ */
+const borcluMu = (bakiye) => Number(bakiye || 0) < 0
 
 const cariOzet = ref({})
 
@@ -1111,8 +1176,28 @@ const toplamOdeme = computed(() =>
 const toplamBorclandirma = computed(() =>
   cariHareketler.value.filter((h) => h.tur === 'BORC').reduce((s, h) => s + (h.tutar || 0), 0)
 )
-// Backend ile ayni isaret kurali: tahsilat bakiyeyi artirir, odeme/borclandirma azaltir.
-const guncelBakiye = computed(() => toplamTahsilat.value - toplamOdeme.value - toplamBorclandirma.value)
+// Hareket tablosu `cari.hareket` kayitlarini gosterir; SATIS/ALIS faturalari
+// burada satir acmaz (FaturaService cari bakiyeyi dogrudan gunceller). Bu yuzden
+// hareketlerden hesaplanan bakiye, kaydin gercek bakiyesiyle UYUSMAZ: 50.000 TL
+// acik faturali bir cari listede -50.000 gosterirken burada 0 cikardi.
+// KAYIT BAKIYESI (negatif = cari bize borcu) esas alinir; hareketlerin saf
+// etkisi ekstrede gorunur, kaydi yalnizca baslangic bakiyesi olarak telafi eder.
+const netHareketEtkisi = computed(() =>
+  toplamTahsilat.value - toplamOdeme.value - toplamBorclandirma.value
+)
+
+const guncelBakiye = computed(() => {
+  const kayit = selectedCariHesap.value?.bakiye
+  return kayit != null ? kayit : netHareketEtkisi.value
+})
+
+// Hareketlerden onceki (acilis) bakiye: en son hareketin yuruyen bakiyesi
+// kaydin gercek bakiyesine tam otursun diye fark kadar eklenir.
+const hareketBaslangicBakiyesi = computed(() => {
+  const kayit = selectedCariHesap.value?.bakiye
+  if (kayit == null) return 0
+  return kayit - netHareketEtkisi.value
+})
 
 const hareketDelta = (h) => (h.tur === 'TAHSILAT' ? h.tutar || 0 : -(h.tutar || 0))
 
@@ -1121,7 +1206,7 @@ const cariHareketlerBakiye = computed(() => {
   const sirali = [...cariHareketler.value].sort(
     (a, b) => new Date(a.hareketTarihi || 0) - new Date(b.hareketTarihi || 0)
   )
-  let bakiye = 0
+  let bakiye = hareketBaslangicBakiyesi.value
   return sirali.map((h) => {
     bakiye += hareketDelta(h)
     return { ...h, bakiye }
@@ -1205,6 +1290,7 @@ const form = ref({
   yetkiliTelefon: '',
   krediLimiti: null,
   odemeVadesi: 0,
+  temsilciId: null,
   notlar: '',
   fotoUrl: '',
   fotoThumbUrl: '',
@@ -1236,12 +1322,6 @@ const { temizle: formTemizle } = useFormKorumasi(form)
 onMounted(async () => {
   await loadCariHesaplar()
   cariOzetYukle()
-  try {
-    const r = await stokAPI.getAll({ size: 1000 })
-    stokSecenekleri.value = unwrapList(r)
-  } catch {
-    stokSecenekleri.value = []
-  }
 })
 
 const cariSayfa = ref(0)
@@ -1277,6 +1357,7 @@ const ara = () => {
 }
 
 const openDialog = () => {
+  temsilcileriYukle()
   editingId.value = null
   form.value = {
     ad: '',
@@ -1293,6 +1374,7 @@ const openDialog = () => {
     yetkiliTelefon: '',
     krediLimiti: null,
     odemeVadesi: 0,
+    temsilciId: null,
     notlar: '',
     aktif: true
   }
@@ -1337,6 +1419,10 @@ const editCariHesap = (cariHesap) => {
     yetkiliTelefon: cariHesap.yetkiliTelefon || '',
     krediLimiti: cariHesap.krediLimiti || null,
     odemeVadesi: cariHesap.odemeVadesi ?? 0,
+    // temsilciAd denormalize alan; raporlar bu alana göre gruplar, bu yüzden
+    // seçim değiştiğinde isimle birlikte gönderilir.
+    temsilciId: cariHesap.temsilciId ?? null,
+    temsilciAd: cariHesap.temsilciAd || null,
     notlar: cariHesap.notlar || '',
     fotoUrl: cariHesap.fotoUrl || '',
     fotoThumbUrl: cariHesap.fotoThumbUrl || '',
@@ -1347,6 +1433,32 @@ const editCariHesap = (cariHesap) => {
   showDialog.value = true
 }
 
+// Satis temsilcisi secenekleri. Kullanici listesi cari ekraninda zaten
+// yuklenmiyordu; dropdown ilk acilista bos kalsin diye forma girildiginde bir
+// kez cekilir. Raporlar bu alana gore grupladigi icin secim zorunlu degil
+// ama atanmayan cariler raporda ayri satirda gosterilir.
+const temsilciSecenekleri = ref([])
+const temsilcilerYukleniyor = ref(false)
+let temsilcilerYuklendi = false
+
+const temsilcileriYukle = async () => {
+  if (temsilcilerYuklendi || temsilcilerYukleniyor.value) return
+  temsilcilerYukleniyor.value = true
+  try {
+    const r = await kullaniciAPI.getAll({ size: 500 })
+    const liste = unwrapList(r)
+    // API sirket filtresini uyguluyor olsa da liste kendi sirketine gore
+    // daraltilir: yanlis sirketten temsilci secilmemeli.
+    const sirketId = authStore?.sirketId
+    temsilciSecenekleri.value = sirketId ? liste.filter((k) => k.sirketId === sirketId) : liste
+    temsilcilerYuklendi = true
+  } catch {
+    temsilciSecenekleri.value = []
+  } finally {
+    temsilcilerYukleniyor.value = false
+  }
+}
+
 const saveCariHesap = async () => {
   submitted.value = true
   if (!form.value.ad.trim()) {
@@ -1354,17 +1466,28 @@ const saveCariHesap = async () => {
     return
   }
 
+  // Temsilcinin adi denormalize olarak saklanir (temsilci performans raporu
+  // JOIN yapmadan bu alana gore gruplar). Dropdown yalnizca id dondurdugu icin
+  // ad burada cozulur; temsilci temizlendiyse alanlar da temizlenir.
+  const seciliTemsilci = temsilciSecenekleri.value.find((k) => k.id === form.value.temsilciId)
+  const temsilciAd = form.value.temsilciId ? seciliTemsilci?.ad || null : null
+  const payload = { ...form.value, temsilciAd }
+
   saving.value = true
   try {
     if (editingId.value) {
-      await cariHesapStore.updateCariHesap(editingId.value, form.value)
+      await cariHesapStore.updateCariHesap(editingId.value, payload)
       toastBildirim.basarili(t('cariHesaplar.guncellendi'))
     } else {
-      await cariHesapStore.addCariHesap(form.value)
+      await cariHesapStore.addCariHesap(payload)
       toastBildirim.basarili(t('cariHesaplar.olusturuldu'))
     }
     formTemizle()
     closeDialog()
+    // Liste ve KPI yeniden sorgulanır. `createCrudStore.add/update` yeni kaydı
+    // listenin SONUNA ekliyor ve toplam kaydı güncellemiyordu; özellikle
+    // sayfalı/aramalı listede kayıt hiç görünmüyor ya da yanlış sayfada kalıyordu.
+    await Promise.allSettled([loadCariHesaplar(), cariOzetYukle()])
   } catch (error) {
     toastBildirim.hata(t('cariHesaplar.islemBasarisiz'))
   } finally {
@@ -1388,6 +1511,8 @@ const deleteCariHesap = async (id) => {
   try {
     await cariHesapStore.deleteCariHesap(id)
     toastBildirim.basarili(t('cariHesaplar.silindi'))
+    // Silinen kayıt liste ve KPI'dan da düşmeli.
+    await Promise.allSettled([loadCariHesaplar(), cariOzetYukle()])
   } catch (error) {
     toastBildirim.hata(t('cariHesaplar.silmeHata'))
   }
@@ -1469,13 +1594,23 @@ const tahsilatAc = async (cariHesap) => {
   }
 }
 
-const tahsilatSonrasiYenile = async () => {
-  tahsilatHedefCari.value = null
+// Tahsilat/borçlandırma sonrası yenileme.
+// ÖNCE getAllCariHesaplar() çağrılıyordu; bu parametresiz (size=50) tüm şirket
+// sayfasını getirip listeyi eziyor, dolayısıyla kullanıcının arama/tür/bakiye
+// filtresi ve bulunduğu sayfa sessizce kayboluyordu. KPI kartları (ozet) de
+// filtreyi yok sayar; o da yenilenmeli.
+const islemSonrasiYenile = async () => {
   try {
-    await cariHesapStore.getAllCariHesaplar()
+    await loadCariHesaplar()
+    await cariOzetYukle()
   } catch {
     /* yenileme hatasi global olarak bildirilir */
   }
+}
+
+const tahsilatSonrasiYenile = async () => {
+  tahsilatHedefCari.value = null
+  await islemSonrasiYenile()
 }
 
 const borclandirmaDialog = ref(false)
@@ -1488,11 +1623,7 @@ const borclandirmaAc = (cariHesap) => {
 
 const borclandirmaSonrasiYenile = async () => {
   borclandirmaHedefCari.value = null
-  try {
-    await cariHesapStore.getAllCariHesaplar()
-  } catch {
-    /* yenileme hatasi global olarak bildirilir */
-  }
+  await islemSonrasiYenile()
   if (showHareketlerDialog.value && selectedCariHesap.value) {
     await viewHareketler(selectedCariHesap.value)
   }
@@ -1528,7 +1659,45 @@ const viewHareketler = async (cariHesap) => {  selectedCariHesap.value = cariHes
 const cariOzelFiyatlar = ref([])
 const ozelFiyatStok = ref(null)
 const ozelFiyatTutar = ref(null)
-const stokSecenekleri = ref([])
+// Özel fiyat ekleme sekmesindeki stok seçici sunucu aramalı. Sayfa açılışında
+// 1000 kayıt çekiliyordu ve dropdown yalnızca bu sekme açıldığında göründüğü
+// için hem gereksiz ağ trafiği hem de 1000. stoktan sonrasının seçilememesi
+// anlamına geliyordu.
+const stokOnerileri = ref([])
+let stokAramaZamanlayici = null
+let stokAramaSeq = 0
+
+const stokAra = (event) => {
+  const q = (event?.filter ?? event?.query ?? '').toString().trim()
+  const benimSeq = ++stokAramaSeq
+  if (stokAramaZamanlayici) clearTimeout(stokAramaZamanlayici)
+  stokAramaZamanlayici = setTimeout(async () => {
+    try {
+      const r = await stokAPI.ara(q)
+      if (benimSeq !== stokAramaSeq) return
+      stokOnerileri.value = unwrapList(r)
+    } catch {
+      if (benimSeq === stokAramaSeq) stokOnerileri.value = []
+    }
+  }, 250)
+}
+
+// Sekme ilk açıldığında boş öneri listesiyle karşılaşılmasın.
+const ozelFiyatSekmesiAcildi = async () => {
+  if (stokOnerileri.value.length) return
+  try {
+    const r = await stokAPI.ara('')
+    stokOnerileri.value = unwrapList(r)
+  } catch {
+    stokOnerileri.value = []
+  }
+}
+
+// Hareket dialog'undaki sekmeler: 0 = Geçmiş Faturalar, 1 = Özel Fiyatlar,
+// 2 = Geçmişte Aldığı Ürünler, 3 = Görüşme Notları.
+const cariSekmeDegisti = (idx) => {
+  if (idx === 1) ozelFiyatSekmesiAcildi()
+}
 
 const cariOzelFiyatlariYukle = async (cariId) => {
   try {

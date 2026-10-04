@@ -17,9 +17,11 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.service.finans.CariHesapService;
@@ -144,27 +146,132 @@ class RaporServiceTest {
     }
 
     @Test
-    void yaslandirmaRaporu_returnsYaslandirma() {
+    void yaslandirmaRaporu_kovaMatrisiDoner() {
         CariHesap cari1 = createCariHesap();
-        // Bakiye konvansiyonu: negatif = bize borçlu (alacaklı olduğumuz taraf).
-        cari1.setBakiye(BigDecimal.valueOf(-3000));
+        cari1.setAd("Cari 1");
         CariHesap cari2 = createCariHesap();
         cari2.setId(2L);
         cari2.setAd("Cari 2");
-        cari2.setBakiye(BigDecimal.valueOf(-1000));
 
         when(cariHesapRepository.findBySirketIdOrderByAdAsc(1L)).thenReturn(List.of(cari1, cari2));
-        // DB'de cari bazinda hesaplanan maks gecikme gunleri (Object[]{cariId, gun}).
-        when(faturaRepository.cariBazindaMaksGecikme(any(), any(), any(), anyList(), any()))
+        // Satır: [cariId, vadeTarihi, kalanTutar] - kovalama Java tarafinda yapilir.
+        LocalDate bugun = LocalDate.now();
+        when(faturaRepository.acikFaturalarVadeIcin(any(), any(), any(), anyList()))
                 .thenReturn(List.<Object[]>of(
-                        new Object[]{1L, 45},
-                        new Object[]{2L, 15}));
+                        new Object[]{1L, bugun.plusDays(10), new BigDecimal("2000")},   // vadesi gelmemis
+                        new Object[]{1L, bugun.minusDays(45), new BigDecimal("1000")},   // 31-60
+                        new Object[]{1L, bugun.minusDays(120), new BigDecimal("500")},  // 90+
+                        new Object[]{2L, bugun.minusDays(10), new BigDecimal("700")}));  // 0-30
 
-        var result = raporService.yaslandirmaRaporu(1L);
+        var rapor = raporService.yaslandirmaRaporu(1L, null);
 
-        assertEquals(2, result.size());
-        assertEquals("31-60 Gün", result.get(0).getAralik());
-        assertEquals("0-30 Gün", result.get(1).getAralik());
+        assertEquals(2, rapor.getSatirlar().size());
+        // En cok geciken cari en ustte.
+        var ilk = rapor.getSatirlar().get(0);
+        assertEquals(1L, ilk.getCariHesapId());
+        assertEquals("Cari 1", ilk.getCariAd());
+        assertEquals(120, ilk.getEnFazlaGecikmeGun());
+        // Ortalama yalnizca gecmis iki fatura uzerinden: (45 + 120) / 2
+        assertEquals(82.5d, ilk.getOrtalamaGecikmeGun(), 0.001d);
+        // Satir toplami kova toplamlarinin toplami olmali.
+        assertEquals(0, ilk.getToplam().compareTo(new BigDecimal("3500")));
+        // Gecmis tutar "vadesi gelmemis" haric kova toplami.
+        assertEquals(0, ilk.getGecikmisTutar().compareTo(new BigDecimal("1500")));
+        assertEquals(new BigDecimal("2000"), ilk.getKovalar().get("VADEDI_GELMEMIS"));
+        assertEquals(BigDecimal.ZERO, ilk.getKovalar().get("GUN_0_30"), "Doluluk yoksa sifir yazilmali");
+        assertEquals(new BigDecimal("500"), ilk.getKovalar().get("GUN_90_PLUS"));
+
+        var ozet = rapor.getOzet();
+        assertEquals(2, ozet.getCariSayisi());
+        assertEquals(0, ozet.getToplam().compareTo(new BigDecimal("4200")));
+        assertEquals(0, ozet.getGecikmisTutar().compareTo(new BigDecimal("2200")));
+        assertEquals(new BigDecimal("2000"), ozet.getKovalar().get("VADEDI_GELMEMIS"));
+        // Gecmis kovalarin toplami: 700 + 1000 + 0 + 500 = 2200
+        assertEquals(new BigDecimal("2200"), ozet.getKovalar().get("GUN_0_30")
+                .add(ozet.getKovalar().get("GUN_31_60")).add(ozet.getKovalar().get("GUN_61_90"))
+                .add(ozet.getKovalar().get("GUN_90_PLUS")));
+        assertEquals(RaporService.YASLANDIRMA_KOVALARI, ozet.getKovaSirasi());
+    }
+
+    /**
+     * Regresyon: satir tutari carinin NET bakiyesinin mutlak degeri olarak
+     * hesaplaniyordu. 1.000 TL vadesi gecmis fatura + 500 TL pesin tahsilati olan
+     * cari 90+ kovasinda yalnizca 500 TL ile gorunuyor, yani rapor tahsil
+     * edilebilecek tutari oldugundan az gosteriyordu.
+     */
+    @Test
+    void yaslandirmaRaporu_netBakiyeDegilKalanTutarToplar() {
+        CariHesap cari = createCariHesap();
+        cari.setAd("Kisisel");
+        // Net bakiye -1500 (1.000 gecmis borc - 500 pesin tahsilat).
+        cari.setBakiye(BigDecimal.valueOf(-1500));
+
+        when(cariHesapRepository.findBySirketIdOrderByAdAsc(1L)).thenReturn(List.of(cari));
+        when(faturaRepository.acikFaturalarVadeIcin(any(), any(), any(), anyList()))
+                .thenReturn(List.<Object[]>of(
+                        new Object[]{1L, LocalDate.now().minusDays(120), new BigDecimal("1000")}));
+
+        var rapor = raporService.yaslandirmaRaporu(1L, null);
+
+        var satir = rapor.getSatirlar().get(0);
+        assertEquals(0, satir.getToplam().compareTo(new BigDecimal("1000")),
+                "Satir toplami gecmis faturanin kalan tutari olmali, net bakiye degil");
+        assertEquals(0, satir.getGecikmisTutar().compareTo(new BigDecimal("1000")));
+    }
+
+    /** Vadesi null olan fatura gecmis sayilmaz; mutabakat icin ilk kovaya girer. */
+    @Test
+    void yaslandirmaRaporu_vadesiNullOlanFaturaVadesiGelmemisKovasinaGirer() {
+        CariHesap cari = createCariHesap();
+        when(cariHesapRepository.findBySirketIdOrderByAdAsc(1L)).thenReturn(List.of(cari));
+        when(faturaRepository.acikFaturalarVadeIcin(any(), any(), any(), anyList()))
+                .thenReturn(List.<Object[]>of(new Object[]{1L, null, new BigDecimal("750")}));
+
+        var satir = raporService.yaslandirmaRaporu(1L, null).getSatirlar().get(0);
+
+        assertEquals(new BigDecimal("750"), satir.getKovalar().get("VADEDI_GELMEMIS"));
+        assertEquals(0, satir.getGecikmisTutar().compareTo(BigDecimal.ZERO));
+        assertEquals(0, satir.getEnFazlaGecikmeGun());
+        assertEquals(0d, satir.getOrtalamaGecikmeGun(), 0.001d);
+    }
+
+    /** Ayni fatura farkli referans tarihlerinde farkli kovalara duser. */
+    @Test
+    void yaslandirmaRaporu_referansTariheGoreKovalar() {
+        CariHesap cari = createCariHesap();
+        when(cariHesapRepository.findBySirketIdOrderByAdAsc(1L)).thenReturn(List.of(cari));
+        when(faturaRepository.acikFaturalarVadeIcin(any(), any(), any(), anyList()))
+                .thenReturn(List.<Object[]>of(
+                        new Object[]{1L, LocalDate.of(2026, 1, 1), new BigDecimal("400")}));
+
+        // 1 Ocak vadeli fatura 15 Subat referansinda 45 gun gecmis -> 31-60
+        var satir = raporService.yaslandirmaRaporu(1L, LocalDate.of(2026, 2, 15)).getSatirlar().get(0);
+        assertEquals(45, satir.getEnFazlaGecikmeGun());
+        assertEquals(new BigDecimal("400"), satir.getKovalar().get("GUN_31_60"));
+        assertEquals(BigDecimal.ZERO, satir.getKovalar().get("VADEDI_GELMEMIS"));
+
+        // 1 Mart referansinda ayni fatura 59 gun gecmis -> hala 31-60
+        assertEquals(59, raporService.yaslandirmaRaporu(1L, LocalDate.of(2026, 3, 1))
+                .getSatirlar().get(0).getEnFazlaGecikmeGun());
+        // 1 Nisan referansinda 90 gun -> 61-90
+        assertEquals(new BigDecimal("400"), raporService.yaslandirmaRaporu(1L, LocalDate.of(2026, 4, 1))
+                .getSatirlar().get(0).getKovalar().get("GUN_61_90"));
+    }
+
+    @Test
+    void yaslandirmaRaporu_veriYoksaBosOzetDoner() {
+        when(cariHesapRepository.findBySirketIdOrderByAdAsc(1L)).thenReturn(List.of());
+        when(faturaRepository.acikFaturalarVadeIcin(any(), any(), any(), anyList()))
+                .thenReturn(List.of());
+
+        var rapor = raporService.yaslandirmaRaporu(1L, null);
+
+        assertTrue(rapor.getSatirlar().isEmpty());
+        assertEquals(0, rapor.getOzet().getToplam().compareTo(BigDecimal.ZERO));
+        assertEquals(0, rapor.getOzet().getCariSayisi());
+        // Tum kovalar sifir olmali; eksik anahtar frontend'de "undefined" gorunur.
+        assertEquals(RaporService.YASLANDIRMA_KOVALARI.size(), rapor.getOzet().getKovalar().size());
+        assertTrue(rapor.getOzet().getKovalar().values().stream().allMatch(v -> v.signum() == 0));
     }
 
     @Test
@@ -381,5 +488,97 @@ class RaporServiceTest {
         assertEquals(0, sonuc.getToplamSatis().compareTo(new BigDecimal("1000")));
         assertEquals(2, sonuc.getToplamFatura());
         assertEquals(0, sonuc.getSatirlar().get(0).getOrtalamaFatura().compareTo(new BigDecimal("500.00")));
+    }
+
+    // N+1 regresyonu: iade kalemleri ve iade bagli faturalarin cari bilgileri
+    // iade basina ayri sorguyla (findByIadeId / findById) cekiliyordu; toplu
+    // cagrilarla sabit sayida sorguya indirilir.
+    @Test
+    void baBsGetir_iadeKalemVeCariBilgisiniTopluCeker() {
+        when(faturaRepository.basliklariTarihAraligindaGetir(any(), any(), any())).thenReturn(List.of());
+        when(iadeRepository.findBySirketIdAndTurAndDurumAndTarihBetween(
+                eq(1L), eq("SATIS"), eq("TAMAMLANDI"), any(), any()))
+                .thenReturn(List.of(iade(1L, 900L), iade(2L, 900L), iade(3L, null)));
+
+        when(iadeKalemRepository.findByIadeIdIn(List.of(1L, 2L, 3L))).thenReturn(List.of(
+                iadeKalem(11L, 1L, "100", "20"),
+                iadeKalem(12L, 2L, "200", "20"),
+                iadeKalem(13L, 3L, "50", "20")));
+
+        CariHesap cari = new CariHesap();
+        cari.setId(7L);
+        cari.setAd("ABC Ltd");
+        cari.setVergiNumarasi("1234567890");
+        when(faturaRepository.findAllById(List.of(900L))).thenReturn(List.of(
+                Fatura.builder().id(900L).cariHesap(cari).build()));
+        when(cariHesapRepository.findAllById(Set.of(7L))).thenReturn(List.of(cari));
+
+        var sonuc = raporService.baBsGetir("2026-01", "BS", new BigDecimal("5000"), 1L);
+
+        assertEquals(3, sonuc.getKayitlar().size());
+        var ilk = sonuc.getKayitlar().stream()
+                .filter(k -> k.getFaturaNo().equals("İADE #1")).findFirst().orElseThrow();
+        assertEquals("ABC Ltd", ilk.getCariAd());
+        assertEquals("1234567890", ilk.getCariVkn());
+        // birimFiyat KDV dahil: net = 100 / 1.20 = 83.33, kdv = 100 - 83.33 = 16.67
+        assertEquals(0, ilk.getMatrah().compareTo(new BigDecimal("-83.33")));
+        assertEquals(0, ilk.getKdv().compareTo(new BigDecimal("-16.67")));
+        assertEquals(0, ilk.getTutar().compareTo(new BigDecimal("-6000")));
+
+        var iadesiz = sonuc.getKayitlar().stream()
+                .filter(k -> k.getFaturaNo().equals("İADE #3")).findFirst().orElseThrow();
+        assertNull(iadesiz.getCariAd());
+
+        verify(iadeKalemRepository, times(1)).findByIadeIdIn(List.of(1L, 2L, 3L));
+        verify(iadeKalemRepository, never()).findByIadeId(any());
+        verify(faturaRepository, times(1)).findAllById(List.of(900L));
+        verify(faturaRepository, never()).findById(any());
+        verify(cariHesapRepository, times(1)).findAllById(Set.of(7L));
+    }
+
+    @Test
+    void baBsGetir_iadeYoksaTopluSorguCagirmaz() {
+        when(faturaRepository.basliklariTarihAraligindaGetir(any(), any(), any())).thenReturn(List.of());
+        when(iadeRepository.findBySirketIdAndTurAndDurumAndTarihBetween(any(), any(), any(), any(), any()))
+                .thenReturn(List.of());
+
+        var sonuc = raporService.baBsGetir("2026-01", "BA", null, 1L);
+
+        assertTrue(sonuc.getKayitlar().isEmpty());
+        assertEquals(0, sonuc.getToplamTutar().compareTo(BigDecimal.ZERO));
+        assertEquals(new BigDecimal("5000"), sonuc.getEsik());
+        verify(iadeKalemRepository, never()).findByIadeIdIn(any());
+        verify(faturaRepository, never()).findAllById(any());
+        verify(cariHesapRepository, never()).findAllById(any());
+    }
+
+    @Test
+    void baBsGetir_gecersizDonemHataFirlatir() {
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> raporService.baBsGetir("2026-13", "BS", null, 1L));
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> raporService.baBsGetir(null, "BS", null, 1L));
+    }
+
+    private com.raspel.erp.entity.ticaret.Iade iade(Long id, Long faturaId) {
+        com.raspel.erp.entity.ticaret.Iade i = new com.raspel.erp.entity.ticaret.Iade();
+        i.setId(id);
+        i.setFaturaId(faturaId);
+        i.setTur("SATIS");
+        i.setDurum("TAMAMLANDI");
+        i.setTarih(LocalDate.of(2026, 1, id.intValue()));
+        // BA/BS esigi 5000; kayit eklenmesi icin tutar esigi asmali.
+        i.setTutar(new BigDecimal("6000"));
+        return i;
+    }
+
+    private com.raspel.erp.entity.ticaret.IadeKalem iadeKalem(Long id, Long iadeId, String matrah, String kdvOrani) {
+        com.raspel.erp.entity.ticaret.IadeKalem k = new com.raspel.erp.entity.ticaret.IadeKalem();
+        k.setId(id);
+        k.setIadeId(iadeId);
+        k.setMiktar(BigDecimal.ONE);
+        k.setBirimFiyat(new BigDecimal(matrah));
+        k.setKdvOrani(new BigDecimal(kdvOrani));
+        return k;
     }
 }

@@ -45,7 +45,7 @@ public class VeriImportController {
     private final CariHesapRepository cariHesapRepository;
 
     @PostMapping("/stok")
-    @Operation(summary = "CSV ile stok aktar", description = "CSV dosyası ile toplu stok girişi yapar. Kolonlar: ad,stokKodu,barkod,birim,fiyat,miktar,minMiktar")
+    @Operation(summary = "CSV ile stok aktar", description = "CSV dosyası ile toplu stok girişi yapar. Kolonlar: ad,stokKodu,barkod,birim,fiyat,miktar,minMiktar,kategori,stokGrubu,marka")
     public ResponseEntity<Map<String, Object>> stokImport(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Map<String, Object> result = new HashMap<>();
@@ -79,6 +79,13 @@ public class VeriImportController {
                             .fiyat(parseBigDecimal(kolonDeger(cols, kolonIndex, "fiyat", satirNo, null)))
                             .miktar(parseBigDecimal(kolonDeger(cols, kolonIndex, "miktar", satirNo, null)))
                             .minMiktar(parseBigDecimal(kolonDeger(cols, kolonIndex, "minmiktar", satirNo, null)))
+                            // Siniflandirma alanlari. ONCEDEN hic okunmuyordu: CSV'deki
+                            // kategori/uretim tipi degerleri sessizce atiliyor, Excel
+                            // ciktisindaki alanlar ise geri yuklenemiyordu (round-trip
+                            // veri kaybi). Eksik kolon varsa null gonderilir.
+                            .kategori(normalizeSinfi(kolonDeger(cols, kolonIndex, "kategori", satirNo, null)))
+                            .stokGrubu(normalizeSinfi(kolonDeger(cols, kolonIndex, "stokgrubu", satirNo, null)))
+                            .marka(normalizeSinfi(kolonDeger(cols, kolonIndex, "marka", satirNo, null)))
                             .build();
                     if (dto.getAd() == null) {
                         hatalar.add("Satır " + satirNo + ": ad alanı zorunlu");
@@ -263,6 +270,17 @@ public class VeriImportController {
         String val = cols[idx].trim();
         if (val.isEmpty()) return null;
         return val;
+    }
+
+    /**
+     * Sınıflandırma metnini normalize eder: kenar boşlukları atılır, içerideki
+     * tekrarlı boşluklar tek'e iner ve boş kalanlar null olur. Böylece CSV'den
+     * gelen " Gıda " ile elle girilen "Gıda" aynı gruba düşer; filtreler
+     * büyük/küçük harf duyarsız karşılaştırma yaptığı için eşleşir.
+     */
+    private String normalizeSinfi(String deger) {
+        if (deger == null || deger.isBlank()) return null;
+        return deger.trim().replaceAll("\\s+", " ");
     }
 
     private int parseInteger(String val, int varsayilan) {

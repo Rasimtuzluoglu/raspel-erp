@@ -163,9 +163,9 @@ class FaturaGecmisServiceTest {
     @Test
     void rapor_faturaBilgileriyleDoner() {
         when(faturaGecmisRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class),
-                any(org.springframework.data.domain.Sort.class))).thenReturn(List.of(
+                any(org.springframework.data.domain.Pageable.class))).thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(
                 FaturaGecmis.builder().id(1L).faturaId(5L).sirketId(1L).olay("YAZDIR")
-                        .yazdirmaFormat("A4").build()));
+                        .yazdirmaFormat("A4").build())));
         when(faturaRepository.findAllById(List.of(5L))).thenReturn(List.of(
                 Fatura.builder().id(5L).faturaNumarasi("FTR-5")
                         .tur(Fatura.FaturaTur.SATIS).durum(Fatura.FaturaDurum.KESILDI).build()));
@@ -180,8 +180,8 @@ class FaturaGecmisServiceTest {
     @Test
     void rapor_turFiltresiUygulanir() {
         when(faturaGecmisRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class),
-                any(org.springframework.data.domain.Sort.class))).thenReturn(List.of(
-                FaturaGecmis.builder().id(1L).faturaId(5L).sirketId(1L).olay("OLUSTUR").build()));
+                any(org.springframework.data.domain.Pageable.class))).thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(
+                FaturaGecmis.builder().id(1L).faturaId(5L).sirketId(1L).olay("OLUSTUR").build())));
         when(faturaRepository.findAllById(List.of(5L))).thenReturn(List.of(
                 Fatura.builder().id(5L).faturaNumarasi("FTR-5")
                         .tur(Fatura.FaturaTur.ALIS).durum(Fatura.FaturaDurum.TASLAK).build()));
@@ -189,5 +189,53 @@ class FaturaGecmisServiceTest {
         var r = service.rapor(1L, null, null, null, null, "SATIS", null);
 
         assertTrue(r.isEmpty());
+    }
+
+    // ---------- B4a: rapor satir tavani (OOM korumasi) ----------
+
+    @Test
+    void rapor_tavanAltindaKirpmaz() {
+        when(faturaGecmisRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class),
+                any(org.springframework.data.domain.Pageable.class))).thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(
+                FaturaGecmis.builder().id(1L).faturaId(5L).sirketId(1L).olay("YAZDIR").build())));
+        when(faturaRepository.findAllById(List.of(5L))).thenReturn(List.of(
+                Fatura.builder().id(5L).faturaNumarasi("FTR-5")
+                        .tur(Fatura.FaturaTur.SATIS).durum(Fatura.FaturaDurum.KESILDI).build()));
+
+        var r = service.rapor(1L, null, null, null, null, null, null);
+
+        assertEquals(1, r.size());
+    }
+
+    /**
+     * B4a: rapor PDF/Excel disa aktariminda tum gecmisi bellege aliyordu;
+     * tarih filtresi verilmediginde yuz binlerce satir DTO'ya cevrilip
+     * OutOfMemoryError olusuyordu. Artik MAKSI_RAPOR_SATIR ile sinirli.
+     */
+    @Test
+    void rapor_satirTavaniniAsmaz() {
+        int tavan = FaturaGecmisService.MAKSI_RAPOR_SATIR;
+        List<FaturaGecmis> cok = new java.util.ArrayList<>();
+        for (int i = 0; i <= tavan; i++) { // tavan + 1 kayit: kirpma tetiklenmeli
+            cok.add(FaturaGecmis.builder().id((long) i + 1).faturaId(5L).sirketId(1L).olay("YAZDIR").build());
+        }
+        when(faturaGecmisRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class),
+                any(org.springframework.data.domain.Pageable.class))).thenReturn(new org.springframework.data.domain.PageImpl<>(cok));
+        when(faturaRepository.findAllById(any())).thenReturn(List.of(
+                Fatura.builder().id(5L).faturaNumarasi("FTR-5")
+                        .tur(Fatura.FaturaTur.SATIS).durum(Fatura.FaturaDurum.KESILDI).build()));
+
+        var r = service.rapor(1L, null, null, null, null, null, null);
+
+        assertEquals(tavan, r.size(), "Tavan asilmemeli");
+    }
+
+    /** B4a: sirket baglami yoksa hic sorgulanmaz. */
+    @Test
+    void rapor_sirketIdYoksaBosDoner() {
+        assertTrue(service.rapor(null, null, null, null, null, null, null).isEmpty());
+        verify(faturaGecmisRepository, never()).findAll(
+                any(org.springframework.data.jpa.domain.Specification.class),
+                any(org.springframework.data.domain.Pageable.class));
     }
 }

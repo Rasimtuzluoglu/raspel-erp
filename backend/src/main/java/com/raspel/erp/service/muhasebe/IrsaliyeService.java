@@ -136,7 +136,7 @@ public class IrsaliyeService {
         var olusan = faturaService.faturaOlustur(faturaDTO, i.getSirketId(), null, null);
         i.setFaturaId(olusan.getId());
         irsaliyeRepository.save(i);
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
         return entityToDTO(i);
     }
 
@@ -153,9 +153,21 @@ public class IrsaliyeService {
         i.setCariHesapId(dto.getCariHesapId());
         i.setFaturaId(dto.getFaturaId());
         if (dto.getSiparisId() != null) i.setSiparisId(dto.getSiparisId());
-        if (dto.getDurum() != null) i.setDurum(dto.getDurum());
         if (dto.getTur() != null) i.setTur(dto.getTur());
         if (dto.getDepoId() != null) i.setDepoId(dto.getDepoId());
+
+        // REDTEAM C5: `durum` alanı DTO'dan doğrudan yazılıyordu. Saldırı
+        // zinciri: TASLAK oluştur (stok HİÇ ETKİLENMEZ) -> PUT ile KESILDI yap
+        // (stok yine etkilenmez, bu yol stok düşürmüyor) -> /durum=IPTAL
+        // (stok +miktar GERİ EKLENİR) => satış olmadan BEDAVA STOK.
+        // Durum yalnızca `durumGuncelle` uçlarından değişebilir.
+        String istenenDurum = dto.getDurum();
+        if (istenenDurum != null && !istenenDurum.equals(i.getDurum())) {
+            throw new BusinessException("İrsaliye durumu değiştirilemez. Durum değişikliği için "
+                    + "'PUT /api/irsaliyeler/{id}/durum' ucunu kullanın. "
+                    + "Mevcut: " + i.getDurum() + ", istenen: " + istenenDurum);
+        }
+
         i.setAciklama(dto.getAciklama());
         i = irsaliyeRepository.save(i);
         if (dto.getKalemler() != null) {
@@ -201,8 +213,12 @@ public class IrsaliyeService {
             for (IrsaliyeKalem k : kalemler) {
                 if (k.getStokId() == null) continue;
                 Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
-                BigDecimal adet = k.getMiktar() != null ? k.getMiktar() : BigDecimal.ZERO;
+.orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
+            // REDTEAM D-05: Stok yazılmadan önce tenant doğrulaması. Aksi halde
+            // başka şirketin stoğu azaltılabilirdi (FaturaService ve IadeService
+            // her ikisi de bu kontrolü yapıyordu; irsaliye atlıyordu).
+            tenantChecker.check(stok.getSirketId(), "Stok");
+            BigDecimal adet = k.getMiktar() != null ? k.getMiktar() : BigDecimal.ZERO;
                 if ("SATIS".equals(i.getTur()) && stok.getMiktar().compareTo(adet) < 0) {
                     throw new BusinessException("Yetersiz stok! Ürün: " + stok.getAd()
                             + ", Mevcut: " + stok.getMiktar() + ", İstenen: " + adet);
@@ -251,8 +267,10 @@ public class IrsaliyeService {
             for (IrsaliyeKalem k : kalemler) {
                 if (k.getStokId() == null) continue;
                 Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
-                BigDecimal miktar = k.getMiktar() != null ? k.getMiktar() : BigDecimal.ZERO;
+.orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
+            // REDTEAM D-05: Geri alma (stok iadesi) yolunda da tenant doğrulaması.
+            tenantChecker.check(stok.getSirketId(), "Stok");
+            BigDecimal miktar = k.getMiktar() != null ? k.getMiktar() : BigDecimal.ZERO;
                 if ("SATIS".equals(i.getTur())) {
                     BigDecimal eskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
                     stok.setMiktar(stok.getMiktar().add(miktar));
@@ -277,7 +295,7 @@ public class IrsaliyeService {
         }
 
         if ("KESILDI".equals(durum) || "IPTAL".equals(durum)) {
-            cacheYardimci.temizle("stoklar", "dashboard");
+            cacheYardimci.commitSonrasiTemizle("stoklar", "dashboard");
         }
 
         i.setDurum(durum);

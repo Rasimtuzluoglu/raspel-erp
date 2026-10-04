@@ -41,6 +41,52 @@ public class KarlilikService {
     private static final int OLCEK = 2;
     private static final int NEGATIF_LIMIT = 10;
 
+    /**
+     * Iade verisi icin toplu on yukleme: iade kalemleri ve kaynak faturalar
+     * (cari hesaplariyla) sabit sayida sorguda cozulur.
+     *
+     * <p>Not: iade kaynak fatura id'si null olabilir. {@link Map#of()} ile uretilen
+     * degismez haritalar {@code get(null)} cagrisinda NPE firlattigi icin bos
+     * durumda {@link java.util.HashMap} kullanilir ve erisim {@link #fatura(Long)}
+     * uzerinden null-guvenli yapilir.
+     */
+    private record IadeToplu(
+            Map<Long, List<IadeKalem>> kalemler,
+            Map<Long, Fatura> kaynakFaturalar) {
+        static IadeToplu bos() {
+            return new IadeToplu(new java.util.HashMap<>(), new java.util.HashMap<>());
+        }
+
+        List<IadeKalem> kalem(Long iadeId) {
+            if (iadeId == null) return List.of();
+            List<IadeKalem> liste = kalemler.get(iadeId);
+            return liste != null ? liste : List.of();
+        }
+
+        Fatura fatura(Long faturaId) {
+            return faturaId == null ? null : kaynakFaturalar.get(faturaId);
+        }
+    }
+
+    /**
+     * N+1 onlemi: iade basina findByIadeId + findById cagrilmasini engeller.
+     * Kaynak fatura ve cari hesap tek sorguda join ile gelir; kalemler toplu alinir.
+     */
+    private IadeToplu iadeTopluYukle(List<Iade> iadeler) {
+        if (iadeler.isEmpty()) return IadeToplu.bos();
+        List<Long> iadeIdleri = iadeler.stream().map(Iade::getId)
+                .filter(java.util.Objects::nonNull).distinct().collect(java.util.stream.Collectors.toList());
+        Map<Long, List<IadeKalem>> kalemler = iadeIdleri.isEmpty() ? new java.util.HashMap<>()
+                : iadeKalemRepository.findByIadeIdIn(iadeIdleri).stream()
+                        .collect(java.util.stream.Collectors.groupingBy(IadeKalem::getIadeId));
+        List<Long> faturaIdleri = iadeler.stream().map(Iade::getFaturaId)
+                .filter(java.util.Objects::nonNull).distinct().collect(java.util.stream.Collectors.toList());
+        Map<Long, Fatura> faturalar = faturaIdleri.isEmpty() ? new java.util.HashMap<>()
+                : faturaRepository.findAllByIdIn(faturaIdleri).stream()
+                        .collect(java.util.stream.Collectors.toMap(Fatura::getId, f -> f, (a, b) -> a));
+        return new IadeToplu(kalemler, faturalar);
+    }
+
     private final FaturaRepository faturaRepository;
     private final FaturaKalemRepository faturaKalemRepository;
     private final StokRepository stokRepository;
@@ -83,21 +129,16 @@ public class KarlilikService {
             }
         }
 
-        // SATIS iadeleri düşülür (iade kalemleri tek sorguda toplu yüklenir).
+        // SATIS iadeleri düşülür (iade kalemleri ve kaynak faturalar tek sorguda toplu yüklenir).
         BigDecimal iadeCiro = BigDecimal.ZERO;
         BigDecimal iadeMaliyet = BigDecimal.ZERO;
         List<Iade> iadeler = iadeRepository.findBySirketIdAndTurAndDurumAndTarihBetween(
                 sirketId, "SATIS", "TAMAMLANDI", bas, bit);
-        Map<Long, List<IadeKalem>> iadeKalemMap = iadeler.isEmpty() ? Map.of()
-                : iadeKalemRepository.findByIadeIdIn(
-                        iadeler.stream().map(Iade::getId).collect(java.util.stream.Collectors.toList()))
-                    .stream().collect(java.util.stream.Collectors.groupingBy(IadeKalem::getIadeId));
+        IadeToplu iadeToplu = iadeTopluYukle(iadeler);
         for (Iade iade : iadeler) {
             String ay = iade.getTarih() != null ? YearMonth.from(iade.getTarih()).toString() : null;
-            // Kaynak fatura iade bazında sabittir; kalem döngüsünde tekrar sorgulanmaz (N+1 önlenir).
-            Fatura kaynakFatura = iade.getFaturaId() != null
-                    ? faturaRepository.findById(iade.getFaturaId()).orElse(null) : null;
-            for (IadeKalem ik : iadeKalemMap.getOrDefault(iade.getId(), List.of())) {
+            Fatura kaynakFatura = iadeToplu.fatura(iade.getFaturaId());
+            for (IadeKalem ik : iadeToplu.kalem(iade.getId())) {
                 BigDecimal miktar = ik.getMiktar() != null ? ik.getMiktar() : BigDecimal.ZERO;
                 if (miktar.signum() == 0) continue;
                 BigDecimal ciro = (ik.getBirimFiyat() != null ? ik.getBirimFiyat() : BigDecimal.ZERO).multiply(miktar);
@@ -220,13 +261,13 @@ public class KarlilikService {
             }
         }
 
-        // İadeler negatif satır olarak düşülür.
+        // İadeler negatif satır olarak düşülür (kalemler ve kaynak faturalar toplu yüklenir).
         List<Iade> iadeler = iadeRepository.findBySirketIdAndTurAndDurumAndTarihBetween(
                 sirketId, "SATIS", "TAMAMLANDI", bas, bit);
+        IadeToplu iadeToplu = iadeTopluYukle(iadeler);
         for (Iade iade : iadeler) {
-            Fatura kaynakFatura = iade.getFaturaId() != null
-                    ? faturaRepository.findById(iade.getFaturaId()).orElse(null) : null;
-            for (IadeKalem ik : iadeKalemRepository.findByIadeId(iade.getId())) {
+            Fatura kaynakFatura = iadeToplu.fatura(iade.getFaturaId());
+            for (IadeKalem ik : iadeToplu.kalem(iade.getId())) {
                 BigDecimal miktar = ik.getMiktar() != null ? ik.getMiktar() : BigDecimal.ZERO;
                 if (miktar.signum() == 0) continue;
                 Stok stok = ik.getStokId() != null ? stokGetir(ik.getStokId(), stokCache) : null;
@@ -412,11 +453,27 @@ public class KarlilikService {
         return cache.computeIfAbsent(stokId, id -> stokRepository.findById(id).orElse(null));
     }
 
-    private BigDecimal netBirim(FaturaKalem k) {
-        BigDecimal birim = k.getBirimFiyat() != null ? k.getBirimFiyat() : BigDecimal.ZERO;
-        BigDecimal iskonto = k.getIskontoOrani() != null ? k.getIskontoOrani() : BigDecimal.ZERO;
-        if (iskonto.signum() <= 0) return birim;
-        return birim.multiply(BigDecimal.ONE.subtract(iskonto.divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP)));
+    /**
+ * Satırın KDV HARIÇ net tutarı.
+ *
+ * <p><b>DÜZELTME:</b> Önceden {@code netBirim} yalnızca satır iskonto oranını
+ * uyguluyordu; KDV'yi ayrıştırmıyordu. Karlılık raporunda "net" olarak
+ * gösterilen tutar aslında KDV DAHİL brüt tutardı. Bu, üç ayrı para hesabı
+ * yaratıyordu:
+ * <ol>
+ *   <li>{@code FaturaTutar} (kayıt/fiş tarafı, doğru),</li>
+ *   <li>{@code KarlilikService.netBirim} (rapor tarafı, KDV dahil — YANLIŞ),</li>
+ *   <li>frontend {@code faturaHesapla.js} (yuvarlamasız — tutarsız).</li>
+ * </ol>
+ * Artık {@link com.raspel.erp.util.FaturaTutar#satir} kullanılır: aynı
+ * formül, aynı yuvarlama, tek kaynak.
+ */
+private BigDecimal netBirim(FaturaKalem k) {
+        return com.raspel.erp.util.FaturaTutar.satir(
+                k.getBirimFiyat(),
+                BigDecimal.ONE,
+                k.getIskontoOrani(),
+                k.getKdvOrani()).net();
     }
 
     private BigDecimal birimMaliyet(FaturaKalem k, Map<Long, Stok> cache) {

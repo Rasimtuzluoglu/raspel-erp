@@ -166,4 +166,74 @@ class CariHesapServiceTest {
         when(cariHesapRepository.toplamBakiyeHesaplaBySirketId(1L)).thenReturn(BigDecimal.valueOf(50000));
         assertEquals(BigDecimal.valueOf(50000), cariHesapService.toplamBakiyeGetir(1L));
     }
+
+    // BAKİYE İŞARET KURALI: negatif = cari bize borçlu (alacak), pozitif = biz
+    // cariye borçluyuz. `ozet()` alacaklı/borçlu toplamlarını önceden ters
+    // yönde döndürüyordu: "Alacaklı" kartı bizim ödeyeceğimiz tutarı gösteriyordu.
+    @Test
+    void ozet_alacakliNegatifBakiyeleriToplar() {
+        when(cariHesapRepository.countBySirketId(1L)).thenReturn(4L);
+        when(cariHesapRepository.toplamNegatifBakiyeBySirketId(1L)).thenReturn(new BigDecimal("-50000"));
+        when(cariHesapRepository.toplamPozitifBakiyeBySirketId(1L)).thenReturn(new BigDecimal("12000"));
+
+        var ozet = cariHesapService.ozet(1L);
+
+        assertEquals(4L, ozet.get("toplamKayit"));
+        assertEquals(0, ((BigDecimal) ozet.get("alacakli")).compareTo(new BigDecimal("50000")),
+                "Bize alacaklı, negatif (tahsil edilecek) bakiyelerin mutlak toplamı olmalı");
+        assertEquals(0, ((BigDecimal) ozet.get("borclu")).compareTo(new BigDecimal("12000")),
+                "Bize borçlu, pozitif (ödenecek) bakiyelerin toplamı olmalı");
+    }
+
+    @Test
+    void ozet_negatifToplamIsaretiniDuzeltir() {
+        when(cariHesapRepository.countBySirketId(1L)).thenReturn(1L);
+        when(cariHesapRepository.toplamNegatifBakiyeBySirketId(1L)).thenReturn(new BigDecimal("-7500"));
+        when(cariHesapRepository.toplamPozitifBakiyeBySirketId(1L)).thenReturn(BigDecimal.ZERO);
+
+        var ozet = cariHesapService.ozet(1L);
+
+        assertEquals(0, ((BigDecimal) ozet.get("alacakli")).compareTo(new BigDecimal("7500")),
+                "KPI kartı negatif işaret göstermemeli (mutlak değer) ");
+    }
+
+    @Test
+    void ozet_nullToplamlariSifirSayar() {
+        when(cariHesapRepository.countBySirketId(1L)).thenReturn(0L);
+        when(cariHesapRepository.toplamNegatifBakiyeBySirketId(1L)).thenReturn(null);
+        when(cariHesapRepository.toplamPozitifBakiyeBySirketId(1L)).thenReturn(null);
+
+        var ozet = cariHesapService.ozet(1L);
+
+        assertEquals(0, ((BigDecimal) ozet.get("alacakli")).compareTo(BigDecimal.ZERO));
+        assertEquals(0, ((BigDecimal) ozet.get("borclu")).compareTo(BigDecimal.ZERO));
+    }
+
+    // Toplu seçim dışa aktarımı: `ids` verilirse yalnızca o kayıtlar aktarılmalı.
+    // Önceden `ids` yok sayılıyor ve tüm şirket listesi (10.000 satır) iniyordu.
+    @Test
+    void disaAktarimListesi_idsVerildigindeSadeceSecilenleriDoner() {
+        CariHesap a = new CariHesap();
+        a.setId(3L); a.setAd("Secilen A"); a.setSirketId(1L);
+        CariHesap b = new CariHesap();
+        b.setId(7L); b.setAd("Secilen B"); b.setSirketId(1L);
+        when(cariHesapRepository.findBySirketIdAndIdIn(eq(1L), any())).thenReturn(List.of(a, b));
+
+        var liste = cariHesapService.disaAktarimListesi(1L, List.of(3L, 7L), 10000);
+
+        assertEquals(2, liste.size());
+        assertEquals("Secilen A", liste.get(0).getAd(), "Sonuç id sırasına göre kararlı olmalı");
+        verify(cariHesapRepository, never()).findBySirketId(any(), any());
+    }
+
+    @Test
+    void disaAktarimListesi_idsYoksaTumSirketiDoner() {
+        when(cariHesapRepository.findBySirketId(eq(1L), any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of()));
+
+        var liste = cariHesapService.disaAktarimListesi(1L, null, 10000);
+
+        assertTrue(liste.isEmpty());
+        verify(cariHesapRepository).findBySirketId(eq(1L), any(org.springframework.data.domain.Pageable.class));
+    }
 }

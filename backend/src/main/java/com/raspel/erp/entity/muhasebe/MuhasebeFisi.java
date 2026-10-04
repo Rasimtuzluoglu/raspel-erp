@@ -18,6 +18,13 @@ public class MuhasebeFisi {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Optimistik kilitleme. Kolon olmadan fiş durum geçişi (ONAYLANDI/IPTAL) eşzamanlı yazmalarda kaybolabiliyordu.
+     */
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     @Column(name = "fis_no", nullable = false, length = 30)
     private String fisNo;
 

@@ -47,6 +47,7 @@ services:
     # 8GB VPS: izleme/proxy konteynerleri de sinirlanir (limitsiz kalirsa backend'i ac birakabilir).
     mem_limit: ${TRAEFIK_MEM_LIMIT:-256m}
     memswap_limit: ${TRAEFIK_MEM_LIMIT:-256m}
+    cpus: ${TRAEFIK_CPU_LIMIT:-0.5}
     logging:
       options:
         max-size: "10m"
@@ -107,7 +108,7 @@ services:
       retries: 5
     deploy:
       resources:
-        limits: { memory: 1500m }
+        limits: { memory: 1500m, cpus: "${POSTGRES_CPU_LIMIT:-2.0}" }
         reservations: { memory: 256m }
     logging:
       options:
@@ -155,7 +156,7 @@ services:
       retries: 5
     deploy:
       resources:
-        limits: { memory: 256m }
+        limits: { memory: 256m, cpus: "${REDIS_CPU_LIMIT:-0.5}" }
         reservations: { memory: 64m }
     logging:
       options:
@@ -182,6 +183,11 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-raspel}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
       RABBITMQ_DEFAULT_VHOST: /
+      # Prometheus eklentisi: config/prometheus/prometheus.yml 'rabbitmq' isini
+      # 15692 portundan scrape eder. Eklenti acilmazsa hedef kapali kalir ve
+      # ServiceDown alarmi surekli yanar. Port disariya publish edilmez;
+      # yalnizca backend-net icinden erisilir.
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbitmq_prometheus 15692"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     restart: unless-stopped
@@ -194,7 +200,7 @@ services:
       retries: 5
     deploy:
       resources:
-        limits: { memory: 512m }
+        limits: { memory: 512m, cpus: "${RABBITMQ_CPU_LIMIT:-1.0}" }
         reservations: { memory: 128m }
     logging:
       options:
@@ -235,7 +241,7 @@ services:
       retries: 5
     deploy:
       resources:
-        limits: { memory: 512m }
+        limits: { memory: 512m, cpus: "${MINIO_CPU_LIMIT:-0.5}" }
         reservations: { memory: 128m }
     logging:
       options:
@@ -299,7 +305,13 @@ services:
       APP_BACKUP_DIR: /app/backups
       APP_BACKUP_RETENTION_DAYS: 30
       APP_BACKUP_DB_PASSWORD: ${POSTGRES_PASSWORD}
-      APP_BACKUP_AUTO_CRON: 0 0 3 * * ?
+      # Yedekleme saatleri birbirinden AYRILDIR: dort yedek de ayni dakikada
+      # (03:00) tetiklenince disk/CPO doyuyor ve isler birbirini bekliyordu.
+      APP_BACKUP_AUTO_CRON: ${APP_BACKUP_AUTO_CRON:-0 0 3 * * ?}
+      APP_BACKUP_WEEKLY_CRON: ${APP_BACKUP_WEEKLY_CRON:-0 20 3 ? * SUN}
+      APP_BACKUP_MONTHLY_CRON: ${APP_BACKUP_MONTHLY_CRON:-0 30 3 1 * ?}
+      APP_BACKUP_YEARLY_CRON: ${APP_BACKUP_YEARLY_CRON:-0 40 3 1 1 ?}
+      APP_BACKUP_CLOUD_AUTO_CRON: ${APP_BACKUP_CLOUD_AUTO_CRON:-0 50 3 * * ?}
       APP_BACKUP_CLOUD_ENABLED: ${APP_BACKUP_CLOUD_ENABLED:-true}
       # Prod varsayilani guvenli (secure cookie + HTTPS zorunlu). Yerel HTTP gelistirme
       # icin .env uzerinden APP_COOKIE_SECURE=false / APP_SECURITY_HTTPS_ONLY=false yapin.
@@ -310,6 +322,16 @@ services:
       APP_SECURITY_STRICT_DOMAINS: ${APP_SECURITY_STRICT_DOMAINS:-true}
       # /actuator/prometheus scrape paylasilan token'i (Prometheus ile ayni deger).
       APP_METRICS_SCRAPE_TOKEN: ${APP_METRICS_SCRAPE_TOKEN:-}
+    # Liveness = JVM ayakta mi. Readiness = trafik alabilir mi (DB/Redis hazir mi).
+    # Once tek /actuator/health kullaniliyordu; DB yavasladiginda container
+    # yeniden baslatiliyordu (restart loop) ve yavaslik kendiligine cozulmuyordu.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health/readiness | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 20s
+      timeout: 10s
+      # DB yavasliginda 6 deneme * 20s = 2 dk tolerans; sonra unhealthy.
+      retries: 6
+      start_period: 90s
     volumes:
       - backup_data:/app/backups
     depends_on:
@@ -327,7 +349,7 @@ services:
       - db-net
     deploy:
       resources:
-        limits: { memory: 2g }
+        limits: { memory: 2g, cpus: "${BACKEND_CPU_LIMIT:-3.0}" }
         reservations: { memory: 256m }
     # Hard memory cap: JVM heap/metaspace/direct are bounded in the Dockerfile;
     # cgroup limit is the last line of defence. Stress test (200 VU) needed more
@@ -353,14 +375,16 @@ services:
       - DAC_OVERRIDE
     depends_on:
       backend:
-        condition: service_started
+        # Backend artik gercek bir healthcheck'e sahip: trafik ancak hazir oldugunda
+        # frontend'e gonderilir (eskiden service_started ile aninda gonderiliyordu).
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - frontend-net
       - backend-net
     deploy:
       resources:
-        limits: { memory: 256m }
+        limits: { memory: 256m, cpus: "${FRONTEND_CPU_LIMIT:-0.5}" }
         reservations: { memory: 64m }
     logging:
       options:
@@ -390,7 +414,7 @@ services:
       ADMINER_DEFAULT_DB: raspelerp
     deploy:
       resources:
-        limits: { memory: 256m }
+        limits: { memory: 256m, cpus: "${ADMINER_CPU_LIMIT:-0.2}" }
         reservations: { memory: 64m }
     logging:
       options:
@@ -422,7 +446,49 @@ services:
       - backend-net
     deploy:
       resources:
-        limits: { memory: 64m }
+        limits: { memory: 64m, cpus: "${NODE_EXPORTER_CPU_LIMIT:-0.2}" }
+        reservations: { memory: 32m }
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # PostgreSQL metrikleri (baglanti sayisi, kilitler, replika gecikmesi, tablo
+  # buyume). HikariCP havuz doygunligu alarmi yalnizca uygulama tarafindan
+  # gorulur; DB tarafi bu exporter ile izlenir.
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: raspel-postgres-exporter
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      # Sifre environment'tan okunur; compose dosyasina duz yazilmaz.
+      # DIKKAT: DATA_SOURCE_NAME bir DSN'dir (postgresql://... veya key=value),
+      # DATA_SOURCE_URI/USER/PASS ile AYNI anda kullanilamaz. Tek hedef icin
+      # URI + USER + PASS yeterlidir; ek hedef gerekiyorsa DATA_SOURCE_NAME
+      # tam DSN olarak verilmelidir.
+      DATA_SOURCE_URI: "postgres:5432/?sslmode=disable"
+      DATA_SOURCE_USER: ${POSTGRES_USER:-postgres}
+      DATA_SOURCE_PASS: ${POSTGRES_PASSWORD}
+      PG_EXPORTER_DISABLE_SSL: "true"
+      PG_EXPORTER_EXTENSIONS: ""
+    ports:
+      - "127.0.0.1:9187:9187"
+    restart: unless-stopped
+    networks:
+      # Iki agda da olmak zorunda: postgres yalnizca db-net'te (DNS adi orada
+      # cozulur), Prometheus ise yalnizca backend-net uzerinden scrape eder.
+      # Tek agda kalmasi "lookup postgres: no such host" ile baglanamamaya yol acar.
+      - db-net
+      - backend-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits: { memory: 128m, cpus: "${POSTGRES_EXPORTER_CPU_LIMIT:-0.3}" }
         reservations: { memory: 32m }
     logging:
       options:
@@ -475,7 +541,7 @@ services:
     memswap_limit: ${PROMETHEUS_MEM_LIMIT:-512m}
     deploy:
       resources:
-        limits: { memory: 512m }
+        limits: { memory: 512m, cpus: "${PROMETHEUS_CPU_LIMIT:-0.5}" }
         reservations: { memory: 128m }
     logging:
       options:
@@ -516,7 +582,7 @@ services:
     memswap_limit: ${GRAFANA_MEM_LIMIT:-384m}
     deploy:
       resources:
-        limits: { memory: 384m }
+        limits: { memory: 384m, cpus: "${GRAFANA_CPU_LIMIT:-0.3}" }
         reservations: { memory: 128m }
     logging:
       options:
@@ -558,7 +624,7 @@ services:
     memswap_limit: ${ALERTMANAGER_MEM_LIMIT:-128m}
     deploy:
       resources:
-        limits: { memory: 128m }
+        limits: { memory: 128m, cpus: "${ALERTMANAGER_CPU_LIMIT:-0.2}" }
         reservations: { memory: 64m }
     logging:
       options:

@@ -56,7 +56,7 @@ public class PersonelService {
                 .aktif(dto.getAktif() != null ? dto.getAktif() : true)
                 .sirketId(sirketId)
                 .build();
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
         return entityToDTO(personelRepository.save(p));
     }
 
@@ -78,7 +78,7 @@ public class PersonelService {
         if (dto.getAdres() != null) p.setAdres(dto.getAdres());
         if (dto.getAktif() != null) p.setAktif(dto.getAktif());
         if (dto.getCikisTarihi() != null) p.setCikisTarihi(dto.getCikisTarihi());
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
         return entityToDTO(personelRepository.save(p));
     }
 
@@ -96,7 +96,7 @@ public class PersonelService {
                     "Bu personele bagli kayitlar (izin, puantaj, maas vb.) oldugu icin silinemez. "
                             + "Once bagli kayitlari kaldirin.");
         }
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
     }
 
     @Transactional(readOnly = true)

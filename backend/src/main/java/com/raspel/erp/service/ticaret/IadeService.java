@@ -254,12 +254,12 @@ public class IadeService {
         if (yeniTamamlandi) {
             stokHareketleriIsle(iade);
             otomatikMuhasebeService.iadeIsle(iade);
-            cacheYardimci.temizle("stoklar", "dashboard");
+            cacheYardimci.commitSonrasiTemizle("stoklar", "dashboard");
         } else if (iptalEdildi) {
             stokHareketleriniTersineCevir(iade);
             otomatikMuhasebeService.kaynakFisIptal(iade.getSirketId(),
                     com.raspel.erp.service.muhasebe.OtomatikMuhasebeService.KAYNAK_IADE, iade.getId());
-            cacheYardimci.temizle("stoklar", "dashboard");
+            cacheYardimci.commitSonrasiTemizle("stoklar", "dashboard");
         }
 
         return entityToDTO(iadeRepository.save(iade));
@@ -284,16 +284,49 @@ public class IadeService {
         if (yeniDurum == null || !List.of("TASLAK", "TAMAMLANDI", "IPTAL").contains(yeniDurum)) {
             throw new BusinessException("Geçersiz durum: " + yeniDurum);
         }
-        if ("TAMAMLANDI".equals(yeniDurum) && !"TAMAMLANDI".equals(iade.getDurum())) {
+
+        // REDTEAM C6: Durum geçiş kuralları.
+        // `guncelle()` zaten "TAMAMLANDI -> TASLAK" geçişini engelliyordu; bu metot
+        // ENGELLEMIYORDU. Zincir: TAMAMLANDI -> TASLAK -> TAMAMLANDI stok/cari/kasa
+        // etkilerini İKİ KEZ uyguluyordu (5 adet iade = 10 adet stok; kanıt:
+        // stok_hareket id 213331 ve 213332).
+        //
+        // Kural tablosu:
+        //   TASLAK     -> TAMAMLANDI | IPTAL
+        //   TAMAMLANDI -> IPTAL                (geri alma tek yollu)
+        //   IPTAL      -> (terminal)           yeniden canlandırılamaz
+        //   aynı durum -> reddedilir           (etkisiz tekrarlar sessiz geçmesin)
+        String eskiDurum = iade.getDurum();
+        if (yeniDurum.equals(eskiDurum)) {
+            throw new BusinessException("İade zaten " + eskiDurum + " durumunda. Durum değişmedi.");
+        }
+        if ("TAMAMLANDI".equals(eskiDurum)) {
+            // Tamamlanmış bir iade yalnızca iptal edilebilir.
+            if (!"IPTAL".equals(yeniDurum)) {
+                throw new BusinessException("Tamamlanmış iade yalnızca iptal edilebilir. "
+                        + "Mevcut durum: TAMAMLANDI, istenen: " + yeniDurum);
+            }
+        } else if ("IPTAL".equals(eskiDurum)) {
+            // İptal edilmiş iade stok/fatura etkileri geri alınmıştır; tekrar
+            // tamamlanırsa etkiler ikinci kez uygulanır. Yeni bir iade kaydı açılmalıdır.
+            throw new BusinessException("İptal edilmiş iade yeniden tamamlanamaz. "
+                    + "Yeni bir iade kaydı oluşturun. Mevcut durum: IPTAL, istenen: " + yeniDurum);
+        } else if (!"TAMAMLANDI".equals(yeniDurum) && !"IPTAL".equals(yeniDurum)) {
+            throw new BusinessException("Taslak iade yalnızca TAMAMLANDI veya IPTAL yapılabilir. "
+                    + "İstenen: " + yeniDurum);
+        }
+
+        if ("TAMAMLANDI".equals(yeniDurum) && !"TAMAMLANDI".equals(eskiDurum)) {
+            // Tamamlama etkileri yalnızca TAMAMLANDI -> IPTAL ile geri alınabilir.
             stokHareketleriIsle(iade);
             iade.setDurum(yeniDurum);
             otomatikMuhasebeService.iadeIsle(iade);
-            cacheYardimci.temizle("stoklar", "dashboard");
-        } else if ("IPTAL".equals(yeniDurum) && "TAMAMLANDI".equals(iade.getDurum())) {
+            cacheYardimci.commitSonrasiTemizle("stoklar", "dashboard");
+        } else if ("IPTAL".equals(yeniDurum) && "TAMAMLANDI".equals(eskiDurum)) {
             stokHareketleriniTersineCevir(iade);
             otomatikMuhasebeService.kaynakFisIptal(iade.getSirketId(),
                     com.raspel.erp.service.muhasebe.OtomatikMuhasebeService.KAYNAK_IADE, iade.getId());
-            cacheYardimci.temizle("stoklar", "dashboard");
+            cacheYardimci.commitSonrasiTemizle("stoklar", "dashboard");
         }
         iade.setDurum(yeniDurum);
         return entityToDTO(iadeRepository.save(iade));

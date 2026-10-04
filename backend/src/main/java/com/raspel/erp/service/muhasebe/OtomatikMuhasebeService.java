@@ -20,8 +20,19 @@ import java.util.List;
  * Operasyonel belgelerden otomatik yevmiye fişi üretir.
  *
  * <p>Kapsam: bordro, satış faturası, alış faturası ve tahsilat.
- * Fiş üretimi iş akışını bloklamaz: hata durumunda loglanır, ilgili işlem devam eder.
  * Aynı kaynak için mükerrer fiş oluşturulmaz (kaynakTip + kaynakId).
+ *
+ * <p><b>Hata politikası (fail-closed):</b> Fiş üretimi başarısız olursa işlem
+ * sessizce geçilmez. Önceden tüm hatalar {@code log.warn} ile yutuluyordu; bu
+ * iki kritik sonuç doğuruyordu:
+ * <ol>
+ *   <li>{@code DonemService.yilSonuKapat} kapanış fişi oluşturulamadan dönemi
+ *       kilitliyor ve {@code donem_kapanis} kaydını yazıyordu; ardından
+ *       "zaten kapatılmış" kontrolü tekrar denemeyi kalıcı olarak reddediyordu
+ *       → mali yıl KAPANIŞ FİŞİ YOK kapatılıyordu.</li>
+ *   <li>Muhasebe defteri ile operasyonel kayıtlar sessizce ayrışıyordu
+ *       (bordro/fatura/iade fişi yok, işlem var).</li>
+ * </ol>
  */
 @Service
 @RequiredArgsConstructor
@@ -71,6 +82,31 @@ public class OtomatikMuhasebeService {
 
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
+
+    /**
+     * Otomatik fiş hatasını iş akışına taşır.
+     *
+     * <p>Kurallar:
+     * <ul>
+     *   <li>Zaten bir iş kuralı hatasıysa ({@code BusinessException},
+     *       {@code ResourceNotFoundException}) olduğu gibi yeniden fırlatılır —
+     *       kullanıcıya anlamlı mesaj ulaşsın.</li>
+     *   <li>DB kısıt ihlali / beklenmeyen hata ise: teknik detay log'a yazılır,
+     *       kullanıcıya anlaşılır bir {@code BusinessException} döner. Böylece
+     *       transaction rollback olur ve muhasebe defteri ile operasyonel
+     *       kayıt ayrışmaz.</li>
+     * </ul>
+     */
+    private void fisHatasi(String mesaj, Exception e) {
+        if (e instanceof com.raspel.erp.exception.BusinessException
+                || e instanceof com.raspel.erp.exception.ResourceNotFoundException) {
+            throw (RuntimeException) e;
+        }
+        // Beklenmeyen hata: tam istisna yalnızca log'a yazılır. Mesaj kullanıcıya
+        // döner ve iç hata (SQL metni, sınıf adı) sızdırılmaz; neden log'da durur.
+        log.error(mesaj, e);
+        throw new com.raspel.erp.exception.BusinessException(mesaj, e);
+    }
 
     /**
      * Bordro için yevmiye fişi: Borç 770 (brüt) / Alacak 335 (net) + Alacak 360 (kesinti).
@@ -124,8 +160,7 @@ public class OtomatikMuhasebeService {
                     .build());
             log.info("Bordro yevmiye fişi oluşturuldu - Bordro ID: {}", bordro.getId());
         } catch (Exception e) {
-            log.warn("Bordro otomatik muhasebe fişi oluşturulamadı (bordro id: {}): {}",
-                    bordro.getId(), e.getMessage());
+            fisHatasi("Bordro otomatik muhasebe fişi oluşturulamadı (bordro id: " + bordro.getId() + ")", e);
         }
     }
 
@@ -142,7 +177,7 @@ public class OtomatikMuhasebeService {
                         log.info("Bordro yevmiye fişi iptal edildi - Fiş: {}, Bordro ID: {}", f.getFisNo(), bordroId);
                     });
         } catch (Exception e) {
-            log.warn("Bordro yevmiye fişi iptal edilemedi (bordro id: {}): {}", bordroId, e.getMessage());
+            fisHatasi("Bordro yevmiye fişi iptal edilemedi (bordro id: " + bordroId + ")", e);
         }
     }
 
@@ -213,7 +248,7 @@ public class OtomatikMuhasebeService {
                     .build());
             log.info("Fatura yevmiye fişi oluşturuldu - Fatura ID: {}, tip: {}", fatura.getId(), kaynakTip);
         } catch (Exception e) {
-            log.warn("Fatura otomatik muhasebe fişi oluşturulamadı (fatura id: {}): {}", fatura.getId(), e.getMessage());
+            fisHatasi("Fatura otomatik muhasebe fişi oluşturulamadı (fatura id: " + fatura.getId() + ")", e);
         }
     }
 
@@ -252,7 +287,7 @@ public class OtomatikMuhasebeService {
                     .build());
             log.info("Tahsilat yevmiye fişi oluşturuldu - Kaynak ID: {}", kaynakId);
         } catch (Exception e) {
-            log.warn("Tahsilat otomatik muhasebe fişi oluşturulamadı (kaynak id: {}): {}", kaynakId, e.getMessage());
+            fisHatasi("Tahsilat otomatik muhasebe fişi oluşturulamadı (kaynak id: " + kaynakId + ")", e);
         }
     }
 
@@ -354,7 +389,7 @@ public class OtomatikMuhasebeService {
                     .build());
             log.info("İade yevmiye fişi oluşturuldu - İade ID: {}", iade.getId());
         } catch (Exception e) {
-            log.warn("İade otomatik muhasebe fişi oluşturulamadı (iade id: {}): {}", iade.getId(), e.getMessage());
+            fisHatasi("İade otomatik muhasebe fişi oluşturulamadı (iade id: " + iade.getId() + ")", e);
         }
     }
 
@@ -400,7 +435,7 @@ public class OtomatikMuhasebeService {
                     .build());
             log.info("Çek/senet tahsil yevmiye fişi oluşturuldu - Kayıt ID: {}", cs.getId());
         } catch (Exception e) {
-            log.warn("Çek/senet otomatik muhasebe fişi oluşturulamadı (id: {}): {}", cs.getId(), e.getMessage());
+            fisHatasi("Çek/senet otomatik muhasebe fişi oluşturulamadı (id: " + cs.getId() + ")", e);
         }
     }
 
@@ -473,7 +508,7 @@ public class OtomatikMuhasebeService {
                     .build());
             log.info("Yıl sonu kapanış fişi oluşturuldu - Şirket: {}, Yıl: {}", sirketId, yil);
         } catch (Exception e) {
-            log.warn("Yıl sonu kapanış fişi oluşturulamadı (şirket {}, yıl {}): {}", sirketId, yil, e.getMessage());
+            fisHatasi("Yıl sonu kapanış fişi oluşturulamadı (şirket " + sirketId + ", yıl " + yil + ")", e);
         }
     }
 
@@ -527,7 +562,7 @@ public class OtomatikMuhasebeService {
                     .build());
             log.info("Masraf yevmiye fişi oluşturuldu - Masraf ID: {}", masraf.getId());
         } catch (Exception e) {
-            log.warn("Masraf otomatik muhasebe fişi oluşturulamadı (masraf id: {}): {}", masraf.getId(), e.getMessage());
+            fisHatasi("Masraf otomatik muhasebe fişi oluşturulamadı (masraf id: " + masraf.getId() + ")", e);
         }
     }
 
@@ -617,7 +652,7 @@ public class OtomatikMuhasebeService {
             log.info("Kur değerleme fişi oluşturuldu - Şirket: {}, tarih: {}, kâr: {}, zarar: {}",
                     sirketId, gun, toplamKar, toplamZarar);
         } catch (Exception e) {
-            log.warn("Kur değerleme fişi oluşturulamadı (şirket {}, tarih {}): {}", sirketId, gun, e.getMessage());
+            fisHatasi("Kur değerleme fişi oluşturulamadı (şirket " + sirketId + ", tarih " + gun + ")", e);
         }
     }
 
@@ -641,7 +676,7 @@ public class OtomatikMuhasebeService {
                         log.info("Otomatik yevmiye fişi iptal edildi - Fiş: {}, kaynak: {}/{}", f.getFisNo(), kaynakTip, kaynakId);
                     });
         } catch (Exception e) {
-            log.warn("Otomatik fiş iptal edilemedi ({}:{}): {}", kaynakTip, kaynakId, e.getMessage());
+            fisHatasi("Otomatik fiş iptal edilemedi (" + kaynakTip + ":" + kaynakId + ")", e);
         }
     }
 

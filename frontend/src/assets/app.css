@@ -1076,19 +1076,84 @@ img {
   background: var(--bg-card) !important;
   color: var(--text-primary) !important;
 }
-.p-autocomplete-panel {
+.p-autocomplete-overlay {
   background: var(--bg-card) !important;
   border: 1px solid var(--border) !important;
   border-radius: 10px !important;
 }
-.p-autocomplete-panel .p-autocomplete-items .p-autocomplete-item {
+
+/* AutoComplete #option sablonlari (stok / urun onerileri).
+   Bu kurallar GLOBAL olmak zorunda: PrimeVue overlay panelini body'ye
+   teleport eder ve bilesen `<style scoped>` kullandiginda paneldeki ogeler
+   data-v ozelligi tasimaz. Scoped kurallar yazildiginda urun adi once
+   Flexbox'siz, sonra `white-space:nowrap; overflow:hidden` yuzunden
+   kelime ortasindan kesiliyordu. */
+.stok-opsiyon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  /* Flex ogeleri daralabilsin: aksi halde kod/fiyat span'i siqismaz ve
+     `overflow:hidden` olan ad alani yine de tasar. */
+  min-width: 0;
+}
+.stok-opsiyon-kod {
+  flex: 0 0 auto;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.stok-opsiyon-ad {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stok-opsiyon-fiyat {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Cari musteri onerileri (Satis.vue / Faturalar.vue musteri AutoComplete'i).
+   Teleport nedeniyle global olmak zorunda. */
+.musteri-opsiyon {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+.musteri-opsiyon-ad {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.musteri-opsiyon-detay {
+  flex: 0 0 auto;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.p-autocomplete-overlay .p-autocomplete-list .p-autocomplete-option {
   color: var(--text-primary) !important;
   padding: 10px 14px !important;
 }
-.p-autocomplete-panel .p-autocomplete-items .p-autocomplete-item:hover {
+.p-autocomplete-overlay .p-autocomplete-list .p-autocomplete-option:hover {
   background: rgba(148, 163, 184, 0.08) !important;
 }
-.p-autocomplete-panel .p-autocomplete-items .p-autocomplete-item.p-highlight {
+.p-autocomplete-overlay .p-autocomplete-list .p-autocomplete-option.p-focus,
+.p-autocomplete-overlay .p-autocomplete-list .p-autocomplete-option.p-autocomplete-option-selected {
   background: var(--accent-soft-strong) !important;
   color: var(--accent) !important;
 }
@@ -1500,14 +1565,14 @@ img {
   background: var(--white) !important;
   color: var(--text-primary) !important;
 }
-[data-theme='light'] .p-autocomplete-panel {
+[data-theme='light'] .p-autocomplete-overlay {
   background: var(--white) !important;
   border-color: var(--border) !important;
 }
-[data-theme='light'] .p-autocomplete-panel .p-autocomplete-items .p-autocomplete-item {
+[data-theme='light'] .p-autocomplete-overlay .p-autocomplete-list .p-autocomplete-option {
   color: var(--text-primary) !important;
 }
-[data-theme='light'] .p-autocomplete-panel .p-autocomplete-items .p-autocomplete-item:hover {
+[data-theme='light'] .p-autocomplete-overlay .p-autocomplete-list .p-autocomplete-option:hover {
   background: rgba(148, 163, 184, 0.08) !important;
 }
 [data-theme='light'] .p-inputnumber .p-inputnumber-input {
@@ -2183,7 +2248,7 @@ label .required,
 .p-select-overlay,
 .p-dropdown-panel,
 .p-datepicker,
-.p-autocomplete-panel {
+.p-autocomplete-overlay {
   max-width: calc(100vw - 16px);
 }
 

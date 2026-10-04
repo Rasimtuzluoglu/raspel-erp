@@ -13,6 +13,14 @@ public interface NotRepository extends JpaRepository<Not, Long> {
     List<Not> findBySirketIdAndKullaniciIdOrderByOlusturmaTarihiDesc(Long sirketId, Long kullaniciId);
     List<Not> findByCariHesapIdOrderByOlusturmaTarihiDesc(Long cariHesapId);
 
+    /**
+     * Tenant-scoped cari notları. `findByCariHesapId...` yalnızca cari id'sine
+     * baktığı için başka şirketin carisine ait notları döndürüyordu (cross-tenant
+     * IDOR). Sorgu seviyesinde filtrelemek, servis katmanındaki kontrolün
+     * atlanması hâlinde de sızıntıyı engeller (defense in depth).
+     */
+    List<Not> findBySirketIdAndCariHesapIdOrderByOlusturmaTarihiDesc(Long sirketId, Long cariHesapId);
+
     /** Kullanıcının kişisel notları: cari notlarını hariç tutar (gizlilik + kirlilik önleme). */
     Page<Not> findBySirketIdAndKullaniciIdAndCariHesapIdIsNullOrderByOlusturmaTarihiDesc(
             Long sirketId, Long kullaniciId, Pageable pageable);

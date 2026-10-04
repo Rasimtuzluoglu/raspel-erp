@@ -26,10 +26,19 @@ public class AsyncConfig {
                 log.error("Async gorev kuyrugu dolu, gorev reddedildi: {}", r.getClass().getSimpleName()));
         // Yakalanmayan async hatalar varsayilan logger'da kaybolmasin; acikca logla.
         executor.setTaskDecorator(runnable -> () -> {
+            // MDC aktarimi: async gorev KARSILAYAN thread'de calisir ve ThreadLocal
+            // MDC otomatik tasinmaz. Aktarilmazsa asenkron log satirlari (bildirim,
+            // rapor, dis-yuk) traceId/sirketId bilgisi TUMUR ve izlenemez olur.
+            java.util.Map<String, String> mdc = org.slf4j.MDC.getCopyOfContextMap();
+            if (mdc != null) {
+                org.slf4j.MDC.setContextMap(mdc);
+            }
             try {
                 runnable.run();
             } catch (Throwable t) {
                 log.error("Async gorev hata ile sonlandi", t);
+            } finally {
+                org.slf4j.MDC.clear();
             }
         });
         executor.initialize();

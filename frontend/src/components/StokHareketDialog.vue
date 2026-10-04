@@ -26,11 +26,16 @@
       <label>{{ $t('nav.cari') }}</label>
       <Dropdown
         v-model="cariHesapId"
-        :options="cariHesaplar"
+        :options="cariOnerileri"
         option-label="ad"
         option-value="id"
         :placeholder="$t('common.optional')"
         class="w-full"
+        show-clear
+        filter
+        filter-by="ad,vergiNumarasi,telefon"
+        :loading="cariOnerileriYukleniyor"
+        @filter="cariAra"
       />
     </div>
     <div class="form-grup">
@@ -71,14 +76,21 @@
 </template>
 
 <script setup>
+import { watch } from 'vue'
+import { useCariOnerileri } from '../composables/useCariOnerileri.js'
+
 defineProps({
   baslik: { type: String, default: '' },
-  cariHesaplar: { type: Array, default: () => [] },
   depolar: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false }
 })
 
 defineEmits(['kaydet'])
+
+// Cari secici sunucu aramali. Once `Stoklar.vue` 50 kayitlik listeyi prop ile
+// geciyordu; 50. kayittan sonraki cari stok hareketine atanamadan kayboluyordu.
+const { oneriler: cariOnerileri, ara: cariAra, hemenAra: cariOnerileriYukle, yukleniyor: cariOnerileriYukleniyor } =
+  useCariOnerileri()
 
 const visible = defineModel('visible', { type: Boolean, default: false })
 const miktar = defineModel('miktar', { type: Number, default: null })
@@ -86,6 +98,16 @@ const hareketTarihi = defineModel('hareketTarihi', { type: [Date, String], defau
 const cariHesapId = defineModel('cariHesapId', { type: [Number, String], default: null })
 const depoId = defineModel('depoId', { type: [Number, String], default: null })
 const aciklama = defineModel('aciklama', { type: String, default: '' })
+
+// Dialog her acildiginda ilk sayfa yuklenir; dropdown filtresiz birakilirsa
+// ilk kullanimda bos gorunur.
+watch(
+  visible,
+  (acik) => {
+    if (acik) cariOnerileriYukle()
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>

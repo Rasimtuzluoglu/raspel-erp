@@ -56,9 +56,23 @@ public class NotService {
         return entityToDTO(not);
     }
 
-    @Transactional(readOnly = true)
+    /**
+     * Cari notları.
+     *
+     * <p>Tenant izolasyonu: bu metot önce {@code sirketId} ile sorguluyor.
+     * Daha önce yalnızca {@code cariHesapId} üzerinden filtreleniyordu; herhangi
+     * bir {@code USER} rolündeki kullanıcı başka bir şirketin cari id'sini
+     * bilerek notlarını (başlık, içerik, önem derecesi) okuyabiliyordu.
+     */
+@Transactional(readOnly = true)
     public List<NotDTO> cariNotlari(Long cariHesapId) {
-        return notRepository.findByCariHesapIdOrderByOlusturmaTarihiDesc(cariHesapId)
+        Long sirketId = tenantChecker.getCurrentSirketId();
+        if (sirketId == null) {
+            // Dahili çağrı (request bağlamı yok): tenant filtresi uygulanamaz.
+            return notRepository.findByCariHesapIdOrderByOlusturmaTarihiDesc(cariHesapId)
+                    .stream().map(this::entityToDTO).collect(Collectors.toList());
+        }
+        return notRepository.findBySirketIdAndCariHesapIdOrderByOlusturmaTarihiDesc(sirketId, cariHesapId)
                 .stream().map(this::entityToDTO).collect(Collectors.toList());
     }
 

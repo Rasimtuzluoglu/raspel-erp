@@ -25,6 +25,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -242,5 +245,91 @@ class KarlilikServiceTest {
         assertEquals("CARI", r.getAltGrup());
         assertEquals(1, r.getAltKirilim().size());
         assertEquals("Müşteri A", r.getAltKirilim().get(0).getAd());
+    }
+
+    // N+1 regresyonu: iade kaynak faturalari iade basina findById ile, kalemleri
+    // ise findByIadeId ile cekiliyordu. Artik ikisi de toplu (findAllByIdIn /
+    // findByIadeIdIn) alindigi icin sorgu sayisi iade sayisindan bagimsizdir.
+    @Test
+    void analiz_iadeKaynakFaturalariniTopluCeker() {
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(SIRKET, BAS, BIT)).thenReturn(List.of());
+        when(iadeRepository.findBySirketIdAndTurAndDurumAndTarihBetween(SIRKET, "SATIS", "TAMAMLANDI", BAS, BIT))
+                .thenReturn(List.of(iade(5L, 900L), iade(6L, 901L)));
+        when(iadeKalemRepository.findByIadeIdIn(List.of(5L, 6L))).thenReturn(List.of(
+                IadeKalem.builder().id(1L).iadeId(5L).stokId(10L).miktar(BigDecimal.ONE)
+                        .birimFiyat(new BigDecimal("100")).build(),
+                IadeKalem.builder().id(2L).iadeId(6L).stokId(10L).miktar(BigDecimal.ONE)
+                        .birimFiyat(new BigDecimal("50")).build()));
+        when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Elektronik")));
+        when(maliyetService.ortalamaMaliyet(any(Stok.class))).thenReturn(new BigDecimal("40"));
+        when(faturaRepository.findAllByIdIn(List.of(900L, 901L))).thenReturn(List.of(
+                Fatura.builder().id(900L).build(), Fatura.builder().id(901L).build()));
+
+        service.karlilikAnalizi(SIRKET, BAS, BIT, "KATEGORI");
+
+        verify(faturaRepository, times(1)).findAllByIdIn(List.of(900L, 901L));
+        verify(faturaRepository, never()).findById(any());
+        verify(iadeKalemRepository, times(1)).findByIadeIdIn(List.of(5L, 6L));
+        verify(iadeKalemRepository, never()).findByIadeId(any());
+    }
+
+    @Test
+    void detay_iadeKaynakFaturalariniTopluCeker() {
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(SIRKET, BAS, BIT)).thenReturn(List.of());
+        when(iadeRepository.findBySirketIdAndTurAndDurumAndTarihBetween(SIRKET, "SATIS", "TAMAMLANDI", BAS, BIT))
+                .thenReturn(List.of(iade(5L, 900L), iade(6L, 901L)));
+        when(iadeKalemRepository.findByIadeIdIn(List.of(5L, 6L))).thenReturn(List.of(
+                IadeKalem.builder().id(1L).iadeId(5L).stokId(10L).miktar(BigDecimal.ONE)
+                        .birimFiyat(new BigDecimal("100")).build(),
+                IadeKalem.builder().id(2L).iadeId(6L).stokId(10L).miktar(BigDecimal.ONE)
+                        .birimFiyat(new BigDecimal("50")).build()));
+        when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Elektronik")));
+        when(maliyetService.ortalamaMaliyet(any(Stok.class))).thenReturn(new BigDecimal("40"));
+        when(faturaRepository.findAllByIdIn(List.of(900L, 901L))).thenReturn(List.of(
+                Fatura.builder().id(900L).build(), Fatura.builder().id(901L).build()));
+
+        var r = service.karlilikDetay(SIRKET, BAS, BIT, "URUN", null, 10L);
+
+        assertEquals(2, r.getBelgeler().size());
+        verify(faturaRepository, times(1)).findAllByIdIn(List.of(900L, 901L));
+        verify(faturaRepository, never()).findById(any());
+        verify(iadeKalemRepository, times(1)).findByIadeIdIn(List.of(5L, 6L));
+        verify(iadeKalemRepository, never()).findByIadeId(any());
+    }
+
+    // iade kaynak fatura id'si null olan kayitlarda toplu harita erisimi NPE firlatmamali.
+    @Test
+    void analiz_iadeFaturaIdsiNullOlanKayitlariIsler() {
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(SIRKET, BAS, BIT)).thenReturn(List.of());
+        when(iadeRepository.findBySirketIdAndTurAndDurumAndTarihBetween(SIRKET, "SATIS", "TAMAMLANDI", BAS, BIT))
+                .thenReturn(List.of(iade(5L, null)));
+        when(iadeKalemRepository.findByIadeIdIn(List.of(5L))).thenReturn(List.of(
+                IadeKalem.builder().id(1L).iadeId(5L).stokId(10L).miktar(BigDecimal.ONE)
+                        .birimFiyat(new BigDecimal("100")).build()));
+        when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Elektronik")));
+        when(maliyetService.ortalamaMaliyet(any(Stok.class))).thenReturn(new BigDecimal("40"));
+
+        var r = service.karlilikAnalizi(SIRKET, BAS, BIT, "KATEGORI");
+
+        assertEquals(0, r.getOzet().getIadeTutari().compareTo(new BigDecimal("100.00")));
+        verify(faturaRepository, never()).findAllByIdIn(any());
+        verify(faturaRepository, never()).findById(any());
+    }
+
+    @Test
+    void analiz_iadeYoksaTopluSorguCagirmaz() {
+        when(faturaRepository.findBySirketIdAndTarihBetweenKalemli(SIRKET, BAS, BIT)).thenReturn(List.of());
+        bosIade();
+
+        service.karlilikAnalizi(SIRKET, BAS, BIT, "KATEGORI");
+
+        verify(iadeKalemRepository, never()).findByIadeIdIn(any());
+        verify(faturaRepository, never()).findAllByIdIn(any());
+        verify(faturaRepository, never()).findById(any());
+    }
+
+    private Iade iade(Long id, Long faturaId) {
+        return Iade.builder().id(id).faturaId(faturaId).tur("SATIS").durum("TAMAMLANDI")
+                .tarih(LocalDate.of(2026, 9, 10 + id.intValue())).sirketId(SIRKET).build();
     }
 }

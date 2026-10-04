@@ -1,6 +1,7 @@
 package com.raspel.erp.service.sistem;
 
 import com.raspel.erp.exception.BusinessException;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -115,5 +116,88 @@ class BackupServiceTest {
         Map<String, Object> config = backupService.getCloudConfig();
         assertEquals("DEVRE_DISI", config.get("status"));
         assertEquals(false, config.get("enabled"));
+    }
+
+    // Cron yedekleme sessizce basarisiz oldugunda (pg_dump yok, disk dolu, izin
+    // hatasi) kimse fark etmesin diye metrik uretilmelidir.
+    // Gauge: 0=OK, 1=UYARI, 2=KRITIK. Alarmlar bu degerleri okur.
+    @Test
+    void yedekDogrula_yedekYokkenKritikDurumMetrigiUretir() {
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        ReflectionTestUtils.setField(backupService, "meterRegistry", registry);
+
+        Map<String, Object> sonuc = backupService.yedekDogrula();
+
+        assertEquals("KRITIK", sonuc.get("durum"));
+        assertEquals(2.0, registry.get("raspel.yedek.durum").gauge().value());
+        assertEquals(0.0, registry.get("raspel.yedek.son").gauge().value(),
+                "Basarili yedek yokken son yedek zamani 0 olmali (BackupFileMissing alarmi)");
+    }
+
+    @Test
+    void yedekDogrula_butunlukHatasiKritikDurumUretir() throws Exception {
+        // Bozuk (gzip olmayan) bir yedek dosyasi yazilir.
+        Files.write(tempDir.resolve("raspelerp_DAILY_20260101_030000.sql.gz"), "bozuk veri".getBytes());
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        ReflectionTestUtils.setField(backupService, "meterRegistry", registry);
+
+        Map<String, Object> sonuc = backupService.yedekDogrula();
+
+        assertEquals("KRITIK", sonuc.get("durum"));
+        assertEquals(false, sonuc.get("butunluk"));
+        assertEquals(2.0, registry.get("raspel.yedek.durum").gauge().value());
+        assertTrue(registry.get("raspel.yedek.son").gauge().value() > 0,
+                "Dosya var diye son yedek zamani guncellenmeli");
+    }
+
+    // MeterRegistry bean'i yoksa (test ortami) servis cokmemeli.
+    @Test
+    void yedekDogrula_registryYoksaCokmez() {
+        assertNull(ReflectionTestUtils.getField(backupService, "meterRegistry"));
+        Map<String, Object> sonuc = backupService.yedekDogrula();
+        assertEquals("KRITIK", sonuc.get("durum"));
+    }
+
+    // Gauge'lar tembel kaydedilirse metrik, ilk yedekDogrulama() calismasina
+    // (gunluk cron) kadar Prometheus'ta gorunmez ve "hic yedek alinmadi"
+    // alarmi sessizce calismaz. Bu yuzden init() icinde kaydedilirler.
+    @Test
+    void init_gauge_larBaslangictaKaydedilir() {
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        ReflectionTestUtils.setField(backupService, "meterRegistry", registry);
+
+        ReflectionTestUtils.invokeMethod(backupService, "init");
+
+        assertNotNull(registry.find("raspel.yedek.durum").gauge());
+        assertEquals(0.0, registry.get("raspel.yedek.son").gauge().value());
+        // "hic yedek yok" durumu raspel_yedek_son == 0 ile bildirilir; durum
+        // gauge'i yalnizca var olan yedegi anlattigi icin 0 (OK) baslar.
+        assertEquals(0.0, registry.get("raspel.yedek.durum").gauge().value());
+    }
+
+    // Ayni registry icinde iki kez cagrildiginda "gauge already registered"
+    // hatasi vermemeli.
+    @Test
+    void durumGuncelle_ayniRegistryIleCokluCagriGuvenli() {
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        ReflectionTestUtils.setField(backupService, "meterRegistry", registry);
+
+        backupService.yedekDogrula();
+        backupService.yedekDogrula();
+
+        assertEquals(2.0, registry.get("raspel.yedek.durum").gauge().value());
+    }
+
+    @Test
+    void manualBackup_hataDurumundaHataSayaciArtar() {
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        ReflectionTestUtils.setField(backupService, "meterRegistry", registry);
+        // dbName gecersiz: pg_dump basarisiz olur ve hata yoluna duser.
+        ReflectionTestUtils.setField(backupService, "dbHost", "127.0.0.1");
+        ReflectionTestUtils.setField(backupService, "dbPort", "1");
+
+        assertThrows(RuntimeException.class, () -> backupService.manualBackup("DAILY"));
+
+        assertEquals(1.0, registry.counter("raspel.yedek.islem", "tur", "DAILY", "sonuc", "hata").count());
     }
 }

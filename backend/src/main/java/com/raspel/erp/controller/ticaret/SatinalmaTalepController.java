@@ -40,6 +40,7 @@ public class SatinalmaTalepController {
 
     @PostMapping
     @Operation(summary = "Yeni satın alma talebi oluştur", description = "Yeni bir satın alma talebi oluşturur")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SATINALMA_WRITE')")
     public ResponseEntity<SatinalmaTalepDTO> olustur(@Valid @RequestBody SatinalmaTalepDTO dto,
                                                      jakarta.servlet.http.HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
@@ -48,19 +49,21 @@ public class SatinalmaTalepController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Satın alma talebi güncelle", description = "Satın alma talebi bilgilerini günceller")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SATINALMA_WRITE')")
     public ResponseEntity<SatinalmaTalepDTO> guncelle(@PathVariable Long id, @Valid @RequestBody SatinalmaTalepDTO dto) {
         return ResponseEntity.ok(satinalmaTalepService.guncelle(id, dto));
     }
 
     @PutMapping("/{id}/durum")
     @Operation(summary = "Satın alma talebi durum güncelle", description = "Satın alma talebi durumunu günceller")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SATINALMA_WRITE')")
     public ResponseEntity<SatinalmaTalepDTO> durumGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body) {
         return ResponseEntity.ok(satinalmaTalepService.durumGuncelle(id, body.getDurum()));
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Satın alma talebi sil", description = "Satın alma talebini siler (yalnızca ADMIN)")
-    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Satın alma talebi sil", description = "Satın alma talebini siler")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SATINALMA_DELETE')")
     public ResponseEntity<Void> sil(@PathVariable Long id) {
         satinalmaTalepService.sil(id);
         return ResponseEntity.noContent().build();

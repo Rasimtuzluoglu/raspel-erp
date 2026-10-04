@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -132,7 +133,7 @@ public class FaturaService {
     public Page<FaturaDTO> ara(Long sirketId, String q, LocalDate bas, LocalDate bit,
                                Fatura.FaturaTur tur, Fatura.FaturaDurum durum, String odemeDurumu,
                                Boolean vadesiGecen, Boolean teslimatVar, Pageable pageable) {
-        String like = (q == null || q.isBlank()) ? null : "%" + q.trim().toLowerCase() + "%";
+        String like = com.raspel.erp.util.AramaTemizleyici.like(q);
         return sayfaDTOyaCevir(faturaRepository.ara(sirketId, like, bas, bit, tur, durum, odemeDurumu,
                 vadesiGecen, teslimatVar, LocalDate.now(), pageable));
     }
@@ -957,7 +958,7 @@ public class FaturaService {
         faturaGecmisService.kaydet(kaydedilen, FaturaGecmisService.GUNCELLE,
                 "Yeniden hesaplama (KDV dahil model)",
                 oncekiSnapshot, faturaGecmisService.snapshot(kaydedilen));
-        cacheYardimci.temizle("faturalar", "dashboard");
+        cacheYardimci.commitSonrasiTemizle("faturalar", "dashboard");
         log.info("Fatura yeniden hesaplandı - ID: {}, eski genelToplam: {}, yeni: {}",
                 id, oncekiSnapshot, belge.genelToplam());
         return entityDTOyeCevir(kaydedilen);
@@ -1080,7 +1081,7 @@ public class FaturaService {
         }
 
         if (kaydet && degisti) {
-            cacheYardimci.temizle("faturalar", "dashboard");
+            cacheYardimci.commitSonrasiTemizle("faturalar", "dashboard");
         }
         log.info("Toplu yeniden hesaplama - sirket: {}, kaydet: {}, taranan: {}, degisecek: {}, kilitli: {}",
                 sirketId, kaydet, taranan, degisecek, kilitli);
@@ -1417,7 +1418,7 @@ public class FaturaService {
         if (!hareketler.isEmpty()) {
             stokHareketRepository.saveAll(hareketler);
         }
-        cacheYardimci.temizle("stoklar", "dashboard");
+        cacheYardimci.commitSonrasiTemizle("stoklar", "dashboard");
     }
 
     /**
@@ -1560,7 +1561,7 @@ public class FaturaService {
         if (!hareketler.isEmpty()) {
             stokHareketRepository.saveAll(hareketler);
         }
-        cacheYardimci.temizle("stoklar", "dashboard");
+        cacheYardimci.commitSonrasiTemizle("stoklar", "dashboard");
         return kritikStokIds;
     }
 
@@ -1571,8 +1572,8 @@ public class FaturaService {
             if (sirketId != null) {
                 sirketEmail = sirketRepository.findById(sirketId).map(Sirket::getEmail).orElse(null);
             }
-            for (Long stokId : kritikStokIds) {
-                Stok stok = stokRepository.findById(stokId).orElse(null);
+            // Kritik stoklar tek sorguda yuklenir; kalem basina findById cagirmak N+1 uretir.
+            for (Stok stok : stokRepository.findAllById(new LinkedHashSet<>(kritikStokIds))) {
                 if (stok == null) continue;
                 if (sirketId != null) {
                     Long bildirimSirketId = sirketId;

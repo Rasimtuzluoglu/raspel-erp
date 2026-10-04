@@ -30,80 +30,80 @@ const routes = [
     path: '/cari-hesaplar',
     name: 'CariHesaplar',
     component: () => import('../views/CariHesaplar.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'CARI_READ' }
   },
   {
     path: '/hareketler',
     name: 'Hareketler',
     component: () => import('../views/Hareketler.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'RAPOR_READ' }
   },
   {
     path: '/faturalar',
     name: 'Faturalar',
     component: () => import('../views/Faturalar.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'FATURA_READ' }
   },
   {
     path: '/faturalar/:id',
     name: 'FaturaDetay',
     component: () => import('../views/FaturaDetay.vue'),
     props: true,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'FATURA_READ' }
   },
   {
     path: '/tekrarlayan-faturalar',
     name: 'TekrarlayanFaturalar',
     component: () => import('../views/TekrarlayanFaturalar.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'FATURA_READ' }
   },
   {
     path: '/bankalar',
     name: 'Bankalar',
     component: () => import('../views/Bankalar.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'FINANS_READ' }
   },
   {
     path: '/kasa',
     name: 'Kasa',
     component: () => import('../views/Kasa.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'FINANS_READ' }
   },
   {
     path: '/raporlar',
     name: 'Raporlar',
     component: () => import('../views/Raporlar.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'RAPOR_READ' }
   },
   {
     path: '/raporlar/karlilik-analizi',
     name: 'KarlilikAnalizi',
     component: () => import('../views/KarlilikAnalizi.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'RAPOR_READ' }
   },
   {
     path: '/raporlar/fatura-gecmis',
     name: 'FaturaGecmisRaporu',
     component: () => import('../views/FaturaGecmisRaporu.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'RAPOR_READ' }
   },
   {
     path: '/raporlar/gorunumler-360',
     name: 'Gorunumler360',
     component: () => import('../views/Gorunumler360.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'RAPOR_READ' }
   },
   {
     path: '/kategoriler',
     name: 'Kategoriler',
     component: () => import('../views/Kategoriler.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'STOK_READ' }
   },
   {
     path: '/adres-defteri',
     name: 'AdresDefteri',
     component: () => import('../views/AdresDefteri.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'CARI_READ' }
   },
   {
     path: '/kullanicilar',
@@ -115,25 +115,25 @@ const routes = [
     path: '/stoklar',
     name: 'Stoklar',
     component: () => import('../views/Stoklar.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'STOK_READ' }
   },
   {
     path: '/toplu-stok',
     name: 'TopluStok',
     component: () => import('../views/TopluStok.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'STOK_WRITE' }
   },
   {
     path: '/satislar',
     name: 'Satislar',
     component: () => import('../views/Satis.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'SIPARIS_READ' }
   },
   {
     path: '/hizli-satis',
     name: 'HizliSatis',
     component: () => import('../views/HizliSatis.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'SIPARIS_READ' }
   },
   {
     path: '/sirketler',
@@ -145,7 +145,7 @@ const routes = [
     path: '/donemler',
     name: 'Donemler',
     component: () => import('../views/Donemler.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'SISTEM_READ' }
   },
   {
     path: '/yeni-yil-sihirbazi',
@@ -157,43 +157,43 @@ const routes = [
     path: '/satinalma',
     name: 'Satinalma',
     component: () => import('../views/Satinalma.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'SATINALMA_READ' }
   },
   {
     path: '/personel',
     name: 'Personel',
     component: () => import('../views/Personel.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'IK_READ' }
   },
   {
     path: '/izinler',
     name: 'Izinler',
     component: () => import('../views/Izinler.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'IK_READ' }
   },
   {
     path: '/puantaj',
     name: 'Puantaj',
     component: () => import('../views/Puantaj.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'IK_READ' }
   },
   {
     path: '/siparisler',
     name: 'Siparisler',
     component: () => import('../views/Siparisler.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'SIPARIS_READ' }
   },
   {
     path: '/siparis-takip',
     name: 'SiparisTakip',
     component: () => import('../views/SiparisTakip.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'SIPARIS_READ' }
   },
   {
     path: '/teklifler',
     name: 'Teklifler',
     component: () => import('../views/Teklifler.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'SIPARIS_READ' }
   },
   {
     path: '/yonetici-kokpiti',
@@ -211,37 +211,37 @@ const routes = [
     path: '/cek-senet',
     name: 'CekSenet',
     component: () => import('../views/CekSenet.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'FINANS_READ' }
   },
   {
     path: '/tahsilat',
     name: 'Tahsilat',
     component: () => import('../views/Tahsilat.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'FINANS_READ' }
   },
   {
     path: '/taksit-takvimi',
     name: 'TaksitTakvimi',
     component: () => import('../views/TaksitTakvimi.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'FINANS_READ' }
   },
   {
     path: '/pos-terminalleri',
     name: 'PosTerminalleri',
     component: () => import('../views/PosTerminalleri.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'FINANS_READ' }
   },
   {
     path: '/irsaliyeler',
     name: 'Irsaliyeler',
     component: () => import('../views/Irsaliyeler.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'IRSALIYE_READ' }
   },
   {
     path: '/teslimatlar',
     name: 'Teslimatlar',
     component: () => import('../views/Teslimatlar.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'SIPARIS_READ' }
   },
   {
     path: '/projeler',
@@ -265,13 +265,13 @@ const routes = [
     path: '/subeler',
     name: 'Subeler',
     component: () => import('../views/Subeler.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'SISTEM_READ' }
   },
   {
     path: '/depolar',
     name: 'Depolar',
     component: () => import('../views/Depolar.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'STOK_READ' }
   },
   {
     path: '/butceler',
@@ -289,37 +289,37 @@ const routes = [
     path: '/fiyat-listesi',
     name: 'FiyatListesi',
     component: () => import('../views/FiyatListesi.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'STOK_READ' }
   },
   {
     path: '/iskonto-kurallari',
     name: 'IskontoKurallari',
     component: () => import('../views/IskontoKurallari.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'STOK_READ' }
   },
   {
     path: '/crm-merkezi',
     name: 'CrmMerkezi',
     component: () => import('../views/CrmMerkezi.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'SIPARIS_READ' }
   },
   {
     path: '/iadeler',
     name: 'Iadeler',
     component: () => import('../views/Iadeler.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'SIPARIS_READ' }
   },
   {
     path: '/stok-seriler',
     name: 'StokSeriler',
     component: () => import('../views/StokSeriler.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'STOK_READ' }
   },
   {
     path: '/stok-sayim',
     name: 'StokSayim',
     component: () => import('../views/StokSayim.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'STOK_READ' }
   },
   {
     path: '/uretim',
@@ -331,7 +331,7 @@ const routes = [
     path: '/stok-duzeltmeler',
     name: 'StokDuzeltmeler',
     component: () => import('../views/StokDuzeltmeler.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'STOK_READ' }
   },
   {
     path: '/maas-bordro',
@@ -343,13 +343,13 @@ const routes = [
     path: '/vardiyalar',
     name: 'Vardiyalar',
     component: () => import('../views/Vardiyalar.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'IK_READ' }
   },
   {
     path: '/anomaliler',
     name: 'Anomaliler',
     component: () => import('../views/Anomaliler.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'RAPOR_READ' }
   },
   {
     path: '/notlar',
@@ -361,7 +361,7 @@ const routes = [
     path: '/veri-aktar',
     name: 'VeriImport',
     component: () => import('../views/VeriImport.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'SISTEM_READ' }
   },
   {
     path: '/kullanim-sartlari',
@@ -391,19 +391,19 @@ const routes = [
     path: '/muhasebe',
     name: 'Muhasebe',
     component: () => import('../views/Muhasebe.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'FINANS_READ' }
   },
   {
     path: '/crm',
     name: 'Crm',
     component: () => import('../views/Crm.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'SIPARIS_READ' }
   },
   {
     path: '/e-fatura',
     name: 'EFatura',
     component: () => import('../views/EFatura.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'FATURA_READ' }
   },
   {
     path: '/kritik-stok',
@@ -425,13 +425,13 @@ const routes = [
     path: '/banka-mutabakat',
     name: 'BankaMutabakat',
     component: () => import('../views/BankaMutabakat.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'FINANS_READ' }
   },
   {
     path: '/vergi-raporlari',
     name: 'VergiRaporlari',
     component: () => import('../views/VergiRaporlari.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, permission: 'RAPOR_READ' }
   },
   {
     path: '/sohbet',
@@ -489,6 +489,8 @@ router.beforeEach((to, from, next) => {
   } else if (to.meta.requiresAdmin && !authStore.isAdmin) {
     next('/yetki-reddi')
   } else if (to.meta.permission && !authStore.hasPermission(to.meta.permission)) {
+    // Modül yetkisi yoksa erişim reddedilir. Saha/şoför rolleri kendi
+    // akışlarına (beyaz listeye göre) devam eder.
     next('/yetki-reddi')
   } else if (authStore.isSaha && to.path !== '/yetki-reddi') {
     const sahaIzinli = [

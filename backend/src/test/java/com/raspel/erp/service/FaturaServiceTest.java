@@ -15,8 +15,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -169,14 +171,15 @@ class FaturaServiceTest {
 
     @Test
     void ara_ucArgOverload_tarihsizRepoCagirir() {
-        when(faturaRepository.ara(eq(1L), eq("%x%"), isNull(), isNull(), isNull(), isNull(), isNull(),
+        when(faturaRepository.ara(eq(1L), eq("%xy%"), isNull(), isNull(), isNull(), isNull(), isNull(),
                 isNull(), isNull(), any(LocalDate.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(createFatura(1L))));
 
-        var result = faturaService.ara(1L, "x", Pageable.unpaged());
+        var result = faturaService.ara(1L, "xy", Pageable.unpaged());
 
         assertEquals(1, result.getContent().size());
-        verify(faturaRepository).ara(eq(1L), eq("%x%"), isNull(), isNull(), isNull(), isNull(), isNull(),
+        // Arama terimi AramaTemizleyici ile normalize edilir (%xy%).
+        verify(faturaRepository).ara(eq(1L), eq("%xy%"), isNull(), isNull(), isNull(), isNull(), isNull(),
                 isNull(), isNull(), any(LocalDate.class), any(Pageable.class));
     }
 
@@ -888,5 +891,48 @@ class FaturaServiceTest {
 
         assertEquals(0L, ozet.getAdet());
         assertEquals(0, ozet.getCiro().compareTo(BigDecimal.ZERO));
+    }
+
+    // N+1 regresyonu: kritik stok uyarisi icin her stok icin ayri findById
+    // cagriliyordu; kalem sayisi kadar ek sorgu uretiliyordu. Artik tek
+    // findAllById cagrisi yeterlidir.
+    @Test
+    void kritikStokUyarisiGonder_stoklariTekSorgudaYukler() throws Exception {
+        Stok s1 = new Stok();
+        s1.setId(10L);
+        s1.setAd("Ürün A");
+        s1.setMiktar(BigDecimal.ONE);
+        s1.setMinMiktar(new BigDecimal("5"));
+        Stok s2 = new Stok();
+        s2.setId(11L);
+        s2.setAd("Ürün B");
+        s2.setMiktar(BigDecimal.ZERO);
+        s2.setMinMiktar(new BigDecimal("5"));
+
+        when(sirketRepository.findById(1L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.sistem.Sirket.builder().email("info@abc.com").build()));
+        when(stokRepository.findAllById(any())).thenReturn(List.of(s1, s2));
+
+        java.lang.reflect.Method m = FaturaService.class.getDeclaredMethod(
+                "kritikStokUyarisiGonder", List.class, Long.class);
+        m.setAccessible(true);
+        m.invoke(faturaService, List.of(10L, 11L), 1L);
+
+        ArgumentCaptor<Collection<Long>> captor = ArgumentCaptor.forClass(Collection.class);
+        verify(stokRepository, times(1)).findAllById(captor.capture());
+        assertEquals(Set.of(10L, 11L), new java.util.HashSet<>(captor.getValue()));
+        verify(stokRepository, never()).findById(any());
+    }
+
+    @Test
+    void kritikStokUyarisiGonder_bosListeSorguYapmaz() throws Exception {
+        java.lang.reflect.Method m = FaturaService.class.getDeclaredMethod(
+                "kritikStokUyarisiGonder", List.class, Long.class);
+        m.setAccessible(true);
+        m.invoke(faturaService, List.of(), 1L);
+        m.invoke(faturaService, null, 1L);
+
+        verify(stokRepository, never()).findAllById(any());
+        verify(stokRepository, never()).findById(any());
     }
 }

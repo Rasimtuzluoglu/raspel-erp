@@ -40,7 +40,7 @@ public class TeslimatService {
     private final FaturaRepository faturaRepository;
     private final DosyaDepolamaService dosyaDepolama;
     private final BildirimService bildirimService;
-        private final TeslimatDurumLogRepository durumLogRepository;
+    private final TeslimatDurumLogRepository durumLogRepository;
     private final com.raspel.erp.repository.ik.PersonelRepository personelRepository;
     private final SiparisRepository siparisRepository;
     private final PdfRaporService pdfRaporService;
@@ -104,7 +104,7 @@ public class TeslimatService {
     @Transactional(readOnly = true)
     public List<com.raspel.erp.dto.ticaret.AtanabilirFaturaDTO> atanabilirFaturalar(Long sirketId, String q, int limit) {
         if (sirketId == null) return List.of();
-        String like = (q == null || q.isBlank()) ? null : "%" + q.trim().toLowerCase() + "%";
+        String like = com.raspel.erp.util.AramaTemizleyici.like(q);
         int boyut = Math.max(1, Math.min(limit, 100));
         return faturaRepository
                 .atanabilirFaturalar(sirketId, like, org.springframework.data.domain.PageRequest.of(0, boyut))
@@ -285,6 +285,7 @@ public class TeslimatService {
         return durumGuncelle(id, durum, null, sirketId, kullaniciId);
     }
 
+    @Transactional
     public TeslimatDTO durumGuncelle(Long id, String durum, String sebep, Long sirketId, Long kullaniciId) {
         if (durum == null || !gecerliDurum(durum)) {
             throw new BusinessException("Geçersiz teslimat durumu");

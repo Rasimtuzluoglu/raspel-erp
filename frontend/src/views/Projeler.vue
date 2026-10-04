@@ -65,6 +65,7 @@
             :title="t('projeler.tamamla')"
             @click="durumGuncelle(data, 'TAMAMLANDI')"
           />
+          v-permission="'SISTEM_DELETE'"
           <Button
             icon="pi pi-trash"
             :aria-label="$t('common.delete')"

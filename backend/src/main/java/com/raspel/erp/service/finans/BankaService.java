@@ -53,7 +53,7 @@ public class BankaService {
                 .sirketId(sirketId)
                 .build();
         Banka kaydedilen = bankaRepository.save(banka);
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
         return entityDTOyeCevir(kaydedilen);
     }
 
@@ -66,7 +66,7 @@ public class BankaService {
         if (dto.getHesapNo() != null) banka.setHesapNo(dto.getHesapNo());
         if (dto.getIban() != null) banka.setIban(dto.getIban());
         Banka guncellenen = bankaRepository.save(banka);
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
         return entityDTOyeCevir(guncellenen);
     }
 
@@ -83,7 +83,7 @@ public class BankaService {
             throw new BusinessException("Bu banka hesabına ait " + hareketSayisi + " adet hareket kaydı bulunmaktadır. Önce hareketleri temizleyiniz.");
         }
         bankaRepository.deleteById(id);
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
     }
 
     private BankaDTO entityDTOyeCevir(Banka banka) {

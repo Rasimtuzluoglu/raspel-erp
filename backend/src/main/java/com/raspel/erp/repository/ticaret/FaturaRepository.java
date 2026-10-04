@@ -4,6 +4,8 @@ import com.raspel.erp.entity.ticaret.Fatura;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,12 +18,32 @@ import com.raspel.erp.entity.finans.CariHesap;
 
 @Repository
 public interface FaturaRepository extends JpaRepository<Fatura, Long> {
+
+    /**
+     * Kilitli fatura okuması.
+     *
+     * <p>REDTEAM (yarış koşulu): Ödeme uygulaması ({@code HareketService
+     * .faturaOdemeUygula}) kilitsiz {@code findById} ile okuyordu. İki paralel
+     * tahsilat isteğinde ikisi de aynı {@code odenenTutar} değerini görüp
+     * kendi toplamını yazıyor; sonuç "ödenen = 1000" (fatura 600 TL) gibi
+     * fazla ödeme kaydı oluşuyor ve {@code kalanTutar} sessizce 0'a
+     * kırpılıyordu.
+     *
+     * <p>{@code PESSIMISTIC_WRITE} ile aynı faturaya eşzamanlı ödeme
+     * serileştirilir: ikinci istek birincinin commit'ini bekler, güncel
+     * {@code odenenTutar} üzerinden hesaplar.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT f FROM Fatura f WHERE f.id = :id")
+    java.util.Optional<Fatura> findByIdForUpdate(@Param("id") Long id);
+
     @EntityGraph(attributePaths = {"cariHesap"})
     Page<Fatura> findBySirketIdOrderByTarihDesc(Long sirketId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"cariHesap"})
     @Query("SELECT f FROM Fatura f LEFT JOIN f.cariHesap c WHERE f.sirketId = :sirketId " +
-            "AND (:q IS NULL OR lower(f.faturaNumarasi) LIKE :q OR lower(c.ad) LIKE :q) " +
+            "AND (:q IS NULL OR lower(f.faturaNumarasi) LIKE :q ESCAPE '\\' " +
+            "            OR lower(c.ad) LIKE :q ESCAPE '\\') " +
             // Tarih filtresi COALESCE ile: null parametrelerde Postgres'in parametre tipini
             // cozememesi (42P18) hatasini onler.
             "AND f.tarih >= COALESCE(:bas, f.tarih) AND f.tarih <= COALESCE(:bit, f.tarih) " +
@@ -106,6 +128,15 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
 
     @EntityGraph(attributePaths = {"cariHesap"})
     Optional<Fatura> findTopByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(Long cariHesapId, Long sirketId);
+
+    /**
+     * Verilen id'lerdeki faturaları cari hesaplarıyla birlikte tek sorguda getirir.
+     * Iade kaynak faturaları rapor kırılımlarında kullanılır; findById ile iade
+     * başına sorgu atmak (ve lazy cariHesap'ı ayrıca yüklemek) N+1 üretir.
+     * Kalemler yüklenmez (bu yol yalnızca başlık bilgisi kullanır).
+     */
+    @EntityGraph(attributePaths = {"cariHesap"})
+    List<Fatura> findAllByIdIn(java.util.Collection<Long> idler);
 
     @Override
     @EntityGraph(attributePaths = {"cariHesap"})
@@ -240,20 +271,27 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
                                             @Param("odemeDurumlari") java.util.List<String> odemeDurumlari);
 
     /**
-     * Cari bazında en çok geciken fatura günü (yaşlandırma raporu). Tüm fatura listesi
-     * yüklenmeden DB'de grup bazında hesaplanır: [cariHesapId, maksGecikmeGun].
+     * Vade yaşlandırması için açık satış faturalarının minimal projeksiyonu:
+     * {@code [cariHesapId, vadeTarihi, kalanTutar]}.
+     *
+     * <p>Önceden kova gruplaması native sorguda {@code CASE ... GROUP BY} ile
+     * yapılıyordu; Hibernate {@code :bugun} parametresini pozisyonel {@code ?}
+     * olarak bağladığı için PostgreSQL "column must appear in the GROUP BY clause"
+     * hatası veriyordu (H2'de yakalanmıyordu). Kovalama Java tarafına alındı:
+     * sorgu artık taşınabilir ve H2 ile test edilebilir, tek satırda
+     * {@code SELECT cari_id, vade_tarihi, kalan_tutar} döner.
+     *
+     * <p>Yalnızca üç kolon döndüğü için bellek yükü kabul edilebilir; satır
+     * sayısı açık (ödenecek) fatura adediyle sınırlıdır.
      */
-    @Query(value = "SELECT f.cari_hesap_id, MAX(:bugun - f.vade_tarihi) FROM fatura.fatura f " +
-            "WHERE f.sirket_id = :sirketId AND f.tur = :tur AND f.durum = :durum " +
-            "AND f.odeme_durumu NOT IN (:odemeDurumlari) AND f.kalan_tutar > 0 " +
-            "AND f.cari_hesap_id IS NOT NULL AND f.vade_tarihi < :bugun " +
-            "GROUP BY f.cari_hesap_id",
-            nativeQuery = true)
-    List<Object[]> cariBazindaMaksGecikme(@Param("sirketId") Long sirketId,
-                                          @Param("tur") String tur,
-                                          @Param("durum") String durum,
-                                          @Param("odemeDurumlari") java.util.List<String> odemeDurumlari,
-                                          @Param("bugun") java.time.LocalDate bugun);
+    @Query("SELECT f.cariHesap.id, f.vadeTarihi, f.kalanTutar FROM Fatura f " +
+            "WHERE f.sirketId = :sirketId AND f.tur = :tur AND f.durum = :durum " +
+            "AND f.odemeDurumu NOT IN :odemeDurumlari AND f.kalanTutar > 0 " +
+            "AND f.cariHesap.id IS NOT NULL")
+    List<Object[]> acikFaturalarVadeIcin(@Param("sirketId") Long sirketId,
+                                        @Param("tur") Fatura.FaturaTur tur,
+                                        @Param("durum") Fatura.FaturaDurum durum,
+                                        @Param("odemeDurumlari") java.util.List<String> odemeDurumlari);
 
     // Churn analizi icin cari bazli fatura ozeti (tam tabloyu belleğe yuklemeden).
     @Query("SELECT new map(f.cariHesap.id as cariId, MAX(f.tarih) as sonTarih, COUNT(f) as adet, " +
@@ -279,6 +317,50 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     BigDecimal sumKesilmisSatisCiro(@Param("sirketId") Long sirketId);
 
     /**
+     * Sohbet/AI ozeti: en yuksek ciro yapan cariler. Ciro toplami veritabaninda
+     * gruplanir; boylece sirketin tum faturalari bellege cekilmez.
+     * {@code aralik} null ise tarih filtresi uygulanmaz.
+     */
+    @Query("SELECT new map(COALESCE(f.cariHesap.ad, 'Genel Satış') as cariAd, " +
+            "COALESCE(SUM(f.genelToplam), 0) as ciro) " +
+            "FROM Fatura f WHERE f.sirketId = :sirketId " +
+            "AND f.tur = com.raspel.erp.entity.ticaret.Fatura.FaturaTur.SATIS " +
+            "AND f.durum = com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.KESILDI " +
+            "AND (:baslangic IS NULL OR f.tarih >= :baslangic) " +
+            "AND (:bitis IS NULL OR f.tarih <= :bitis) " +
+            "GROUP BY COALESCE(f.cariHesap.ad, 'Genel Satış') " +
+            "ORDER BY COALESCE(SUM(f.genelToplam), 0) DESC, COALESCE(f.cariHesap.ad, 'Genel Satış') ASC")
+    List<Map<String, Object>> cariBazindaCiroTop(@Param("sirketId") Long sirketId,
+                                                @Param("baslangic") java.time.LocalDate baslangic,
+                                                @Param("bitis") java.time.LocalDate bitis,
+                                                Pageable pageable);
+
+    /**
+     * Sohbet/AI: vadesi (vade_tarihi yoksa fatura tarihi) verilen pencereye
+     * dusen kesilmis faturalar. Onceki davranis tum faturalari cekip Java'da
+     * filtreliyordu; burada filtre veritabaninda uygulanir.
+     */
+    @EntityGraph(attributePaths = {"cariHesap"})
+    @Query("SELECT f FROM Fatura f WHERE f.sirketId = :sirketId " +
+            "AND f.durum = com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.KESILDI " +
+            "AND COALESCE(f.vadeTarihi, f.tarih) IS NOT NULL " +
+            "AND COALESCE(f.vadeTarihi, f.tarih) >= :baslangic " +
+            "AND COALESCE(f.vadeTarihi, f.tarih) <= :bitis")
+    List<Fatura> vadesiAraliktakiFaturalar(@Param("sirketId") Long sirketId,
+                                           @Param("baslangic") java.time.LocalDate baslangic,
+                                           @Param("bitis") java.time.LocalDate bitis);
+
+    /**
+     * Sohbet/AI ozeti: kesilmis faturalarin tur basinda adet ve ciro toplami.
+     * Tum faturalari bellege cekmeden tek sorguda hesaplanir.
+     */
+    @Query("SELECT new map(f.tur as tur, COUNT(f) as adet, COALESCE(SUM(f.genelToplam), 0) as ciro) " +
+            "FROM Fatura f WHERE f.sirketId = :sirketId " +
+            "AND f.durum = com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.KESILDI " +
+            "GROUP BY f.tur")
+    List<Map<String, Object>> kesilmisFaturaOzetiByTur(@Param("sirketId") Long sirketId);
+
+    /**
      * Sofor atanabilir faturalar: satis faturalari arasindan teslimati olmayanlar
      * (Faturalar "Sofor Ata" aramasi). Iptal faturalar haric tutulur.
      */
@@ -287,7 +369,8 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
             "AND f.tur = com.raspel.erp.entity.ticaret.Fatura.FaturaTur.SATIS " +
             "AND f.durum <> com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.IPTAL " +
             "AND NOT EXISTS (SELECT 1 FROM Teslimat t WHERE t.faturaId = f.id) " +
-            "AND (:q IS NULL OR lower(f.faturaNumarasi) LIKE :q OR lower(c.ad) LIKE :q) " +
+            "AND (:q IS NULL OR lower(f.faturaNumarasi) LIKE :q ESCAPE '\\' " +
+            "            OR lower(c.ad) LIKE :q ESCAPE '\\') " +
             "ORDER BY f.tarih DESC, f.id DESC")
     List<Fatura> atanabilirFaturalar(@Param("sirketId") Long sirketId, @Param("q") String q, Pageable pageable);
 }

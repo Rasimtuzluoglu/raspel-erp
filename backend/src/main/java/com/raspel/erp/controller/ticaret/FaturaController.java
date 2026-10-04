@@ -22,6 +22,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.scheduling.annotation.Scheduled;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import com.raspel.erp.util.CsvGuvenliUtil;
 import com.raspel.erp.entity.ticaret.Fatura;
 
 @Tag(name = "Faturalar", description = "Fatura yönetimi API")
@@ -165,6 +166,7 @@ public class FaturaController {
 
     @PostMapping
     @Operation(summary = "Yeni fatura oluştur", description = "Yeni bir fatura oluşturur. X-Idempotency-Key header ile çift kayıt engellenir.")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FATURA_WRITE')")
     public ResponseEntity<FaturaDTO> faturaOlustur(
             @RequestBody @jakarta.validation.Valid FaturaDTO dto,
             HttpServletRequest request,
@@ -225,12 +227,14 @@ public class FaturaController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Fatura güncelle", description = "Fatura bilgilerini günceller")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FATURA_WRITE')")
     public ResponseEntity<FaturaDTO> faturaGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid FaturaDTO dto) {
         return ResponseEntity.ok(faturaService.faturaGuncelle(id, dto));
     }
 
     @PutMapping("/{id}/durum")
     @Operation(summary = "Fatura durum güncelle", description = "Fatura durumunu günceller (ödendi/bekliyor/iptal)")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FATURA_WRITE')")
     public ResponseEntity<FaturaDTO> faturaDurumGuncelle(@PathVariable Long id, @Valid @RequestBody DurumRequest request) {
         return ResponseEntity.ok(faturaService.faturaDurumGuncelle(id, request.durum));
     }
@@ -322,11 +326,11 @@ public class FaturaController {
         List<FaturaDTO> liste = faturaService.tumFaturalariGetir((Long) request.getAttribute("sirketId"), PageRequest.of(0, 10000)).getContent();
         StringBuilder csv = new StringBuilder("Fatura No,Tarih,Müşteri,Tutar,Durum\n");
         for (FaturaDTO f : liste) {
-            csv.append(csvSafe(f.getFaturaNumarasi())).append(",")
+            csv.append(CsvGuvenliUtil.deger(f.getFaturaNumarasi())).append(",")
                .append(f.getTarih()).append(",")
-               .append(csvSafe(f.getCariHesapAd()))
+               .append(CsvGuvenliUtil.deger(f.getCariHesapAd()))
                .append(",").append(f.getGenelToplam())
-               .append(",").append(csvSafe(f.getDurum())).append("\n");
+               .append(",").append(CsvGuvenliUtil.deger(f.getDurum())).append("\n");
         }
         byte[] bytes = csv.toString().getBytes(StandardCharsets.UTF_8);
         HttpHeaders headers = new HttpHeaders();
@@ -335,14 +339,6 @@ public class FaturaController {
         return ResponseEntity.ok().headers(headers).body(bytes);
     }
 
-    private String csvSafe(String deger) {
-        if (deger == null || deger.isBlank()) return "\"\"";
-        String s = deger.trim();
-        if (s.startsWith("=") || s.startsWith("+") || s.startsWith("-") || s.startsWith("@")) {
-            s = "'" + s;
-        }
-        return "\"" + s.replace("\"", "\"\"") + "\"";
-    }
 
     record DurumRequest(String durum) {}
 }

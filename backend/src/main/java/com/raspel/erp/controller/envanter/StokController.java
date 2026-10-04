@@ -156,11 +156,30 @@ public class StokController {
         return ResponseEntity.ok(stokService.filtreli(sirketId, q, kategori, marka, stokGrubu, minFiyat, maxFiyat, depoId, pageable));
     }
 
+    @GetMapping("/gruplama-dagilimi")
+    @Operation(summary = "Kategori / üretim tipi dağılımı",
+            description = "Tüm katalogdan kategori ve üretim tipi değerlerini ürün sayılarıyla döner (liste çipleri ve toplu fiyat hedefleri için).")
+    public ResponseEntity<java.util.Map<String, Object>> gruplamaDagilimi(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokService.gruplamaDagilimi(sirketId));
+    }
+
     @GetMapping("/ara")
     @Operation(summary = "Stok ara", description = "Stokları ada/barkoda göre arar")
     public ResponseEntity<List<StokDTO>> ara(@RequestParam String q, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(stokService.ara(q, sirketId));
+    }
+
+    @GetMapping("/satis-onerileri")
+    @Operation(summary = "Satış ekranı ürün önerisi",
+            description = "Yazarken arama (typeahead) için sınırlı ürün önerisi. Tam barkod/stok kodu eşleşmesinde tek kayıt döner.")
+    public ResponseEntity<List<StokDTO>> satisOnerileri(
+            @RequestParam String q,
+            @RequestParam(required = false) Integer limit,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokService.satisOnerileri(q, sirketId, limit));
     }
 
     @GetMapping("/en-cok-satanlar")
@@ -235,6 +254,7 @@ public class StokController {
 
     @PostMapping
     @Operation(summary = "Yeni stok oluştur", description = "Yeni bir stok/ürün oluşturur")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'STOK_WRITE')")
     public ResponseEntity<StokDTO> olustur(@RequestBody @jakarta.validation.Valid StokDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.status(HttpStatus.CREATED).body(stokService.olustur(dto, sirketId));
@@ -242,6 +262,7 @@ public class StokController {
 
     @PostMapping("/toplu")
     @Operation(summary = "Toplu stok oluştur", description = "Birden fazla stok kaydını tek istekte oluşturur (CSV içe aktarma)")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'STOK_WRITE')")
     public ResponseEntity<Map<String, Object>> topluOlustur(
             @RequestBody List<StokDTO> dtolar,
             HttpServletRequest request) {
@@ -252,6 +273,7 @@ public class StokController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Stok güncelle", description = "Stok bilgilerini günceller")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'STOK_WRITE')")
     public ResponseEntity<StokDTO> guncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid StokDTO dto) {
         return ResponseEntity.ok(stokService.guncelle(id, dto));
     }

@@ -1,5 +1,7 @@
 package com.raspel.erp.util;
 
+import com.raspel.erp.exception.BusinessException;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -17,6 +19,17 @@ import java.util.List;
 public final class FaturaTutar {
 
     private static final BigDecimal YUZ = BigDecimal.valueOf(100);
+
+    /** İskonto oranı üst sınırı: %100'den büyük indirim anlamsızdır. */
+    private static final BigDecimal MAKS_ISKONTO = BigDecimal.valueOf(100);
+
+    /**
+     * KDV oranı için makul üst sınır. KDV oranı 100'ün üzerine çıkarsa
+     * {@code 1 + kdv/100} ifadesi patlar (bölme sıfıra → HTTP 500) veya net
+     * tutar negatife döner. Türkiye'de en yüksek oran %20; %100 sınırı hem
+     * bozuk veriyi hem de bölme sıfırını engeller.
+     */
+    private static final BigDecimal MAKS_KDV = BigDecimal.valueOf(100);
 
     private FaturaTutar() {
     }
@@ -43,6 +56,29 @@ public final class FaturaTutar {
         BigDecimal ad = nz(adet);
         BigDecimal isk = nz(iskontoOrani);
         BigDecimal kdv = nz(kdvOrani);
+
+        // --- Girdi savunmasi (denetim C1: negatif iskonto ile kasa nakit yaratma) ---
+        // `isk < 0` (örn. -500) iskontolu brütü `brüt * (1 + 5)` yapıyor, yani
+        // 100 TL'lik 1 adet stok 600 TL'lik faturaya dönüşüyor ve kasa girisi
+        // gerçek nakit yaratıyordu. DTO katmanı doğrulama yapsa bile bu util
+        // birden çok giriş noktasından (Fatura, Siparis, Teklif, Iade, Masraf,
+        // Rapor, EFatura, Satinalma) çağrıldığı için KENDİSİ DE reddetmeli.
+        if (isk.signum() < 0) {
+            throw new BusinessException("İskonto oranı negatif olamaz: " + isk.toPlainString());
+        }
+        if (isk.compareTo(MAKS_ISKONTO) > 0) {
+            throw new BusinessException("İskonto oranı %100'den büyük olamaz: " + isk.toPlainString());
+        }
+        if (kdv.signum() < 0) {
+            throw new BusinessException("KDV oranı negatif olamaz: " + kdv.toPlainString());
+        }
+        if (kdv.compareTo(MAKS_KDV) > 0) {
+            // kdv == 100 -> bolen = 2 (geçerli); > 100 -> bolen > 2 (anlamsız)
+            throw new BusinessException("KDV oranı %100'den büyük olamaz: " + kdv.toPlainString());
+        }
+        if (bf.signum() < 0 || ad.signum() < 0) {
+            throw new BusinessException("Birim fiyat ve miktar negatif olamaz");
+        }
 
         BigDecimal brut = bf.multiply(ad);
         BigDecimal iskontoTutari = brut.multiply(isk).divide(YUZ, 2, RoundingMode.HALF_UP);

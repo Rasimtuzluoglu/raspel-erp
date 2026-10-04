@@ -416,84 +416,89 @@ const tumMenuler = [
   { path: '/onaylar', labelKey: 'nav.onaylar', icon: 'pi pi-check-circle', grupKey: '' },
   { path: '/belgeler', labelKey: 'nav.belgeler', icon: 'pi pi-folder-open', grupKey: '' },
   { path: '/sistem-durum', labelKey: 'nav.sistemDurum', icon: 'pi pi-server', grupKey: '', admin: true },
-  { path: '/muhasebe', labelKey: 'nav.muhasebe', icon: 'pi pi-book', grupKey: 'nav.finans', gelismis: true },
-  { path: '/cari-hesaplar', labelKey: 'nav.cari', icon: 'pi pi-users', grupKey: 'nav.finans' },
-  { path: '/faturalar', labelKey: 'nav.faturalar', icon: 'pi pi-file', grupKey: 'nav.finans' },
-  { path: '/tekrarlayan-faturalar', labelKey: 'nav.tekrarlayanFaturalar', icon: 'pi pi-sync', grupKey: 'nav.finans' },
-  { path: '/bankalar', labelKey: 'nav.banka', icon: 'pi pi-building', grupKey: 'nav.finans' },
-  { path: '/kasa', labelKey: 'nav.kasa', icon: 'pi pi-wallet', grupKey: 'nav.finans' },
-  { path: '/banka-mutabakat', labelKey: 'nav.bankaMutabakat', icon: 'pi pi-link', grupKey: 'nav.finans', gelismis: true },
-  { path: '/cek-senet', labelKey: 'nav.ceksenet', icon: 'pi pi-money-bill', grupKey: 'nav.finans', gelismis: true },
-  { path: '/tahsilat', labelKey: 'nav.tahsilat', icon: 'pi pi-dollar', grupKey: 'nav.finans' },
-  { path: '/taksit-takvimi', labelKey: 'nav.taksitTakvimi', icon: 'pi pi-calendar', grupKey: 'nav.finans' },
-  { path: '/pos-terminalleri', labelKey: 'nav.posTerminalleri', icon: 'pi pi-credit-card', grupKey: 'nav.finans', gelismis: true },
+  { path: '/muhasebe', labelKey: 'nav.muhasebe', icon: 'pi pi-book', permission: 'FINANS_READ', grupKey: 'nav.finans', gelismis: true },
+  { path: '/cari-hesaplar', labelKey: 'nav.cari', icon: 'pi pi-users', permission: 'CARI_READ', grupKey: 'nav.finans' },
+  { path: '/faturalar', labelKey: 'nav.faturalar', icon: 'pi pi-file', permission: 'FATURA_READ', grupKey: 'nav.finans' },
+  { path: '/tekrarlayan-faturalar', labelKey: 'nav.tekrarlayanFaturalar', icon: 'pi pi-sync', permission: 'FATURA_READ', grupKey: 'nav.finans' },
+  { path: '/bankalar', labelKey: 'nav.banka', icon: 'pi pi-building', permission: 'FINANS_READ', grupKey: 'nav.finans' },
+  { path: '/kasa', labelKey: 'nav.kasa', icon: 'pi pi-wallet', permission: 'FINANS_READ', grupKey: 'nav.finans' },
+  { path: '/banka-mutabakat', labelKey: 'nav.bankaMutabakat', icon: 'pi pi-link', permission: 'FINANS_READ', grupKey: 'nav.finans', gelismis: true },
+  { path: '/cek-senet', labelKey: 'nav.ceksenet', icon: 'pi pi-money-bill', permission: 'FINANS_READ', grupKey: 'nav.finans', gelismis: true },
+  { path: '/tahsilat', labelKey: 'nav.tahsilat', icon: 'pi pi-dollar', permission: 'FINANS_READ', grupKey: 'nav.finans' },
+  { path: '/taksit-takvimi', labelKey: 'nav.taksitTakvimi', icon: 'pi pi-calendar', permission: 'FINANS_READ', grupKey: 'nav.finans' },
+  { path: '/pos-terminalleri', labelKey: 'nav.posTerminalleri', icon: 'pi pi-credit-card', permission: 'FINANS_READ', grupKey: 'nav.finans', gelismis: true },
   { path: '/butceler', labelKey: 'nav.butce', icon: 'pi pi-chart-bar', grupKey: 'nav.finans', admin: true, gelismis: true },
   { path: '/masraflar', labelKey: 'nav.masraf', icon: 'pi pi-money-bill', grupKey: 'nav.finans', gelismis: true },
-  { path: '/satislar', labelKey: 'nav.satis', icon: 'pi pi-shopping-cart', grupKey: 'nav.ticaret', gelismis: true },
-  { path: '/hizli-satis', labelKey: 'nav.hizliSatis', icon: 'pi pi-bolt', grupKey: 'nav.ticaret' },
+  { path: '/satislar', labelKey: 'nav.satis', icon: 'pi pi-shopping-cart', permission: 'SIPARIS_READ', grupKey: 'nav.ticaret', gelismis: true },
+  { path: '/hizli-satis', labelKey: 'nav.hizliSatis', icon: 'pi pi-bolt', permission: 'SIPARIS_READ', grupKey: 'nav.ticaret' },
   { path: '/saha-portali', labelKey: 'nav.sahaPortali', icon: 'pi pi-compass', grupKey: 'nav.ticaret' },
-  { path: '/teklifler', labelKey: 'nav.teklifler', icon: 'pi pi-file-edit', grupKey: 'nav.ticaret' },
+  { path: '/teklifler', labelKey: 'nav.teklifler', icon: 'pi pi-file-edit', permission: 'SIPARIS_READ', grupKey: 'nav.ticaret' },
   { path: '/crm', labelKey: 'nav.crm', icon: 'pi pi-bullseye', grupKey: 'nav.ticaret', gelismis: true },
   { path: '/crm-merkezi', labelKey: 'nav.crmMerkezi', icon: 'pi pi-users', grupKey: 'nav.ticaret', gelismis: true },
   { path: '/adres-defteri', labelKey: 'nav.adresDefteri', icon: 'pi pi-address-book', grupKey: 'nav.ticaret' },
   { path: '/e-fatura', labelKey: 'nav.eFatura', icon: 'pi pi-file-pdf', grupKey: 'nav.ticaret', gelismis: true },
-  { path: '/satinalma', labelKey: 'nav.satinalma', icon: 'pi pi-shopping-bag', grupKey: 'nav.ticaret', gelismis: true },
-  { path: '/siparisler', labelKey: 'nav.siparis', icon: 'pi pi-receipt', grupKey: 'nav.ticaret', gelismis: true },
-  { path: '/siparis-takip', labelKey: 'nav.siparisTakip', icon: 'pi pi-sitemap', grupKey: 'nav.ticaret' },
+  { path: '/satinalma', labelKey: 'nav.satinalma', icon: 'pi pi-shopping-bag', permission: 'SATINALMA_READ', grupKey: 'nav.ticaret', gelismis: true },
+  { path: '/siparisler', labelKey: 'nav.siparis', icon: 'pi pi-receipt', permission: 'SIPARIS_READ', grupKey: 'nav.ticaret', gelismis: true },
+  { path: '/siparis-takip', labelKey: 'nav.siparisTakip', icon: 'pi pi-sitemap', permission: 'SIPARIS_READ', grupKey: 'nav.ticaret' },
   { path: '/teslimatlar', labelKey: 'nav.teslimatlar', icon: 'pi pi-truck', grupKey: 'nav.ticaret' },
-  { path: '/irsaliyeler', labelKey: 'nav.irsaliye', icon: 'pi pi-truck', grupKey: 'nav.ticaret', gelismis: true },
-  { path: '/fiyat-listesi', labelKey: 'nav.fiyatListesi', icon: 'pi pi-tag', grupKey: 'nav.ticaret', gelismis: true },
-  { path: '/iskonto-kurallari', labelKey: 'nav.iskontoKurallari', icon: 'pi pi-percentage', grupKey: 'nav.ticaret', gelismis: true },
-  { path: '/iadeler', labelKey: 'nav.iade', icon: 'pi pi-replay', grupKey: 'nav.ticaret', gelismis: true },
-  { path: '/stoklar', labelKey: 'nav.stok', icon: 'pi pi-box', grupKey: 'nav.envanter' },
+  { path: '/irsaliyeler', labelKey: 'nav.irsaliye', icon: 'pi pi-truck', permission: 'IRSALIYE_READ', grupKey: 'nav.ticaret', gelismis: true },
+  { path: '/fiyat-listesi', labelKey: 'nav.fiyatListesi', icon: 'pi pi-tag', permission: 'STOK_READ', grupKey: 'nav.ticaret', gelismis: true },
+  { path: '/iskonto-kurallari', labelKey: 'nav.iskontoKurallari', icon: 'pi pi-percentage', permission: 'STOK_READ', grupKey: 'nav.ticaret', gelismis: true },
+  { path: '/iadeler', labelKey: 'nav.iade', icon: 'pi pi-replay', permission: 'SIPARIS_READ', grupKey: 'nav.ticaret', gelismis: true },
+  { path: '/stoklar', labelKey: 'nav.stok', icon: 'pi pi-box', permission: 'STOK_READ', grupKey: 'nav.envanter' },
   { path: '/kritik-stok', labelKey: 'nav.kritikStok', icon: 'pi pi-exclamation-triangle', grupKey: 'nav.envanter', gelismis: true },
   { path: '/toplu-stok', labelKey: 'nav.topluStok', icon: 'pi pi-database', grupKey: 'nav.envanter', gelismis: true },
-  { path: '/depolar', labelKey: 'nav.depo', icon: 'pi pi-warehouse', grupKey: 'nav.envanter', gelismis: true },
-  { path: '/stok-seriler', labelKey: 'nav.serilot', icon: 'pi pi-qrcode', grupKey: 'nav.envanter', gelismis: true },
-  { path: '/stok-sayim', labelKey: 'nav.stokSayim', icon: 'pi pi-sort-alt', grupKey: 'nav.envanter', gelismis: true },
-  { path: '/stok-duzeltmeler', labelKey: 'nav.stokDuzeltmeler', icon: 'pi pi-sliders-h', grupKey: 'nav.envanter', gelismis: true },
+  { path: '/depolar', labelKey: 'nav.depo', icon: 'pi pi-warehouse', permission: 'STOK_READ', grupKey: 'nav.envanter', gelismis: true },
+  { path: '/stok-seriler', labelKey: 'nav.serilot', icon: 'pi pi-qrcode', permission: 'STOK_READ', grupKey: 'nav.envanter', gelismis: true },
+  { path: '/stok-sayim', labelKey: 'nav.stokSayim', icon: 'pi pi-sort-alt', permission: 'STOK_READ', grupKey: 'nav.envanter', gelismis: true },
+  { path: '/stok-duzeltmeler', labelKey: 'nav.stokDuzeltmeler', icon: 'pi pi-sliders-h', permission: 'STOK_READ', grupKey: 'nav.envanter', gelismis: true },
   { path: '/uretim', labelKey: 'nav.uretim', icon: 'pi pi-cog', grupKey: 'nav.envanter' },
-  { path: '/subeler', labelKey: 'nav.sube', icon: 'pi pi-sitemap', grupKey: 'nav.yonetim', gelismis: true },
-  { path: '/personel', labelKey: 'nav.personel', icon: 'pi pi-id-card', grupKey: 'nav.yonetim' },
-  { path: '/puantaj', labelKey: 'nav.puantaj', icon: 'pi pi-clock', grupKey: 'nav.yonetim', gelismis: true },
-  { path: '/izinler', labelKey: 'nav.izin', icon: 'pi pi-calendar', grupKey: 'nav.yonetim', gelismis: true },
+  { path: '/subeler', labelKey: 'nav.sube', icon: 'pi pi-sitemap', permission: 'SISTEM_READ', grupKey: 'nav.yonetim', gelismis: true },
+  { path: '/personel', labelKey: 'nav.personel', icon: 'pi pi-id-card', permission: 'IK_READ', grupKey: 'nav.yonetim' },
+  { path: '/puantaj', labelKey: 'nav.puantaj', icon: 'pi pi-clock', permission: 'IK_READ', grupKey: 'nav.yonetim', gelismis: true },
+  { path: '/izinler', labelKey: 'nav.izin', icon: 'pi pi-calendar', permission: 'IK_READ', grupKey: 'nav.yonetim', gelismis: true },
   { path: '/projeler', labelKey: 'nav.proje', icon: 'pi pi-folder', grupKey: 'nav.yonetim', gelismis: true },
   {
     path: '/maas-bordro',
     labelKey: 'nav.maasBordro',
     icon: 'pi pi-credit-card',
+    permission: 'IK_READ',
     grupKey: 'nav.yonetim',
     admin: true,
     gelismis: true
   },
-  { path: '/vardiyalar', labelKey: 'nav.vardiya', icon: 'pi pi-clock', grupKey: 'nav.yonetim', gelismis: true },
-  { path: '/sirketler', labelKey: 'nav.sirket', icon: 'pi pi-building', grupKey: 'nav.sistem', admin: true, gelismis: true },
+  { path: '/vardiyalar', labelKey: 'nav.vardiya', icon: 'pi pi-clock', permission: 'IK_READ', grupKey: 'nav.yonetim', gelismis: true },
+  { path: '/sirketler', labelKey: 'nav.sirket', icon: 'pi pi-building', permission: 'SISTEM_READ', grupKey: 'nav.sistem', admin: true, gelismis: true },
   { path: '/yeni-yil-sihirbazi', labelKey: 'nav.yeniYil', icon: 'pi pi-sparkles', grupKey: 'nav.sistem', admin: true, gelismis: true },
-  { path: '/donemler', labelKey: 'nav.donem', icon: 'pi pi-calendar', grupKey: 'nav.sistem', gelismis: true },
-  { path: '/kullanicilar', labelKey: 'nav.kullanici', icon: 'pi pi-user', grupKey: 'nav.sistem', admin: true, gelismis: true },
-  { path: '/yetki-yonetimi', labelKey: 'nav.yetkiler', icon: 'pi pi-key', grupKey: 'nav.sistem', admin: true, gelismis: true },
-  { path: '/kategoriler', labelKey: 'nav.kategori', icon: 'pi pi-tags', grupKey: 'nav.sistem', gelismis: true },
+  { path: '/donemler', labelKey: 'nav.donem', icon: 'pi pi-calendar', permission: 'SISTEM_READ', grupKey: 'nav.sistem', gelismis: true },
+  { path: '/kullanicilar', labelKey: 'nav.kullanici', icon: 'pi pi-user', permission: 'SISTEM_READ', grupKey: 'nav.sistem', admin: true, gelismis: true },
+  { path: '/yetki-yonetimi', labelKey: 'nav.yetkiler', icon: 'pi pi-key', permission: 'SISTEM_READ', grupKey: 'nav.sistem', admin: true, gelismis: true },
+  { path: '/kategoriler', labelKey: 'nav.kategori', icon: 'pi pi-tags', permission: 'STOK_READ', grupKey: 'nav.sistem', gelismis: true },
   { path: '/notlar', labelKey: 'nav.notlar', icon: 'pi pi-pen-to-square', grupKey: 'nav.sistem' },
-  { path: '/veri-aktar', labelKey: 'nav.veriAktar', icon: 'pi pi-upload', grupKey: 'nav.sistem', gelismis: true },
+  { path: '/veri-aktar', labelKey: 'nav.veriAktar', icon: 'pi pi-upload', permission: 'SISTEM_READ', grupKey: 'nav.sistem', gelismis: true },
   { path: '/kullanim-sartlari', labelKey: 'nav.kullanimSartlari', icon: 'pi pi-file', grupKey: 'nav.sistem', gelismis: true },
   { path: '/gizlilik-politikasi', labelKey: 'nav.gizlilik', icon: 'pi pi-shield', grupKey: 'nav.sistem', gelismis: true },
   { path: '/hesap-ayarlari', labelKey: 'nav.hesapAyarlari', icon: 'pi pi-cog', grupKey: 'nav.sistem', gelismis: true },
-  { path: '/yedekler', labelKey: 'nav.yedek', icon: 'pi pi-save', grupKey: 'nav.sistem', admin: true, gelismis: true },
+  { path: '/yedekler', labelKey: 'nav.yedek', icon: 'pi pi-save', permission: 'SISTEM_READ', grupKey: 'nav.sistem', admin: true, gelismis: true },
   { path: '/yonetici-kokpiti', labelKey: 'nav.yoneticiKokpiti', icon: 'pi pi-bolt', grupKey: 'nav.rapor', admin: true },
-    { path: '/raporlar', labelKey: 'nav.rapor', icon: 'pi pi-chart-bar', grupKey: 'nav.rapor' },
-    { path: '/raporlar/gorunumler-360', labelKey: 'nav.gorunum360', icon: 'pi pi-compass', grupKey: 'nav.rapor' },
-    { path: '/raporlar/karlilik-analizi', labelKey: 'nav.karlilikAnalizi', icon: 'pi pi-chart-pie', grupKey: 'nav.rapor' },
-    { path: '/raporlar/fatura-gecmis', labelKey: 'nav.faturaGecmisRaporu', icon: 'pi pi-history', grupKey: 'nav.rapor' },
-  { path: '/vergi-raporlari', labelKey: 'nav.vergiRaporlari', icon: 'pi pi-file-edit', grupKey: 'nav.rapor', gelismis: true },
-  { path: '/anomaliler', labelKey: 'nav.anomaliler', icon: 'pi pi-exclamation-triangle', grupKey: 'nav.rapor', gelismis: true },
-  { path: '/hareketler', labelKey: 'nav.hareket', icon: 'pi pi-chart-line', grupKey: 'nav.rapor' },
+    { path: '/raporlar', labelKey: 'nav.rapor', icon: 'pi pi-chart-bar', permission: 'RAPOR_READ', grupKey: 'nav.rapor' },
+    { path: '/raporlar/gorunumler-360', labelKey: 'nav.gorunum360', icon: 'pi pi-compass', permission: 'RAPOR_READ', grupKey: 'nav.rapor' },
+    { path: '/raporlar/karlilik-analizi', labelKey: 'nav.karlilikAnalizi', icon: 'pi pi-chart-pie', permission: 'RAPOR_READ', grupKey: 'nav.rapor' },
+    { path: '/raporlar/fatura-gecmis', labelKey: 'nav.faturaGecmisRaporu', icon: 'pi pi-history', permission: 'RAPOR_READ', grupKey: 'nav.rapor' },
+  { path: '/vergi-raporlari', labelKey: 'nav.vergiRaporlari', icon: 'pi pi-file-edit', permission: 'RAPOR_READ', grupKey: 'nav.rapor', gelismis: true },
+  { path: '/anomaliler', labelKey: 'nav.anomaliler', icon: 'pi pi-exclamation-triangle', permission: 'RAPOR_READ', grupKey: 'nav.rapor', gelismis: true },
+  { path: '/hareketler', labelKey: 'nav.hareket', icon: 'pi pi-chart-line', permission: 'RAPOR_READ', grupKey: 'nav.rapor' },
   { path: '/denetim', labelKey: 'nav.denetim', icon: 'pi pi-shield', grupKey: 'nav.rapor', admin: true, gelismis: true }
 ]
 
 const gorunenMenuler = computed(() => {
   return tumMenuler.filter((m) => {
     if (m.path === '/') return false
-    
+
+    // Modül yetkisi: kullanıcının rolünde ilgili *_READ yetkisi yoksa menü
+    // gösterilmez. (Yetkiler henüz yüklenmediyse hasPermission true döner.)
+    if (m.permission && !authStore.hasPermission(m.permission)) return false
+
     if (authStore.isDriver) {
       const driverErisilebilir = ['/teslimatlar', '/saha-portali', '/sohbet', '/notlar', '/belgeler', '/hesap-ayarlari']
       if (!driverErisilebilir.includes(m.path)) return false
@@ -519,7 +524,11 @@ const gorunenMenuler = computed(() => {
 })
 
 const favoriMenuler = computed(() =>
-  tumMenuler.filter((m) => favoriler.value.includes(m.path) && (!m.admin || authStore?.kullanici?.role === 'ADMIN'))
+  tumMenuler.filter((m) =>
+    favoriler.value.includes(m.path) &&
+    (!m.admin || authStore?.kullanici?.role === 'ADMIN') &&
+    (!m.permission || authStore.hasPermission(m.permission))
+  )
 )
 
 // Menu kalabaligini azaltmak icin grup basliklari katlanabilir (tercih kalici).

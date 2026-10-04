@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.time.YearMonth;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,6 +39,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class RaporService {
+
+    /** Vadesi gelmemiş kova anahtarı. */
+    public static final String KOVA_VADEDI_GELMEMIS = "VADEDI_GELMEMIS";
+    /** Yaşlandırma kovalarının görünüm sırası (daha yeni kova önce). */
+    public static final List<String> YASLANDIRMA_KOVALARI =
+            List.of(KOVA_VADEDI_GELMEMIS, "GUN_0_30", "GUN_31_60", "GUN_61_90", "GUN_90_PLUS");
 
     private final CariHesapRepository cariHesapRepository;
     private final HareketRepository hareketRepository;
@@ -216,38 +223,130 @@ public class RaporService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public List<RaporDTO.YaslandirmaDTO> yaslandirmaRaporu(Long sirketId) {
-        LocalDate bugun = LocalDate.now();
+    /**
+     * Vade yaşlandırma raporu (cari bazında kova matrisi).
+     *
+     * <p>Tutar her bir faturanın kendi vadesine göre hesaplanır: vadesi geçen
+     * fatura gecikme günüyle uygun kovaya girer, vadesi gelmemiş olanlar ilk
+     * kovaya. Böylece satır toplamı, o carinin faturalardan gelen toplam
+     * tahsil edilecek tutarıdır.
+     *
+     * @param referansTarih gecikme günlerinin hesaplanacağı tarih; {@code null} ise bugün
+     */
+    public RaporDTO.YaslandirmaRaporDTO yaslandirmaRaporu(Long sirketId, LocalDate referansTarih) {
+        LocalDate bugun = referansTarih != null ? referansTarih : LocalDate.now();
+        Fatura.FaturaTur tur = Fatura.FaturaTur.SATIS;
+        Fatura.FaturaDurum durum = Fatura.FaturaDurum.KESILDI;
+        List<String> kapaliOdeme = List.of("ODENDI", "IPTAL");
 
-        // Cari bazında en çok geciken faturanın gecikme günü DB'de grup bazında hesaplanır
-        // (tüm fatura listesi belleğe yüklenmez).
-        Map<Long, Integer> cariGecikme = new HashMap<>();
-        for (Object[] row : faturaRepository.cariBazindaMaksGecikme(
-                sirketId, Fatura.FaturaTur.SATIS.name(), Fatura.FaturaDurum.KESILDI.name(),
-                List.of("ODENDI", "IPTAL"), bugun)) {
-            if (row[0] == null || row[1] == null) continue;
-            cariGecikme.put(((Number) row[0]).longValue(), ((Number) row[1]).intValue());
+        // Kovalama Java tarafında yapılır (native CASE ... GROUP BY sorgusu
+        // PostgreSQL'de "must appear in the GROUP BY clause" hatası veriyordu).
+        // Satır: [cariId, vadeTarihi, kalanTutar]
+        Map<Long, Map<String, BigDecimal>> cariKovalar = new HashMap<>();
+        Map<Long, int[]> cariMaksGecikme = new HashMap<>();
+        Map<Long, long[]> cariGecikmeToplam = new HashMap<>();
+        Map<Long, Integer> cariGecikmeAdet = new HashMap<>();
+
+        for (Object[] row : faturaRepository.acikFaturalarVadeIcin(sirketId, tur, durum, kapaliOdeme)) {
+            if (row[0] == null) continue;
+            long cariId = ((Number) row[0]).longValue();
+            LocalDate vade = row[1] instanceof LocalDate ld ? ld : null;
+            BigDecimal kalan = bigDecimalDeger(row[2]);
+            // Vadesi null olan fatura: gecikmeyi kanıtlayacak vade bilgisi yok,
+            // bu yüzden "vadesi gelmemiş" kovasına girer (mutabakat korunur).
+            int gecikmeGun = vade == null ? 0 : (int) ChronoUnit.DAYS.between(vade, bugun);
+            String kova = yaslandirmaKovasi(gecikmeGun);
+
+            cariKovalar.computeIfAbsent(cariId, k -> new LinkedHashMap<>()).merge(kova, kalan, BigDecimal::add);
+
+            cariMaksGecikme.merge(cariId, new int[]{Math.max(gecikmeGun, 0)}, (a, b) -> new int[]{Math.max(a[0], b[0])});
+            if (gecikmeGun > 0) {
+                cariGecikmeToplam.merge(cariId, new long[]{gecikmeGun}, (a, b) -> new long[]{a[0] + b[0]});
+                cariGecikmeAdet.merge(cariId, 1, Integer::sum);
+            }
         }
 
-        return cariHesapRepository.findBySirketIdOrderByAdAsc(sirketId).stream()
-                // Bakiye konvansiyonu: negatif = bize borçlu (alacak), pozitif = biz borçluyuz.
-                // Yaşlandırma tahsil edilecek alacakları gösterir; borçlu cariler seçilir.
-                .filter(c -> c.getBakiye() != null && c.getBakiye().compareTo(BigDecimal.ZERO) < 0)
-                .map(c -> {
-                    int gun = cariGecikme.getOrDefault(c.getId(), 0);
-                    return RaporDTO.YaslandirmaDTO.builder()
-                            .cariAd(c.getAd()).bakiye(c.getBakiye().abs()).gun(gun).aralik(aralik(gun)).build();
-                })
-                .sorted(Comparator.comparingInt(RaporDTO.YaslandirmaDTO::getGun).reversed())
-                .collect(Collectors.toList());
+        // Cari adları tek sorguda; N+1 sorgu yapmamak için liste halinde çekilir.
+        Map<Long, String> cariAdlari = new HashMap<>();
+        for (CariHesap c : cariHesapRepository.findBySirketIdOrderByAdAsc(sirketId)) {
+            if (c.getId() != null) cariAdlari.put(c.getId(), c.getAd());
+        }
+
+        List<RaporDTO.YaslandirmaDTO> satirlar = new ArrayList<>();
+        Map<String, BigDecimal> toplamKovalar = new LinkedHashMap<>();
+        for (String kova : YASLANDIRMA_KOVALARI) toplamKovalar.put(kova, BigDecimal.ZERO);
+
+        for (Map.Entry<Long, Map<String, BigDecimal>> entry : cariKovalar.entrySet()) {
+            Long cariId = entry.getKey();
+            Map<String, BigDecimal> kovalar = new LinkedHashMap<>();
+            for (String kova : YASLANDIRMA_KOVALARI) {
+                BigDecimal tutar = entry.getValue().getOrDefault(kova, BigDecimal.ZERO);
+                kovalar.put(kova, tutar);
+                toplamKovalar.merge(kova, tutar, BigDecimal::add);
+            }
+
+            BigDecimal toplam = kovalar.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal gecikmis = toplam.subtract(kovalar.get(KOVA_VADEDI_GELMEMIS));
+            long adet = cariGecikmeAdet.getOrDefault(cariId, 0);
+            double ortalama = adet > 0
+                    ? yuvarla((double) cariGecikmeToplam.getOrDefault(cariId, new long[]{0L})[0] / adet)
+                    : 0d;
+
+            satirlar.add(RaporDTO.YaslandirmaDTO.builder()
+                    .cariHesapId(cariId)
+                    .cariAd(cariAdlari.getOrDefault(cariId, "-"))
+                    .kovalar(kovalar)
+                    .toplam(toplam)
+                    .enFazlaGecikmeGun(cariMaksGecikme.getOrDefault(cariId, new int[]{0})[0])
+                    .ortalamaGecikmeGun(ortalama)
+                    .gecikmisTutar(gecikmis)
+                    .build());
+        }
+
+        // En çok geciken cari en üstte; aynı gecikmede tutar büyüğü önce.
+        satirlar.sort(Comparator.comparingInt(RaporDTO.YaslandirmaDTO::getEnFazlaGecikmeGun)
+                .thenComparing(RaporDTO.YaslandirmaDTO::getToplam, Comparator.reverseOrder())
+                .reversed());
+
+        BigDecimal toplamGenel = toplamKovalar.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        RaporDTO.YaslandirmaOzetDTO ozet = RaporDTO.YaslandirmaOzetDTO.builder()
+                .kovalar(toplamKovalar)
+                .toplam(toplamGenel)
+                .gecikmisTutar(toplamGenel.subtract(toplamKovalar.get(KOVA_VADEDI_GELMEMIS)))
+                .cariSayisi(satirlar.size())
+                .kovaSirasi(List.copyOf(YASLANDIRMA_KOVALARI))
+                .build();
+
+        return RaporDTO.YaslandirmaRaporDTO.builder()
+                .satirlar(satirlar)
+                .ozet(ozet)
+                .referansTarih(bugun)
+                .build();
     }
 
-    private String aralik(int gun) {
-        if (gun <= 0) return "Vadesi Gelmemiş";
-        if (gun <= 30) return "0-30 Gün";
-        if (gun <= 60) return "31-60 Gün";
-        if (gun <= 90) return "61-90 Gün";
-        return "90+ Gün";
+    private static double yuvarla(double d) {
+        return Math.round(d * 100d) / 100d;
+    }
+
+    /** Gecikme gününe göre yaşlandırma kovası. */
+    static String yaslandirmaKovasi(int gecikmeGun) {
+        if (gecikmeGun <= 0) return KOVA_VADEDI_GELMEMIS;
+        if (gecikmeGun <= 30) return "GUN_0_30";
+        if (gecikmeGun <= 60) return "GUN_31_60";
+        if (gecikmeGun <= 90) return "GUN_61_90";
+        return "GUN_90_PLUS";
+    }
+
+    /**
+     * Native sorgu {@code SUM(...)} sonucunu sürüme göre {@link BigDecimal} ya da
+     * {@link Double} döndürebiliyor; her iki durumda da BigDecimal'e çevirir.
+     */
+    private static BigDecimal bigDecimalDeger(Object deger) {
+        if (deger == null) return BigDecimal.ZERO;
+        if (deger instanceof BigDecimal bd) return bd;
+        if (deger instanceof Integer i) return BigDecimal.valueOf(i);
+        if (deger instanceof Long l) return BigDecimal.valueOf(l);
+        return new BigDecimal(String.valueOf(deger));
     }
 
     /** Belirtilen ay (YYYY-MM) için KDV beyannameye hazırlık listesi üretir. */
@@ -341,6 +440,40 @@ public class RaporService {
         String iadeTur = faturaTur == Fatura.FaturaTur.ALIS ? "ALIS" : "SATIS";
         List<com.raspel.erp.entity.ticaret.Iade> iadeler = iadeRepository
                 .findBySirketIdAndTurAndDurumAndTarihBetween(sirketId, iadeTur, "TAMAMLANDI", bas, bit);
+
+        // N+1 onlemi: iade kalemleri ve iade bagli faturalarin cari bilgileri
+        // tek sorguda toplu cozulur. Kalemler ve cariler iade basina ayri
+        // findByIadeId/findById ile cekilirse sorgu sayisi iade sayisiyla artar.
+        List<Long> iadeIdleri = iadeler.stream().map(com.raspel.erp.entity.ticaret.Iade::getId)
+                .filter(java.util.Objects::nonNull).distinct().collect(Collectors.toList());
+        Map<Long, List<com.raspel.erp.entity.ticaret.IadeKalem>> iadeKalemHaritasi = iadeIdleri.isEmpty()
+                ? Map.of()
+                : iadeKalemRepository.findByIadeIdIn(iadeIdleri).stream()
+                        .collect(Collectors.groupingBy(com.raspel.erp.entity.ticaret.IadeKalem::getIadeId));
+
+        List<Long> iadeFaturaIdleri = iadeler.stream().map(com.raspel.erp.entity.ticaret.Iade::getFaturaId)
+                .filter(java.util.Objects::nonNull).distinct().collect(Collectors.toList());
+        Map<Long, Fatura> iadeFaturalari = iadeFaturaIdleri.isEmpty()
+                ? Map.of()
+                : faturaRepository.findAllById(iadeFaturaIdleri).stream()
+                        .collect(Collectors.toMap(Fatura::getId, f -> f, (a, b) -> a));
+        Set<Long> iadeCariIdleri = iadeFaturalari.values().stream()
+                .map(Fatura::getCariHesap).filter(java.util.Objects::nonNull)
+                .map(CariHesap::getId).filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, CariHesap> iadeCariler = iadeCariIdleri.isEmpty()
+                ? Map.of()
+                : cariHesapRepository.findAllById(iadeCariIdleri).stream()
+                        .collect(Collectors.toMap(CariHesap::getId, c -> c, (a, b) -> a));
+        Map<Long, IadeCari> iadeCarileri = new java.util.HashMap<>();
+        for (Fatura f : iadeFaturalari.values()) {
+            if (f.getCariHesap() == null) continue;
+            CariHesap c = iadeCariler.get(f.getCariHesap().getId());
+            if (c != null) {
+                iadeCarileri.put(f.getId(), new IadeCari(c.getAd(), c.getVergiNumarasi()));
+            }
+        }
+
         for (com.raspel.erp.entity.ticaret.Iade iade : iadeler) {
             BigDecimal tutar = iade.getTutar() != null ? iade.getTutar() : BigDecimal.ZERO;
             if (tutar.abs().compareTo(limit) <= 0) continue;
@@ -348,20 +481,17 @@ public class RaporService {
             String cariVkn = null;
             BigDecimal matrahToplam = BigDecimal.ZERO;
             BigDecimal kdvToplam = BigDecimal.ZERO;
-            List<com.raspel.erp.entity.ticaret.IadeKalem> kalemler = iadeKalemRepository.findByIadeId(iade.getId());
-            for (com.raspel.erp.entity.ticaret.IadeKalem k : kalemler) {
+            for (com.raspel.erp.entity.ticaret.IadeKalem k : iadeKalemHaritasi.getOrDefault(iade.getId(), List.of())) {
                 BigDecimal oran = k.getKdvOrani() != null ? k.getKdvOrani() : BigDecimal.ZERO;
                 com.raspel.erp.util.FaturaTutar.Satir satir = com.raspel.erp.util.FaturaTutar
                         .satir(k.getBirimFiyat(), k.getMiktar(), BigDecimal.ZERO, oran);
                 matrahToplam = matrahToplam.add(satir.net());
                 kdvToplam = kdvToplam.add(satir.kdv());
             }
-            if (iade.getFaturaId() != null) {
-                Fatura f = faturaRepository.findById(iade.getFaturaId()).orElse(null);
-                if (f != null && f.getCariHesap() != null) {
-                    cariAd = f.getCariHesap().getAd();
-                    cariVkn = f.getCariHesap().getVergiNumarasi();
-                }
+            IadeCari iadeCari = iadeCarileri.get(iade.getFaturaId());
+            if (iadeCari != null) {
+                cariAd = iadeCari.ad();
+                cariVkn = iadeCari.vkn();
             }
             kayitlar.add(RaporDTO.BaBsSatiriDTO.builder()
                     .faturaNo("İADE #" + iade.getId()).tarih(iade.getTarih())
@@ -376,6 +506,9 @@ public class RaporService {
                 .donem(donem).tur(faturaTur == Fatura.FaturaTur.ALIS ? "BA" : "BS")
                 .esik(limit).kayitlar(kayitlar).toplamTutar(toplam).build();
     }
+
+    /** İade satırının cari ad/vergi numarası (iade bağlı faturadan türetilir). */
+    private record IadeCari(String ad, String vkn) {}
 
     /** Dönem (YYYY-MM) değerini çözer; geçersizse anlamlı bir iş kuralı hatası fırlatır. */
     private YearMonth donemAyCoz(String donem) {
@@ -856,9 +989,14 @@ public class RaporService {
         for (var k : kayitlar) {
             BigDecimal satis = k.getToplamSatis() != null ? k.getToplamSatis() : BigDecimal.ZERO;
             long adet = k.getFaturaSayisi() != null ? k.getFaturaSayisi() : 0;
+            // Temsilci atanmamış cariler ayrı satır olarak işaretlenir. Adı null
+            // bırakılır ki frontend kendi i18n etiketini ("Atanmamış") kullansın;
+            // burada Türkçe sabit dönmek EN kullanıcısına sızıyordu.
+            boolean atanmamis = k.getTemsilciId() == null;
             satirlar.add(com.raspel.erp.dto.sistem.StokAnalizDTO.TemsilciSatiri.builder()
                     .temsilciId(k.getTemsilciId())
-                    .temsilciAd(k.getTemsilciAd() != null ? k.getTemsilciAd() : "Atanmamış")
+                    .temsilciAd(atanmamis ? null : k.getTemsilciAd())
+                    .atanmamisMi(atanmamis)
                     .faturaSayisi(adet)
                     .toplamSatis(satis)
                     .ortalamaFatura(adet > 0 ? satis.divide(BigDecimal.valueOf(adet), 2, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO)

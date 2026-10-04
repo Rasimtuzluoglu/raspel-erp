@@ -1,5 +1,12 @@
 describe('Role Guard (USER)', () => {
   beforeEach(() => {
+    // Genel yakalayici EN BASA tanimlanir: Cypress aynı istege birden fazla
+    // intercept uygulandığında EN SON tanımlananı seçer. Bu spec'te catch-all
+    // sonda kalsaydı `/api/kullanicilar/ben` mock'unu gölgeler, `kullanici`
+    // dizi olur ve `hasPermission` her koşulda false dönerdi; yani testin
+    // varlık sebebi olan yetki reddi kontrolü anlamsızlaşırdı.
+    cy.intercept('GET', '/api/**', { statusCode: 200, body: [] }).as('catchAll')
+
     cy.intercept('POST', '/api/kullanicilar/giris', {
       statusCode: 200,
       body: {
@@ -29,7 +36,6 @@ describe('Role Guard (USER)', () => {
       statusCode: 200,
       body: { toplamCariSayisi: 0, toplamBakiye: 0, toplamFatura: 0, toplamStok: 0, aylikGelirGider: [], sonHareketler: [], enCokSatanlar: [] }
     }).as('dashboard')
-    cy.intercept('GET', '/api/**', { statusCode: 200, body: [] }).as('catchAll')
 
     cy.visit('/giris')
     cy.get('input[placeholder="Kullanıcı Adı"]').type('user')

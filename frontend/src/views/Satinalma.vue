@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="satinalma-sayfasi">
     <div class="sayfa-baslik">
       <h1 class="page-title">
@@ -262,6 +262,7 @@
               filter
               :placeholder="t('satinalma.stokSecin')"
               class="w-full"
+              @filter="stokAra"
               @change="stokSecildi(talepForm, data)"
             />
           </template>
@@ -403,6 +404,7 @@
               filter
               :placeholder="t('satinalma.stokSecin')"
               class="w-full"
+              @filter="stokAra"
               @change="stokSecildi(siparisForm, data)"
             />
           </template>
@@ -482,7 +484,8 @@ import { ref, computed, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
-import { satinalmaTalepAPI, satinalmaSiparisAPI, cariHesapAPI, stokAPI } from '../api/index.js'
+import { satinalmaTalepAPI, satinalmaSiparisAPI, cariHesapAPI } from '../api/index.js'
+import { useStokOnerileri } from '../composables/useStokOnerileri.js'
 import { formatCurrency, getLocalDateString } from '../utils/format.js'
 import { kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
 import { useI18n } from 'vue-i18n'
@@ -493,7 +496,6 @@ const { t } = useI18n()
 const talepler = ref([])
 const siparisler = ref([])
 const cariler = ref([])
-const stoklar = ref([])
 const taleplerYukleniyor = ref(false)
 const siparislerYukleniyor = ref(false)
 const kaydediliyor = ref(false)
@@ -503,6 +505,11 @@ const bosTalepForm = () => ({ talepNo: 'TAL-' + Date.now(), tarih: new Date(), t
 const bosSiparisForm = () => ({ siparisNo: 'SIP-' + Date.now(), tarih: new Date(), cariHesapId: null, talepId: null, aciklama: '', kalemler: [] })
 const talepForm = ref(bosTalepForm())
 const siparisForm = ref(bosSiparisForm())
+
+// Talep ve sipariş kalemlerindeki stok dropdown'ları sunucu aramalı. Önceden
+// `stokAPI.getAll({ size: 1000 })` ile 1000 kayıt çekiliyordu; 1000. stoktan
+// sonrası satın alma kalemine eklenemiyordu.
+const { oneriler: stoklar, ara: stokAra, hemenAra: stokOnerileriYukle } = useStokOnerileri()
 
 const stokSecenekleri = computed(() => stoklar.value.map((s) => ({ label: s.ad, value: s.id })))
 
@@ -530,12 +537,8 @@ onMounted(async () => {
 })
 
 const stoklariYukle = async () => {
-  try {
-    const r = await stokAPI.getAll({ size: 1000 })
-    stoklar.value = unwrapList(r)
-  } catch {
-    stoklar.value = []
-  }
+  // Dropdown ilk açılışta boş görünmesin diye ilk sayfa bir kez çekilir.
+  await stokOnerileriYukle()
 }
 
 const talepleriYukle = async () => {

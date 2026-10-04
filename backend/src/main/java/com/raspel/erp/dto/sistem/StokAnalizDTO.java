@@ -67,6 +67,12 @@ public class StokAnalizDTO {
         private long faturaSayisi;
         private BigDecimal toplamSatis;
         private BigDecimal ortalamaFatura;
+        /**
+         * Cari kartında temsilci atanmamış satışlar. {@code temsilciAd} bu durumda
+         * null gelir; frontend yerelleştirilmiş etiket gösterir (backend'den
+         * Türkçe sabit metin döndürmek i18n kaçağıydı).
+         */
+        private boolean atanmamisMi;
     }
 
     @Data

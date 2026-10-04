@@ -44,6 +44,7 @@ public class TeklifController {
 
     @PostMapping
     @Operation(summary = "Yeni teklif oluştur")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SIPARIS_WRITE')")
     public ResponseEntity<TeklifDTO> olustur(@jakarta.validation.Valid @RequestBody TeklifDTO dto, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         TeklifDTO olusan = com.raspel.erp.support.MukerrerKayitRetry.calistir(
@@ -54,12 +55,14 @@ public class TeklifController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Teklif güncelle")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SIPARIS_WRITE')")
     public ResponseEntity<TeklifDTO> guncelle(@PathVariable Long id, @jakarta.validation.Valid @RequestBody TeklifDTO dto) {
         return ResponseEntity.ok(teklifService.guncelle(id, dto));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Teklif sil")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SIPARIS_DELETE')")
     public ResponseEntity<Void> sil(@PathVariable Long id) {
         teklifService.sil(id);
         return ResponseEntity.noContent().build();
@@ -67,6 +70,7 @@ public class TeklifController {
 
     @PatchMapping("/{id}/durum")
     @Operation(summary = "Teklif durumu güncelle")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SIPARIS_WRITE')")
     public ResponseEntity<TeklifDTO> durumGuncelle(@PathVariable Long id, @RequestBody Map<String, String> body) {
         String durum = body.get("durum");
         return ResponseEntity.ok(teklifService.durumGuncelle(id, durum));
@@ -74,18 +78,21 @@ public class TeklifController {
 
     @PostMapping("/{id}/revizyon")
     @Operation(summary = "Tekliften yeni revizyon oluştur")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SIPARIS_WRITE')")
     public ResponseEntity<TeklifDTO> revizyonOlustur(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.CREATED).body(teklifService.revizyonOlustur(id));
     }
 
     @PostMapping("/{id}/siparise-donustur")
     @Operation(summary = "Teklifi siparişe dönüştür")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SIPARIS_WRITE')")
     public ResponseEntity<SiparisDTO> sipariseDonustur(@PathVariable Long id) {
         return ResponseEntity.ok(teklifService.sipariseDonustur(id));
     }
 
     @PostMapping("/{id}/faturaya-donustur")
     @Operation(summary = "Teklifi faturaya dönüştür")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FATURA_WRITE')")
     public ResponseEntity<FaturaDTO> faturayaDonustur(@PathVariable Long id, HttpServletRequest request) {
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         return ResponseEntity.ok(teklifService.faturayaDonustur(id, kullaniciId));

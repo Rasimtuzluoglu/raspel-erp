@@ -53,6 +53,7 @@ public class UretimService {
     private final com.raspel.erp.service.sube.DepoStokService depoStokService;
     private final com.raspel.erp.service.envanter.StokSeriService stokSeriService;
     private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
+    private final com.raspel.erp.config.TenantChecker tenantChecker;
 
     private static final BigDecimal YUZ = BigDecimal.valueOf(100);
 
@@ -111,10 +112,21 @@ public class UretimService {
         if (kalemler == null) return;
         for (ReceteKalemDTO k : kalemler) {
             if (k.getHammaddeId() == null) continue;
+            // REDTEAM C4: negatif miktar/fire oranı kaydedilirse üretim
+            // tamamlandığında "gereken hammadde" negatif olur, yetersizlik
+            // kontrolü atlanır ve stok ARTAR. Kayıt anında reddet.
+            if (k.getMiktar() == null || k.getMiktar().signum() <= 0) {
+                throw new com.raspel.erp.exception.BusinessException(
+                        "Reçete kalemi miktarı pozitif olmalıdır. Hammadde: " + k.getHammaddeId());
+            }
+            if (k.getFireOrani() != null && k.getFireOrani().signum() < 0) {
+                throw new com.raspel.erp.exception.BusinessException(
+                        "Reçete kalemi fire oranı negatif olamaz. Hammadde: " + k.getHammaddeId());
+            }
             receteKalemRepository.save(ReceteKalem.builder()
                     .receteId(receteId)
                     .hammaddeId(k.getHammaddeId())
-                    .miktar(k.getMiktar() != null ? k.getMiktar() : BigDecimal.ZERO)
+                    .miktar(k.getMiktar())
                     .birim(k.getBirim())
                     .fireOrani(k.getFireOrani() != null ? k.getFireOrani() : BigDecimal.ZERO)
                     .build());
@@ -199,7 +211,16 @@ public class UretimService {
 
     @Transactional
     public UretimEmriDTO emirTamamla(Long id, Long sirketId, UretimTamamlaIstek istek, Long kullaniciId) {
-        UretimEmri e = emirGetir(id, sirketId);
+        // Satırı kilitle: durum kontrolü ve hammadde tüketimi/mamul üretimi tek
+        // atomik işlem olmalı. Kilit olmadan iki eşzamanlı istek "TAMAMLANDI"
+        // kontrolünü ikisi de geçip hammaddeyi iki kez tüketiyor, mamulü iki kez
+        // üretiyor ve stok/maliyet şişmesine yol açıyordu.
+        UretimEmri e = uretimEmriRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new ResourceNotFoundException("UretimEmri", id));
+        tenantChecker.check(e.getSirketId(), "Uretim Emri");
+        if (!e.getSirketId().equals(sirketId)) {
+            throw new ResourceNotFoundException("UretimEmri", id);
+        }
         if (UretimEmri.Durum.TAMAMLANDI.name().equals(e.getDurum())
                 || UretimEmri.Durum.IPTAL.name().equals(e.getDurum())) {
             throw new BusinessException("Bu üretim emri tamamlanamaz (durum: " + e.getDurum() + ")");
@@ -225,13 +246,26 @@ public class UretimService {
 
         BigDecimal hammaddeMaliyet = BigDecimal.ZERO;
         for (ReceteKalem k : kalemler) {
+            // REDTEAM C4: Bu satır SAVUNMA DERİNLİĞİ. Reçete kaydı eski/elle
+            // bozulmuş olabilir; negatif miktar yine de stok ARTIRAMAZ.
+            if (k.getMiktar() == null || k.getMiktar().signum() <= 0) {
+                throw new BusinessException("Reçete kalemi miktarı pozitif olmalıdır (hammadde: "
+                        + k.getHammaddeId() + ").");
+            }
             BigDecimal kalemFire = k.getFireOrani() != null ? k.getFireOrani() : BigDecimal.ZERO;
-            BigDecimal gereken = (k.getMiktar() != null ? k.getMiktar() : BigDecimal.ZERO)
+            if (kalemFire.signum() < 0) {
+                throw new BusinessException("Reçete kalemi fire oranı negatif olamaz (hammadde: "
+                        + k.getHammaddeId() + ").");
+            }
+            BigDecimal gereken = k.getMiktar()
                     .multiply(toplamTuketim)
                     .multiply(BigDecimal.ONE.add(kalemFire.divide(YUZ, 6, RoundingMode.HALF_UP)))
                     .setScale(2, RoundingMode.HALF_UP);
             Stok hammadde = stokRepository.findByIdForUpdate(k.getHammaddeId())
                     .orElseThrow(() -> new ResourceNotFoundException("Hammadde", k.getHammaddeId()));
+            // REDTEAM C4: stok düşümünden ÖNCE tenant kontrolü. Aksi halde
+            // başka şirketin hammadde stoğu azaltılabilirdi.
+            tenantChecker.check(hammadde.getSirketId(), "Stok");
             BigDecimal mevcut = hammadde.getMiktar() != null ? hammadde.getMiktar() : BigDecimal.ZERO;
             if (mevcut.compareTo(gereken) < 0) {
                 throw new BusinessException("Yetersiz hammadde stoğu: " + hammadde.getAd()

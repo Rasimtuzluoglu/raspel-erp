@@ -117,4 +117,48 @@ class SohbetOdaServiceTest {
 
         assertEquals("/api/uploads/sohbet/a.png", url);
     }
+
+    /**
+     * C7: sohbet eki artık düz `sohbet/` klasörüne değil `sohbet/s{sirketId}`
+     * altına yazılır. Düz klasördeki bir dosyanın URL'i UUID'sini bilen herhangi
+     * bir kullanıcı tarafından diğer şirket için de okunabiliyordu.
+     */
+    @Test
+    void dosyaYukle_tenantKlasoruKullanir() throws Exception {
+        when(odaRepository.findById(1L)).thenReturn(Optional.of(SohbetOda.builder().id(1L).sirketId(4L).build()));
+        when(uyeRepository.existsByOdaIdAndKullaniciId(1L, 99L)).thenReturn(true);
+        when(dosyaDepolama.kaydetResimDogrulamali(anyString(), any())).thenReturn("a.png");
+
+        MockMultipartFile file = new MockMultipartFile("file", "a.png", "image/png", new byte[]{1});
+        odaService.dosyaYukle(1L, file, 4L, 99L);
+
+        verify(dosyaDepolama).kaydetResimDogrulamali(eq("sohbet/s4"), any());
+    }
+
+    /** C7: iki farklı şirket aynı adı taşısa bile ayrı klasörlere yazılır. */
+    @Test
+    void dosyaYukle_farkliSirketlerAyrıKlasoreYazar() throws Exception {
+        when(odaRepository.findById(1L)).thenReturn(Optional.of(SohbetOda.builder().id(1L).sirketId(1L).build()));
+        when(odaRepository.findById(2L)).thenReturn(Optional.of(SohbetOda.builder().id(2L).sirketId(2L).build()));
+        when(uyeRepository.existsByOdaIdAndKullaniciId(anyLong(), anyLong())).thenReturn(true);
+        when(dosyaDepolama.kaydetResimDogrulamali(anyString(), any())).thenReturn("a.png");
+
+        MockMultipartFile file = new MockMultipartFile("file", "a.png", "image/png", new byte[]{1});
+        odaService.dosyaYukle(1L, file, 1L, 99L);
+        odaService.dosyaYukle(2L, file, 2L, 99L);
+
+        verify(dosyaDepolama).kaydetResimDogrulamali(eq("sohbet/s1"), any());
+        verify(dosyaDepolama).kaydetResimDogrulamali(eq("sohbet/s2"), any());
+    }
+
+    /** C7: sohbet dışı dosya türleri (svg/html/exe) reddedilir. */
+    @Test
+    void dosyaYukle_tehlikeliUzantiReddedilir() throws Exception {
+        when(odaRepository.findById(1L)).thenReturn(Optional.of(SohbetOda.builder().id(1L).sirketId(1L).build()));
+        when(uyeRepository.existsByOdaIdAndKullaniciId(1L, 99L)).thenReturn(true);
+
+        MockMultipartFile svg = new MockMultipartFile("file", "x.svg", "image/svg+xml", "<svg/>".getBytes());
+        assertThrows(BusinessException.class, () -> odaService.dosyaYukle(1L, svg, 1L, 99L));
+        verify(dosyaDepolama, never()).kaydet(anyString(), any());
+    }
 }

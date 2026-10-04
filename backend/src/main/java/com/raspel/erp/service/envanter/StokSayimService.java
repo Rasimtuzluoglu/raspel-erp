@@ -145,7 +145,7 @@ public class StokSayimService {
                         .build());
                 depoStokService.guncelle(depoId, stok.getId(), uygulananFark);
                 kritikStokBildirimiGonder(stok);
-                cacheYardimci.temizle("stoklar", "dashboard");
+                cacheYardimci.commitSonrasiTemizle("stoklar", "dashboard");
             }
         } else if ("TAMAMLANDI".equals(eskiDurum) && !"TAMAMLANDI".equals(yeniDurum) && sayim.getStok() != null) {
             // Tamamlanmis sayimdan geri donus (IPTAL/TASLAK): uygulanan fark tersine cevrilir.
@@ -174,7 +174,7 @@ public class StokSayimService {
                         .build());
                 depoStokService.guncelle(depoId, stok.getId(), uygulananFark.negate());
                 kritikStokBildirimiGonder(stok);
-                cacheYardimci.temizle("stoklar", "dashboard");
+                cacheYardimci.commitSonrasiTemizle("stoklar", "dashboard");
             }
             // Ters kayit uygulandi; tekrar uygulanmamasi icin fark sifirlanir.
             sayim.setFark(BigDecimal.ZERO);

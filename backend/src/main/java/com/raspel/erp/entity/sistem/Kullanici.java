@@ -66,6 +66,15 @@ public class Kullanici {
     @JsonIgnore
     private String twoFactorSecret;
 
+    /**
+     * TOTP replay koruması: en son başarıyla doğrulanan zaman adımı
+     * (RFC 6238 counter). Doğrulama penceresi ±30 sn olduğu için aynı kod üç kez
+     * kabul edilebiliyordu; bu alan aynı adımın tekrar kullanılmasını engeller.
+     * -1: henüz kod kullanılmadı.
+     */
+    @Column(name = "two_factor_last_counter")
+    private Long twoFactorLastCounter = -1L;
+
     @Column(name = "token_version", nullable = false)
     @Builder.Default
     private Long tokenVersion = 0L;

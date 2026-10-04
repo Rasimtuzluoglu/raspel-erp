@@ -19,6 +19,7 @@ import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -126,7 +127,7 @@ public class SiparisService {
                     "Yeni Sipariş: " + siparisNo,
                     "Tutar: " + bildirimTutar + " ₺"));
         }
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
         return entityToDTO(s);
     }
 
@@ -167,7 +168,7 @@ public class SiparisService {
                         .kdvOrani(k.getKdvOrani()).tutar(k.getTutar()).build());
             }
         }
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
         return entityToDTO(s);
     }
 
@@ -291,7 +292,7 @@ public class SiparisService {
                         com.raspel.erp.support.AfterCommitExecutor.calistir(() -> emailService.siparisBildirimiGonder(eposta, siparisNo, durum));
                     });
         }
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
         return sonuc;
     }
 
@@ -312,7 +313,7 @@ public class SiparisService {
         }
         kalemRepository.deleteBySiparisId(id);
         siparisRepository.deleteById(id);
-        cacheYardimci.temizle("dashboard");
+        cacheYardimci.commitSonrasiTemizle("dashboard");
     }
 
     /**
@@ -428,9 +429,16 @@ public class SiparisService {
             }
             try {
                 teslimatService.siparisTeslimatiUpsert(s.getId(), driverId, sirketId, musteriAdi, adres);
-            } catch (Exception e) {
-                log.warn("Sipariş teslimatı oluşturulamadı ({}): {}", s.getSiparisNo(), e.getMessage());
+            } catch (DataIntegrityViolationException e) {
+                // Eszamanli ikinci istek ayni siparis icin teslimat kaydi acmaya calisirsa
+                // unique kisit ihtilafi olusur; bu bir hata degil, atama zaten kayitlidir.
+                log.warn("Sipariş teslimat kaydı eşzamanlı istek nedeniyle zaten mevcut ({}): {}",
+                        s.getSiparisNo(), e.getMessage());
             }
+            // Beklenmeyen hatalar (NPE, baglanti kopmasi vb.) YUTULMAZ: ayni
+            // @Transactional icinde olduklari icin veritabani hatasi zaten
+            // rollback-only isaretlemistir; yutulsaydi commit aninda
+            // UnexpectedRollbackException ile daha anlasilmaz bir hata ortaya cikardi.
             String bildirimSiparisNo = s.getSiparisNo();
             String bildirimSoforAd = driverAd != null ? driverAd : "";
             Long bildirimSirketId = sirketId;

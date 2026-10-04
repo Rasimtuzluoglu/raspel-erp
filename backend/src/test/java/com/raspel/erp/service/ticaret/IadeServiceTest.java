@@ -12,6 +12,7 @@ import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
 import com.raspel.erp.repository.ticaret.IadeKalemRepository;
 import com.raspel.erp.repository.ticaret.IadeRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -386,5 +387,103 @@ class IadeServiceTest {
 
         assertThrows(com.raspel.erp.exception.BusinessException.class,
                 () -> iadeService.durumGuncelle(1L, "TAMAMLANDI"));
+    }
+
+    // ------------------------------------------------------------------
+    // REDTEAM C6 regresyonu: iade durum makinesi
+    //
+    // CANLI KANIT: durumGuncelle'de gecis kurallari YOKTU. Zincir
+    //   TASLAK -> TAMAMLANDI (stok girisi) -> TASLAK (HTTP 200!) -> TAMAMLANDI (HTTP 200!)
+    // 5 adetlik tek iade icin IKI adet stok_hareket GIRIS kaydi olustu
+    // (id 213331, 213332) ve stok 5090 -> 5100 ile iki kez artti.
+    // ------------------------------------------------------------------
+
+    @Test
+    @DisplayName("C6: TAMAMLANDI -> TASLAK geri alinamaz (cift stok girisi vektoru)")
+    void durumGuncelle_tamamlandidanTasligaGecilemez() {
+        Iade i = ornekIade(1L);
+        i.setDurum("TAMAMLANDI");
+        when(iadeRepository.findById(1L)).thenReturn(Optional.of(i));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> iadeService.durumGuncelle(1L, "TASLAK"));
+        verify(iadeRepository, never()).save(any());
+        verify(stokRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("C6: TAMAMLANDI -> TAMAMLANDI tekrari reddedilir (cift stok girisi)")
+    void durumGuncelle_tamamlandiTekrarTamamlandiReddedilir() {
+        Iade i = ornekIade(1L);
+        i.setDurum("TAMAMLANDI");
+        when(iadeRepository.findById(1L)).thenReturn(Optional.of(i));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> iadeService.durumGuncelle(1L, "TAMAMLANDI"));
+        verify(iadeRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("C6: IPTAL terminal durumdur, yeniden TAMAMLANDI yapilamaz")
+    void durumGuncelle_iptaldenTamamlandiyaGecilemez() {
+        Iade i = ornekIade(1L);
+        i.setDurum("IPTAL");
+        when(iadeRepository.findById(1L)).thenReturn(Optional.of(i));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> iadeService.durumGuncelle(1L, "TAMAMLANDI"));
+        verify(iadeRepository, never()).save(any());
+        verify(stokRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("C6: IPTAL -> TASLAK reddedilir")
+    void durumGuncelle_iptaldenTaslagaGecilemez() {
+        Iade i = ornekIade(1L);
+        i.setDurum("IPTAL");
+        when(iadeRepository.findById(1L)).thenReturn(Optional.of(i));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> iadeService.durumGuncelle(1L, "TASLAK"));
+        verify(iadeRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("C6: TASLAK -> TASLAK (etkisiz tekrar) reddedilir")
+    void durumGuncelle_taslakTekrarTaslakReddedilir() {
+        Iade i = ornekIade(1L);
+        i.setDurum("TASLAK");
+        when(iadeRepository.findById(1L)).thenReturn(Optional.of(i));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> iadeService.durumGuncelle(1L, "TASLAK"));
+        verify(iadeRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("C6: IPTAL -> IPTAL (etkisiz tekrar) reddedilir")
+    void durumGuncelle_iptalTekrarIptalReddedilir() {
+        Iade i = ornekIade(1L);
+        i.setDurum("IPTAL");
+        when(iadeRepository.findById(1L)).thenReturn(Optional.of(i));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> iadeService.durumGuncelle(1L, "IPTAL"));
+        verify(iadeRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("C6: TASLAK -> IPTAL gecisi hala serbesttir (mevcut davranis korunur)")
+    void durumGuncelle_taslaktanIptaleGecilebilir() {
+        hazirla();
+        Iade i = ornekIade(1L);
+        i.setDurum("TASLAK");
+        when(iadeRepository.findById(1L)).thenReturn(Optional.of(i));
+        when(iadeKalemRepository.findByIadeId(1L)).thenReturn(List.of());
+        when(iadeRepository.save(any(Iade.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var sonuc = iadeService.durumGuncelle(1L, "IPTAL");
+
+        assertEquals("IPTAL", sonuc.getDurum());
     }
 }

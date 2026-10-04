@@ -186,7 +186,7 @@ class HareketServiceTest {
         fatura.setOdenenTutar(BigDecimal.ZERO);
         fatura.setKalanTutar(BigDecimal.valueOf(10000));
         fatura.setOdemeDurumu("ODENMEDI");
-        when(faturaRepository.findById(5L)).thenReturn(Optional.of(fatura));
+        when(faturaRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(fatura));
         HareketDTO dto = HareketDTO.builder().cariHesapId(1L).tur("TAHSILAT").faturaId(5L)
                 .tutar(BigDecimal.valueOf(4000)).hareketTarihi(LocalDate.now()).build();
         Hareket saved = createHareket(1L);
@@ -212,7 +212,7 @@ class HareketServiceTest {
         fatura.setOdenenTutar(BigDecimal.valueOf(6000));
         fatura.setKalanTutar(BigDecimal.valueOf(4000));
         fatura.setOdemeDurumu("KISMI_ODENDI");
-        when(faturaRepository.findById(5L)).thenReturn(Optional.of(fatura));
+        when(faturaRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(fatura));
         HareketDTO dto = HareketDTO.builder().cariHesapId(1L).tur("TAHSILAT").faturaId(5L)
                 .tutar(BigDecimal.valueOf(4000)).hareketTarihi(LocalDate.now()).build();
         Hareket saved = createHareket(1L);
@@ -233,7 +233,7 @@ class HareketServiceTest {
         Fatura fatura = new Fatura();
         fatura.setId(9L);
         fatura.setSirketId(2L);
-        when(faturaRepository.findById(9L)).thenReturn(Optional.of(fatura));
+        when(faturaRepository.findByIdForUpdate(9L)).thenReturn(Optional.of(fatura));
         doThrow(new com.raspel.erp.exception.ResourceNotFoundException("Fatura bu sirkete ait degil"))
                 .when(tenantChecker).check(2L, "Fatura");
         HareketDTO dto = HareketDTO.builder().cariHesapId(1L).tur("ODEME").faturaId(9L)
@@ -255,7 +255,7 @@ class HareketServiceTest {
         fatura.setOdenenTutar(BigDecimal.valueOf(4000));
         fatura.setKalanTutar(BigDecimal.valueOf(6000));
         fatura.setOdemeDurumu("KISMI_ODENDI");
-        when(faturaRepository.findById(5L)).thenReturn(Optional.of(fatura));
+        when(faturaRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(fatura));
 
         hareketService.hareketSil(1L);
 
