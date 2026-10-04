@@ -79,12 +79,32 @@ app.config.globalProperties.formatDateTime = formatDateTime
 app.use(createPinia())
 app.use(router)
 app.use(PrimeVue, {
-  theme: {
-    preset: Lara,
-    options: { darkModeSelector: false }
-  },
-  locale: pvTr
-})
+    theme: {
+      preset: Lara,
+      options: { darkModeSelector: false }
+    },
+    locale: pvTr,
+    // REDTEAM/Faz2.5: Katman merdiveni acikca tanimlandi.
+    //
+    // Varsayilanlar: overlay=1000, modal=1100. Uygulama ici z-index'ler
+    // bunlarla KESISIYORDU:
+    //   - mobil offline banner 1001 > overlay 1000 -> POS'ta cevrimdisi
+    //     kuyruk banner'i acildiginda urun arama sonuclari GORUNMEZDI
+    //   - mobil sidebar 1000 == overlay 1000 -> DOM sirasina bagliydi,
+    //     yani kazara calisiyordu
+    //   - SatirEylemleri menusu 1200 > modal 1100 -> Dialog maskinin
+    //     USTUNDE, modal disinda gorunuyordu
+    //
+    // Siralama (kucukten buyuge): sticky < sidebar < overlay < menu < modal
+    // < tooltip. Boylece bir menü bir Dialog'un ICINDE acildiginda maskinin
+    // altinda kalir (dogru davranis).
+    zIndex: {
+      overlay: 1200,
+      menu: 1250,
+      modal: 1300,
+      tooltip: 1400
+    }
+  })
 app.use(ToastService)
 app.use(ConfirmationService)
 app.use(i18n)

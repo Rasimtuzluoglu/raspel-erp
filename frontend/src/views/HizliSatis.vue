@@ -150,14 +150,27 @@
               :placeholder="t('hizliSatis.aramaPlaceholder')"
               class="w-full"
               :min-length="2"
-              :delay="250"
+              :delay="0"
               :force-selection="false"
-              :panel-style="{ minWidth: '380px' }"
+              :panel-style="URUN_PANEL_STILI"
               :scroll-height="'320px'"
-              dropdown
               @complete="urunOneriAra"
               @option-select="urunOneriSecildi"
             >
+              <!--
+                REDTEAM/Faz2.2: `dropdown` (ok dugmesi) KALDIRILDI.
+                `dropdown` + `min-length="2"` birlikte kullanildiginda ok
+                ISLEVSIZDI: ok'a tiklaninca PrimeVue `onDropdownClick`
+                `search(event, '', 'dropdown')` cagirir ve `@complete`
+                `query: ''` ile tetiklenir. `urunOneriAra` `q.length < 2`
+                oldugu icin listeyi BOSALTIR; `suggestions` watcher'i
+                `searching=true` iken bos listeyi gorup `!visibleOptions
+                .length && hide()` calistirir. Sonuc: panel acilir, 1 tick
+                sonra kendini kapatir.
+                `minLength=2` ile ok zaten anlamsiz (bos sorguda ne
+                gosterilecek?); kullanicinin yazmaya baslamasi zaten
+                yeterli sinyal.
+              -->
               <template #option="slotProps">
                 <div class="urun-oneri">
                   <span class="urun-oneri-ad">{{ slotProps.option.ad }}</span>
@@ -308,7 +321,18 @@
             <h3>
               <i class="pi pi-box" />
               {{ t('hizliSatis.mevcutUrunler') }}
-              <span class="urun-sayaci">{{ filtrelenmisUrunler ? filtrelenmisUrunler.length : 0 }}</span>
+              <!--
+                REDTEAM/Faz2.4: Sayaç yalnızca YÜKLÜ ve FİLTRELENMİŞ ürün
+                sayısını gösteriyordu (en fazla 50), kullanıcı katalogda 4.000
+                ürün olduğunu sanıp "ürün yok" diye kasaya giriyordu.
+                Filtre aktifken filtrelenmiş sayı, filtre yoksa sunucudan
+                gelen gerçek toplam gösterilir.
+              -->
+              <span class="urun-sayaci">{{
+                aktifFiltreSayisiPos > 0
+                  ? filtrelenmisUrunler.length
+                  : (stokStore.stoklar?.length || 0)
+              }}</span>
             </h3>
             <div class="product-header-sag">
               <span class="siralama-etiket">{{ t('hizliSatis.sirala') }}</span>
@@ -377,6 +401,9 @@
             v-if="filtrelenmisUrunler.length > gorunenUrunler.length"
             class="daha-fazla"
           >
+            <!-- REDTEAM/Faz2.4: `Math.min(60, ...)` etikette her zaman 60
+                 gosteriyordu; gercek kalan daha azsa yalan soyluyordu.
+                 Buton 60'ar artirdigi icin kalani 60 ile sinirla. -->
             <Button
               :label="t('hizliSatis.dahaFazlaGoster', { n: Math.min(60, filtrelenmisUrunler.length - gorunenUrunler.length) })"
               icon="pi pi-angle-down"
@@ -781,6 +808,17 @@ import { useStokStore } from '../stores/stokStore.js'
 import { useMarka } from '../composables/useMarka.js'
 import { useI18n } from 'vue-i18n'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
+
+// REDTEAM/Faz2.2: Oneri panelinin stilini SABIT referansla ver.
+// previously `:panel-style="{ minWidth: '380px' }"` (template literal) her
+// render'da YENI bir obje olusturuyordu. PrimeVue `alignOverlay` overlay'i
+// acilista input genisligine yazar, sonraki parent re-render'inda (yani
+// kullanicinin ilk harfi tikladiginda) Vue `patchStyle` deger farkini
+// gozemedigi icin 380px'e geri yaziyordu -> panel acilir, kullanici ilk
+// harfi yazinca 380px'e "snap" olup zipliyordu.
+// Sabit referans ayni isi her render'da tekrarliyor; bkz. FaturaKalemleri.vue
+// (PANEL_STILI deseni).
+const URUN_PANEL_STILI = Object.freeze({ minWidth: '380px' })
 import PosFisOnizleme from '../components/PosFisOnizleme.vue'
 import PosSatisOzetDialog from '../components/PosSatisOzetDialog.vue'
 import PosBugunkuSatislarDialog from '../components/PosBugunkuSatislarDialog.vue'
@@ -1520,8 +1558,12 @@ const urunOneriAra = (event) => {
     urunOnerileri.value = []
     return
   }
-  // Gecikmeyi biz yönetiyoruz: AutoComplete'un kendi delay'i ile birlikte
-  // çift istek olmasın.
+  // REDTEAM/Faz2.3: Gecikme ASIMDIR ULUSTU BINIYORDU.
+  // PrimeVue `search()` zaten `this.searchTimeout = setTimeout(..., this.delay)`
+  // ile kendi debounce'unu uygular ve `@complete` OLURKEN cagrilir. Yani
+  // :delay="250" varken akis suydu:
+  //     tus -> 250ms (PrimeVue :delay) -> @complete -> 250ms (buradaki) -> HTTP
+  // = ~500ms + RTT. Asagida :delay="0" yapildigi icin TEK gecikme kaldi.
   urunOneriZamanlayici = setTimeout(async () => {
     const seq = ++urunOneriSeq
     try {
@@ -1664,7 +1706,14 @@ onMounted(async () => {
       // POS musteri secici sunucu aramali; 50 kayitlik onbellek yerine ilk
       // sayfa onerileri yukleniyor, sonraki aramalar sunucuya gidiyor.
       musteriOnerileriYukle(),
-      stokStore.getAll(),
+      // REDTEAM/Faz2.4: Parametre verilmediginde backend varsayilan
+      // `@PageableDefault(size = 50)` donuyordu; kart izgara en fazla 50 urun
+      // gosteriyordu. Global `max-page-size=200` oldugu icin en fazla o kadar
+      // istenebilir. 200 > 60 oldugu icin "Daha fazla goster" butonu da artik
+      // GERCEKTEN calisiyor (once `filtrelenmisUrunler.length` (en fazla 50)
+      // `gorunenUrunler.length` (60) ile karsilastirildigi icin kosul HICBIR
+      // zaman dogru olmuyor, buton hic gorunmuyordu).
+      stokStore.getAll({ size: 200 }),
       soforleriYukle(),
       cokSatanlariYukle(),
       kasalariYukle(),
@@ -2346,7 +2395,9 @@ const sonSatisiIptalEt = async () => {
     toastBildirim.basarili(t('hizliSatis.sonSatisIptalEdildi'))
     sonSatis.value = null
     gunlukSatislariYukle()
-    stokStore.getAll()
+    // REDTEAM/Faz2.4: Satis iptal sonrasi stok onbellegi tazelenir; ilk
+    // yuklemede kullanilan sayfa boyutuyla ayni olmali (bkz. L1695).
+    stokStore.getAll({ size: 200 })
     kasalariYukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('hizliSatis.iptalBasarisiz'))
@@ -2730,12 +2781,30 @@ const sepetiTemizle = () => {
   display: block;
   position: relative;
 }
-.pos-arac-cubugu .arama-kutusu .p-inputtext {
+/* REDTEAM/Faz2 (canli E2E ile tespit): `:deep()` EKLENIYORDU.
+   Scoped CSS derlemesi son selector'a `[data-v-hash]` ekler:
+     .pos-arac-cubugu .arama-kutusu .p-inputtext[data-v-hash]
+   PrimeVue bilesenlerinin scope-id davranisi:
+     - <InputText> koku <input> -> scope-id ALIR  -> kural UYGULANIR
+     - <AutoComplete> koku <span class="p-autocomplete">, icindeki
+       <input class="p-inputtext"> ICE ICE oldugu icin scope-id ALMAZ
+       -> kural UYGULANMAZ
+   Sonuc: urun arama kutusunda global `app.css` padding'i (14px) kaliyordu,
+   `pi-search` ikonu ise `left: 0.9rem` (14.4px) + ~15px genislikle 14px'ten
+   baslayan yazinin USTUNE biniyordu. `height: 42px` de kayboluyordu; ayni
+   CSS'teki barkod kutusu (dogrudan InputText) 42px iken arama kutusu ~38px
+   kaliyor, hizasizlik gorunuyordu.
+
+   CANLI KANIT (Cypress redteam-faz2 2.2): padding-left 14px geliyordu
+   (beklenen > 30px).
+
+   Duzeltme: `:deep()` ile scope-id zorunlulugu kaldirilir. */
+.pos-arac-cubugu .arama-kutusu :deep(.p-inputtext) {
   width: 100%;
   height: 42px;
   padding-left: 2.75rem !important;
 }
-.pos-arac-cubugu .barkod-kutu .p-inputtext {
+.pos-arac-cubugu .barkod-kutu :deep(.p-inputtext) {
   padding-right: 2.75rem !important;
 }
 .pos-arac-cubugu .arama-kutusu > i {

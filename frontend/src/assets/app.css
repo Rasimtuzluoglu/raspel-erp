@@ -121,11 +121,17 @@
   --violet-border: rgba(124, 58, 237, 0.4);
   --violet-border-35: rgba(124, 58, 237, 0.35);
 
-  /* Katman sirasi */
+  /* Katman sirasi (REDTEAM/Faz2.5: artik GERCEKTEN kullaniliyor)
+     Siralama: sticky < sidebar < overlay < menu < modal < tooltip
+     Bu degerler main.js icindeki PrimeVue `zIndex` ayarlariyla HIZALI:
+       overlay: 1200, menu: 1250, modal: 1300, tooltip: 1400
+     Degistirirken main.js ile birlikte guncelleyin. */
   --z-sticky: 900;
   --z-sidebar: 1000;
-  --z-menu: 1200;
-  --z-overlay: 1300;
+  --z-overlay: 1200;
+  --z-menu: 1250;
+  --z-modal: 1300;
+  --z-tooltip: 1400;
   --z-toast: 99999;
   --z-undo: 100000;
 }
@@ -329,7 +335,7 @@ img {
   position: absolute;
   left: -9999px;
   top: 0;
-  z-index: 100000;
+  z-index: var(--z-undo);
   background: var(--accent);
   color: var(--white);
   padding: 10px 16px;
@@ -1330,14 +1336,14 @@ img {
 }
 
 .p-toast {
-  z-index: 99999 !important;
+  z-index: var(--z-toast) !important;
 }
 /* Oturum sayaci: sag ustte sabit kapsul (toast'in altinda kalir) */
 .oturum-sayaci-sabit {
   position: fixed;
   top: 12px;
   right: 16px;
-  z-index: 950;
+  z-index: var(--z-sticky);
 }
 @media (max-width: 900px) {
   /* Mobilde oturum sayaci: ust serit ve toast ile cakismamasi icin alt menunun
@@ -1618,7 +1624,7 @@ img {
     flex-wrap: wrap;
     align-items: center;
     padding: 8px 12px;
-    z-index: 1000;
+    z-index: var(--z-sidebar);
     border-right: none;
     border-bottom: 1px solid var(--border);
     overflow: visible;
@@ -1659,7 +1665,7 @@ img {
     justify-content: flex-start;
     padding: 0;
     overflow-y: auto;
-    z-index: 1000;
+    z-index: var(--z-sidebar);
   }
   .sidebar.mobil-acik .sidebar-ust {
     flex: 0 0 auto;

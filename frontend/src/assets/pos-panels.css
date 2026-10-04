@@ -312,28 +312,54 @@
   display: flex;
   flex-wrap: wrap;
 }
-.pos-container .personel-opsiyon {
+/* REDTEAM/Faz2.1: Bu kurallar `.pos-container` ONEKI ILE yaziliyordu ve
+   HICBIR UYGULANMIYORDU.
+
+   Sebep: `.personel-opsiyon`, PrimeVue Dropdown'inin `#option` slotunun
+   icerigidir ve PrimeVue 4 bu overlay'i `<body>`'ye TELEPORT eder. Teleport
+   sonrasi DOM su sekilde olur:
+
+     body > .p-select-overlay > .p-select-list > .p-select-option
+                                                     > .personel-opsiyon
+
+   `.pos-container` bu noktada bir ATASI DEGIL. `.pos-container X` yazimi
+   "X'in .pos-container icinde bir komsusu olmasi" demektir; teleport
+   yuzunden o komsuluk kayboldugu icin 6 kuralin 6'si da olu komusuydu.
+
+   Gorunen sonuc (kullanici "dropdown'lar ic ice giriyor" diyordu):
+     - "Bekleyen teslimat" rozeti ve rol uyarisi saga yaslanmiyor
+       (`margin-left: auto` olus kodugu icin ada yapisik duruyor)
+     - rozet turuncu zeminli pill DEGIL, duz metin
+     - uzun sofor isimleri kirpilmıyor (`text-overflow: ellipsis` olus)
+       -> panel tasar
+     - ikonlar 12px/gri degil, PrimeVue varsayilani (14px)
+
+   Duzeltme: Onek kaldirildi; dosyanin kendi `.musteri-option` (L152) ve
+   `.urun-oneri` (L170) kaliplari da oneksiz tanimli — tutarlilik icin ayni
+   desen kullanildi. Ayni siniflari Faturalar.vue (kendi scoped CSS'i ile)
+   ve SoforAtaDialog.vue oneksiz kullaniyor ve dogru calisiyorlar. */
+.personel-opsiyon {
   display: flex;
   align-items: center;
   gap: 8px;
   width: 100%;
   min-width: 0;
 }
-.pos-container .personel-opsiyon > span:not(.sofor-bekleyen):not(.sofor-rol-uyari) {
+.personel-opsiyon > span:not(.sofor-bekleyen):not(.sofor-rol-uyari) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.pos-container .personel-opsiyon i {
+.personel-opsiyon i {
   font-size: 12px;
   color: var(--text-muted);
 }
-.pos-container .personel-opsiyon .sofor-rol-uyari {
+.personel-opsiyon .sofor-rol-uyari {
   margin-left: auto;
   color: var(--warning);
   font-size: 12px;
 }
-.pos-container .personel-opsiyon .sofor-bekleyen {
+.personel-opsiyon .sofor-bekleyen {
   margin-left: auto;
   min-width: 18px;
   height: 18px;
@@ -347,7 +373,7 @@
   font-size: 11px;
   font-weight: 700;
 }
-.pos-container .personel-opsiyon .sofor-rol-uyari + .sofor-bekleyen {
+.personel-opsiyon .sofor-rol-uyari + .sofor-bekleyen {
   margin-left: 0;
 }
 

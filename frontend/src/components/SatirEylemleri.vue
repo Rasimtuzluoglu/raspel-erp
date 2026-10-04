@@ -196,7 +196,11 @@ onUnmounted(() => {
   display: inline-flex;
 }
 .eylem-menu {
-  z-index: 1200;
+  /* REDTEAM/Faz2.5: 1200 idi. Dialog maski 1100'de oldugu icin bu menu
+   maskinin USTUNDE, modalin disinda gorunup tiklanabiliyordu.
+   Artik menü (1250) < modal (1300): bir Dialog icinde acildiginda maskinin
+   altinda kalir; dropdown/overlay'larin (1200) uzerinde kalmaya devam eder. */
+  z-index: var(--z-menu);
   min-width: 170px;
   max-height: min(320px, 70vh);
   overflow-y: auto;

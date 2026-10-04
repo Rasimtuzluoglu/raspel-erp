@@ -158,13 +158,16 @@
                 class="w-full"
                 :min-length="2"
                 :force-selection="false"
-                :panel-style="{ minWidth: '380px' }"
+                :panel-style="URUN_PANEL_STILI"
                 :scroll-height="'320px'"
-                dropdown
                 autofocus
                 @complete="$emit('urun-degistir-ara', $event)"
                 @option-select="(e) => $emit('urun-degistir-sec', { idx, urun: e.value })"
               >
+                <!-- REDTEAM/Faz2.2: `dropdown` oku kaldirildi; `min-length="2"`
+                     ile birlikte panel acilip aninda kendini kapatiyordu
+                     (bos sorgu -> liste bosalir -> PrimeVue hide()). Detay:
+                     HizliSatis.vue AutoComplete yorumu. -->
                 <template #option="slotProps">
                   <div class="urun-oneri">
                     <span class="urun-oneri-ad">{{ slotProps.option.ad }}</span>
@@ -285,6 +288,10 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatCurrency, formatDate } from '../utils/format.js'
+
+// REDTEAM/Faz2.2: SABIT referans; her render'da yeni obje olusturmak panelin
+// genisliginin ilk tuşta ziplamasına yol açıyordu (bkz. HizliSatis.vue).
+const URUN_PANEL_STILI = Object.freeze({ minWidth: '380px' })
 
 const props = defineProps({
   sepet: { type: Array, required: true },

@@ -415,7 +415,13 @@ watch(
   /* Mobilde ust bar sabit konumda; cevrimdisi banner onun altinda kalsin */
   .offline-banner {
     top: 56px;
-    z-index: 1001;
+    /* REDTEAM/Faz2.5: 1001 idi ve PrimeVue overlay'inin (varsayilan 1000,
+       artik 1200) USTUNDEYDI. POS'ta cevrimdisi satis kuyrugu banner'i
+       acildiginda urun arama sonuclari ve dropdown'lar banner'in ALTINDA
+       kalip gorunmez oluyordu.
+       Sidebar (--z-sidebar: 1000) drawer'i bunun ustunde kalmali; icerik
+       ve sticky basliklar altinda kalmali. */
+    z-index: var(--z-sticky);
   }
 }
 .slide-down-enter-active,
