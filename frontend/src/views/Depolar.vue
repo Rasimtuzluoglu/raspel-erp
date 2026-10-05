@@ -75,8 +75,15 @@
                 class="p-button-rounded p-button-text"
                 @click="dialogAc(data)"
               />
+              <!--
+                  REDTEAM/Faz3.2: Burada `v-permission="'STOK_DELETE'"` vardi,
+                  ama backend `DepoController:63` silmeyi `hasRole('ADMIN')`
+                  ile koruyor. Stok silme yetkisi olan baska bir rol butonu
+                  gorur, 403 alirdi. ADMIN-only oldugu icin
+                  `v-if="authStore.isAdmin"` kullaniliyor.
+                -->
               <Button
-                v-permission="'STOK_DELETE'"
+                v-if="authStore.isAdmin"
                 icon="pi pi-trash"
                 :aria-label="$t('common.delete')"
                 class="p-button-rounded p-button-text"

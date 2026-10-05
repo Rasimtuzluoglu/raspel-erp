@@ -23,14 +23,15 @@
         <p>{{ t('gizlilikPolitikasi.sonGuncelleme') }}</p>
       </div>
       <div class="search-box">
-        <span class="p-input-icon-left w-full">
-          <i class="pi pi-search" />
+        <!-- REDTEAM/Faz3.3: `p-input-icon-left` PrimeVue 4'te kaldirildi. -->
+        <IconField class="w-full">
+          <InputIcon class="pi pi-search" />
           <InputText
             v-model="aramaMetni"
             :placeholder="t('gizlilikPolitikasi.aramaPlaceholder')"
             class="w-full search-input"
           />
-        </span>
+        </IconField>
       </div>
     </div>
 

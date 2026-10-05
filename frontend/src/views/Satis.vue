@@ -41,13 +41,14 @@
     </div>
 
     <div class="filtre-cubugu">
-      <span class="p-input-icon-left arama-kutu">
-        <i class="pi pi-search" />
+      <!-- REDTEAM/Faz3.3: `p-input-icon-left` PrimeVue 4'te kaldirildi. -->
+      <IconField class="arama-kutu">
+        <InputIcon class="pi pi-search" />
         <InputText
           v-model="filtre"
           :placeholder="t('satis.aramaPlaceholder')"
         />
-      </span>
+      </IconField>
       <TarihHizliSecim v-model="tarihAraligi" />
       <div class="durum-cipleri">
         <button

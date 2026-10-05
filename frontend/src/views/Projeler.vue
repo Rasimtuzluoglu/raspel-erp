@@ -65,8 +65,14 @@
             :title="t('projeler.tamamla')"
             @click="durumGuncelle(data, 'TAMAMLANDI')"
           />
-          v-permission="'SISTEM_DELETE'"
+          <!--
+              REDTEAM/Faz3.1: `v-permission="'SISTEM_DELETE'"` satiri ETIKET
+              DISINDA kalmisti -> Vue metin dugumu olarak derleyip ekrana
+              basiyordu. Ayrica yanlis kod: backend `ProjeController:76`
+              `hasRole('ADMIN')` istiyor.
+            -->
           <Button
+            v-if="authStore.isAdmin"
             icon="pi pi-trash"
             :aria-label="$t('common.delete')"
             class="p-button-rounded p-button-text"
@@ -281,12 +287,15 @@ import { useConfirm } from 'primevue/useconfirm'
 import { projeAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
 import { useI18n } from 'vue-i18n'
+import { useAuthStore } from '../stores/authStore.js'
 import { getLocalDateString } from '../utils/format.js'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { t } = useI18n()
+// REDTEAM/Faz3.1: Proje silme backend'de ADMIN-only (ProjeController:76).
+const authStore = useAuthStore()
 const list = ref([])
 const yukleniyor = ref(false)
 const kaydediliyor = ref(false)

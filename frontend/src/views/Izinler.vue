@@ -102,9 +102,15 @@
             :title="t('izinler.reddet')"
             @click="reddet(data)"
           />
-          v-permission="'IK_DELETE'"
+          <!--
+              REDTEAM/Faz3.1: `v-permission="'IK_DELETE'"` ETIKET DISINDA
+              kalmisti -> ekrana metin olarak basiliyordu. Butonun `v-if`'i
+              zaten vardi ve dogruydu (ADMIN-only, backend
+              `PersonelIzinController:72`); yalnizca ozel `v-if` ifadesi
+              yerine tutarlilik icin `authStore.isAdmin` kullanildi.
+            -->
           <Button
-            v-if="authStore?.kullanici?.role === 'ADMIN'"
+            v-if="authStore.isAdmin"
             icon="pi pi-trash"
             class="p-button-rounded p-button-sm p-button-text"
             :title="t('common.delete')"

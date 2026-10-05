@@ -40,15 +40,16 @@
           style="margin-right: 8px"
           @click="csvExport"
         />
-        <span class="p-input-icon-left">
-          <i class="pi pi-search" />
+        <!-- REDTEAM/Faz3.3: `p-input-icon-left` PrimeVue 4'te kaldirildi. -->
+        <IconField>
+          <InputIcon class="pi pi-search" />
           <InputText
             ref="aramaGirdiRef"
             v-model="aramaMetni"
             :placeholder="t('cariHesaplar.aramaPlaceholder')"
             @input="ara"
           />
-        </span>
+        </IconField>
       </template>
     </Toolbar>
 
@@ -291,9 +292,16 @@
             class="p-button-sm p-button-info"
             @click="topluEmailDialog = true"
           />
+          <!--
+              REDTEAM/Faz3.2: `v-permission="'CARI_DELETE'"` burada
+              GEREKSIZDI ve yanlisti: backend `CariHesapController:160`
+              toplu silmeyi `hasRole('ADMIN')` ile koruyor (tekil silme ise
+              `CARI_DELETE` kabul ediyor). `v-if="isAdmin"` zaten vardi ve
+              dogru kontrol bu; iki kontrol yan yana birakildiginda biri
+              sessizce etkisiz kaliyordu. Yanlis olan silindi.
+            -->
           <Button
             v-if="isAdmin"
-            v-permission="'CARI_DELETE'"
             :label="t('cariHesaplar.topluSil')"
             icon="pi pi-trash"
             class="p-button-sm p-button-danger"

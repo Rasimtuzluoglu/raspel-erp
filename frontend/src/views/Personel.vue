@@ -102,8 +102,14 @@
                 :title="t('personel.izinEkle')"
                 @click="izinDialogAc(data)"
               />
-              v-permission="'IK_DELETE'"
+              <!--
+                  REDTEAM/Faz3.1: `v-permission="'IK_DELETE'"` ETIKET DISINDA
+                  kalmisti -> ekrana metin olarak basiliyordu. Kod da yanlisti:
+                  backend `PersonelController:67` `hasRole('ADMIN')` istiyor.
+                  authStore bu view'da zaten kullaniliyordu.
+                -->
               <Button
+                v-if="authStore.isAdmin"
                 icon="pi pi-trash"
                 :aria-label="$t('common.delete')"
                 class="p-button-rounded p-button-text p-button-danger"

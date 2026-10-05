@@ -18,17 +18,17 @@
           class="p-button-success"
           @click="openCreateDialog"
         />
-        <span
-          class="p-input-icon-left arama-kutu"
-        >
-          <i class="pi pi-search" />
+        <!-- REDTEAM/Faz3.3: `p-input-icon-left` PrimeVue 4'te kaldirildi; ikon
+             yerlestirme kurali uygulanmiyordu. -->
+        <IconField class="arama-kutu">
+          <InputIcon class="pi pi-search" />
           <InputText
             v-model="arama"
             :placeholder="t('faturalar.aramaPlaceholder')"
             class="arama-input"
             @input="aramaDebounce"
           />
-        </span>
+        </IconField>
       </template>
       <template #end>
         <TarihHizliSecim

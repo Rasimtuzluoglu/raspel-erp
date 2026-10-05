@@ -35,14 +35,15 @@
           class="olay-sec"
           @change="filtrele"
         />
-        <span class="p-input-icon-left arama">
-          <i class="pi pi-search" />
+        <!-- REDTEAM/Faz3.3: `p-input-icon-left` PrimeVue 4'te kaldirildi. -->
+        <IconField class="arama">
+          <InputIcon class="pi pi-search" />
           <InputText
             v-model="arama"
             :placeholder="t('faturaGecmisRapor.arama')"
             @keyup.enter="filtrele"
           />
-        </span>
+        </IconField>
         <Button
           icon="pi pi-refresh"
           :aria-label="$t('common.refresh')"

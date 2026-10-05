@@ -140,14 +140,16 @@
       class="filter-bar"
       :class="{ 'filtre-gizli': !filtreAcik }"
     >
-      <span class="p-input-icon-left">
-        <i class="pi pi-search" />
+      <!-- REDTEAM/Faz3.3: `p-input-icon-left` PrimeVue 4'te kaldirildi; asagidaki
+           `.filter-bar > .p-input-icon-left` CSS kurali da bu yuzden oluydu. -->
+      <IconField>
+        <InputIcon class="pi pi-search" />
         <InputText
           v-model="filtreArama"
           :placeholder="t('stoklar.filtreArama')"
           @input="filtreDegisti"
         />
-      </span>
+      </IconField>
       <InputText
         v-model="filtreKategori"
         :placeholder="t('stoklar.filtreKategori')"
@@ -2191,10 +2193,11 @@ h2 {
     grid-template-columns: 1fr 1fr;
     gap: 8px;
   }
-  .filter-bar > .p-input-icon-left {
+/* REDTEAM/Faz3.3: IconField kendisi `p-iconfield` sinifi uretir. */
+  .filter-bar > .p-iconfield {
     grid-column: 1 / -1;
   }
-  .filter-bar > .p-input-icon-left .p-inputtext {
+  .filter-bar > .p-iconfield .p-inputtext {
     width: 100%;
   }
   .filter-input,

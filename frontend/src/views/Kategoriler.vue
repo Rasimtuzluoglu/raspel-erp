@@ -41,8 +41,18 @@
           style="width: 80px"
         >
           <template #body="s">
-            v-permission="'STOK_DELETE'"
+            <!--
+                REDTEAM/Faz3.1: `v-permission="'STOK_DELETE'"` satiri BU
+                ETIKETIN DISINDA kalmisti. Vue derleyicisi bunu literal metin
+                dugumu olarak derleyip EKRANA BASIYORDU (kullanici ekranda bu
+                yaziyi gordu) ve derleyici HICBIR uyari vermiyordu.
+                Ayrica bu kod yanlisti: backend `KategoriController:57`
+                silmeyi `hasRole('ADMIN')` ile koruyor, `STOK_DELETE` degil.
+                Duzeltme: metin dugumu silindi; ADMIN-only oldugu icin
+                `v-if="authStore.isAdmin"` kullaniliyor.
+              -->
             <Button
+              v-if="authStore.isAdmin"
               icon="pi pi-trash"
               :aria-label="$t('common.delete')"
               class="p-button-rounded p-button-danger p-button-sm"
@@ -111,12 +121,16 @@ import { useI18n } from 'vue-i18n'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useKategoriStore } from '../stores/kategoriStore.js'
+import { useAuthStore } from '../stores/authStore.js'
 import EmptyState from '../components/EmptyState.vue'
 
 const { t } = useI18n()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const kategoriStore = useKategoriStore()
+// REDTEAM/Faz3.1: Kategori silme backend'de ADMIN-only (KategoriController:57),
+// bu yuzden silme butonu `v-if="authStore.isAdmin"` ile korunur.
+const authStore = useAuthStore()
 
 const showDialog = ref(false)
 const saving = ref(false)

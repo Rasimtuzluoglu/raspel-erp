@@ -49,14 +49,18 @@
               {{ t('teklifler.durumSipariseDonustu') }}
             </button>
           </div>
-          <span class="p-input-icon-left">
-            <i class="pi pi-search" />
+          <!-- REDTEAM/Faz3.3: `p-input-icon-left` PrimeVue 4'te KALDIRILDI; o sinif
+               artik uretilmiyor, yani ikon yerlestirme kurali hic uygulanmiyor
+               ve ikon input'un uzerine biniyordu. PrimeVue 4 API'si:
+               IconField + InputIcon. -->
+          <IconField>
+            <InputIcon class="pi pi-search" />
             <InputText
               v-model="aramaMetni"
               :placeholder="t('teklifler.aramaPlaceholder')"
               class="p-inputtext-sm"
             />
-          </span>
+          </IconField>
         </div>
       </template>
 

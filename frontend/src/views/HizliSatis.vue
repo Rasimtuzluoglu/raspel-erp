@@ -117,8 +117,10 @@
     <div class="pos-body">
       <div class="pos-left">
         <div class="pos-arac-cubugu">
-          <span class="p-input-icon-left arama-kutusu barkod-kutu">
-            <i class="pi pi-barcode" />
+          <!-- REDTEAM/Faz3.3: `p-input-icon-left` PrimeVue 4'te kaldirildi; Faz 2'de
+           ayrica `:deep()` eksikligi duzeltildi. Simdi dogrustru API. -->
+          <IconField class="arama-kutusu barkod-kutu">
+            <InputIcon class="pi pi-barcode" />
             <InputText
               ref="barkodInputRef"
               v-model="globalBarkod"
@@ -136,9 +138,10 @@
             >
               <i class="pi pi-camera" />
             </button>
-          </span>
-          <span class="p-input-icon-left arama-kutusu">
-            <i class="pi pi-search" />
+          </IconField>
+          <!-- REDTEAM/Faz3.3: `p-input-icon-left` -> IconField/InputIcon. -->
+          <IconField class="arama-kutusu">
+            <InputIcon class="pi pi-search" />
             <!-- Sunucu taraflı yazarken arama (typeahead). Önceden bu kutu kart
                  ızgarasını yalnızca YÜKLÜ 50 üründe filtreliyordu; katalog
                  büyüdükçe ürünler hiç bulunamıyordu. -->
@@ -179,7 +182,7 @@
                 </div>
               </template>
             </AutoComplete>
-          </span>
+          </IconField>
           <button
             type="button"
             class="filtre-btn"

@@ -6,14 +6,16 @@
 
     <Toolbar class="toolbar">
       <template #start>
-        <span class="p-input-icon-left arama">
-          <i class="pi pi-search" />
+        <!-- REDTEAM/Faz3.3: `p-input-icon-left` PrimeVue 4'te kaldirildi -> ikon
+                 yerlestirme kurali uygulanmiyor, ikon yazinin uzerine biniyordu. -->
+        <IconField class="arama">
+          <InputIcon class="pi pi-search" />
           <InputText
             v-model="arama"
             :placeholder="t('adresDefteri.aramaYerTutucu')"
             class="arama-girdi"
           />
-        </span>
+        </IconField>
         <Dropdown
           v-model="turFiltre"
           :options="turSecenekleri"
