@@ -3,6 +3,16 @@ global:
 
 api:
   dashboard: true
+  # `insecure: true` olmadan dashboard/API HICBIR entrypoint'te SERVIS EDILMEZ.
+  # Yalnizca `dashboard: true` yazmak dashboardu acar ama erisilebilir kilmaz:
+  # /dashboard/ ve /api/overview dahil TUM istekler 404 doner.
+  #
+  # Guvenlik: bu ayar API'yi `traefik` entrypoint'ine (varsayilan :8080) acar ve
+  # bu port docker-compose.yml'de SADECE loopback'e baglidir
+  # (`127.0.0.1:8080:8080`), yani dis ayudan erisilemez. Uretimde de ayni kalir.
+  # Erisim korumasi `dynamic.yml`'deki basicAuth ile saglanir ve
+  # `DASHBOARD_MIDDLEWARES` uzerinden kosullu uygulanir.
+  insecure: true
 
 entryPoints:
   web:

@@ -38,13 +38,26 @@ http:
         accessControlAllowCredentials: true
         accessControlMaxAge: 3600
 
-    # Traefik dashboard icin temel kimlik dogrulama. DASHBOARD_BASIC_AUTH tanimliysa
-    # (htpasswd formati) kullanilir; bos/eksikse middleware devre disi birakilir ve
-    # dashboard router'i (asagida) yine fail-closed olarak 401 doner.
+    # Traefik dashboard icin temel kimlik dogrulama.
+    #
+    # DASHBOARD_BASIC_AUTH doluysa (htpasswd formati: `kullanici:$2y$...`) bu
+    # middleware tanimlanir; `docker-compose.yml` dashboard router'ina
+    # `DASHBOARD_MIDDLEWARES` ile ekler.
+    #
+    # KOSULLU OLMANIN SEBEBI: `basicAuth.users: ['']` gecersiz bir kayittir ve
+    # dosya saglayicisinin bu middleware'i dusurmesine yol acar (dashboard 500).
+    # .env'de de bos birakildigi icin dashboard hicbir zaman acilmazdi.
+    #
+    # Bos birakilmasinin guvenlik acigi olmamasi icin dashboard yine de SADECE
+    # loopback'e bagli portta calisir (127.0.0.1:8080). URETIMDE
+    # `DASHBOARD_BASIC_AUTH` + `DASHBOARD_MIDDLEWARES` ZORUNLUDUR
+    # (docs/GO-LIVE.md checklist).
+    {{ if ne (env "DASHBOARD_BASIC_AUTH") "" }}
     dashboard-auth:
       basicAuth:
         users:
           - '{{ env "DASHBOARD_BASIC_AUTH" }}'
+    {{ end }}
 
   routers:
     # HTTP (port 80) — gercek domainler HTTPS'e yonlendirilir. localhost/127.0.0.1
@@ -80,7 +93,60 @@ http:
         - security-headers
       priority: 6
 
-    # HTTPS (port 443) — yalnizca APP_DOMAIN icin gecerli
+    # Yerel HTTPS (dev). Iki ayri konu:
+    #
+    # 1) BU ROUTER'LAR VAR, cunku `security-headers` icindeki HSTS (stsSeconds +
+    #    includeSubdomains + preload) tarayiciyi localhost'u HTTPS'e zorlar.
+    #    Bu yuzden localhost'ta HTTPS erisimi BIRAKILAMAZ.
+    #
+    # 2) `tls: {}` BOS OLMALI. Traefik `websecure` uzerindeki bir router'da `tls`
+    #    bolumu YOKSA o router'i hic yonlendirmeye katmaz ve 404 doner (router
+    #    "enabled" gorunse bile eslesmez). Bos blok, sertifika istemeden Traefik'in
+    #    kendi self-signed varsayilan sertifikasini kullanmasini saglar.
+    #
+    # ONCEKI DAVRANIS: Bu yol `frontend@file` router'i ile `certResolver:
+    # letsencrypt` tasiyordu. Let's Encrypt `localhost`a sertifika VERMEDIGI icin
+    # Traefik her acilista reddedilen ACME istegi atiyor, loga
+    # `rejectedIdentifier` hatasi yaziyor ve sonunda ayni self-signed sertifikayi
+    # sunuyordu. Simdi: ayni sertifika, ayni 200, ACME hatasi YOK.
+    frontend-https-local:
+      rule: 'PathPrefix(`/`) && !PathPrefix(`/api`) && (Host(`localhost`) || Host(`127.0.0.1`))'
+      service: frontend
+      entryPoints:
+        - websecure
+      middlewares:
+        - security-headers
+      # `tls: {}` BOS OLMALI: bu blok sertifika ISTEMIYOR, Traefik'in kendi
+      # self-signed varsayilan sertifikasini kullanir. Dolu bir `certResolver`
+      # yazilirsa (ornegin letsencrypt) ACME localhost'a sertifika veremedigi icin
+      # router'i devre disi birakip 404 donduruyor.
+      tls: {}
+      priority: 3
+
+    api-https-local:
+      rule: 'PathPrefix(`/api`) && (Host(`localhost`) || Host(`127.0.0.1`))'
+      service: backend
+      entryPoints:
+        - websecure
+      middlewares:
+        - cors-headers
+        - ratelimit
+        - security-headers
+      # Bkz. `frontend-https-local`: `tls: {}` olmadan websecure router'i calismiyor.
+      tls: {}
+      priority: 4
+
+    # Uretim HTTPS (port 443) — yalnizca APP_DOMAIN GERCEK BIR ALAN ADI oldugunda.
+    #
+    # NEDEN KOSULLU: Bu blok kosulsuz oldugunda, yerel gelistirmede
+    # (APP_DOMAIN=localhost) `certResolver: letsencrypt` localhost'a sertifika
+    # isteyecek, Let's Encrypt reddedecek ve log `rejectedIdentifier` ile dolacak.
+    # Dolayisiyla:
+    #   - APP_DOMAIN=localhost          -> yalnizca yukaridaki *-https-local
+    #                                      router'lari vardir (sertifikasiz, gurultusuz)
+    #   - APP_DOMAIN=erp.sirketiniz.com -> bu blok tanimli, letsencrypt ile
+    #                                      gercek sertifika alinir (degismeyen davranis)
+    {{ if ne (env "APP_DOMAIN") "localhost" }}
     frontend:
       rule: 'PathPrefix(`/`) && !PathPrefix(`/api`) && Host(`{{ env "APP_DOMAIN" }}`)'
       service: frontend
@@ -105,6 +171,7 @@ http:
       tls:
         certResolver: letsencrypt
       priority: 2
+    {{ end }}
 
   services:
     frontend:

@@ -20,13 +20,30 @@ docker-compose up -d --build
 
 | Servis | Adres |
 |---|---|
-| Frontend | http://localhost |
+| **Frontend (uygulamaya giriş)** | **http://localhost** |
 | Backend API | http://localhost:8081 |
 | Swagger UI | http://localhost:8081/swagger-ui.html |
 | Traefik Dashboard | http://localhost:8080/dashboard |
 | Adminer (DB) | http://localhost:8082 |
 | Grafana | http://localhost:3000 (admin/admin) |
 | Prometheus | http://localhost:9090 |
+
+### Erişim nasıl çalışır (yerel)
+
+Tüm giriş **Traefik üzerinden `http://localhost` (port 80)** adresinden yapılır. Bu adres
+doğrudan frontend konteynerine değil, Traefik'e gider; Traefik isteği konteyner
+ağında `raspel-frontend:80` servisine yönlendirir. `/api/...` istekleri ise aynı
+adres üzerinden `raspel-backend:8081` servisine gider. Yani **tek adres** yeterlidir;
+frontend ve API aynı origin'den geldiği için tarayıcı CORS kurallarına takılmaz.
+
+`https://localhost` da çalışır (tarayıcıda sertifika uyarısı çıkar): `security-headers`
+içindeki HSTS, tarayıcıyı localhost'u HTTPS'e zorlar. Yerelde Let's Encrypt
+`localhost` için sertifika veremediğinden Traefik kendi self-signed varsayılan
+sertifikasını sunar — bu **kasıtlıdır** ve logda ACME hatası üretmez. Gerçek
+sertifika yalnızca `APP_DOMAIN` bir alan adı olduğunda alınır.
+
+Dashboard (`http://localhost:8080/dashboard`) yalnızca `127.0.0.1` üzerinden erişilebilir
+(`docker-compose.yml` bu portu loopback'e bağlar), dış ağdan açılamaz.
 
 **İlk giriş (kurulum sihirbazı):**
 - Hazır demo kullanıcı/veri **gelmez**. Sistemde hiç firma yokken giriş sayfası **İlk Kurulum** sihirbazını gösterir.
@@ -67,9 +84,12 @@ POSTGRES_PASSWORD=<güçlü-parola>
 REDIS_PASSWORD=<güçlü-parola>
 JWT_SECRET=<uzun-rastgele-base64>
 
-# Traefik dashboard / adminer erişimi (zorunlu; yoksa dashboard fail-closed kalır)
+# Traefik dashboard erişimi — ÜRETİMDE ZORUNLU (ikisi birlikte)
 # Üretmek için: docker run --rm httpd:alpine htpasswd -nb admin GUCLU_SIFRENIZ
 DASHBOARD_BASIC_AUTH=admin:<htpasswd-hash>
+# Dashboard router'ına uygulanacak middleware. Boşsa dashboard korumasız çalışır.
+# Yerelde boş bırakılabilir (dashboard zaten yalnızca 127.0.0.1'e bağlı).
+DASHBOARD_MIDDLEWARES=dashboard-auth@file
 
 # SSL
 ACME_EMAIL=sizi@mail.com
@@ -92,13 +112,23 @@ Traefik yapılandırması hazırdır; HTTPS otomatik etkinleşir:
 
 > **Not:** Let's Encrypt, `APP_DOMAIN` alan adına istek geldiğinde sertifika düzenler. Sertifika alımı için 80 portu dışarıdan erişilebilir olmalıdır.
 
+`APP_DOMAIN=localhost` iken sertifika **istenmez** (Let's Encrypt `localhost` için
+sertifika veremez, "Domain name needs at least one dot" hatası döner). Yerelde
+`config/traefik/dynamic.yml` bunu `{{ if ne (env "APP_DOMAIN") "localhost" }}` ile
+kontrol eder ve yalnızca self-signed yerel router'ları tanımlar — böylece log
+ACME hatalarıyla dolmaz. `APP_DOMAIN` bir alan adı olduğunda üretim router'ları
+otomatik devreye girer.
+
 ### 2.4 Güvenlik Kontrol Listesi
 - [ ] Tüm parolalar değiştirildi
 - [ ] JWT_SECRET uzun ve rastgele
-- [ ] HTTPS çalışıyor (https://alan-adiniz)
+- [ ] `APP_DOMAIN` gerçek alan adını gösteriyor (localhost **değil**)
+- [ ] `ACME_EMAIL` tanımlı ve geçerli
+- [ ] HTTPS çalışıyor (https://alan-adiniz) ve sertifika Let's Encrypt'ten geliyor
 - [ ] SMTP e-postası test edildi
 - [ ] Grafana varsayılan parolası değiştirildi
-- [ ] `DASHBOARD_BASIC_AUTH` .env dosyasında güçlü bir parola ile tanımlandı (config/traefik/dynamic.yml artık .env'den okur)
+- [ ] `DASHBOARD_BASIC_AUTH` güçlü bir parola ile tanımlandı
+- [ ] `DASHBOARD_MIDDLEWARES=dashboard-auth@file` tanımlandı (aksi halde dashboard korumasız)
 
 ## 3. Yedekleme
 

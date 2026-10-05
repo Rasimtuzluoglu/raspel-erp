@@ -408,7 +408,7 @@
             :kdv-toplam="kdvToplam"
             :genel-toplam="genelToplam"
             :kdv-secenekleri="kdvOranlari"
-            :kdv-varsayilan="0"
+            :kdv-varsayilan="kdvVarsayilan"
             stok-arama
             @add="kalemEkle"
             @remove="(i) => satisForm.kalemler.splice(i, 1)"
@@ -661,7 +661,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { faturaAPI, teklifAPI, kasaAPI, bankaAPI, posAPI, teslimatAPI } from '../api/index.js'
 import { useCariOnerileri } from '../composables/useCariOnerileri.js'
-import { useStokStore } from '../stores/stokStore.js'
+
 import { useAuthStore } from '../stores/authStore.js'
 import { useRouter, useRoute } from 'vue-router'
 import { useMarka } from '../composables/useMarka.js'
@@ -672,7 +672,7 @@ import FaturaKalemleri from '../components/FaturaKalemleri.vue'
 import KpiKart from '../components/KpiKart.vue'
 import AppDialog from '../components/AppDialog.vue'
 import { formatCurrency, formatPara, getLocalDateString, durumLabel as durumLabelUtil } from '../utils/format.js'
-import { kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
+import { kalemNetTutar, kalemKdv, VARSAYILAN_KDV_ORANI } from '../utils/faturaHesapla.js'
 import { satisPayloadUret, normalizeKalem } from '../utils/satisPayload.js'
 import { useI18n } from 'vue-i18n'
 
@@ -681,7 +681,9 @@ const confirm = useConfirm()
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
-const stokStore = useStokStore()
+// `stokStore` kaldirildi: `getAll()` cagrisi sonucu hicbir yerde okunmuyordu
+// (bkz. onMounted). Kalemlerdeki stok miktari `FaturaKalemleri` icindeki sunucu
+// aramasi (`stokAPI.ara`) ile gelir.
 const authStore = useAuthStore()
 const { sirketLogosu } = useMarka()
 
@@ -702,6 +704,11 @@ const sadeceVadesiGecen = ref(false)
 const durumCipleri = ['KESILDI', 'TASLAK', 'IPTAL']
 const ozet = ref({ adet: 0, ciro: 0, tahsilEdilen: 0, kalan: 0 })
 const kdvOranlari = [0, 1, 8, 10, 18, 20]
+// Stokta KDV tanimli degilse kullanilacak oran. `faturaHesapla.js` ile PAYLASILIR:
+// once bu view `:kdv-varsayilan="0"` gonderiyordu, oysa payload uretici (`kdvOrani()`)
+// ve backend 20 kullaniyor. Sonuc: ekranda %0 KDV gorunurken fatura %20 KDV ile
+// kaydediliyor, genel toplam ile kaydedilen tutar ayrisiyordu.
+const kdvVarsayilan = VARSAYILAN_KDV_ORANI
 
 // Sunucu tarafli sayfalama (tum fatura listesini cekip istemcide filtrelemek
 // ilk 50 kayitla sinirliydi; eski satislar gorunmuyordu).
@@ -752,11 +759,15 @@ const soforlerYukleniyor = ref(false)
 const teslimatAdresi = ref('')
 const teslimDurumu = ref('BEKLIYOR')
 const teslimNotu = ref('')
-const teslimDurumSecenekleri = [
-  { label: 'Bekliyor', value: 'BEKLIYOR' },
-  { label: 'Yolda', value: 'YOLDA' },
-  { label: 'Teslim Edildi', value: 'TESLIM_EDILDI' }
-]
+// Teslim durumu etiketleri `teslimatlar.*` anahtarlarindan gelir. Once sabit
+// Turkce yaziliydi; dil degistiricide secmekle etiketler Turkce kaliyordu.
+// Degerler `Satis.vue`de ayrica `teslimatlar.*` ile birebir ayni (bkz. asagidaki
+// `teslimDurumuEtiketi` ve teslim kaydi olusturma eslemesi).
+const teslimDurumSecenekleri = computed(() => [
+  { label: t('teslimatlar.durumBeklemede'), value: 'BEKLIYOR' },
+  { label: t('teslimatlar.durumYolda'), value: 'YOLDA' },
+  { label: t('teslimatlar.durumTeslimEdildi'), value: 'TESLIM_EDILDI' }
+])
 
 // Odeme durumu -> backend enum'u (POS ile ayni kural).
 const odemeDurumEnum = computed(() => {
@@ -803,10 +814,16 @@ const tarihParametreleri = () => {
 
 onMounted(async () => {
   // Store'lar hata firlatir; bir hata digerlerini engellemesin.
+  //
   // `getAllCariHesaplar()` kaldirildi: bu view'da musteri secici sunucu
   // aramalı (useCariOnerileri) ve liste hicbir yerde okunmuyordu; istek ayrica
   // parametresiz oldugu icin 50 kayitlik tavana takiliyordu.
-  await Promise.allSettled([satislariYukle(), ozetiYukle(), stokStore.getAll()])
+  //
+  // `stokStore.getAll()` de kaldirildi: sonucu HICBIR YERDE kullanilmiyordu
+  // (kalem stok bilgisi `FaturaKalemleri` icindeki sunucu aramasiyla gelir), yani
+  // bosuna agirti bir istek. Ayrica parametresiz oldugu icin 50 kayitlik tavana
+  // takiliyordu — bu desen POS icin yasak (`redteam-faz2-hizliSatis.spec.js`).
+  await Promise.allSettled([satislariYukle(), ozetiYukle()])
   opsiyonVerileriniYukle()
   // FaturaDetay'dan "Duzenle" ile gelindiyse ilgili satisi duzenleme modunda ac.
   const duzenleId = Number(route.query.duzenle)
@@ -992,6 +1009,9 @@ const stokSatirSecildi = ({ index, stok }) => {
     k.aciklama = stok.ad
     k.birimFiyat = yeniFiyat
     if (stok.kdvOrani != null) k.kdvOrani = Number(stok.kdvOrani)
+    // Stok miktari satira tasinir: `stokYetersizKalemler` bunu kullanarak
+    // kayittan once adet > stok uyarisi verir.
+    k.stokMiktar = stok.miktar != null ? Number(stok.miktar) : null
   }
 
   if (!urunDegisti) {
@@ -1082,6 +1102,42 @@ const openSatisDuzenle = async (s) => {
   }
 }
 
+// Satis kalemlerindeki mevcut stok miktarlari. `FaturaKalemleri` stok secildiginde
+// satira `stokMiktar` yazar; burada yalnizca O KADAR SATIR KARSILASTIRILIR.
+// `stokMiktar`'i bilmeyen satirlar (serbest metin, kayit listesi vb.) kontrol disi
+// kalir — stok hareketi yine backend'de `stokId` uzerinden islenir.
+const stokYetersizKalemler = computed(() =>
+  satisForm.value.kalemler.filter((k) => {
+    if (!k?.stokId || k.stokMiktar == null) return false
+    return Number(k.adet || 0) > Number(k.stokMiktar)
+  })
+)
+
+const stokYetersizSatirlar = () =>
+  stokYetersizKalemler.value
+    .map((k) => `${k.aciklama || '-'} (${k.adet} / ${k.stokMiktar})`)
+    .join(', ')
+
+// Stok yetmiyorsa kullaniciya sorar. Onaylanirsa true, reddedilirse false doner.
+// `useConfirm` geri cagirmali oldugu icin Promise ile sarilir.
+const stokYetersizOnayiSor = () => {
+  const yetersiz = stokYetersizKalemler.value
+  if (!yetersiz.length) return Promise.resolve(true)
+  return new Promise((coz) => {
+    confirm.require({
+      header: t('satis.yetersizStokBaslik'),
+      message: t('satis.yetersizStokSatirlar', { satirlar: stokYetersizSatirlar() }),
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: t('satis.yetersizStokOnayla'),
+      rejectLabel: t('common.cancel'),
+      acceptProps: { severity: 'danger' },
+      rejectProps: { severity: 'secondary', outlined: true },
+      accept: () => coz(true),
+      reject: () => coz(false)
+    })
+  })
+}
+
 const satisiTamamla = async () => {
   if (satisModu.value === 'SATIS' && !satisForm.value.cariHesapId) {
     toastBildirim.uyari(t('satis.musteriSecinizUyari'))
@@ -1091,6 +1147,11 @@ const satisiTamamla = async () => {
     toastBildirim.uyari(t('satis.enAzBirUrun'))
     return
   }
+  // Stok yetersizligi: kayittan ONCE uyari. Once yalnizca kayit SONRASI
+  // `kritikStokUyarisiGonder` bildirimi geliyordu ve stok hareketi geri
+  // alinmiyordu — kullanici farkina varmadan stok negatife dustu. Teklif
+  // stok harcamaz, kontrol yalnizca SATIS modunda yapilir.
+  if (satisModu.value === 'SATIS' && !(await stokYetersizOnayiSor())) return
   saving.value = true
   try {
     // Teklif modu: fatura yerine GERÇEK Teklif kaydı oluşturulur; böylece teklif
@@ -1109,14 +1170,19 @@ const satisiTamamla = async () => {
           // undefined miktar ile kaydediliyordu. normalizeKalem tek kanonik
           // esleme ve KDV/tutar hesabini birlikte saglar.
           const n = normalizeKalem(k)
-          return {
+          const kalem = {
             stokId: n.stokId,
             aciklama: n.aciklama,
             miktar: n.adet,
             birimFiyat: n.birimFiyat,
-            iskontoOrani: n.iskontoOrani,
             kdvOrani: n.kdvOrani
           }
+          // `normalizeKalem` iskonto alanini yalnizca ANLAMLI deger varsa yazar
+          // (bkz. satisPayload.js). Teklif service'i null iskontoyu kural motoruna
+          // devreder, `undefined` degil. Alan hic yazilmamis olmasi da ayni
+          // sonucu verir; yalnizca deger varsa tasinir.
+          if (n.iskontoOrani !== undefined) kalem.iskontoOrani = n.iskontoOrani
+          return kalem
         })
       })
       toastBildirim.basarili(t('satis.teklifKaydedildiTekliflerde'))
@@ -1243,50 +1309,50 @@ const printTermalFis = (satisData) => {
     </head>
     <body>
       <div class="no-print">
-        <button onclick="window.print()">Yazdır (Termal 80mm)</button>
-        <button onclick="window.close()" style="background:#64748b; margin-left:6px;">${t('common.close')}</button>
+        <button onclick="window.print()">${escapeHtml(t('satis.termalYazdirBtn'))}</button>
+        <button onclick="window.close()" style="background:#64748b; margin-left:6px;">${escapeHtml(t('common.close'))}</button>
       </div>
       <div class="header text-center">
         ${sirketLogosu.value ? `<img class="logo" src="${escapeHtml(sirketLogosu.value)}" alt="logo" />` : ''}
         <h2>${escapeHtml(authStore?.sirketAdi || 'RASPEL ERP')}</h2>
         <p class="raspel-mini">RasPel ERP</p>
-        <p>SATIŞ FİŞİ</p>
-        <p>${t('satis.fisNo')} ${escapeHtml(satisData.faturaNumarasi || 'FIS-' + (satisData.id || Date.now()))}</p>
-        <p>${t('common.date')}: ${formatDate(satisData.tarih || new Date())}</p>
-        <p>${t('satis.musteriLabel')} ${escapeHtml(satisData.cariHesapAd || t('satis.perakendeMusteri'))}</p>
+        <p>${escapeHtml(t('satis.termalFisBaslik'))}</p>
+        <p>${escapeHtml(t('satis.fisNo'))} ${escapeHtml(satisData.faturaNumarasi || 'FIS-' + (satisData.id || Date.now()))}</p>
+        <p>${escapeHtml(t('common.date'))}: ${formatDate(satisData.tarih || new Date())}</p>
+        <p>${escapeHtml(t('satis.musteriLabel'))} ${escapeHtml(satisData.cariHesapAd || t('satis.perakendeMusteri'))}</p>
       </div>
       <div class="line"></div>
       <table>
         <thead>
           <tr>
-            <th style="text-align:left;">Ürün / Miktar</th>
-            <th style="text-align:right;">Tutar</th>
+            <th style="text-align:left;">${escapeHtml(t('satis.termalUrunMiktar'))}</th>
+            <th style="text-align:right;">${escapeHtml(t('common.amount'))}</th>
           </tr>
         </thead>
         <tbody>
-          ${kalemlerHtml.length ? kalemlerHtml : `<tr><td colspan="2">${t('satis.fisKalemFallback')}</td></tr>`}
+          ${kalemlerHtml.length ? kalemlerHtml : `<tr><td colspan="2">${escapeHtml(t('satis.fisKalemFallback'))}</td></tr>`}
         </tbody>
       </table>
       <div class="line"></div>
       <table>
         <tr>
-          <td>ARA TOPLAM:</td>
+          <td>${escapeHtml(t('satis.termalAraToplam'))}</td>
           <td class="text-right bold">${formatCurrency(satisData.araToplam || satisData.genelToplam || 0)}</td>
         </tr>
         <tr>
-          <td>KDV:</td>
+          <td>${escapeHtml(t('satis.termalKdv'))}</td>
           <td class="text-right">${formatCurrency(satisData.kdvToplam || 0)}</td>
         </tr>
         <tr style="font-size:13px;">
-          <td class="bold">GENEL TOPLAM:</td>
+          <td class="bold">${escapeHtml(t('satis.termalGenelToplam'))}</td>
           <td class="text-right bold">${formatCurrency(satisData.genelToplam || 0)}</td>
         </tr>
       </table>
       <div class="line"></div>
       <div class="footer">
-        <p>Bizi tercih ettiğiniz için teşekkür ederiz!</p>
-        <p>Yazilim: RasPel ERP</p>
-        <p>İşlem Yapan: ${escapeHtml(authStore?.kullanici?.displayName || '-')}</p>
+        <p>${escapeHtml(t('satis.termalTesekkur'))}</p>
+        <p>${escapeHtml(t('satis.termalYazilim'))}</p>
+        <p>${escapeHtml(t('satis.termalIslemYapan'))} ${escapeHtml(authStore?.kullanici?.displayName || '-')}</p>
       </div>
     </body>
     </html>

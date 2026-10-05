@@ -10,7 +10,8 @@
 - [ ] `REDIS_PASSWORD` ortam degiskeni guclu bir degerle ayarlandi
 - [ ] `RABBITMQ_PASSWORD` ortam degiskeni guclu bir degerle ayarlandi
 - [ ] `GRAFANA_PASSWORD` ortam degiskeni guclu bir degerle ayarlandi
-- [ ] `DASHBOARD_BASIC_AUTH` ortam degiskeni htpasswd hash'i ile ayarlandi (Traefik dashboard/adminer; yoksa fail-closed)
+- [ ] `DASHBOARD_BASIC_AUTH` ortam degiskeni htpasswd hash'i ile ayarlandi
+- [ ] `DASHBOARD_MIDDLEWARES=dashboard-auth@file` ayarlandi (yoksa dashboard basicAuth KORUMASIZ kalir; port 8080 loopback'te oldugu icin disaridan acilmaz ama iceriden herkes erisebilir)
 - [ ] `app.cors.allowed-origins` gercek domain'i iceriyor
 - [ ] Veritabani portu (5432) dis dunyaya acik degil (firewall'dan kapali)
 - [ ] Backend 8081 ve Traefik 8080 portlari yalnizca 127.0.0.1'e bagli (docker-compose varsayilani)
@@ -20,6 +21,7 @@
 - [ ] `docker-compose.yml`'de `SPRING_PROFILES_ACTIVE=prod`
 - [ ] `SPRING_MAIL_*` ortam degiskenleri gercek SMTP sunucusu ile ayarlandi
 - [ ] `ACME_EMAIL` ortam degiskeni gecerli bir e-posta (Let's Encrypt icin)
+- [ ] `APP_DOMAIN` gercek alan adini iceriyor — `localhost` OLMAMALI. `localhost` iken Let's Encrypt sertifika veremedigi icin Traefik'in uretim router'lari tanimlanmaz (`config/traefik/dynamic.yml`), HTTPS kendi self-signed sertifikasiyla kalir ve HSTS nedeniyle kullanici guvenlik uyarisi gorur
 - [ ] `app.backup.dir` erisilebilir bir dizine isaret ediyor
 - [ ] `app.admin.*` degiskenleri kontrol edildi, demo admin kullanicisi yok
 - [ ] Bos sistemde onboarding yalnizca firma + yonetici olusturuyor; demo veri yukleme ozelligi yok
@@ -51,8 +53,12 @@
 
 ## Son Kontrol
 
-- [ ] `docker-compose up -d` ile tum servisler ayaga kalkiyor
-- [ ] Tarayicidan giris yapilabiliyor
+- [ ] `docker-compose up -d` ile tum servisler ayaga kalkiyor (`docker compose ps` -> hepsi `Up`, saglik kontrollu olanlar `healthy`)
+- [ ] Uygulamaya **https://\<APP_DOMAIN\>** adresinden giris yapilabiliyor ve sertifika Let's Encrypt'ten geliyor (tarayici kilidinde uyari YOK)
+- [ ] `curl -sI http://\<APP_DOMAIN\>/` -> `301` (HTTPS'e yonlendirme)
+- [ ] `curl -sI https://\<APP_DOMAIN\>/api/actuator/health` -> `401` (kimliksiz API erisimi reddediliyor)
+- [ ] `docker logs raspel-traefik` icinde `rejectedIdentifier` / ACME hatasi YOK
+- [ ] Traefik dashboard `http://127.0.0.1:8080/dashboard` adresinden aciliyor ve basicAuth SORUYOR
 - [ ] `.env` dosyasi sunucuda mevcut ve dogru degerlerle dolu
 - [ ] `.env` dosyasi `.gitignore`'da ve commit'lenmemis
 - [ ] Repo public ise tum secret'lar rotate edildi

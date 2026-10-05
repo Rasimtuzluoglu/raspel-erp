@@ -118,6 +118,15 @@
             {{ item.ad }}<i class="pi pi-pencil urun-degistir-ikon" />
           </button>
           <span class="sepet-tutar">{{ formatCurrency(item.miktar * item.fiyat) }}</span>
+          <!-- Satır eylemleri (Düzenle / Çoğalt / Sil). `SatirEylemleri`
+               zaten bu üç işlemi sunuyor ve 9 testi var; POS'a bağlanmadığı için
+               çoğaltma yalnızca klavyeden `D` ile mümkündü. -->
+          <SatirEylemleri
+            :gorunur="{ duzenle: true, cogalt: true, sil: false }"
+            :items="satirEylemMenusu(idx)"
+            @duzenle="$emit('urun-degistir-ac', idx)"
+            @cogalt="$emit('cogalt', idx)"
+          />
           <button
             type="button"
             class="sepet-sil"
@@ -288,6 +297,7 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatCurrency, formatDate } from '../utils/format.js'
+import SatirEylemleri from './SatirEylemleri.vue'
 
 // REDTEAM/Faz2.2: SABIT referans; her render'da yeni obje olusturmak panelin
 // genisliginin ilk tuşta ziplamasına yol açıyordu (bkz. HizliSatis.vue).
@@ -315,18 +325,30 @@ const props = defineProps({
   indirimTipleri: { type: Array, default: () => [] }
 })
 
-defineEmits([
+const emit = defineEmits([
   'toggle', 'kaydet', 'yukle', 'temizle', 'geri-al', 'satir-geri-al',
-  'sil', 'miktar-azalt', 'miktar-artir', 'satir-sec', 'urun-degistir-ac',
+  'sil', 'cogalt', 'miktar-azalt', 'miktar-artir', 'satir-sec', 'urun-degistir-ac',
   'urun-degistir-ara', 'urun-degistir-sec', 'urun-degistir-vazgec',
   'surukleme-basla', 'surukleme-uzerine', 'surukleme-birak', 'surukleme-bitir',
-  'fiyat-tipi-degisti', 'detay-toggle',
+  'fiyat-tipi-degisti', 'detay-toggle', 'adedi-sifirla',
   'update:indirimTipi', 'update:indirimDegeri'
 ])
 
 void props
 const { t } = useI18n()
 const listeRef = ref(null)
+
+// Satır eylem menüsü. `SatirEylemleri` `duzenle`/`cogalt`/`sil` olaylarını ayrı
+// ayrı yayar; `sil` için panelde zaten ayrı bir ✕ düğmesi var (daha erişilebilir),
+// bu yüzden menüde gizliyoruz (`gorunur.sil = false`). Menüye eklenen tek özel
+// eylem "adedi sıfırla"dır: miktar alanına tıklamadan adedi 1'e indirir.
+const satirEylemMenusu = (idx) => [
+  {
+    etiket: t('hizliSatis.adediSifirla'),
+    ikon: 'pi pi-undo',
+islem: () => emit('adedi-sifirla', idx)
+  }
+]
 
 // Sepette ürün değiştirme seçicisinin arama girdisi (satır bazında değil, tek seferlik).
 const urunDegistirGirdi = ref(null)

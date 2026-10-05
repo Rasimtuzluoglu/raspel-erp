@@ -96,11 +96,18 @@
       <span><kbd>F1</kbd> {{ $t('hizliSatis.barkod') }}</span>
       <span><kbd>F2</kbd> {{ $t('hizliSatis.temizle') }}</span>
       <span><kbd>F3</kbd> {{ $t('hizliSatis.ipucuUrunAra') }}</span>
+      <span><kbd>↓</kbd> {{ $t('hizliSatis.ipucuIzgara') }}</span>
       <span><kbd>F4</kbd> {{ $t('hizliSatis.musteri') }}</span>
       <span><kbd>F5</kbd> {{ $t('hizliSatis.ipucuYeniMusteri') }}</span>
       <span><kbd>F6</kbd> {{ $t('hizliSatis.ipucuKamera') }}</span>
+      <span><kbd>F7</kbd> {{ $t('hizliSatis.ipucuBugunkuSatis') }}</span>
+      <span><kbd>F8</kbd> {{ $t('hizliSatis.ipucuYazdir') }}</span>
+      <span><kbd>F11</kbd> {{ $t('hizliSatis.ipucuTermal') }}</span>
       <span><kbd>F9</kbd>/<kbd>F10</kbd> {{ $t('hizliSatis.odeme') }}</span>
-      <span><kbd>N</kbd>/<kbd>K</kbd>/<kbd>H</kbd> {{ $t('hizliSatis.ipucuYontem') }}</span>
+      <span><kbd>N</kbd>/<kbd>K</kbd>/<kbd>H</kbd>/<kbd>T</kbd> {{ $t('hizliSatis.ipucuYontem') }}</span>
+      <span><kbd>G</kbd>/<kbd>Ctrl+Z</kbd> {{ $t('hizliSatis.ipucuGeriAl') }}</span>
+      <span><kbd>D</kbd> {{ $t('hizliSatis.ipucuSatirCogalt') }}</span>
+      <span><kbd>P</kbd> {{ $t('hizliSatis.ipucuFisModu') }}</span>
       <span><kbd>↑</kbd>/<kbd>↓</kbd> {{ $t('hizliSatis.ipucuSatir') }}</span>
       <span><kbd>Alt+↑/↓</kbd> {{ $t('hizliSatis.miktar') }}</span>
       <span><kbd>Del</kbd> {{ $t('hizliSatis.ipucuSil') }}</span>
@@ -383,14 +390,29 @@
             </button>
           </div>
 
-          <div class="product-grid">
+          <div
+            class="product-grid"
+            :class="{ 'izgara-odak': urunIzgaraOdak }"
+            role="listbox"
+            :aria-label="t('hizliSatis.urunler')"
+          >
+            <!-- Izgara klavyeyle gezilebilir (bir metin alanindayken ↓ ya da F3
+                   sonrasi ↓). ↑↓←→ kart secar, Enter sepete ekler, rakamlar + Enter
+                   miktari belirler, Shift+Enter adet penceresini acar, Esc izgaradan
+                   cikip barkod alanina doner. Once izgara YALNIZCA fareyle
+                   kullanilabiliyordu: ok tuslari SEPETI geziyordu ve urun karti hicbir
+                   zaman odaklanamiyordu. -->
             <PosUrunKarti
-              v-for="u in gorunenUrunler"
+              v-for="(u, i) in gorunenUrunler"
               :key="u.id"
               :urun="u"
               :cari-fiyat="cariFiyati(u.id)"
               :sepette-adet="sepetteAdet(u.id)"
+              :odakli="urunIzgaraOdak && i === urunIzgaraIndeks"
+              :tabindex="urunIzgaraOdak ? (i === urunIzgaraIndeks ? 0 : -1) : undefined"
+              :dom-id="urunKartDomId(i)"
               @sec="urunKartiTikla(u)"
+              @adet-ist="adetPopoverAc(u, i)"
             />
             <div
               v-if="filtrelenmisUrunler && filtrelenmisUrunler.length === 0"
@@ -413,6 +435,59 @@
               class="p-button-outlined"
               @click="gosterilenAdet += 60"
             />
+          </div>
+          <!-- Adet penceresi: kart uzerinde sag tik veya izgarada Shift+Enter.
+               Oncesi hizli adet YOKTU; 20 adet almak icin karti 20 kez tiklamak
+               gerekiyordu. -->
+          <div
+            v-if="adetPopoverUrun"
+            class="adet-popover"
+            role="dialog"
+            :aria-label="t('hizliSatis.adetSec')"
+          >
+            <div class="adet-popover-ust">
+              <span class="adet-popover-ad">{{ adetPopoverUrun.ad }}</span>
+              <span class="adet-popover-stok">
+                {{ t('hizliSatis.stokAdet', { n: adetPopoverUrun.miktar, birim: adetPopoverUrun.birim || t('hizliSatis.adetBirimi') }) }}
+              </span>
+            </div>
+            <div class="adet-popover-govde">
+              <button
+                type="button"
+                class="adet-btn"
+                :aria-label="t('hizliSatis.miktarAzalt')"
+                @click="adetPopoverOnayla = Math.max(1, (adetPopoverOnayla || 1) - 1)"
+              >
+                <i class="pi pi-minus" />
+              </button>
+              <InputNumber
+                v-model="adetPopoverOnayla"
+                :min="1"
+                class="adet-popover-girdi"
+                @keyup.enter="adetPopoverOnaylandi"
+              />
+              <button
+                type="button"
+                class="adet-btn"
+                :aria-label="t('hizliSatis.miktarArtir')"
+                @click="adetPopoverOnayla = (adetPopoverOnayla || 1) + 1"
+              >
+                <i class="pi pi-plus" />
+              </button>
+              <Button
+                :label="t('common.add')"
+                size="small"
+                class="p-button-success"
+                @click="adetPopoverOnaylandi"
+              />
+              <Button
+                :label="t('common.cancel')"
+                size="small"
+                severity="secondary"
+                text
+                @click="adetPopoverKapat"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -476,6 +551,8 @@
               @urun-degistir-sec="urunDegistirSec"
               @urun-degistir-vazgec="urunDegistirKapat"
               @sil="sepetSil"
+              @cogalt="satiriCogalt"
+              @adedi-sifirla="adediSifirla"
               @miktar-azalt="miktarAzalt"
               @miktar-artir="(i) => sepet[i].miktar++"
               @satir-sec="(i) => (aktifSatir = i)"
@@ -548,8 +625,13 @@
               />
             </div>
 
+            <!-- Sepet bos olsa bile `sonSatis` varsa gosterilir: sattiktan sonra fisin
+                 YENIDEN yazdirilmasi bu bolum uzerinden yapilir. Once yalnizca
+                 `sepet.length > 0` ile aciliyordu, yani satis bittikten sonra
+                 fiy yeniden basilamiyordu (fare ile bile: bolum kayboluyordu). -->
             <details
-              v-if="sepet.length > 0"
+              v-if="sepet.length > 0 || sonSatis"
+              ref="fisDetayRef"
               class="fis-detay pos-bolum"
               @toggle="fisAcik = $event.target.open; fisAcikKaydet()"
             >
@@ -565,13 +647,13 @@
                   @click.prevent.stop
                 >
                   <Button
-                    :label="t('hizliSatis.yazdirF9')"
+                    :label="t('hizliSatis.yazdirF8')"
                     icon="pi pi-print"
                     size="small"
                     @click="fisiYazdir(sonSatis?.faturaNumarasi, satisOzet?.fisModu)"
                   />
                   <Button
-                    :label="t('hizliSatis.termal')"
+                    :label="t('hizliSatis.termalF11')"
                     icon="pi pi-send"
                     size="small"
                     severity="secondary"
@@ -876,8 +958,15 @@ useKisayollar({
     if (yeniMusteriDialog.value) yeniMusteriDialog.value = false
     else if (scannerAcik.value) scannerAcik.value = false
     else if (satisOzetDialog.value) satisOzetDialog.value = false
+    else if (adetPopoverUrun.value) adetPopoverKapat()
+    else if (urunIzgaraOdak.value) urunIzgaradanCik()
   },
-  yazdir: () => fisiYazdir()
+  yazdir: () => fisiYazdir(),
+  // `?` POS'ta yerel kisayol seridini acar (global KisayolRehberi degil).
+  ipucu: () => ipucuToggle(),
+  // POS `n/k/h/t/p/g` harflerini kullaniyor; `g`+harf gezinmesi bu harfleri
+  // yutuyordu ve POS'tan cikis kisayolu (`g h`) sessizce oldu.
+  gezinmeKapat: true
 })
 
 const girdideMi = (e) => {
@@ -891,9 +980,11 @@ const odakla = (r) => {
 
 // Hizli Satis klavye kisayollari. Capture fazinda calisir; boylece global F2/F4
 // (App.vue) preventDefault sayesinde devreye girmez.
+// Ctrl/Cmd kombinasyonlari `useKisayollar`'a aittir (Ctrl+S kaydet, Ctrl+P
+// yazdir). Ctrl+Z geri al ise ayri bir dinleyicide (`handlePosUndo`) yakalanir:
+// tarayicinin metin alanlarindaki yerlesik geri alma davranisini ezmemek icin
+// odak bir metin alaninda degilken calisir.
 const handlePosKeys = (e) => {
-  if (e.ctrlKey || e.metaKey) return
-
   if (e.key === 'F1') {
     e.preventDefault(); odakla(barkodInputRef); return
   }
@@ -904,7 +995,18 @@ const handlePosKeys = (e) => {
     return
   }
   if (e.key === 'F3') {
-    e.preventDefault(); odaklaUrunArama(); return
+    e.preventDefault()
+    // Izgara modundaysak arama kutusuna degil ızgaraya geri don (F3 tek
+    // yonlu bir tus olmali). Degilse urun arama kutusuna odaklan.
+    if (urunIzgaraOdak.value) urunIzgarayiOdakla()
+    else odaklaUrunArama()
+    return
+  }
+  // Bir metin alanindayken ↓ ile ızgaraya gir: metin alaninda oklar zaten
+  // sepette gezmez (`girdideMi` korumasi), yani bu yon bos kalirdi. Once
+  // ızgaraya gecmenin HICBIR yolu yoktu — kartlar yalniz fareyle secilebiliyordu.
+  if (girdideMi(e) && e.key === 'ArrowDown' && gorunenUrunler.value.length) {
+    e.preventDefault(); urunIzgarayaGir(); return
   }
   if (e.key === 'F4') {
     e.preventDefault()
@@ -918,6 +1020,18 @@ const handlePosKeys = (e) => {
   if (e.key === 'F6') {
     e.preventDefault(); scannerAcik.value = true; return
   }
+  if (e.key === 'F7') {
+    e.preventDefault(); bugunkuSatislariAc(); return
+  }
+  if (e.key === 'F8') {
+    // Fis onizlemesini ac ve YAZDIR. Once F9'a bagliymis gibi etiketleniyordu
+    // (`hizliSatis.yazdirF9`) ama F9 satisi tamamlıyor; yazdirma yalnizca
+    // Ctrl+P ile mumkundu. Artik F8 gercekten yazdirir.
+    e.preventDefault(); fisOnizlemeToggle(); return
+  }
+  if (e.key === 'F11') {
+    e.preventDefault(); termalYazdir(); return
+  }
   if (e.key === 'F9' || e.key === 'F10') {
     e.preventDefault()
     odemeDurumu.value = e.key === 'F9' ? 'tam' : 'yarim'
@@ -929,6 +1043,39 @@ const handlePosKeys = (e) => {
       e.preventDefault()
       if (e.key === 'ArrowUp') sepet.value[aktifSatir.value].miktar++
       else miktarAzalt(aktifSatir.value)
+    }
+    return
+  }
+
+  // ---------------------------------------------------------------------
+  // Izgara klabye modu: burada oklar SEPETI DEGIL URUN IZGARASINI gezer.
+  // ---------------------------------------------------------------------
+  if (urunIzgaraOdak.value) {
+    if (e.key === 'Escape') {
+      e.preventDefault(); urunIzgaradanCik(); return
+    }
+    if (e.key === 'ArrowUp') { e.preventDefault(); urunIzgaraHareket(0, -1); return }
+    if (e.key === 'ArrowDown') { e.preventDefault(); urunIzgaraHareket(0, 1); return }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); urunIzgaraHareket(-1, 0); return }
+    if (e.key === 'ArrowRight') { e.preventDefault(); urunIzgaraHareket(1, 0); return }
+    if (e.key === 'Enter' && e.shiftKey) {
+      // Shift+Enter: adet penceresi
+      e.preventDefault()
+      adetPopoverAc(gorunenUrunler.value[urunIzgaraIndeks.value], urunIzgaraIndeks.value)
+      return
+    }
+    if (e.key === 'Enter') { e.preventDefault(); urunIzgaraSec(); return }
+    if (e.key === 'Backspace') {
+      // Rakam girdisini sildir (miktarli ekleme)
+      e.preventDefault()
+      urunIzgaraRakam.value = urunIzgaraRakam.value.slice(0, -1)
+      return
+    }
+    if (/^[0-9]$/.test(e.key)) {
+      // Rakam yazildi: miktarli ekleme hazirlanir. Maksimum 4 hane (9999).
+      e.preventDefault()
+      if (urunIzgaraRakam.value.length < 4) urunIzgaraRakam.value += e.key
+      return
     }
     return
   }
@@ -967,7 +1114,86 @@ const handlePosKeys = (e) => {
     e.preventDefault(); odemeYontemi.value = 'KART'
   } else if (k === 'h') {
     e.preventDefault(); odemeYontemi.value = 'HAVALE'
+  } else if (k === 't') {
+    // Taksit yontemi ONCEDEN kisyolu yoktu; odeme icin fareye uzanmak gerekiyordu.
+    e.preventDefault(); odemeYontemi.value = 'TAKSIT'
+  } else if (k === 'p') {
+    // Fis modunu (fiyatli/fiyatsiz) yazdirma kisayolu degil, tek tusla degistirir.
+    e.preventDefault(); fisDegiskeniniDegistir()
+  } else if (k === 'g') {
+    e.preventDefault(); geriAlYap()
+  } else if (k === 'd') {
+    // Aktif satiri cogalt: ayni urunden ikinci satir acmak icin sepetle oynamak
+    // gerekiyordu. `D` = Duplicate.
+    if (aktifSatir.value >= 0 && sepet.value[aktifSatir.value]) {
+      e.preventDefault(); aktifSatiriCogalt()
+    }
+  } else if (k === '?' || (e.key === '/' && e.shiftKey)) {
+    // `?` yerel kisayol seridini acar. NOT: normalde `useKisayollar` bunu yakalar;
+    // bu dal yalniz `?` girdi alaninin ICINDE basildiginda devreye girer.
+    e.preventDefault(); ipucuToggle()
   }
+}
+
+// Ctrl/Cmd+Z geri al. `handlePosKeys` capture fazinda calistigi icin
+// tarayicinin yerlesik geri alma (form alanlarinda) davranisini ezmemek icin
+// yalnizca SEPET bosken, yani o an odak bir metin alaninda degilken calisir.
+// F7: bugunku satislar diyalogunu acar (yalnizca okunur; POS'tan cikmaz).
+const bugunkuSatislariAc = () => {
+  bugunkuDialog.value = true
+}
+
+// F8: fis onizlemesini acar ve YAZDIR. Fis onizlemesi kapaliysa once acilir;
+// `fisiYazdir` sepet bosken geri doner (satistan sonra fiyenin yeniden
+// yazdirilmasi bu yoldan yapilir, `sonSatis` uzerinden).
+const fisOnizlemeToggle = () => {
+  if (!fisAcik.value) {
+    fisAcik.value = true
+    fisAcikKaydet()
+    nextTick(() => {
+      const kok = fisDetayRef.value?.$el || fisDetayRef.value
+      kok?.querySelector?.('.fis-detay-ozet')?.scrollIntoView?.({ block: 'nearest' })
+      // `<details>` acilmasi icin bir sonraki tick gerekiyor.
+      nextTick(() => {
+        const d = kok?.querySelector?.('details.fis-detay')
+        if (d) d.open = true
+      })
+    })
+  }
+  if (sonSatis.value || sepet.value.length) {
+    const fisNoYaz = sonSatis.value?.faturaNumarasi || null
+    const fisModu = satisOzet.value?.fisModu ?? null
+    setTimeout(() => fisiYazdir(fisNoYaz, fisModu), 60)
+  }
+}
+
+// P: fis modunu (fiyatli / fiyatsiz) tek tusla degistirir.
+const fisDegiskeniniDegistir = () => {
+  fisFiyatliGecici.value = !fisFiyatliGecici.value
+}
+
+const handlePosUndo = (e) => {
+  if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z' || e.shiftKey) return
+  if (girdideMi(e)) return
+  e.preventDefault()
+  geriAlYap()
+}
+
+// Geri al: once sepetin tamami, sonra etkin satir. Iki seviyeli geri alma zaten
+// vardi (`geriAlSepet` / `geriAlSatir`) ama YALNIZCA fare ile basilabiliyordu —
+// klavye kullanan kasada bu islem yapilamazdi.
+const geriAlYap = () => {
+  // Satir geri alma penceresi VARSa onu uygula (daha kisa sureli, yeni islem);
+  // yoksa sepetin tamamini geri al. Oncelik sirasi bilincli: kasa kullanicisi
+  // az once silinen SATIRI geri almak istiyorsa sepet geri alma calismamali.
+  if (geriAlSatir.value) geriAlSatirYap()
+  else if (geriAlSepet.value) sepetGeriAl()
+  else toast.add({
+    severity: 'info',
+    summary: t('common.toastInfo'),
+    detail: t('hizliSatis.geriAlinacakSatisYok'),
+    life: 2000
+  })
 }
 
 const odaklaAktifAdet = () => {
@@ -1014,6 +1240,8 @@ const detayAcik = ref(localStorage.getItem('raspel_pos_detay_acik') === 'true')
 
 // Bugunku satislar: sag sutunda yer kaplamasin diye dialog'da gosterilir.
 const bugunkuDialog = ref(false)
+// Fis onizleme `<details>` blogu (F8 ile acilip yazdirilir).
+const fisDetayRef = ref(null)
 
 const sepetAcikDegistir = () => {
   sepetAcik.value = !sepetAcik.value
@@ -1048,12 +1276,14 @@ const onayBekleyenSatis = ref(false)
 
 onMounted(() => {
   window.addEventListener('keydown', handlePosKeys, true)
+  window.addEventListener('keydown', handlePosUndo, true)
   window.addEventListener('online', offlineKuyruguSenkronizeEt)
   if (navigator.onLine) offlineKuyruguSenkronizeEt()
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handlePosKeys, true)
+  window.removeEventListener('keydown', handlePosUndo, true)
   window.removeEventListener('online', offlineKuyruguSenkronizeEt)
 })
 
@@ -1536,13 +1766,129 @@ const stokYokMu = (u) => Number(u?.miktar || 0) <= 0
 // Sepetteki adet: kart üzerinde rozet olarak gösterilir.
 const sepetteAdet = (id) => sepet.value.find((i) => i.id === id)?.miktar || 0
 
-const urunKartiTikla = (u) => {
+// Adet parametresi: 1 (fare/Enter) veya izgarada yazilan rakam.
+const urunKartiTikla = (u, adet = 1) => {
   if (stokYokMu(u)) {
     toastBildirim.uyari(t('hizliSatis.stokYokUyari', { ad: u.ad }))
     return
   }
-  sepeteEkle(u)
+  sepeteEkle(u, adet)
 }
+
+// ---------------------------------------------------------------------------
+// Izgara klabye modu (Faz4)
+// ---------------------------------------------------------------------------
+// Once urun kartlari yalnizca FARE ile secilebiliyordu: `↑/↓` oklari SEPETI
+// geziyor, kartlarin `tabindex` degeri vardi ama hicbir sey onlari odaklamiyordu.
+// Simdi:
+//   F3 / ↑↓ (barkod alanindayken) -> izgaraya gir, ilk kart odaklanir
+//   ↑↓←→ -> karti gez (grid genisligine gore satir sonu sarar)
+//   Enter -> secili urunu sepete ekle
+//   3 + Enter -> 3 adet ekle
+//   Sag tik / Shift+Enter -> adet penceresi
+//   Esc -> izgaradan cik, barkod alanina don
+const urunIzgaraOdak = ref(false)
+const urunIzgaraIndeks = ref(0)
+// Izgara modunda biriken rakamlar ("3" yazinca Enter bekleniyor).
+const urunIzgaraRakam = ref('')
+const urunKartDomId = (i) => `pos-urun-kart-${i}`
+
+// Izgaraya girerken seçili ürünü seçer ve kartı odaklar.
+// Varsayılan olarak STOKTA OLAN ilk karta odaklanır: stoksuz kart Enter'de
+// sadece uyarı üretir, kasiyer ölü bir seçimle karşılaşır.
+const urunIzgarayaGir = (yoksaIlkKart = false) => {
+  const liste = gorunenUrunler.value
+  if (!liste.length) return
+  urunIzgaraOdak.value = true
+  if (!yoksaIlkKart && urunIzgaraIndeks.value >= liste.length) {
+    urunIzgaraIndeks.value = 0
+  }
+  if (yoksaIlkKart || stokYokMu(liste[urunIzgaraIndeks.value])) {
+    const ilkStoklu = liste.findIndex((u) => !stokYokMu(u))
+    urunIzgaraIndeks.value = ilkStoklu === -1 ? 0 : ilkStoklu
+  }
+  urunIzgaraRakam.value = ''
+  urunIzgarayiOdakla()
+}
+
+const urunIzgarayiOdakla = () => {
+  nextTick(() => {
+    const el = document.getElementById(urunKartDomId(urunIzgaraIndeks.value))
+    el?.focus?.()
+    el?.scrollIntoView?.({ block: 'nearest' })
+  })
+}
+
+const urunIzgaradanCik = () => {
+  urunIzgaraOdak.value = false
+  urunIzgaraRakam.value = ''
+  nextTick(() => odakla(barkodInputRef))
+}
+
+const urunIzgaraHareket = (dx, dy) => {
+  const liste = gorunenUrunler.value
+  if (!liste.length) return
+  // Kac sütun var? Izgaranin gercek genisligini olcup en kucuk kart genisligiyle
+  // sutun sayisi hesaplanir (CSS `minmax(178px, 1fr)` + 12px gap).
+  const gridEl = document.querySelector('.product-grid')
+  const sutun = Math.max(1, Math.floor(((gridEl?.clientWidth || 178) + 12) / 190))
+  let i = urunIzgaraIndeks.value
+  if (dx) i += dx
+  if (dy) i += dy * sutun
+  urunIzgaraIndeks.value = Math.min(liste.length - 1, Math.max(0, i))
+  urunIzgaraRakam.value = ''
+  urunIzgarayiOdakla()
+}
+
+// Izgarada Enter: once rakam yazildiysa miktarli ekleme, yoksa 1 adet.
+const urunIzgaraSec = () => {
+  const liste = gorunenUrunler.value
+  const u = liste[urunIzgaraIndeks.value]
+  if (!u) return
+  const adet = urunIzgaraRakam.value ? parseInt(urunIzgaraRakam.value, 10) || 1 : 1
+  urunIzgaraRakam.value = ''
+  urunKartiTikla(u, adet)
+}
+
+// Sag tik / Shift+Enter ile acilan adet penceresi.
+const adetPopoverUrun = ref(null)
+const adetPopoverIndeks = ref(-1)
+const adetPopoverDeger = ref(null)
+
+const adetPopoverAc = (u, i) => {
+  if (stokYokMu(u)) {
+    toastBildirim.uyari(t('hizliSatis.stokYokUyari', { ad: u.ad }))
+    return
+  }
+  adetPopoverUrun.value = u
+  adetPopoverIndeks.value = i ?? urunIzgaraIndeks.value
+  adetPopoverDeger.value = sepetteAdet(u.id) || 1
+  adetPopoverOnayla.value = adetPopoverDeger.value
+  if (urunIzgaraOdak.value && i != null) urunIzgaraIndeks.value = i
+}
+
+const adetPopoverOnayla = ref(1)
+const adetPopoverOnaylandi = () => {
+  const u = adetPopoverUrun.value
+  const adet = Math.max(1, parseInt(adetPopoverOnayla.value, 10) || 1)
+  adetPopoverKapat()
+  if (!u) return
+  sepeteEkle(u, adet)
+}
+
+const adetPopoverKapat = () => {
+  adetPopoverUrun.value = null
+  adetPopoverIndeks.value = -1
+  adetPopoverDeger.value = null
+}
+
+// Liste daraldiginda (filtre degisimi, urun silme) indeks sinir disinda kalir.
+watch(gorunenUrunler, (list) => {
+  if (urunIzgaraIndeks.value >= list.length) urunIzgaraIndeks.value = Math.max(0, list.length - 1)
+  if (adetPopoverUrun.value && !list.some((u) => u.id === adetPopoverUrun.value.id)) {
+    adetPopoverKapat()
+  }
+})
 
 // ---------------------------------------------------------------------------
 // Sunucu taraflı ürün araması (typeahead)
@@ -1911,10 +2257,14 @@ const suruklemeBirak = (hedefIdx) => {
   suruklenenIdx.value = null
 }
 
-const sepeteEkle = async (u) => {
+// `adet` parametresi:Izgarada "5 + Enter" ile veya adet penceresinden gelen
+// miktarli ekleme. Once her ekleme 1 adettti; 20 adet almak icin 20 kez
+// tiklamak/kart tusu gerekiyordu.
+const sepeteEkle = async (u, adet = 1) => {
+  const miktar = Math.max(1, parseInt(adet, 10) || 1)
   const varOlan = sepet.value.find((i) => i.id === u.id)
   if (varOlan) {
-    varOlan.miktar++
+    varOlan.miktar += miktar
     satiriVurgula(u.id)
     return
   }
@@ -1935,7 +2285,7 @@ const sepeteEkle = async (u) => {
     ad: u.ad,
     stokKodu: u.stokKodu,
     barkod: u.barkod,
-    miktar: 1,
+    miktar,
     fiyat: temelFiyatlar[0]?.fiyat ?? stdFiyat,
     fiyatlar: temelFiyatlar,
     fiyatTipi: temelFiyatlar[0]?.ad ?? t('hizliSatis.fiyatPerakende'),
@@ -2025,10 +2375,40 @@ const sepeteCariFiyatUygula = async () => {
 // Delete/Enter/Alt+↑↓ gibi klavye kısayolları yanlış satıra yönleniyordu.
 const sepetSil = (idx) => {
   if (idx < 0 || idx >= sepet.value.length) return
+  // Once silinen satiri geri alinabilir olarak sakla. `Del` tusuyla veya
+  // `SatirEylemleri` menusinden silinen satir de bu yolla `G`/`Ctrl+Z` ile
+  // geri alinabilir; once bu islem YALNIZCA fare ile basilabiliyordu.
+  geriAlSatirKaydet(idx)
   sepet.value.splice(idx, 1)
   if (sepet.value.length === 0) aktifSatir.value = -1
   else if (aktifSatir.value > idx) aktifSatir.value -= 1
   else if (aktifSatir.value === idx) aktifSatir.value = Math.min(idx, sepet.value.length - 1)
+}
+
+// Aktif satiri cogaltir (D tusu / SatirEylemleri menusu). Kopyanin kendisi
+// geri alinabilir olur: cogaltip hemen `G`/`Ctrl+Z` yapmak cogaltmayi iptal
+// eder (kayit `cogalt` modunda yazildigi icin geri alma KOPYAYI kaldirir).
+const aktifSatiriCogalt = () => {
+  const kaynak = sepet.value[aktifSatir.value]
+  if (!kaynak) return
+  sepet.value.splice(aktifSatir.value + 1, 0, { ...kaynak })
+  aktifSatir.value += 1
+  geriAlSatirCogaltKaydet(aktifSatir.value)
+}
+
+// Baska bir indeksteki satiri cogalt (SatirEylemleri menusunden "Çoğalt").
+const satiriCogalt = (idx) => {
+  if (idx < 0 || idx >= sepet.value.length) return
+  sepet.value.splice(idx + 1, 0, { ...sepet.value[idx] })
+  geriAlSatirCogaltKaydet(idx + 1)
+}
+
+// Satir eylem menusunden "adedi sifirla": miktar alanina dokunmadan 1'e indirir.
+const adediSifirla = (idx) => {
+  const satir = sepet.value[idx]
+  if (!satir || satir.miktar <= 1) return
+  geriAlSatirKaydet(idx)
+  satir.miktar = 1
 }
 
 const miktarAzalt = (idx) => {
@@ -2040,7 +2420,7 @@ const miktarAzalt = (idx) => {
   }
   // Miktar 1'de "-": satırı doğrudan silmek, kasada farkında olmadan veri
   // kaybına yol açıyordu. Satır kaldırılır ama geri al bar'ı çıkar.
-  geriAlSatirKaydet(idx)
+  // (`sepetSil` geri al kaydini kendisi yazar.)
   sepetSil(idx)
 }
 
@@ -2050,20 +2430,41 @@ const geriAlSatir = ref(null)
 let geriAlSatirZamanlayici = null
 const GERI_AL_PENCERE_MS = 8000
 
+// Kayit iki turlu olabilir:
+//   mod 'sil'    -> kalem silindi; geri almak yeniden ekler
+//   mod 'cogalt' -> kalem kopyalandi; geri almak KOPYAYI kaldirir
+// Ikisi de ayni 8 sn penceresini paylasir; `G`/`Ctrl+Z` en son islemi geri alir.
 const geriAlSatirKaydet = (idx) => {
   const kalem = sepet.value[idx]
   if (!kalem) return
-  geriAlSatir.value = { kalem: { ...kalem }, idx }
+  geriAlSatir.value = { mod: 'sil', kalem: { ...kalem }, idx }
+  geriAlSatirZamanlayiciTazele()
+}
+const geriAlSatirCogaltKaydet = (yeniIdx) => {
+  if (yeniIdx < 0 || yeniIdx >= sepet.value.length) return
+  geriAlSatir.value = { mod: 'cogalt', idx: yeniIdx }
+  geriAlSatirZamanlayiciTazele()
+}
+const geriAlSatirZamanlayiciTazele = () => {
   clearTimeout(geriAlSatirZamanlayici)
   geriAlSatirZamanlayici = setTimeout(() => { geriAlSatir.value = null }, GERI_AL_PENCERE_MS)
 }
 
 const geriAlSatirYap = () => {
   if (!geriAlSatir.value) return
-  const { kalem, idx } = geriAlSatir.value
-  const hedef = Math.min(Math.max(idx, 0), sepet.value.length)
-  sepet.value.splice(hedef, 0, kalem)
-  aktifSatir.value = hedef
+  const { kalem, idx, mod } = geriAlSatir.value
+  if (mod === 'cogalt') {
+    // Kopyayi kaldir. Konum kaymaSina uygun sekilde bulunmali: araya yeni
+    // satir eklenmis olabilir.
+    const hedef = Math.min(Math.max(idx, 0), sepet.value.length)
+    sepet.value.splice(hedef, 1)
+    if (sepet.value.length === 0) aktifSatir.value = -1
+    else aktifSatir.value = Math.min(hedef, sepet.value.length - 1)
+  } else {
+    const hedef = Math.min(Math.max(idx, 0), sepet.value.length)
+    sepet.value.splice(hedef, 0, kalem)
+    aktifSatir.value = hedef
+  }
   geriAlSatir.value = null
   clearTimeout(geriAlSatirZamanlayici)
 }
@@ -2414,7 +2815,7 @@ const sepetiGeriAlinabilirTemizle = () => {
   if (sepet.value.length) {
     geriAlSepet.value = sepet.value.map((i) => ({ ...i }))
     clearTimeout(geriAlZamanlayici)
-    geriAlZamanlayici = setTimeout(() => { geriAlSepet.value = null }, 8000)
+    geriAlZamanlayici = setTimeout(() => { geriAlSepet.value = null }, GERI_AL_PENCERE_MS)
   }
   sepet.value = []
   aktifSatir.value = -1
@@ -2427,6 +2828,8 @@ const sepetGeriAl = () => {
   geriAlSepet.value = null
   clearTimeout(geriAlZamanlayici)
 }
+
+
 
 // Satış özeti kapatılıp yeni satışa hazırlanır: barkod alanı odaklanır.
 const yeniSatisaBasla = () => {
@@ -3096,6 +3499,58 @@ const sepetiTemizle = () => {
   display: flex;
   justify-content: center;
   padding: 12px 0 4px;
+}
+
+/* ---------------------------------------------------------------------
+   Izgara klabye modu (Faz4)
+   --------------------------------------------------------------------- */
+/* Odakli kart klavye ile secildiginde belirgin olsun: klavye kullanan
+   kullanici fareyi takip etmedigi icin odak halkasi olmazsa nerede
+   oldugunu bilemez. */
+.product-card.izgara-odakli {
+  outline: 3px solid var(--accent);
+  outline-offset: -1px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.product-card:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -1px;
+}
+
+/* Sag tik ile acilan adet penceresi. Izgara disina sabitlenir; `Escape`
+   ile kapanir (bkz. `handlePosKeys`). */
+.adet-popover {
+  position: fixed;
+  z-index: 1260; /* uygulama ici menu katmaninin uzerinde (bkz. main.js zIndex) */
+  width: min(320px, calc(100vw - 24px));
+  background: var(--surface, #fff);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  padding: 12px;
+}
+.adet-popover-ust {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+.adet-popover-ad {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.adet-popover-stok {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.adet-popover-govde {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.adet-popover-girdi {
+  width: 92px;
 }
 .empty-products {
   grid-column: 1 / -1;

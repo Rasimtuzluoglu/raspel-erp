@@ -1,14 +1,21 @@
 <template>
   <div
+    :id="domId"
     class="product-card"
-    :class="{ 'stok-yok': stokYokMu(urun), sepette: sepetteAdet > 0 }"
-    role="button"
-    tabindex="0"
+    :class="{
+      'stok-yok': stokYokMu(urun),
+      sepette: sepetteAdet > 0,
+      'izgara-odakli': odakli
+    }"
+    role="option"
+    :tabindex="tabindex === undefined ? 0 : tabindex"
+    :aria-selected="odakli"
     :aria-label="urun.ad"
     :aria-disabled="stokYokMu(urun)"
     @click="emit('sec')"
     @keydown.enter.prevent="emit('sec')"
     @keydown.space.prevent="emit('sec')"
+    @contextmenu.prevent="emit('adet-ist')"
   >
     <div class="product-gorsel">
       <img
@@ -63,9 +70,15 @@ import { formatCurrency } from '../utils/format.js'
 defineProps({
   urun: { type: Object, required: true },
   cariFiyat: { type: Number, default: null },
-  sepetteAdet: { type: Number, default: 0 }
+  sepetteAdet: { type: Number, default: 0 },
+  // Izgara klavyeyle gezilebilirken (HizliSatis `urunIzgaraOdak`) aktif kart
+  // vurgulanir ve `aria-selected` ile duyurulur. Roving tabindex: odakli kart 0,
+  // digerleri -1 (Tab tek seferde ızgaraya girer, ok tuslari icerde gezer).
+  odakli: { type: Boolean, default: false },
+  tabindex: { type: Number, default: undefined },
+  domId: { type: String, default: undefined }
 })
-const emit = defineEmits(['sec'])
+const emit = defineEmits(['sec', 'adet-ist'])
 const { t } = useI18n()
 
 const satisFiyati = (u) => Number(u?.satisFiyati || u?.fiyat || 0)

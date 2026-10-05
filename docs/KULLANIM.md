@@ -42,16 +42,58 @@
 | Kısayol | İşlev |
 |---|---|
 | `Ctrl+K` | Hızlı arama (9 modül + son aramalar) |
-| `Ctrl+S` | Form kaydet |
+| `Ctrl+S` | Form kaydet (POS sayfasında: satışı tamamla) |
 | `Ctrl+P` | Yazdır (fiş/fatura) |
 | `F2` | Hızlı Satış'a git (POS sayfasında: sepeti temizle) |
 | `F4` | Stoklar'a git (POS sayfasında: müşteri seçimi) |
 | `Esc` | Dialog kapat / iptal |
-| `G` + harf | Hızlı gezinme (g+c cari, g+f fatura, g+h POS) |
+| `G` + harf | Hızlı gezinme (g+c cari, g+f fatura, g+h POS) — **POS sayfasında devre dışı** |
 | `Ctrl+Shift+H` | Sunum (Müşteri) modunu aç/kapat |
-| `?` | Klavye kısayolları rehberini aç |
+| `?` | Kısayol rehberi (POS sayfasında: POS'a özel ipucu şeridi) |
 
-**Hızlı Satış (POS) sayfasında:** `F1` barkod alanına odak, `F3` ürün arama, `F5` yeni müşteri, `F6` kamera tarayıcı, `F9` tam ödeme + tamamla, `F10` kısmi ödeme + tamamla, `N`/`K`/`H` ödeme yöntemi (Nakit/Kart/Havale), `Alt+↑`/`Alt+↓` aktif satır miktarı, `Del` aktif satırı sil.
+### Hızlı Satış (POS) sayfası
+
+POS tamamen klavyeyle kullanılabilir; fare zorunlu değildir.
+
+**Sepet ve satış**
+
+| Kısayol | İşlev |
+|---|---|
+| `F1` | Barkod alanına odak |
+| `F2` | Sepeti temizle (8 sn geri alınabilir) |
+| `F3` | Ürün arama kutusuna odak |
+| `F4` | Müşteri seçimi |
+| `F5` | Yeni müşteri |
+| `F6` | Kamera barkod tarayıcı |
+| `F7` | Bugünkü satışlar |
+| `F8` | Fiş yazdır |
+| `F9` | Tam ödeme + satışı tamamla |
+| `F10` | Kısmi ödeme + satışı tamamla |
+| `F11` | Termal fiş yazdır |
+| `↑` / `↓` | Aktif satırda gezin |
+| `Enter` | Aktif satırın miktar alanına odak |
+| `Alt+↑` / `Alt+↓` | Aktif satırın miktarını artır/azalt |
+| `Del` | Aktif satırı sil |
+| `D` | Aktif satırı çoğalt |
+| `G` / `Ctrl+Z` | Geri al (son satır işlemini, yoksa sepeti) |
+| `N` / `K` / `H` / `T` | Ödeme yöntemi: Nakit / Kart / Havale / Taksit |
+| `P` | Fiş modunu değiştir (fiyatlı ↔ fiyatsız) |
+
+**Ürün ızgarası** — klavye ile tüm ürünlere erişilir:
+
+| Kısayol | İşlev |
+|---|---|
+| `↓` (metin alanındayken) | Ürün ızgarasına gir (ilk stokta olan ürüne odaklanır) |
+| `↑` `↓` `←` `→` | Izgarada ürün arasında gez |
+| `Enter` | Seçili ürünü sepete ekle |
+| `3` `Enter` | **3 adet** ekle (rakamlar doğrudan miktarı belirler) |
+| `Shift+Enter` | Adet penceresi (herhangi bir miktar) |
+| Sağ tık | Adet penceresini açar |
+| `Esc` | Izgaradan çık, barkod alanına dön |
+
+> **Not:** `G`+harf hızlı gezinmesi POS sayfasında **devre dışıdır**; çünkü
+> `N`/`K`/`H`/`T`/`P`/`G` tuşları ödeme yöntemi, fiş modu ve geri alma atanır.
+> POS'tan çıkmak için menüyü veya `Esc` zincirini kullanın.
 
 **Sunum (Müşteri) Modu:** Kenar çubuğundaki göz simgesiyle veya `Ctrl+Shift+H` ile tek tıkla açılır; açıkken ekranın üstünde bir bilgilendirme şeridi görünür. Maliyet/alış, kâr/marj, cari bakiye, ciro/hedef, banka/kasa bakiyesi, tedarikçi, maaş/bordro ve muhasebe/bütçe/vergi tutarları gizlenir. Şeritten **Bulanık** veya **Gizle** maskeleme stili seçilebilir. Oturum bazlıdır; sayfa yenilenince kapanır. (Fatura/fiş çıktıları ve satış fiyatları gizlenmez.)
 

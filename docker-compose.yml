@@ -36,7 +36,18 @@ services:
       - "traefik.http.routers.dashboard.rule=PathPrefix(`/dashboard`)"
       - "traefik.http.routers.dashboard.service=api@internal"
       - "traefik.http.routers.dashboard.entrypoints=traefik"
-      - "traefik.http.routers.dashboard.middlewares=dashboard-auth@file"
+      # DASHBOARD_MIDDLEWARES doluysa (ornegin `.env`'de
+      # `DASHBOARD_MIDDLEWARES=dashboard-auth@file`) temel kimlik dogrulama
+      # uygulanir. BOSSA hic middleware uygulanmaz.
+      #
+      # Neden bos birakilabiliyor: dashboard `traefik` entrypoint'inde ve bu port
+      # SADECE 127.0.0.1'e baglidir (asagida `127.0.0.1:8080:8080`), yani dis
+      # agdan erisilemez. `dashboard-auth` middleware'i `dynamic.yml`'de yalnizca
+      # DASHBOARD_BASIC_AUTH doluyken tanimlanir; auth tanimli degilken bu
+      # middleware'e atif yapmak dosya saglayicisini hata durumuna dusuruyordu.
+      # URETIMDE `.env`'de `DASHBOARD_MIDDLEWARES=dashboard-auth@file` VE
+      # `DASHBOARD_BASIC_AUTH=<htpasswd>` ZORUNLUDUR (docs/GO-LIVE.md).
+      - "traefik.http.routers.dashboard.middlewares=${DASHBOARD_MIDDLEWARES:-}"
     restart: unless-stopped
     networks:
       - frontend-net

@@ -131,12 +131,25 @@
           style="width: 110px"
         >
           <template #body="s">
-            <InputNumber
-              v-model="s.data.adet"
-              :min="1"
-              class="w-full sayi-girdi"
-              @focus="sec($event)"
-            />
+            <!-- Adet alani stokta kac adet oldugunu gosterir. Adet stoktan
+                 fazlaysa hucre kirmiziya doner; satir kayittan once
+                 `Satis.vue`de onay istiyor. -->
+            <div
+              class="adet-sarici"
+              :class="{ 'stok-yetersiz': stokYetersizMu(s.data) }"
+            >
+              <InputNumber
+                v-model="s.data.adet"
+                :min="1"
+                class="w-full sayi-girdi"
+                @focus="sec($event)"
+              />
+              <small
+                v-if="stokBilgisiGosterilebilir(s.data)"
+                class="stok-notu"
+                :class="{ kritik: stokKritikMu(s.data) }"
+              >{{ $t('faturaKalemleri.stokMiktari', { n: s.data.stokMiktar }) }}</small>
+            </div>
           </template>
         </Column>
         <Column
@@ -159,11 +172,15 @@
           style="width: 100px"
         >
           <template #body="s">
+            <!-- Bos birakilirsa: sunucudaki kademeli indirim kurallari uygulanir.
+                 Deger yazilirsa elle indirim yapilmis olur ve kurallar devreye girmez.
+                 Yuzde degil, tutar yazilmadi; bosluk anlamlidir. -->
             <InputNumber
               v-model="s.data.iskontoOrani"
               :min="0"
               :max="100"
               :min-fraction-digits="0"
+              :placeholder="$t('faturaKalemleri.iskontoKural')"
               class="w-full sayi-girdi"
               @focus="sec($event)"
             />
@@ -300,11 +317,13 @@
           </label>
           <label>
             <small>{{ $t('faturaKalemleri.iskonto') }}</small>
+            <!-- Bkz. masaustu tablo sutunu: bos = sunucu kurallari uygulanir. -->
             <InputNumber
               v-model="k.iskontoOrani"
               :min="0"
               :max="100"
               :min-fraction-digits="0"
+              :placeholder="$t('faturaKalemleri.iskontoKural')"
               class="w-full sayi-girdi"
               @focus="sec($event)"
             />
@@ -461,8 +480,17 @@ const kalemEkle = () => {
     aciklama: s?.ad ?? '',
     adet: yeni.adet || 1,
     birimFiyat: yeni.fiyat || 0,
-    iskontoOrani: 0,
-    kdvOrani: yeni.kdv ?? props.kdvVarsayilan
+    // Iskonto alani BILINCLI OLARAK BIRAKILIR (null). Backend'de null iskonto
+    // goruldugunde `IskontoMotoruService` devreye girer ve sirketin kademeli
+    // indirim kurallarini uygular. Once sabit `0` gonderiliyordu; backend
+    // `0`'i "iskonto yok" sayip motoru hic cagirmiyordu, yani tanimli indirim
+    // kurallari satistan hicbir zaman uygulanmiyordu.
+    iskontoOrani: null,
+    kdvOrani: yeni.kdv ?? props.kdvVarsayilan,
+    // Stokta KAC ADET oldugu kalemle birlikte tasinir. Satis ekrani kayittan
+    // once adet > stok durumunu kontrol edip kullaniciyi uyarir
+    // (`satis.yetersizStok`); bu olmadan fazla satis sessizce olusuyordu.
+    stokMiktar: s?.miktar != null ? Number(s.miktar) : null
   })
   // Satir ekleme hizli olsun: stok temizlenir, adet 1'e doner, KDV varsayilan kalir.
   yeni.stok = null
@@ -478,6 +506,13 @@ const kalemEkle = () => {
 const stokSecsizKalemler = computed(() =>
   (props.kalemler || []).filter((k) => !k.stokId && k.aciklama && k.aciklama.trim())
 )
+
+// Stok miktari bilinen satirlarda gosterilir; bilinmiyorsa (serbest metin, eski
+// kayit) alan bos kalir — yanlis bir "stokta 0" bilgisi gostermekten iyidir.
+const stokBilgisiGosterilebilir = (k) => !!k?.stokId && k.stokMiktar != null
+const stokYetersizMu = (k) =>
+  stokBilgisiGosterilebilir(k) && Number(k.adet || 0) > Number(k.stokMiktar)
+const stokKritikMu = (k) => stokBilgisiGosterilebilir(k) && Number(k.stokMiktar) <= 0
 
 // Satiri kopyala: mevcut degerler korunur, kayit kimligi tasinmaz (yeni satir).
 const cogalt = (kalem) => {
@@ -625,6 +660,27 @@ const cogalt = (kalem) => {
 .kalem-kart-tutar strong {
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
+}
+
+/* Adet alani + stok miktari rozeti. Adet stoktan fazlaysa hucre kirmizi. */
+.adet-sarici {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stok-notu {
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.stok-notu.kritik {
+  color: var(--danger, #dc2626);
+}
+.adet-sarici.stok-yetersiz :deep(.p-inputnumber-input) {
+  border-color: var(--danger, #dc2626);
+  color: var(--danger, #dc2626);
+  font-weight: 600;
 }
 
 @media (max-width: 720px) {

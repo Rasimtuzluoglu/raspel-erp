@@ -8,10 +8,30 @@ describe('satisPayload.js', () => {
     expect(k.adet).toBe(2)
     expect(k.birimFiyat).toBe(60)
     expect(k.kdvOrani).toBe(20)
-    expect(k.iskontoOrani).toBe(0)
     expect(k.stokId).toBeNull()
     // KDV dahil satir tutari
     expect(k.tutar).toBe(120)
+  })
+
+  // KRITIK: Iskonto kullanicinin GIRMEDIGI durumda null gonderilmelidir. Backend
+  // (`FaturaService`) null gordugunde `IskontoMotoruService` calistirir; `0`
+  // gondermek motoru tamamen atlar ve kademeli indirim kurallari hic uygulanmaz.
+  it('normalizeKalem iskonto girilmediginde alani HIC gondermez (motor calissin)', () => {
+    const k = normalizeKalem({ ad: 'Ürün', miktar: 2, fiyat: 60 })
+    expect('iskontoOrani' in k).toBe(false)
+    // Ekran tutari yine de iskontosuz brut olur (motor uygulanmamis varsayim)
+    expect(k.tutar).toBe(120)
+  })
+
+  it('normalizeKalem yalnizca ANLAMLI iskonto degerini gonderir', () => {
+    // Kullanici bilerek sifir indirim istiyor -> 0 gonderilir
+    expect(normalizeKalem({ iskontoOrani: 0 }).iskontoOrani).toBe(0)
+    // Elle indirim -> deger gonderilir
+    expect(normalizeKalem({ iskontoOrani: 15 }).iskontoOrani).toBe(15)
+    // Bos string (input temizlenmis) -> motor calissin
+    expect('iskontoOrani' in normalizeKalem({ iskontoOrani: '' })).toBe(false)
+    // null -> motor calissin
+    expect('iskontoOrani' in normalizeKalem({ iskontoOrani: null })).toBe(false)
   })
 
   it('normalizeKalem kalem kimligini yalnizca varsa tasir', () => {

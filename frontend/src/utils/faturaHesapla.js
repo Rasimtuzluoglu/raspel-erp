@@ -1,4 +1,8 @@
-const VARSAYILAN_KDV_ORANI = 20
+// Stok kartinda KDV orani tanimli DEGILSE kullanilacak oran (KDV'ye tabi
+// standart mal/hizmet orani). Satis ekranindaki varsayilan da BUNUNLA ayni
+// olmali: aksi halde kullanici %0 gosterirken backend %20 hesaplar ve ekrandaki
+// toplam ile kaydedilen toplam ayrisir.
+export const VARSAYILAN_KDV_ORANI = 20
 
 export const kdvOrani = (kalem) => kalem?.kdvOrani ?? VARSAYILAN_KDV_ORANI
 

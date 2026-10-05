@@ -46,6 +46,12 @@ function girdiMi() {
   return aktif && (aktif.tagName === 'INPUT' || aktif.tagName === 'TEXTAREA' || aktif.isContentEditable)
 }
 
+// `g` + harf ile gezinme ozelligini gecici olarak kapatmak icin sayisal saya.
+// POS (HizliSatis) `n/k/h/t/p/g` harflerini ODEME YONTEMI ve GERI AL icin
+// kullaniyordu; `g` ile baslayan gezinme bu harfleri yutuyor, yani POS'tan
+// cikis kisayolu (`g h`) sessizce OLMEYDI. Saya 0'dan buyukse gezinme kapali.
+let gezinmeAskida = 0
+
 function handler(e) {
   const ctrl = e.ctrlKey || e.metaKey
   // e.key bazi sentetik/edge-case olaylarda tanimsiz olabilir; cokmesin.
@@ -86,8 +92,12 @@ function handler(e) {
   }
   // "?" ile kısayol rehberini aç
   if (e.key === '?' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !girdiMi()) {
+    // Sayfa kendi ipucunu acmak istiyorsa `ipucu` eylemi calisir ve global
+    // rehber DEVREYE GIRMEZ. Boylece POS'ta `?` yerel kısayol şeridini açar.
+    if (!calistir('ipucu')) {
+      window.dispatchEvent(new CustomEvent('kisayol-rehberi-ac'))
+    }
     e.preventDefault()
-    window.dispatchEvent(new CustomEvent('kisayol-rehberi-ac'))
     return
   }
 
@@ -97,7 +107,7 @@ function handler(e) {
     return
   }
 
-  if (!ctrl && !e.metaKey && !e.altKey) {
+  if (!ctrl && !e.metaKey && !e.altKey && gezinmeAskida === 0) {
     if (key === 'g') {
       e.preventDefault()
       gAktif = true
@@ -121,13 +131,39 @@ function handler(e) {
 // preventDefault() cagirir (App.vue defaultPrevented kontrolu ile atlar).
 window.addEventListener('keydown', handler, true)
 
-export function useKisayollar({ kaydet: kaydetFn, iptal, yeni, yazdir, ara } = {}) {
+/**
+ * Sayfaya ozgu kisayol kaydeder.
+ *
+ * @param {object} secenek
+ * @param {Function} [secenek.kaydet]  Ctrl/Cmd+S
+ * @param {Function} [secenek.iptal]   Esc (once sayfa dialoglarini kapatir)
+ * @param {Function} [secenek.yeni]    F2 (yeni kayit)
+ * @param {Function} [secenek.yazdir]  Ctrl/Cmd+P
+ * @param {Function} [secenek.ara]     Ctrl/Cmd+K
+ * @param {Function} [secenek.ipucu]   `?` — sayfaya ozgu ipucu. Verilirse global
+ *   KisayolRehberi acilmaz; bu sayfada o komut yerel ipucuna gider.
+ * @param {boolean}  [secenek.gezinmeKapat] `g`+harf gezinmesini kapatir. Tek
+ *   harfli kisayollari olan ekranlarda (POS: n/k/h/t/p/g) `g` gezinmesi bu
+ *   harfleri yuttugu icin kapatilmalidir.
+ */
+export function useKisayollar({
+  kaydet: kaydetFn,
+  iptal,
+  yeni,
+  yazdir,
+  ara,
+  ipucu,
+  gezinmeKapat = false
+} = {}) {
+  if (gezinmeKapat) gezinmeAskida++
+
   onMounted(() => {
     if (kaydetFn) kaydet('kaydet', kaydetFn)
     if (iptal) kaydet('iptal', iptal)
     if (yeni) kaydet('yeni', yeni)
     if (yazdir) kaydet('yazdir', yazdir)
     if (ara) kaydet('ara', ara)
+    if (ipucu) kaydet('ipucu', ipucu)
   })
   onUnmounted(() => {
     if (kaydetFn) kaldir('kaydet', kaydetFn)
@@ -135,5 +171,10 @@ export function useKisayollar({ kaydet: kaydetFn, iptal, yeni, yazdir, ara } = {
     if (yeni) kaldir('yeni', yeni)
     if (yazdir) kaldir('yazdir', yazdir)
     if (ara) kaldir('ara', ara)
+    if (ipucu) kaldir('ipucu', ipucu)
+    // Saya KESIN azaltilir: ayni sayfa iki kez mount olup iki kez unmount
+    // olsa da (HMR, keep-alive) sayac kalici olarak sifirlanmaz, aksine
+    // asagi duserse gecici kisayollar sayfadan cikinca gezinme KAPANIR kalir.
+    gezinmeAskida = Math.max(0, gezinmeAskida - 1)
   })
 }
