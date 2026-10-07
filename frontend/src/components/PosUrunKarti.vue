@@ -15,7 +15,7 @@
     @click="emit('sec')"
     @keydown.enter.prevent="emit('sec')"
     @keydown.space.prevent="emit('sec')"
-    @contextmenu.prevent="emit('adet-ist')"
+    @contextmenu.prevent="emit('adet-ist', $event)"
   >
     <div class="product-gorsel">
       <img

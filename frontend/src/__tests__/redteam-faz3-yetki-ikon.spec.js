@@ -349,13 +349,12 @@ describe('REDTEAM Faz3.3 - PrimeVue 4: p-input-icon-left kaldirildi', () => {
   it('dönüştürülen dosyalar IconField + InputIcon kullaniyor olmali', () => {
     const donusen = [
       'components/TeklifListesi.vue',
+      'components/YasalIcerik.vue',
       'views/AdresDefteri.vue',
       'views/CariHesaplar.vue',
       'views/FaturaGecmisRaporu.vue',
       'views/Faturalar.vue',
-      'views/GizlilikPolitikasi.vue',
       'views/HizliSatis.vue',
-      'views/KullanimSartlari.vue',
       'views/Satis.vue',
       'views/Stoklar.vue'
     ]
@@ -382,8 +381,10 @@ describe('REDTEAM Faz3.3 - PrimeVue 4: p-input-icon-left kaldirildi', () => {
   })
 
   it('Stoklar dogrulanmis .p-iconfield seçicisini kullaniyor', () => {
-    const dosya = vueDosyalari().find((d) => d.endsWith('Stoklar.vue'))
-    const kod = yorumsuz(readFileSync(dosya, 'utf8'))
+    // REDTEAM/Faz8: Stoklar'in <style scoped> blogu `assets/stoklar.css`
+    // dosyasina tasindi; kural artik ORADA aranmali.
+    const stilYolu = join(process.cwd(), 'src', 'assets', 'stoklar.css')
+    const kod = yorumsuz(readFileSync(stilYolu, 'utf8'))
     expect(kod).toMatch(/\.filter-bar > \.p-iconfield\b/)
   })
 })

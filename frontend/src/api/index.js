@@ -46,6 +46,7 @@ export {
   sohbetOdaAPI,
   ajandaAPI,
   bildirimAPI,
+  iletisimAPI,
   sistemDurumAPI,
   sirketAPI,
   subeAPI,

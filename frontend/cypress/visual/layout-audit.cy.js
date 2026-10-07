@@ -16,7 +16,6 @@ describe('Layout Violation Audit', () => {
     ['raporlar', '/raporlar'],
     ['kullanicilar', '/kullanicilar'],
     ['stoklar', '/stoklar'],
-    ['toplu-stok', '/toplu-stok'],
     ['satinalma', '/satinalma'],
     ['personel', '/personel'],
     ['izinler', '/izinler'],

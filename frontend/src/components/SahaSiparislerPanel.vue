@@ -17,7 +17,7 @@
         <div class="card-top">
           <span class="order-code">#{{ s.siparisNo || s.id }}</span>
           <Tag
-            :value="s.durum || 'BEKLIYOR'"
+            :value="durumEtiket(s.durum)"
             :severity="siparisDurumSeverity(s.durum)"
             rounded
           />
@@ -41,7 +41,7 @@
             <strong>{{ formatTarih(s.tarih) }}</strong>
           </div>
           <div class="price-col text-right">
-            <small>Tutar</small>
+            <small>{{ $t('sahaPortali.tutar') }}</small>
             <span class="price-val">{{ formatCurrency(s.toplamTutar || s.genelToplam || 0) }}</span>
           </div>
         </div>
@@ -77,7 +77,7 @@
           class="delivery-actions"
         >
           <Button
-            label="Durum"
+            :label="$t('common.status')"
             icon="pi pi-sync"
             class="p-button-outlined p-button-sm flex-1"
             @click="$emit('durum-sec', s)"
@@ -104,6 +104,9 @@
 
 <script setup>
 import { formatCurrency, formatTarih } from '../utils/format.js'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 defineProps({
   siparisler: { type: Array, default: () => [] }
@@ -114,6 +117,14 @@ defineEmits(['durum-sec', 'imza-ac', 'whatsapp'])
 const siparisDurumSeverity = (durum) => {
   const map = { BEKLIYOR: 'warning', HAZIRLANIYOR: 'info', YOLDA: 'help', TESLIM_EDILDI: 'success', IPTAL: 'danger' }
   return map[durum] || 'info'
+}
+
+// Durum kodlarini cevir (siparisTakip.durum.<KOD>; yoksa kodun kendisi).
+const durumEtiket = (kod) => {
+  if (!kod) return t('siparisTakip.durum.BEKLIYOR')
+  const anahtar = `siparisTakip.durum.${kod}`
+  const ceviri = t(anahtar)
+  return ceviri === anahtar ? kod : ceviri
 }
 </script>
 

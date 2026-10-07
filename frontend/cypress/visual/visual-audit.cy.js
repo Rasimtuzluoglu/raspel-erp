@@ -151,7 +151,6 @@ describe('Visual Audit Screenshots', () => {
     ['raporlar', '/raporlar'],
     ['kullanicilar', '/kullanicilar'],
     ['stoklar', '/stoklar'],
-    ['toplu-stok', '/toplu-stok'],
     ['satinalma', '/satinalma'],
     ['personel', '/personel'],
     ['izinler', '/izinler'],

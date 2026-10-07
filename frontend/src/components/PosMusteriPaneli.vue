@@ -160,6 +160,7 @@
         <div
           v-if="seciliSofor"
           class="teslim-eden-alan"
+          :class="{ 'alan-hata': hatalar && hatalar.teslimatAdresi }"
         >
           <label for="hizli-teslim-adres">
             {{ t('hizliSatis.teslimatAdresi') }} <span class="zorunlu">*</span>
@@ -168,9 +169,20 @@
             id="hizli-teslim-adres"
             :model-value="teslimatAdresi"
             :placeholder="t('hizliSatis.adresPlaceholder')"
+            :invalid="!!(hatalar && hatalar.teslimatAdresi)"
             class="w-full"
             @update:model-value="$emit('update:teslimatAdresi', $event)"
           />
+          <!-- Dogrulama hatasi satir ici gosterilir. Once yalnizca toast
+               cikiyordu; kasiyer hangi alanin eksik oldugunu ekranda
+               goremiyordu (panel kapaliyken alan HIC gorunmuyordu). -->
+          <small
+            v-if="hatalar && hatalar.teslimatAdresi"
+            class="alan-hata-metin"
+          >
+            <i class="pi pi-exclamation-circle" />
+            {{ t('hizliSatis.teslimatAdresiGerekli') }}
+          </small>
         </div>
         <div
           v-if="seciliSofor"
@@ -223,7 +235,9 @@ defineProps({
   teslimatAdresi: { type: String, default: '' },
   teslimDurumu: { type: String, default: 'BEKLIYOR' },
   teslimDurumSecenekleri: { type: Array, default: () => [] },
-  teslimNotu: { type: String, default: '' }
+  teslimNotu: { type: String, default: '' },
+  /** Alan bazli dogrulama hatalari (orn. `teslimatAdresi: true`). */
+  hatalar: { type: Object, default: null }
 })
 
 defineEmits([

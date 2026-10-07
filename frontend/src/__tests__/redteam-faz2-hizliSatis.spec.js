@@ -172,25 +172,44 @@ describe('REDTEAM Faz2.2 - AutoComplete `dropdown` oku + minLength cakismasi', (
 })
 
 // ---------------------------------------------------------------------------
-describe('REDTEAM Faz2.3 - Cift gecikme (debounce) kalmamali', () => {
-  it('AutoComplete :delay ve koddaki setTimeout birlikte kullanilmamali', () => {
-    const dosya = join(KOK, 'views', 'HizliSatis.vue')
-    const icerik = yorumsuz(readFileSync(dosya, 'utf8'))
-
-    // :delay="0" -> PrimeVue debounce yok; gecikme tek yerden yonetilir
+// ASAMA 0 NOTU (Faz2.3): eski denetim yalnizca `HizliSatis.vue` icindeki tek
+// bir satiri sabitliyordu (`:min-length="2"` + `:delay="0"` ve
+// `urunOneriZamanlayici` sayimi). Faz3'te urun aramasi `useStokOnerileri`
+// composable'ina tasinacagi icin bu satirlar kaybolacak, kural da kaybolurdu.
+//
+// Dogru kural capraz dosya seviyesinde korunuyor: bir AutoComplete `:delay`
+// degeri tasiyorsa bu deger 0 olmalidir; aksi halde PrimeVue'nun kendi
+// debounce'u ile kod ici `setTimeout` birlikte calisir ve yarisma olur.
+// ---------------------------------------------------------------------------
+describe('REDTEAM Faz2.3 - AutoComplete gecikmesi tek kaynaktan', () => {
+  it('AutoComplete `:delay` degeri tanimliysa 0 olmali (debounce kodda yonetilir)', () => {
+    // `:delay` sifirdan farkli bir deger PrimeVue'nin KENDI debounce'unu
+    // acar; ayni is icin kodda da `setTimeout` varsa iki kuyruk yarisir ve
+    // yarisma belirtisi (eski istek yeni sonucu ezer) ortaya cikar.
+    const ihlaller = []
+    for (const dosya of vueDosyalari()) {
+      const icerik = yorumsuz(readFileSync(dosya, 'utf8'))
+      const bloklar = icerik.match(/<AutoComplete[\s\S]*?>/g) || []
+      bloklar.forEach((blok) => {
+        const eslesme = blok.match(/:delay\s*=\s*"(\d+)"/)
+        if (eslesme && Number(eslesme[1]) !== 0) {
+          const satirNo = icerik.slice(0, icerik.indexOf(blok)).split(/\r?\n/).length
+          ihlaller.push(
+            `${relative(process.cwd(), dosya)}:${satirNo}  :delay="${eslesme[1]}"  ` +
+            '→ PrimeVue debounce\'u + kod içi gecikme birlikte çalışır; :delay="0" kullanın'
+          )
+        }
+      })
+    }
     expect(
-      icerik,
-      'Ürün arama AutoComplete :delay değeri 0 olmalı (kod zaten 250ms debounce yapıyor)'
-    ).toMatch(/<AutoComplete[\s\S]*?:min-length="2"\s*\n\s*:delay="0"/)
-
-    // Kodda tek bir setTimeout olmali (urunOneriZamanlayici)
-    const setTimeoutSayisi = (icerik.match(/urunOneriZamanlayici\s*=\s*setTimeout/g) || []).length
-    expect(setTimeoutSayisi, 'Ürün öneri gecikmesi tek noktada yönetilmeli').toBe(1)
+      ihlaller,
+      'AutoComplete çift gecikme kaynağı bulundu:\n' + ihlaller.join('\n')
+    ).toEqual([])
   })
 })
 
 // ---------------------------------------------------------------------------
-describe('REDTEAM Faz2.4 - POS stok katalogu 50 urunle sinirli degil', () => {
+describe('REDTEAM Faz2.4 - POS stok katalogu sunucudan sayfali gelmeli', () => {
   it('stokStore.getAll parametresiz cagrilmamali (backend varsayilani 50 doner)', () => {
     const dosya = join(KOK, 'views', 'HizliSatis.vue')
     const icerik = yorumsuz(readFileSync(dosya, 'utf8'))
@@ -203,11 +222,15 @@ describe('REDTEAM Faz2.4 - POS stok katalogu 50 urunle sinirli degil', () => {
     ).toEqual([])
   })
 
-  it('stok yuklemesi global max-page-size (200) ile yapilmali', () => {
-    const dosya = join(KOK, 'views', 'HizliSatis.vue')
-    const icerik = yorumsuz(readFileSync(dosya, 'utf8'))
-    expect(icerik).toMatch(/stokStore\.getAll\(\{\s*size:\s*200\s*\}\)/)
-  })
+  // ASAMA 0 NOTU: burada `stokStore.getAll({ size: 200 })` DEGERINE PINLENEN
+  // bir denetim vardi ("katalog 200 urunle sinirli olmamali" diye yaziyordu
+  // ama aslinda 200 degerine kilitleniyordu). Bu tam olarak kaldirilacak sey:
+  // Faz3'te katalog sunucu taraflı aramaya (`GET /api/stoklar/filtreli`)
+  // gecirilecek ve 200 urunluk istemci tavani kalkacak. Degere kilitlenen
+  // denetim, kurali degil TAVANI koruyordu; tavani bilerek kaldiriyoruz.
+  //
+  // Korunmaya devam eden kural yukarida: parametresiz cagri yapilmaz, yani
+  // katalog istemeden backend'in 50 urunluk varsayilanina dusmez.
 })
 
 // ---------------------------------------------------------------------------

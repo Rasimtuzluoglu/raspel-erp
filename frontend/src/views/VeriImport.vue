@@ -189,6 +189,68 @@
           </div>
         </template>
       </Card>
+
+      <Card>
+        <template #title>
+          <i
+            class="pi pi-money-bill"
+            style="margin-right: 8px"
+          />{{ t('veriImport.hareketAktar') }}
+        </template>
+        <template #content>
+          <p class="import-desc">
+            {{ t('veriImport.hareketDesc') }}
+            <code>cariId;tarih;tur;tutar;aciklama</code> {{ t('veriImport.hareketNot') }}
+          </p>
+          <div
+            class="import-dropzone"
+            @dragover.prevent
+            @drop.prevent="dosyaSec($event, 'hareket')"
+            @click="$refs.hareketInput.click()"
+          >
+            <input
+              ref="hareketInput"
+              type="file"
+              accept=".csv"
+              hidden
+              @change="dosyaDegisti($event, 'hareket')"
+            >
+            <i class="pi pi-upload" />
+            <span>{{ hareketDosya ? hareketDosya.name : t('veriImport.csvSecin') }}</span>
+          </div>
+          <Button
+            v-if="hareketDosya"
+            :label="t('veriImport.aktar')"
+            icon="pi pi-upload"
+            class="p-button-success w-full"
+            :loading="hareketYukleniyor"
+            @click="aktar('hareket')"
+          />
+          <div
+            v-if="hareketSonuc"
+            class="import-sonuc"
+          >
+            <Message
+              :severity="hareketSonuc.hatalar?.length ? 'warn' : 'success'"
+              :closable="true"
+            >
+              <strong>{{ t('veriImport.hareketAktarildi', { n: hareketSonuc.basarili }) }}</strong>
+              <span v-if="hareketSonuc.hatalar?.length"> {{ t('veriImport.hataSayisi', { n: hareketSonuc.hatalar.length }) }}</span>
+            </Message>
+            <ul
+              v-if="hareketSonuc.hatalar?.length"
+              class="hata-listesi"
+            >
+              <li
+                v-for="h in hareketSonuc.hatalar"
+                :key="h"
+              >
+                {{ h }}
+              </li>
+            </ul>
+          </div>
+        </template>
+      </Card>
     </div>
   </div>
 </template>
@@ -206,41 +268,41 @@ const { t } = useI18n()
 const stokDosya = ref(null)
 const cariDosya = ref(null)
 const alisFaturaDosya = ref(null)
+const hareketDosya = ref(null)
 const stokYukleniyor = ref(false)
 const cariYukleniyor = ref(false)
 const alisFaturaYukleniyor = ref(false)
+const hareketYukleniyor = ref(false)
 const stokSonuc = ref(null)
 const cariSonuc = ref(null)
 const alisFaturaSonuc = ref(null)
+const hareketSonuc = ref(null)
+
+// Faz 2.7: import türleri tek haritada toplanır (yeni tür eklemek kolay).
+const dosyaRef = { stok: stokDosya, cari: cariDosya, alisFatura: alisFaturaDosya, hareket: hareketDosya }
+const yukleniyorRef = { stok: stokYukleniyor, cari: cariYukleniyor, alisFatura: alisFaturaYukleniyor, hareket: hareketYukleniyor }
+const sonucRef = { stok: stokSonuc, cari: cariSonuc, alisFatura: alisFaturaSonuc, hareket: hareketSonuc }
+const apiRef = { stok: importAPI.stok, cari: importAPI.cari, alisFatura: importAPI.alisFatura, hareket: importAPI.hareket }
 
 const dosyaDegisti = (e, tur) => {
   const file = e.target.files[0]
-  if (file) {
-    if (tur === 'stok') stokDosya.value = file
-    else if (tur === 'cari') cariDosya.value = file
-    else alisFaturaDosya.value = file
-  }
+  if (file) dosyaRef[tur].value = file
 }
 
 const dosyaSec = (e, tur) => {
   const file = e.dataTransfer.files[0]
-  if (file) {
-    if (tur === 'stok') stokDosya.value = file
-    else if (tur === 'cari') cariDosya.value = file
-    else alisFaturaDosya.value = file
-  }
+  if (file) dosyaRef[tur].value = file
 }
 
 const aktar = async (tur) => {
-  const file = tur === 'stok' ? stokDosya.value : tur === 'cari' ? cariDosya.value : alisFaturaDosya.value
+  const file = dosyaRef[tur].value
   if (!file) return
-  const loading = tur === 'stok' ? stokYukleniyor : tur === 'cari' ? cariYukleniyor : alisFaturaYukleniyor
-  const sonuc = tur === 'stok' ? stokSonuc : tur === 'cari' ? cariSonuc : alisFaturaSonuc
+  const loading = yukleniyorRef[tur]
+  const sonuc = sonucRef[tur]
   loading.value = true
   sonuc.value = null
   try {
-    const api = tur === 'stok' ? importAPI.stok : tur === 'cari' ? importAPI.cari : importAPI.alisFatura
-    const res = await api(file)
+    const res = await apiRef[tur](file)
     sonuc.value = res.data
     toast.add({
       severity: res.data.hatalar?.length ? 'warn' : 'success',

@@ -103,6 +103,9 @@ export const sohbetAPI = {
   aiOcr(gorsel, mimeType) {
     return apiClient.post('/sohbet/ai-ocr', { gorsel, mimeType })
   },
+  aiDashboardOzet() {
+    return apiClient.get('/sohbet/ai-dashboard-ozet')
+  },
   dosya(file) {
     const form = new FormData()
     form.append('file', file)
@@ -135,8 +138,8 @@ export const sohbetOdaAPI = {
   uyeCikar(id, kullaniciId) {
     return apiClient.delete(`/sohbet/odalar/${id}/uye/${kullaniciId}`)
   },
-  mesajlar(id) {
-    return apiClient.get(`/sohbet/odalar/${id}/mesajlar`)
+  mesajlar(id, params) {
+    return apiClient.get(`/sohbet/odalar/${id}/mesajlar`, { params })
   },
   mesajGonder(id, data) {
     return apiClient.post(`/sohbet/odalar/${id}/mesajlar`, data)
@@ -181,6 +184,15 @@ export const ajandaAPI = {
   },
   hatirlaticiSil(id) {
     return apiClient.delete(`/ajanda/reminders/${id}`)
+  }
+}
+
+export const iletisimAPI = {
+  mailGonder(data) {
+    return apiClient.post('/iletisim/mail', data)
+  },
+  whatsapp(cariId) {
+    return apiClient.get(`/iletisim/whatsapp/${cariId}`)
   }
 }
 

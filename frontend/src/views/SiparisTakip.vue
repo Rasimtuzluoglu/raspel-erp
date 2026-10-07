@@ -1,24 +1,56 @@
 <template>
   <div class="takip-sayfasi">
-    <div class="sayfa-baslik">
-      <h1><i class="pi pi-sitemap" /> {{ t('siparisTakip.title') }}</h1>
-      <div class="baslik-aksiyonlar">
-        <Dropdown
-          v-model="secilenSofor"
-          :options="soforSecenekleri"
-          option-label="label"
-          option-value="value"
-          :placeholder="t('siparisTakip.tumSoforler')"
-          :show-clear="true"
-          class="sofor-filtre"
-        />
+    <PageHeader
+      :title="t('siparisTakip.title')"
+      :subtitle="t('siparisTakip.subtitle')"
+    >
+      <template #actions>
         <Button
           icon="pi pi-refresh"
-          :aria-label="$t('common.refresh')"
+          :aria-label="t('common.refresh')"
           class="p-button-text p-button-sm"
           @click="yukle"
         />
-      </div>
+      </template>
+    </PageHeader>
+
+    <!-- Filtre çubuğu: sipariş no, durum, şoför -->
+    <div class="takip-filtre">
+      <IconField class="filtre-arama">
+        <InputIcon class="pi pi-search" />
+        <InputText
+          v-model="filtreQ"
+          :placeholder="t('siparisTakip.aramaPlaceholder')"
+          @input="filtreDegisti"
+        />
+      </IconField>
+      <Dropdown
+        v-model="filtreDurum"
+        :options="durumSecenekleri"
+        option-label="ad"
+        option-value="deger"
+        :placeholder="t('siparisTakip.durumFiltre')"
+        show-clear
+        class="filtre-select"
+        @change="filtreDegisti"
+      />
+      <Dropdown
+        v-model="filtreSofor"
+        :options="soforSecenekleri"
+        option-label="ad"
+        option-value="deger"
+        :placeholder="t('siparisTakip.tumSoforler')"
+        show-clear
+        filter
+        class="filtre-select"
+        @change="filtreDegisti"
+      />
+      <Button
+        :label="t('denetim.temizle')"
+        icon="pi pi-filter-slash"
+        class="p-button-text p-button-sm"
+        @click="filtreTemizle"
+      />
     </div>
 
     <div
@@ -28,20 +60,14 @@
       {{ t('common.loading') }}
     </div>
     <div
-      v-else-if="!zincir.length"
+      v-else-if="!satirlar.length"
       class="bos"
     >
-      {{ t('siparisTakip.bos') }}
-    </div>
-    <div
-      v-else-if="!filtreliZincir.length"
-      class="bos"
-    >
-      {{ t('siparisTakip.filtreBos') }}
+      {{ filtreVar ? t('siparisTakip.filtreBos') : t('siparisTakip.bos') }}
     </div>
 
     <div
-      v-for="s in filtreliZincir"
+      v-for="s in satirlar"
       :key="s.siparisId"
       class="takip-kart"
     >
@@ -62,33 +88,37 @@
           icon="pi pi-cog"
           class="p-button-sm p-button-outlined uretim-buton"
           :loading="emirOlusturuluyor === s.siparisId"
-          @click="uretimEmriOlustur(s)"
+          @click="uretimEmriSor(s)"
         />
       </div>
+
       <div class="adimlar">
+        <!-- 1. Sipariş -->
         <div
           class="adim"
-          :class="{ tamam: !bosDurum(s.siparisDurum) && s.siparisDurum !== 'IPTAL' }"
+          :class="{ tamam: siparisTamam(s) }"
         >
           <i class="pi pi-file" />
           <span>{{ t('siparisTakip.siparis') }}</span>
           <Tag
-            :value="s.siparisDurum"
+            :value="durumEtiket(s.siparisDurum)"
             :severity="durumSeverity(s.siparisDurum)"
           />
         </div>
         <div class="ok">
           <i class="pi pi-arrow-right" />
         </div>
+
+        <!-- 2. Üretim -->
         <div
           class="adim"
-          :class="{ tamam: !!s.uretimDurum }"
+          :class="{ tamam: uretimTamam(s) }"
         >
           <i class="pi pi-cog" />
           <span>{{ t('siparisTakip.uretim') }}</span>
           <Tag
             v-if="s.uretimDurum"
-            :value="s.uretimDurum"
+            :value="durumEtiket(s.uretimDurum)"
             :severity="durumSeverity(s.uretimDurum)"
           />
           <Tag
@@ -96,19 +126,25 @@
             :value="t('siparisTakip.yok')"
             severity="secondary"
           />
+          <span
+            v-if="s.uretimSayisi > 1"
+            class="adet-rozet"
+          >×{{ s.uretimSayisi }}</span>
         </div>
         <div class="ok">
           <i class="pi pi-arrow-right" />
         </div>
+
+        <!-- 3. Sevk -->
         <div
           class="adim"
-          :class="{ tamam: !!s.sevkDurum }"
+          :class="{ tamam: sevkTamam(s) }"
         >
           <i class="pi pi-truck" />
           <span>{{ t('siparisTakip.sevk') }}</span>
           <Tag
             v-if="s.sevkDurum"
-            :value="s.sevkDurum"
+            :value="durumEtiket(s.sevkDurum)"
             :severity="durumSeverity(s.sevkDurum)"
           />
           <Tag
@@ -116,10 +152,16 @@
             :value="t('siparisTakip.yok')"
             severity="secondary"
           />
+          <span
+            v-if="s.sevkSayisi > 1"
+            class="adet-rozet"
+          >×{{ s.sevkSayisi }}</span>
         </div>
         <div class="ok">
           <i class="pi pi-arrow-right" />
         </div>
+
+        <!-- 4. Teslimat -->
         <div
           class="adim"
           :class="{ tamam: s.teslimatDurum === 'TESLIM_EDILDI' }"
@@ -128,7 +170,7 @@
           <span>{{ t('siparisTakip.teslimat') }}</span>
           <Tag
             v-if="s.teslimatDurum"
-            :value="s.teslimatDurum"
+            :value="durumEtiket(s.teslimatDurum)"
             :severity="durumSeverity(s.teslimatDurum)"
           />
           <Tag
@@ -148,41 +190,83 @@
         </div>
       </div>
     </div>
+
+    <Paginator
+      v-if="toplam > sayfaBoyutu"
+      :rows="sayfaBoyutu"
+      :total-records="toplam"
+      :first="sayfa * sayfaBoyutu"
+      :rows-per-page-options="[10, 25, 50]"
+      @page="sayfaDegisti"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { siparisTakipAPI, uretimAPI } from '../api/index.js'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { useConfirm } from 'primevue/useconfirm'
 import { useI18n } from 'vue-i18n'
 import { formatTarih } from '../utils/format.js'
 
 const toastBildirim = useToastBildirim()
+const confirm = useConfirm()
 const { t } = useI18n()
-const zincir = ref([])
+
+const satirlar = ref([])
+const toplam = ref(0)
+const sayfa = ref(0)
+const sayfaBoyutu = ref(25)
 const yukleniyor = ref(false)
-const secilenSofor = ref(null)
 const emirOlusturuluyor = ref(null)
 
-const soforSecenekleri = computed(() => {
-  const kume = new Set(zincir.value.map((s) => s.driverAd).filter(Boolean))
-  return [...kume].map((ad) => ({ label: ad, value: ad }))
-})
+const filtreQ = ref('')
+const filtreDurum = ref(null)
+const filtreSofor = ref(null)
+let aramaZaman = null
 
-const filtreliZincir = computed(() => {
-  if (!secilenSofor.value) return zincir.value
-  return zincir.value.filter((s) => s.driverAd === secilenSofor.value)
-})
+const soforListesi = ref([])
 
-const bosDurum = (d) => !d || d === 'TEKLIF' || d === 'TASLAK'
+// Sipariş seviyesindeki durumlar (filtre için).
+const SIPARIS_DURUMLARI = ['TEKLIF', 'SIPARIS', 'BEKLIYOR', 'HAZIRLANIYOR', 'YOLDA', 'TESLIM_EDILDI', 'FATURA_KESILDI', 'IPTAL']
+const durumSecenekleri = computed(() => SIPARIS_DURUMLARI.map((d) => ({ ad: durumEtiket(d), deger: d })))
+const soforSecenekleri = computed(() => soforListesi.value.map((s) => ({ ad: s, deger: s })))
+
+const filtreVar = computed(() => !!(filtreQ.value?.trim() || filtreDurum.value || filtreSofor.value))
+
+// Ham enum kodlarını (FATURA_KESILDI) çevir; bilinmeyen kodu olduğu gibi bırak.
+const durumEtiket = (kod) => {
+  if (!kod) return ''
+  const anahtar = `siparisTakip.durum.${kod}`
+  const ceviri = t(anahtar)
+  return ceviri === anahtar ? kod : ceviri
+}
+
+// "tamam" artık yalnızca GERÇEKTEN tamamlanan durumlar için (eskiden TASLAK
+// bile tamam sayılıyordu).
+const siparisTamam = (s) => !['TEKLIF', 'TASLAK', 'IPTAL'].includes(s.siparisDurum) && !!s.siparisDurum
+const uretimTamam = (s) => s.uretimDurum === 'TAMAMLANDI'
+const sevkTamam = (s) => ['KESILDI', 'TAMAMLANDI'].includes(s.sevkDurum)
 
 const durumSeverity = (d) => {
   if (!d) return 'secondary'
-  if (['IPTAL', 'REDDEDILDI'].includes(d)) return 'danger'
+  if (['IPTAL', 'REDDEDILDI', 'HATA'].includes(d)) return 'danger'
   if (['TAMAMLANDI', 'KESILDI', 'TESLIM_EDILDI', 'ONAYLANDI'].includes(d)) return 'success'
-  if (['URETIMDE', 'BEKLEMEDE', 'YOLDA'].includes(d)) return 'info'
+  if (['URETIMDE', 'BEKLEMEDE', 'YOLDA', 'HAZIRLANIYOR'].includes(d)) return 'info'
   return 'warn'
+}
+
+const uretimEmriSor = (s) => {
+  confirm.require({
+    header: t('uretim.siparistenEmir'),
+    message: t('siparisTakip.uretimEmriOnay', { no: s.siparisNo }),
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: t('common.evet'),
+    rejectLabel: t('common.cancel'),
+    accept: () => uretimEmriOlustur(s)
+  })
 }
 
 const uretimEmriOlustur = async (s) => {
@@ -202,15 +286,54 @@ const uretimEmriOlustur = async (s) => {
 const yukle = async () => {
   yukleniyor.value = true
   try {
-    const r = await siparisTakipAPI.zincir()
-    zincir.value = r.data || []
-  } catch (err) {
+    const params = { page: sayfa.value, size: sayfaBoyutu.value }
+    if (filtreQ.value?.trim()) params.q = filtreQ.value.trim()
+    if (filtreDurum.value) params.durum = filtreDurum.value
+    if (filtreSofor.value) params.sofor = filtreSofor.value
+    const r = await siparisTakipAPI.zincir(params)
+    satirlar.value = r.data?.content || unwrapList(r)
+    toplam.value = r.data?.totalElements ?? satirlar.value.length
+  } catch {
     toastBildirim.hata(t('siparisTakip.hataYukleme'))
   }
   yukleniyor.value = false
 }
 
-onMounted(yukle)
+const soforleriYukle = async () => {
+  try {
+    const r = await siparisTakipAPI.soforler()
+    soforListesi.value = Array.isArray(r.data) ? r.data : unwrapList(r)
+  } catch {
+    soforListesi.value = []
+  }
+}
+
+const filtreDegisti = () => {
+  if (aramaZaman) clearTimeout(aramaZaman)
+  aramaZaman = setTimeout(() => {
+    sayfa.value = 0
+    yukle()
+  }, 300)
+}
+
+const filtreTemizle = () => {
+  filtreQ.value = ''
+  filtreDurum.value = null
+  filtreSofor.value = null
+  sayfa.value = 0
+  yukle()
+}
+
+const sayfaDegisti = (e) => {
+  sayfa.value = e.page
+  sayfaBoyutu.value = e.rows
+  yukle()
+}
+
+onMounted(() => {
+  soforleriYukle()
+  yukle()
+})
 </script>
 
 <style scoped>
@@ -219,23 +342,17 @@ onMounted(yukle)
   flex-direction: column;
   gap: 14px;
 }
-.sayfa-baslik {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.sayfa-baslik h1 {
-  margin: 0;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-}
-.baslik-aksiyonlar {
+.takip-filtre {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
-.sofor-filtre {
+.filtre-arama {
+  min-width: 240px;
+  flex: 1;
+}
+.filtre-select {
   min-width: 180px;
 }
 .uretim-buton {
@@ -247,6 +364,11 @@ onMounted(yukle)
   display: inline-flex;
   align-items: center;
   gap: 4px;
+}
+.adet-rozet {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
 }
 .bos {
   text-align: center;
@@ -264,6 +386,7 @@ onMounted(yukle)
   align-items: center;
   gap: 10px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 .muted {
   font-size: 12px;

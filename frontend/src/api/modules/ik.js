@@ -52,8 +52,11 @@ export const puantajAPI = {
 }
 
 export const maasBordroAPI = {
-  getAll(params = { size: 500 }) {
+  getAll(params = { size: 25 }) {
     return apiClient.get('/maas-bordro', { params })
+  },
+  ozet(params = {}) {
+    return apiClient.get('/maas-bordro/ozet', { params })
   },
   getById(id) {
     return apiClient.get(`/maas-bordro/${id}`)
@@ -85,8 +88,11 @@ export const maasBordroAPI = {
   hesapla(data) {
     return apiClient.post('/maas-bordro/hesapla', data)
   },
-  topluUret(yil, ay) {
-    return apiClient.post('/maas-bordro/toplu-uret', null, { params: { yil, ay } })
+  topluUret(yil, ay, personelIds = null) {
+    return apiClient.post('/maas-bordro/toplu-uret', personelIds, { params: { yil, ay } })
+  },
+  topluOnizleme(yil, ay) {
+    return apiClient.get('/maas-bordro/toplu-onizleme', { params: { yil, ay } })
   }
 }
 

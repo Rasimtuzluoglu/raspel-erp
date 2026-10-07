@@ -143,17 +143,12 @@
             :title="item.barkod || item.stokKodu"
           >{{ item.barkod || item.stokKodu }}</span>
           <div class="sepet-adet-grup">
-            <button
-              type="button"
-              class="adet-btn"
-              :aria-label="t('hizliSatis.miktarAzalt')"
-              :title="t('hizliSatis.miktarAzalt')"
-              @click="$emit('miktar-azalt', idx)"
-            >
-              −
-            </button>
-            <!-- Sunucu taraflı arama: yanlış ürünü satır silmeden değiştirmek için.
-                 Adet ve seçili fiyat tipi KORUNUR. -->
+            <!-- ADET: buton, girdi ve klavye TEK yoldan gider. Bilesen
+                 kendi adedini degistirmez; ust taraf (`miktarDegistir`)
+                 dogrular, stok tavanini uygular ve geri al penceresini yazar.
+                 Uygulanamayan bir degisiklik reddedilirse girdi eski
+                 degerine doner ve kirmiziya boyanir; boylece "yazdigim deger
+                 kaydedilmedi" durumu gorunur olur. -->
             <div
               v-if="urunDegistirSatir === idx"
               class="sepet-urun-degistir"
@@ -195,24 +190,15 @@
                 <i class="pi pi-times" />
               </button>
             </div>
-            <input
+            <PosAdetGirisi
               v-else
-              v-model.number="item.miktar"
-              type="number"
-              min="1"
-              class="sepet-adet-input"
-              :aria-label="t('hizliSatis.adet')"
-              :title="t('hizliSatis.adet')"
-            >
-            <button
-              type="button"
-              class="adet-btn"
-              :aria-label="t('hizliSatis.miktarArtir')"
-              :title="t('hizliSatis.miktarArtir')"
-              @click="$emit('miktar-artir', idx)"
-            >
-              +
-            </button>
+              :miktar="item.miktar"
+              :stok-miktari="item.stokMiktari"
+              :birim="item.birim"
+              @azalt="$emit('miktar-azalt', idx)"
+              @artir="$emit('miktar-artir', idx)"
+              @commit="$emit('miktar-degistir', { idx, miktar: $event })"
+            />
           </div>
           <select
             v-model="item.fiyatTipi"
@@ -298,6 +284,7 @@ import { ref, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatCurrency, formatDate } from '../utils/format.js'
 import SatirEylemleri from './SatirEylemleri.vue'
+import PosAdetGirisi from './PosAdetGirisi.vue'
 
 // REDTEAM/Faz2.2: SABIT referans; her render'da yeni obje olusturmak panelin
 // genisliginin ilk tuşta ziplamasına yol açıyordu (bkz. HizliSatis.vue).
@@ -327,7 +314,7 @@ const props = defineProps({
 
 const emit = defineEmits([
   'toggle', 'kaydet', 'yukle', 'temizle', 'geri-al', 'satir-geri-al',
-  'sil', 'cogalt', 'miktar-azalt', 'miktar-artir', 'satir-sec', 'urun-degistir-ac',
+  'sil', 'cogalt', 'miktar-azalt', 'miktar-artir', 'miktar-degistir', 'satir-sec', 'urun-degistir-ac',
   'urun-degistir-ara', 'urun-degistir-sec', 'urun-degistir-vazgec',
   'surukleme-basla', 'surukleme-uzerine', 'surukleme-birak', 'surukleme-bitir',
   'fiyat-tipi-degisti', 'detay-toggle', 'adedi-sifirla',

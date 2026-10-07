@@ -43,13 +43,25 @@
             />
           </div>
           <div class="filtre-alan">
+            <label>{{ t('denetim.kullanici') }}</label>
+            <Select
+              v-model="filtre.kullaniciId"
+              :options="kullanicilar"
+              option-label="ad"
+              option-value="id"
+              :placeholder="t('denetim.tumu')"
+              class="w-full"
+              filter
+              show-clear
+              clear-icon="pi pi-times"
+              @change="filtrele"
+            />
+          </div>
+          <div class="filtre-alan filtre-tarih">
             <label>{{ t('denetim.tarihAraligi') }}</label>
             <TarihHizliSecim v-model="filtre.tarihAraligi" />
           </div>
-          <div
-            v-if="filtre.tarihAraligi?.length === 2"
-            class="filtre-alan"
-          >
+          <div class="filtre-alan">
             <label>{{ t('denetim.ozelTarihAraligi') }}</label>
             <DatePicker
               v-model="filtre.tarihAraligi"
@@ -57,7 +69,6 @@
               date-format="dd.mm.yy"
               :placeholder="t('denetim.baslangicBitis')"
               class="w-full"
-              @date-select="filtrele"
             />
           </div>
           <div class="filtre-aksiyon">
@@ -65,7 +76,7 @@
               :label="t('denetim.filtreKaydet')"
               icon="pi pi-bookmark"
               class="p-button-sm p-button-text"
-              @click="kayitliFiltreDialog = true"
+              @click="kaydetDialogAc"
             />
             <Dropdown
               v-model="seciliKayitliFiltre"
@@ -74,6 +85,14 @@
               :placeholder="t('denetim.kayitliFiltreler')"
               class="kayitli-filtre"
               @change="kayitliFiltreYukle"
+            />
+            <Button
+              icon="pi pi-trash"
+              class="p-button-sm p-button-text p-button-danger"
+              :title="t('denetim.filtreSil')"
+              :aria-label="t('denetim.filtreSil')"
+              :disabled="!seciliKayitliFiltre"
+              @click="kayitliFiltreSil"
             />
             <Button
               :label="t('denetim.temizle')"
@@ -124,18 +143,18 @@
           :value="logSatirlari"
           :loading="yukleniyor"
           striped-rows
-          :rows="20"
+          :rows="PAGE_SIZE"
           :paginator="true"
           :total-records="toplamKayit"
           lazy
-          :first="sayfa * 20"
+          :first="sayfa * PAGE_SIZE"
           size="small"
           sort-field="tarih"
           :sort-order="-1"
           @page="sayfaDegisti"
         >
           <template #empty>
-            <EmptyState />
+            <EmptyState :message="t('denetim.empty')" />
           </template>
           <Column
             field="tarih"
@@ -158,11 +177,11 @@
           <Column
             field="islem"
             :header="t('denetim.islem')"
-            style="width: 100px"
+            style="width: 110px"
           >
             <template #body="s">
               <Tag
-                :value="s.data.islem"
+                :value="islemEtiket(s.data.islem)"
                 :severity="islemSeverity(s.data.islem)"
               />
             </template>
@@ -202,12 +221,6 @@
             style="width: 120px"
           />
         </DataTable>
-        <div
-          v-if="(!logs || !logs.length) && !yukleniyor"
-          class="empty-state"
-        >
-          {{ t('denetim.empty') }}
-        </div>
       </template>
     </Card>
 
@@ -220,7 +233,7 @@
       <div class="detay-dialog-icerik">
         <div class="detay-dialog-satir">
           <span class="detay-dialog-etiket">{{ t('denetim.islem') }}</span>
-          <strong>{{ seciliDetay?.islem }}</strong>
+          <strong>{{ islemEtiket(seciliDetay?.islem) }}</strong>
         </div>
         <div class="detay-dialog-satir">
           <span class="detay-dialog-etiket">{{ t('denetim.entity') }}</span>
@@ -252,29 +265,37 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
-import { auditLogAPI, excelAPI } from '../api/index.js'
+import { auditLogAPI, excelAPI, kullaniciAPI } from '../api/index.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import FormField from '../components/FormField.vue'
+import EmptyState from '../components/EmptyState.vue'
 import { useI18n } from 'vue-i18n'
+import { formatTarihSaat as formatDate, getLocalDateString } from '../utils/format.js'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const { t } = useI18n()
+
+const PAGE_SIZE = 20
+const MAKS_KAYITLI_FILTRE = 20
+
 const logs = ref([])
 const yukleniyor = ref(false)
 const sayfa = ref(0)
 const toplamKayit = ref(0)
 const islemTipleri = ref([])
 const entityListesi = ref([])
+const kullanicilar = ref([])
 const excelYukleniyor = ref(false)
 
 const filtre = ref({
   islem: null,
   entityAdi: null,
+  kullaniciId: null,
   tarihAraligi: []
 })
 
@@ -284,6 +305,48 @@ const seciliKayitliFiltre = ref(null)
 const kayitliFiltreDialog = ref(false)
 const yeniFiltreAdi = ref('')
 
+// Tarih araligi degistiginde (hizli secim, ozel aralik veya kayitli filtre
+// yuklemesi) listeyi otomatik yenile. ONCEDEN yalnizca iki Select ve
+// DatePicker'in `@date-select`'i yeniliyordu; "Bu Ay" gibi hizli secimler
+// tabloyu GUNCELLEMIYORDU.
+watch(
+  () => filtre.value.tarihAraligi,
+  () => filtrele()
+)
+
+// --- Kayitli filtreler: ISO-guvenli serilestirme ---
+// ONCEDEN Date nesneleri JSON.stringify ile ISO string'e donusuyor, geri
+// yuklenirken DatePicker'a string geliyor ve aralik bos gorunuyordu.
+const isoToDate = (s) => (typeof s === 'string' && s ? new Date(`${s}T00:00:00`) : null)
+
+const seriFiltre = () => ({
+  islem: filtre.value.islem || null,
+  entityAdi: filtre.value.entityAdi || null,
+  kullaniciId: filtre.value.kullaniciId || null,
+  tarihAraligi:
+    filtre.value.tarihAraligi?.length === 2 && filtre.value.tarihAraligi[0]
+      ? [getLocalDateString(filtre.value.tarihAraligi[0]), getLocalDateString(filtre.value.tarihAraligi[1])]
+      : []
+})
+
+const cozFiltre = (f = {}) => ({
+  islem: f.islem || null,
+  entityAdi: f.entityAdi || null,
+  kullaniciId: f.kullaniciId || null,
+  tarihAraligi:
+    Array.isArray(f.tarihAraligi) && f.tarihAraligi.length === 2
+      ? [isoToDate(f.tarihAraligi[0]), isoToDate(f.tarihAraligi[1])]
+      : []
+})
+
+const kayitliFiltreleriKaydet = () => {
+  try {
+    localStorage.setItem(KAYITLI_ANAHTAR, JSON.stringify(kayitliFiltreler.value))
+  } catch {
+    /* yoksay */
+  }
+}
+
 const kayitliFiltreleriYukle = () => {
   try {
     kayitliFiltreler.value = JSON.parse(localStorage.getItem(KAYITLI_ANAHTAR) || '[]')
@@ -292,10 +355,24 @@ const kayitliFiltreleriYukle = () => {
   }
 }
 
+const kaydetDialogAc = () => {
+  yeniFiltreAdi.value = seciliKayitliFiltre.value?.ad || ''
+  kayitliFiltreDialog.value = true
+}
+
 const filtreKaydet = () => {
-  const kayit = { ad: yeniFiltreAdi.value.trim(), filtre: JSON.parse(JSON.stringify(filtre.value)) }
-  kayitliFiltreler.value.push(kayit)
-  localStorage.setItem(KAYITLI_ANAHTAR, JSON.stringify(kayitliFiltreler.value))
+  const ad = yeniFiltreAdi.value.trim()
+  if (!ad) return
+  const kayit = { ad, filtre: seriFiltre() }
+  // Ayni ad varsa guncelle (mukerrer kayit olusmasin).
+  const idx = kayitliFiltreler.value.findIndex((f) => f.ad.toLowerCase() === ad.toLowerCase())
+  if (idx >= 0) {
+    kayitliFiltreler.value[idx] = kayit
+  } else {
+    kayitliFiltreler.value.push(kayit)
+    if (kayitliFiltreler.value.length > MAKS_KAYITLI_FILTRE) kayitliFiltreler.value.shift()
+  }
+  kayitliFiltreleriKaydet()
   kayitliFiltreDialog.value = false
   yeniFiltreAdi.value = ''
   toast.add({ severity: 'success', summary: t('denetim.kaydedildi'), detail: t('denetim.filtreKaydedildi'), life: 3000 })
@@ -303,17 +380,26 @@ const filtreKaydet = () => {
 
 const kayitliFiltreYukle = () => {
   if (!seciliKayitliFiltre.value) return
-  filtre.value = JSON.parse(JSON.stringify(seciliKayitliFiltre.value.filtre))
-  filtrele()
+  filtre.value = cozFiltre(seciliKayitliFiltre.value.filtre)
   toast.add({ severity: 'info', summary: t('denetim.filtreUygulandi'), detail: seciliKayitliFiltre.value.ad, life: 3000 })
+}
+
+const kayitliFiltreSil = () => {
+  if (!seciliKayitliFiltre.value) return
+  const ad = seciliKayitliFiltre.value.ad
+  kayitliFiltreler.value = kayitliFiltreler.value.filter((f) => f.ad !== ad)
+  kayitliFiltreleriKaydet()
+  seciliKayitliFiltre.value = null
+  toast.add({ severity: 'success', summary: t('denetim.filtreSilindi'), life: 3000 })
 }
 
 const yukle = async (page = 0) => {
   yukleniyor.value = true
   try {
-    const params = { page, size: 20 }
+    const params = { page, size: PAGE_SIZE }
     if (filtre.value.islem) params.islem = filtre.value.islem
     if (filtre.value.entityAdi) params.entityAdi = filtre.value.entityAdi
+    if (filtre.value.kullaniciId) params.kullaniciId = filtre.value.kullaniciId
     if (filtre.value.tarihAraligi?.length === 2 && filtre.value.tarihAraligi[0]) {
       params.baslangicTarih = formatISODate(filtre.value.tarihAraligi[0])
       params.bitisTarih = formatISODate(filtre.value.tarihAraligi[1])
@@ -339,6 +425,7 @@ const excelIndir = async () => {
     const params = {}
     if (filtre.value.islem) params.islem = filtre.value.islem
     if (filtre.value.entityAdi) params.entityAdi = filtre.value.entityAdi
+    if (filtre.value.kullaniciId) params.kullaniciId = filtre.value.kullaniciId
     if (filtre.value.tarihAraligi?.length === 2 && filtre.value.tarihAraligi[0]) {
       params.baslangicTarih = formatISODate(filtre.value.tarihAraligi[0])
       params.bitisTarih = formatISODate(filtre.value.tarihAraligi[1])
@@ -360,22 +447,33 @@ const excelIndir = async () => {
     excelYukleniyor.value = false
   }
 }
+
 const filtreTemizle = () => {
-  filtre.value = { islem: null, entityAdi: null, tarihAraligi: [] }
-  filtrele()
+  filtre.value = { islem: null, entityAdi: null, kullaniciId: null, tarihAraligi: [] }
+  seciliKayitliFiltre.value = null
 }
 const sayfaDegisti = (e) => {
   sayfa.value = e.page
   yukle(e.page)
 }
 
-import { formatTarihSaat as formatDate, getLocalDateString } from '../utils/format.js'
 const formatISODate = (d) => {
   if (!d) return null
   return getLocalDateString(d)
 }
+
+// Islem kodlarini kullaniciya cevirir (OLUSTUR/SIL/... ham gorunmesin).
+const islemEtiketleri = computed(() => ({
+  OLUSTUR: t('denetim.islemOlustur'),
+  GUNCELLE: t('denetim.islemGuncelle'),
+  SIL: t('denetim.islemSil'),
+  ISLEM: t('denetim.islemIslem'),
+  HATA: t('denetim.islemHata')
+}))
+const islemEtiket = (v) => islemEtiketleri.value[v] || v || '-'
+
 const islemSeverity = (islem) => {
-  if (islem === 'SIL') return 'danger'
+  if (islem === 'SIL' || islem === 'HATA') return 'danger'
   if (islem === 'OLUSTUR') return 'success'
   if (islem === 'GUNCELLE') return 'warn'
   return 'info'
@@ -392,8 +490,6 @@ const kisaDetay = (detay) => {
   }
 }
 
-// JSON.parse/stringify satir basina her render'da tekrarlanmasin diye
-// kisaltilmis detay bir kez hesaplanir.
 const logSatirlari = computed(() => logs.value.map((l) => ({ ...l, kisaDetay: kisaDetay(l.detay) })))
 
 const detayDialogAcik = ref(false)
@@ -413,9 +509,17 @@ const detayGoster = (log) => {
 
 const filtreSecenekleriniYukle = async () => {
   try {
-    const [islemRes, entityRes] = await Promise.all([auditLogAPI.getIslemTipleri(), auditLogAPI.getEntityListesi()])
+    const [islemRes, entityRes, kullaniciRes] = await Promise.all([
+      auditLogAPI.getIslemTipleri(),
+      auditLogAPI.getEntityListesi(),
+      kullaniciAPI.getAll({ page: 0, size: 200 })
+    ])
     islemTipleri.value = islemRes.data || []
     entityListesi.value = entityRes.data || []
+    kullanicilar.value = (unwrapList(kullaniciRes) || []).map((u) => ({
+      id: u.id,
+      ad: u.displayName || u.username || `#${u.id}`
+    }))
   } catch {
     /* empty */
   }
@@ -452,17 +556,14 @@ onMounted(() => {
 .filtre-aksiyon {
   display: flex;
   align-items: flex-end;
+  gap: 4px;
+  flex-wrap: wrap;
 }
 .w-full {
   width: 100% !important;
 }
 .kayitli-filtre {
   min-width: min(170px, 100%) !important;
-}
-.empty-state {
-  text-align: center;
-  padding: 2rem;
-  color: var(--text-muted);
 }
 .detay-metin {
   font-family: monospace;

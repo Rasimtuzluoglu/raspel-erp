@@ -165,4 +165,34 @@ describe('Uretim.vue', () => {
     expect(metin).toContain('Planlama')
     expect(metin).toContain('Rapor')
   })
+
+  it('reçete kalemini baz miktara göre ölçekler (1 birim -> N birim)', async () => {
+    const wrapper = mount(Uretim, {
+      global: { stubs, plugins: [createPinia(), ToastService, ConfirmationService, i18n] }
+    })
+    await flushPromises()
+    const k = { hammaddeId: 1, miktar: 3, fireOrani: 0 }
+    wrapper.vm.receteForm.bazMiktar = 1
+    wrapper.vm.receteForm.fireOrani = 0
+    wrapper.vm.onizlemeMiktar = 10
+    expect(wrapper.vm.kalemHesaplanan(k)).toBe(30) // 10/1 * 3
+    wrapper.vm.receteForm.bazMiktar = 2
+    expect(wrapper.vm.kalemHesaplanan(k)).toBe(15) // 10/2 * 3
+  })
+
+  it('kaydederken bazMiktar ve bazBirim gönderir', async () => {
+    const wrapper = mount(Uretim, {
+      global: { stubs, plugins: [createPinia(), ToastService, ConfirmationService, i18n] }
+    })
+    await flushPromises()
+    wrapper.vm.receteForm.ad = 'Kola'
+    wrapper.vm.receteForm.urunId = 10
+    wrapper.vm.receteForm.bazMiktar = 2
+    wrapper.vm.receteForm.bazBirim = 'litre'
+    wrapper.vm.receteForm.kalemler = [{ hammaddeId: 1, miktar: 3, birim: 'kg', fireOrani: 0 }]
+    await wrapper.vm.receteKaydet()
+    expect(uretimAPI.receteOlustur).toHaveBeenCalledWith(
+      expect.objectContaining({ bazMiktar: 2, bazBirim: 'litre' })
+    )
+  })
 })

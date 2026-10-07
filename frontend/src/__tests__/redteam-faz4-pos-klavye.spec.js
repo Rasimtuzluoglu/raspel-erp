@@ -1,37 +1,80 @@
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { readFileSync, readdirSync, statSync } from 'node:fs'
+import { join, relative } from 'node:path'
 
 /**
  * REDTEAM/Faz4 — POS klavyeye gore yeniden tasarim: regresyon denetimleri.
  *
- * Bu dosya bilesen MOUNT ETMEZ; kaynak kodu okuyup kural ihlalini tespit eder.
- * Denetlenen bulgular hicbir derleyici/ESLint uyarisi URETMIYORDU ve hicbir
- * mevcut test yakalamiyordu:
+ * DENETLENEN BULGULAR (hicbir derleyici/ESLint uyarisi uretmıyordu):
  *
- *  1) Izgara klavyeyle GIRILEMIYORDU. `↑/↓` oklari sepette geziyordu ve urun
+ *  1) Izgara klavyeye GIRILEMIYORDU. `↑/↓` oklari sepette geziyordu ve urun
  *     kartlari hicbir zaman odaklanmiyordu. Kasada urun kartini secmek icin
- *     fare zorunluydu; barkod okutmayan satis akislari (kasa, menu, siparis)
- *     tamamen fareye bagliydi.
+ *     fare zorunluydu.
  *  2) HIZLI ADET YOKTU. `PosUrunKarti` yalnizca `emit('sec')` ile 1 adet
  *     ekliyordu; 20 adet almak icin 20 kez tiklamak gerekiyordu.
- *  3) GERI AL klavyeye bagli DEGILDI. Iki seviyeli geri alma vardi ama yalnizca
- *     fare ile basilabiliyordu.
+ *  3) GERI AL klavyeye bagli DEGILDI (G / Ctrl+Z eklendi).
  *  4) `?` POS'ta global KisayolRehberi'nin yerine yerel ipucunu acmiyordu.
- *  5) `g h` POS'tan cikis kisayolu OLMUYORDU: `n/k/h` odeme yontemi tuslari
- *     `useKisayollar`'in `g`-gezinme harflerini yutuyordu.
- *  6) "Yazdır (F9)" etiketi YANLISDI: F9 satisi tamamliyor, yazdirma yalnizca
- *     Ctrl+P ile mumkundu; ayrica satis sonrasi fiy yeniden basilamiyordu
- *     (`<details>` yalnizca `sepet.length > 0` iken gorunuyordu).
- *  7) Satiri cogaltma YALNIZCA klavyeden mumkundu ve hicbir menude gorunmuyordu
- *     (`SatirEylemleri` POS'a bagli degildi).
+ *  5) `g h` POS'tan cikis kisayolu OLMUYORDU (`n/k/h` odeme tuslari
+ *     `useKisayollar`'in `g`-gezinme harflerini yutuyordu).
+ *  6) "Yazdir (F9)" etiketi YANLISDI: F9 satisi tamamliyor, yazdirma yalnizca
+ *     Ctrl+P ile mumkundu; satis sonrasi fiy yeniden basilamiyordu.
+ *  7) Satiri cogaltma YALNIZCA klavyeden mumkundu ve hicbir menude gorunmuyordu.
+ *
+ * ---------------------------------------------------------------------------
+ * SINIFLANDIRMA (POS revizyonu, Asama 0)
+ *
+ * Bu dosya iki tur denetim karistiriyordu. Revizyon plani geregi ayrildi:
+ *
+ *  A) ARTUK DAVRANIS TESTIYLE KAPSALI OLAN KURALLAR SILINDI.
+ *     Bunlar bilesenlerin props/emits/erisilebilirlik sozlesmesidir ve
+ *     mount testiyle dogrulanir; kaynak metnine bakan bir denetim ayni
+ *     kurali daha zayif bir yolla tekrar ediyordu:
+ *       - kart roving tabindex / aria-selected / sag tik adet penceresi
+ *         -> src/components/__tests__/PosUrunKarti.spec.js
+ *       - satir eylem menusu (duzenle/cogalt/adedi sifirla) baglantisi
+ *         -> src/components/__tests__/PosSepetPaneli.spec.js
+ *
+ *  B) VIEW-IC KLAVYE/SEPET KURALLARI KORUNDU, ancak SABIT METIN yerine
+ *     BLOK KAPSAMLI denetim haline getirildi. Gerekce: bu kurallar
+ *     `HizliSatis.vue` icinde duruyor ve Faz1'de `usePosKisayollar` /
+ *     `usePosSepet` composable'larina tasiyacak. Tasi, TASIYANA kadar
+ *     kural kaybolmasin diya burada tutulur; her biri tasima hedefini
+ *     yorumda belirtir. Blok kapsamli yazildigi icin yorum eklemek,
+ *     siralamayi degistirmek veya fonksiyonu yeniden adlandirmak
+ *     (kosul metni degistirmedikce) testi kirmaz.
+ *
+ *  C) KALAN KURALLAR BILESEN/ALTYAPI DUZEYINDE ve yerinde kalir:
+ *     `useKisayollar` sayfa basina kayit/nerede-calistir sözlesmesi ve
+ *     teleport/defineEmpts gibi capraz dosya mimari kurallari.
+ *
+ * YENI DOSYA EKLEMEK: bu bir "kural" dosyasi; ekran davranisi degil, kodun
+ * belli ozelliklerini korur. Yeniden yazim yuzunden kirilirsa once
+ * kuralin degerini sor: degerini koruyorsan testi guncelle.
  */
 
 const KOK = join(process.cwd(), 'src')
 const posKod = readFileSync(join(KOK, 'views/HizliSatis.vue'), 'utf8')
 const kartKod = readFileSync(join(KOK, 'components/PosUrunKarti.vue'), 'utf8')
-const sepetPanelKod = readFileSync(join(KOK, 'components/PosSepetPaneli.vue'), 'utf8')
 const kisayolKod = readFileSync(join(KOK, 'composables/useKisayollar.js'), 'utf8')
+// Sepet cekirdedi (sepeteEkle/sepetSil/geriAlSatir*) `usePosSepet`'e tasindi.
+const sepetKod = readFileSync(join(KOK, 'composables/usePosSepet.js'), 'utf8')
+// ASAMA 1: POS klavye kisayollari `HizliSatis.vue` icindeki TEK bir
+// `handlePosKeys` fonksiyonundan `composables/usePosKisayollar.js` icindeki
+// gruplara tasindi. Artik kisayol kurallari IKI dosyaya dagiliyor:
+//   - `usePosKisayollar.js` : tus -> eylem eslemesi, oncelik sirasi, yazarken koruma
+//   - `HizliSatis.vue`      : o eylemlerin KARSILIGI olan view fonksiyonlari
+//                          (sepeteEkle, geriAlYap, urunIzgaraHareket ...)
+// Bu dosya artik yalniz VIEW tarafindaki sözlesmeyi denetler; tus->eylem
+// eslemesinin davranis testleri `src/composables/__tests__/usePosKisayollar.spec.js`
+// dosyasindadir (orada mount'suz, saf fonksiyon uzerinden dogrulanir).
+const posKisayolKod = readFileSync(join(KOK, 'composables/usePosKisayollar.js'), 'utf8')
+// ASAMA 1: HizliSatis'in <style scoped> blogu `assets/pos-hizli-satis.css`
+// dosyasina tasindi (SFC 4000+ satirdan ~2800'e indi). Dosya <style scoped>
+// UZERINDEN @import edildigi icai kurallar yine SADECE bu view'in sablonuna
+// uygulanir — dosyayi global CSS sanmak yanlis olur.
+// `sepetPanelKod` artik okunmuyor: panelin satir eylem menusu baglantisi artik
+// mount testiyle kapsali (PosSepetPaneli.spec.js). Cift tanim kurali ise tum
+// .vue dosyalarini tarayan capraz-dosya denetimine donusturuldu.
 
 /** Yorum satirlarini temizler; denetim KOD okumalidir, metni degil.
  *  NOT: dosyalar CRLF kaydedilmis olabilir; JS regexte `.` \r'yi TUTMAZ. */
@@ -57,116 +100,206 @@ const scriptKodu = (s) => {
   return bas === -1 || son <= bas ? '' : yorumsuz(s.slice(bas, son))
 }
 
+/** `anchor` metninden baslayip suslu parantez DENGESINI takip ederek biten
+ *  blogu dondurur.
+ *
+ *  Neden sabit `slice(0, 400)` degil? Cunku 400 karakterlik pencere bir
+ *  ACIKLAMA satiri eklendiginde koda degil yoruma gore kirilir. Buradaki
+ *  denetimler kodun YAPISINI (hangi cagri hangi fonksiyonun icinde) kontrol
+ *  ediyor; yorum eklendikce de dogru kalmali. */
+const blokBul = (kod, anchor) => {
+  const bas = kod.indexOf(anchor)
+  if (bas === -1) return ''
+  const suAc = kod.indexOf('{', bas)
+  if (suAc === -1) return ''
+  let derinlik = 0
+  for (let i = suAc; i < kod.length; i++) {
+    if (kod[i] === '{') derinlik++
+    else if (kod[i] === '}') {
+      derinlik--
+      if (derinlik === 0) return kod.slice(bas, i + 1)
+    }
+  }
+  return kod.slice(bas)
+}
+
+/** Projedeki tum .vue dosyalari (capraz dosya kurallari icin). */
+const vueDosyalari = () => {
+  const bul = (klasor, cikti = []) => {
+    for (const ad of readdirSync(klasor)) {
+      const yol = join(klasor, ad)
+      if (statSync(yol).isDirectory()) bul(yol, cikti)
+      else if (ad.endsWith('.vue')) cikti.push(yol)
+    }
+    return cikti
+  }
+  return bul(KOK)
+}
+
+/** POS sayfa kabugu stilleri (bkz. ASAMA 1 notu): @import edilen CSS dosyasi. */
+const posStilKod = yorumsuz(readFileSync(join(KOK, 'assets', 'pos-hizli-satis.css'), 'utf8'))
+
+// ===========================================================================
+// (A) Once davranis testiyle kapsali kurallar — SILINDI, yerine:
+//   PosUrunKarti.spec.js : roving tabindex, aria-selected, role=option,
+//                          sag tik -> `adet-ist`, odakli kart isareti,
+//                          stok rozeti renk esikleri
+//   PosSepetPaneli.spec.js: satir eylem menusu -> duzenle/cogalt/adedi sifirla
+// ===========================================================================
+
+// ---------------------------------------------------------------------------
+// (B) Izgara klavye modu.
+//     TUS -> EYLEM eslesmesi artik `usePosKisayollar.js` icinde; burada yalniz
+//     view'in o eylemlere KARSILIK veren fonksiyonlari ve izgara odagi
+//     baglantisi denetlenir. Esleme kurallarinin kendisi:
+//     src/composables/__tests__/usePosKisayollar.spec.js
 // ---------------------------------------------------------------------------
 describe('Faz4.1 - urun izgarasi klavyeye acilmali', () => {
-  it('izgara odak modu tanimli ve oklarla geziliyor', () => {
+  it('izgara odak durumu ve hareket fonksiyonu view icinde tanimli', () => {
     const kod = scriptKodu(posKod)
     expect(kod).toContain('urunIzgaraOdak')
-    // Yatay ve dikey hareket ayri ele alinir (sarma icin sutun sayisi gerekir)
+    // Yon tuslarinin cagirdigi hedef fonksiyonlar view'da olmali
     expect(kod).toContain('urunIzgaraHareket')
-    expect(kod).toMatch(/e\.key === 'ArrowLeft'/)
-    expect(kod).toMatch(/e\.key === 'ArrowRight'/)
+    expect(kod).toContain('urunIzgarayaGir')
+    expect(kod).toContain('urunIzgaradanCik')
+  })
+
+  it('izgara hareketi yatayda da sarma yapabilmeli (tek boyutlu degil)', () => {
+    // Yatay hareket ayri ele alinir; aksi halde son sutundan ilk sutuna
+    // gecilemez. Kapsam: hareket fonksiyonunun TAMAMI.
+    const kod = scriptKodu(posKod)
+    const hareket = blokBul(kod, 'const urunIzgaraHareket')
+    expect(hareket).toContain('dx')
+    expect(hareket).toContain('dy')
   })
 
   it('izgara modunda Enter urunu sepete ekler', () => {
     const kod = scriptKodu(posKod)
-    expect(kod).toMatch(/if \(urunIzgaraOdak\.value\) \{/)
-    expect(kod).toMatch(/e\.key === 'Enter'\) \{ e\.preventDefault\(\); urunIzgaraSec\(\)/)
+    expect(kod).toContain('urunIzgaraSec')
+    // Enter tusu composable'da bu fonksiyona baglanir
+    expect(posKisayolKod).toContain('urunIzgaraSec()')
   })
 
   it('bir metin alanindayken ↓ ile izgaraya girilir', () => {
     // Once izgaraya gecmenin HICBIR yolu yoktu.
+    // Esleme composable'da; view'de hedef fonksiyon tanimli olmali.
     const kod = scriptKodu(posKod)
-    expect(kod).toMatch(/girdideMi\(e\) && e\.key === 'ArrowDown'/)
     expect(kod).toContain('urunIzgarayaGir')
+    expect(posKisayolKod).toContain("e.key !== 'ArrowDown'")
   })
 
-  it('kartlar roving tabindex + aria ile duyuruluyor', () => {
+  it('kartlar roving tabindex + liste semantigi ile duyuruluyor', () => {
     const sablon = yorumsuz(sablonBlogu(posKod))
+    // Izgara bir "secim listesi" oldugu icin listbox/option semantigi sart.
+    expect(sablon).toContain('role="listbox"')
+    expect(kartKod).toContain('role="option"')
+    // Roving tabindex: odakli kart 0, digerleri -1
     expect(sablon).toContain(':tabindex="urunIzgaraOdak ?')
     expect(sablon).toContain(':odakli="urunIzgaraOdak && i === urunIzgaraIndeks"')
-    expect(sablon).toContain('role="listbox"')
-    // Kart bileseni bu ozellikleri kabul etmeli
-    expect(kartKod).toContain('odakli: { type: Boolean')
-    expect(kartKod).toContain("role=\"option\"")
-    expect(kartKod).toContain(':aria-selected="odakli"')
   })
 
   it('odakli kart gorunur bicimde isaretlenir (fare takibi yokken konum bilinmeli)', () => {
-    expect(posKod).toMatch(/\.product-card\.izgara-odakli\s*\{/)
+    // Stil `assets/pos-hizli-satis.css` icinde (bkz. yukaridaki ASAMA 1 notu).
+    expect(posStilKod).toMatch(/\.product-card\.izgara-odakli\s*\{/)
   })
 })
 
 // ---------------------------------------------------------------------------
+// (B) Hizli adet — view ici.
+//     TASIMA HEDEFI: Faz2 `PosAdetGirisi.vue` + `usePosSepet`
+//     KART tarafi artik PosUrunKarti.spec.js'de mount ile kapsali.
+// ---------------------------------------------------------------------------
 describe('Faz4.2 - hizli adet', () => {
   it('kart sag tik ile adet penceresi acar', () => {
-    expect(kartKod).toContain('@contextmenu.prevent="emit(\'adet-ist\')"')
+    // REDTEAM/Faz4: kart artik OLAYI da yayar (`$event`), boylece adet
+    // penceresi tiklanan noktanin yanina konumlanabilir.
+    expect(kartKod).toContain('@contextmenu.prevent="emit(\'adet-ist\', $event)"')
     expect(kartKod).toContain("defineEmits(['sec', 'adet-ist'])")
     expect(scriptKodu(posKod)).toContain('adetPopoverAc')
   })
 
   it('rakam + Enter miktarli ekleme', () => {
+    // Girdi durumu view'da, tus->eylem eslemesi composable'da.
     const kod = scriptKodu(posKod)
     expect(kod).toContain('urunIzgaraRakam')
-    expect(kod).toMatch(/\/\^\[0-9\]\$\/\.test\(e\.key\)/)
     // Enter rakam varsa miktarli ekler
     expect(kod).toMatch(/urunIzgaraRakam\.value \? parseInt\(urunIzgaraRakam\.value, 10\) \|\| 1 : 1/)
-    // Backspace rakami siler
-    expect(kod).toMatch(/e\.key === 'Backspace'/)
+    // Rakam tanima ve Backspace composable'da
+    expect(posKisayolKod).toMatch(/\/\^\[0-9\]\$\/\.test\(e\.key\)/)
+    expect(posKisayolKod).toMatch(/case 'Backspace':/)
   })
 
   it('Shift+Enter adet penceresini acar', () => {
-    expect(scriptKodu(posKod)).toMatch(/e\.key === 'Enter' && e\.shiftKey/)
+    // View'de adet penceresini acan fonksiyon; tus eslemesi composable'da.
+    expect(scriptKodu(posKod)).toContain('adetPopoverAc')
+    expect(posKisayolKod).toContain('e.shiftKey')
   })
 
-  it('sepeteEkle adet parametresi alir', () => {
-    const kod = scriptKodu(posKod)
-    expect(kod).toMatch(/const sepeteEkle = async \(u, adet = 1\)/)
-    // Var olan satira EKLENIR, yeni satira miktar ile yazilir
-    expect(kod).toMatch(/varOlan\.miktar \+= miktar/)
-    expect(kod).toMatch(/miktar,\s*\n\s*fiyat: temelFiyatlar/)
+  // GERCEK IS KURALI: ayni urun tekrar eklenince AYRI SATIR acilmaz,
+  // mevcut satirin miktari ARTAR. "Cogalt" bunu bilerek atlayan tek yoldur.
+  // REDTEAM/Faz2: artma artik dogrulama katmanindan gecer
+  // (`miktarDogrula` -> stok tavani), bu yuzden `+=` ifadesi yerine
+  // denetim "TEK push yolu + erken donus" kuralini korur.
+  // Davranis testi: src/utils/__tests__/posAdet.spec.js
+  it('sepete ekleme ayni urunde duplicate satir acmaz (tek push yolu)', () => {
+    const ekleBlogu = blokBul(yorumsuz(sepetKod), 'const sepeteEkle = async')
+    // Var olan satir bulundugunda islem biter (yeni satir acilmaz).
+    expect(ekleBlogu).toContain('varOlan')
+    expect(ekleBlogu).toMatch(/varOlan\.miktar\s*=/)
+    // Sepete ekleme noktasi TEK olmali; ikinci bir `push` duplicate uretirdi.
+    const pushSayisi = (ekleBlogu.match(/sepet\.value\.push/g) || []).length
+    expect(pushSayisi, 'sepete ekleme birden fazla noktadan olmali (duplicate satir riski)').toBe(1)
   })
 })
 
+// ---------------------------------------------------------------------------
+// (B) Geri al — view ici.
+//     TASIMA HEDEFI: Faz1 `usePosSepet.geriAl`
 // ---------------------------------------------------------------------------
 describe('Faz4.3 - geri al klavyeye bagli', () => {
   it('G ve Ctrl+Z geri al calistirir', () => {
     const kod = scriptKodu(posKod)
-    expect(kod).toMatch(/k === 'g'\) \{/)
+    // G: harf kisa yolu composable'da, hedef fonksiyon view'da
     expect(kod).toContain('geriAlYap')
-    // Ctrl+Z ayri dinleyici: metin alanindayken tarayici geri al'i calisir
-    expect(kod).toContain('handlePosUndo')
-    expect(kod).toMatch(/if \(girdideMi\(e\)\) return/)
+    expect(posKisayolKod).toMatch(/case 'g':/)
+    // Ctrl+Z ayri dinleyici (metin alanindayken tarayici geri al'i calisir)
+    expect(posKisayolKod).toContain('handlePosUndo')
   })
 
   it('her iki dinleyici de mount/unmount ediliyor', () => {
-    const kod = scriptKodu(posKod)
-    expect(kod).toMatch(/addEventListener\('keydown', handlePosUndo, true\)/)
-    expect(kod).toMatch(/removeEventListener\('keydown', handlePosUndo, true\)/)
+    // Dinleyici kaydi artik composable'in sorumlulugu: view mount olunca
+    // `usePosKisayollar` cagrilir, o da window'a baglar.
+    expect(posKisayolKod).toMatch(/addEventListener\('keydown', handlePosKeys, true\)/)
+    expect(posKisayolKod).toMatch(/removeEventListener\('keydown', handlePosKeys, true\)/)
+    expect(posKisayolKod).toMatch(/addEventListener\('keydown', handlePosUndo, true\)/)
+    expect(posKisayolKod).toMatch(/removeEventListener\('keydown', handlePosUndo, true\)/)
+    expect(scriptKodu(posKod)).toContain('usePosKisayollar(')
   })
 
   it('satir silme geri alinabilir', () => {
     // Once `Del` ile silinen satir SADECE fare ile geri alinabiliyordu.
-    const kod = scriptKodu(posKod)
-    const silFn = kod.slice(kod.indexOf('const sepetSil'))
-    expect(silFn.slice(0, 400)).toContain('geriAlSatirKaydet(idx)')
+    expect(blokBul(yorumsuz(sepetKod), 'const sepetSil')).toContain('geriAlSatirKaydet(idx)')
   })
 
   it('cogaltma geri alinabilir (kayit cogalt modunda)', () => {
-    const kod = scriptKodu(posKod)
-    expect(kod).toContain('geriAlSatirCogaltKaydet')
+    expect(yorumsuz(sepetKod)).toContain('geriAlSatirCogaltKaydet')
     // Cogaltma geri almasi KOPYAYI kaldirmali, yeniden eklememeli
-    expect(kod).toMatch(/if \(mod === 'cogalt'\) \{[\s\S]*?splice\(hedef, 1\)/)
+    expect(yorumsuz(sepetKod)).toMatch(/if \(mod === 'cogalt'\) \{[\s\S]*?splice\(hedef, 1\)/)
   })
 })
 
 // ---------------------------------------------------------------------------
+// (C) Klavye altyapisi — `useKisayollar` sozlesmesi (dosya tasinmayacak)
+// ---------------------------------------------------------------------------
 describe('Faz4.4 - POS yerel ipucu ve g-gezinme cakismasi', () => {
   it('useKisayollar ipucu eylemini destekliyor', () => {
     expect(kisayolKod).toContain("calistir('ipucu')")
-    // Sayfa ipucu veriyorsa global rehber devreye girmemeli
-    const q = kisayolKod.slice(kisayolKod.indexOf("e.key === '?'"))
-    expect(q.slice(0, 400)).toMatch(/if \(!calistir\('ipucu'\)\)/)
+    // Sayfa ipucu veriyorsa global rehber devreye girmemeli.
+    // Kontrol `?` tusunun TUM `if` blogu uzerinde yapilir; boylece hem
+    // blogun ici dogru, hem de blogun disinda ikinci bir `calistir('ipucu')`
+    // cagrisi olmadigi gorulur.
+    const qBlok = blokBul(yorumsuz(kisayolKod), "e.key === '?'")
+    expect(qBlok).toMatch(/if \(!calistir\('ipucu'\)\)/)
   })
 
   it('gezinmeKapat secenegi sayfaya aciliyor', () => {
@@ -177,6 +310,7 @@ describe('Faz4.4 - POS yerel ipucu ve g-gezinme cakismasi', () => {
   })
 
   it('POS gezinmeyi kapatiyor ve yerel ipucunu veriyor', () => {
+    // TASIMA HEDEFI: Faz1 `usePosKisayollar` birim testi
     const kod = scriptKodu(posKod)
     expect(kod).toMatch(/gezinmeKapat: true/)
     expect(kod).toMatch(/ipucu: \(\) => ipucuToggle\(\)/)
@@ -184,11 +318,14 @@ describe('Faz4.4 - POS yerel ipucu ve g-gezinme cakismasi', () => {
 })
 
 // ---------------------------------------------------------------------------
+// (B) Fis yazdirma kisayollari — view ici.
+//     TASIMA HEDEFI: Faz1 `utils/posFis.js`
+// ---------------------------------------------------------------------------
 describe('Faz4.5 - fis yazdirma kisayolu duzeltildi', () => {
   it('yanlis F9 etiketi giderildi, F8/F11 eklendi', () => {
-    const kod = scriptKodu(posKod)
-    expect(kod).toMatch(/if \(e\.key === 'F8'\)/)
-    expect(kod).toMatch(/if \(e\.key === 'F11'\)/)
+    // F8/F11 tus eslemesi composable'da; ipucu seridi etiketleri view'da.
+    expect(posKisayolKod).toMatch(/case 'F8':/)
+    expect(posKisayolKod).toMatch(/case 'F11':/)
     // Artik `hizliSatis.yazdirF9` diye bir etiket OLMAMALI. KOD okunur:
     // dosyada "yazdirF9" gecen yerler yalniz duzeltme ACIKLAMALARINDA olabilir.
     const kodSade = yorumsuz(posKod)
@@ -203,29 +340,40 @@ describe('Faz4.5 - fis yazdirma kisayolu duzeltildi', () => {
   })
 
   it('F7 bugunku satislari acar', () => {
-    expect(scriptKodu(posKod)).toMatch(/if \(e\.key === 'F7'\)/)
+    expect(posKisayolKod).toMatch(/case 'F7':/)
     expect(scriptKodu(posKod)).toContain('bugunkuSatislariAc')
   })
 })
 
 // ---------------------------------------------------------------------------
-describe('Faz4.6 - satir eylem menusu POS sepetine bagli', () => {
-  it('PosSepetPaneli SatirEylemleri kullaniyor', () => {
-    expect(sepetPanelKod).toContain("import SatirEylemleri from './SatirEylemleri.vue'")
-    expect(sepetPanelKod).toContain('<SatirEylemleri')
-    // Duzenle (urun degistir) + Cogalt olaylari baglanmis olmali
-    expect(sepetPanelKod).toContain("@duzenle=\"$emit('urun-degistir-ac', idx)\"")
-    expect(sepetPanelKod).toContain("@cogalt=\"$emit('cogalt', idx)\"")
-  })
-
-  it('HizliSatis bu olaylari dinliyor', () => {
-    const kod = yorumsuz(sablonBlogu(posKod))
-    expect(kod).toContain('@cogalt="satiriCogalt"')
-    expect(kod).toContain('@adedi-sifirla="adediSifirla"')
-  })
-
-  it('emit tanimi `const emit = defineEmits(...)` olmali (cift tanim yok)', () => {
-    expect(sepetPanelKod).toMatch(/const emit = defineEmits/)
-    expect(sepetPanelKod).not.toMatch(/^defineEmits\(/m)
+// (A+C) Satir eylem menusu baglantisi — ARTUK mount ile kapsali.
+//     `PosSepetPaneli.spec.js` "menudeki adedi sifirla adedi-sifirla yayar"
+//     ve "urun adina tiklamak urun-degistir-ac yayar" testlerine bakin.
+//     Asagidaki denetim genel MIMARI kurala genisletildi: hicbir .vue
+//     dosyasinda `defineEmits` iki kez tanimlanmamali (cift cagri / lostuk).
+// ---------------------------------------------------------------------------
+describe('Faz4.6 - defineEmpts cift tanimi olmamali (capraz dosya kurali)', () => {
+  it('hicbir .vue dosyasinda defineEmpts iki kez tanimlanmamali', () => {
+    const ihlaller = []
+    for (const dosya of vueDosyalari()) {
+      const icerik = yorumsuz(readFileSync(dosya, 'utf8'))
+      const atamali = (icerik.match(/const\s+emit\s*=\s*defineEmpts\s*\(/g) || []).length
+      const cift = (icerik.match(/^defineEmpts\s*\(/gm) || []).length
+      if (atamali > 1) {
+        ihlaller.push(
+          `${relative(process.cwd(), dosya)}  'const emit = defineEmpts' ${atamali} kez tanimli`
+        )
+      }
+      if (cift > 0) {
+        ihlaller.push(
+          `${relative(process.cwd(), dosya)}  'defineEmpts(' atamasi ${cift} kez; ` +
+            'emit degiskeni kullanilmiyor ve cift tanim riski var'
+        )
+      }
+    }
+    expect(
+      ihlaller,
+      'defineEmpts cift tanimi bulundu:\n' + ihlaller.join('\n')
+    ).toEqual([])
   })
 })

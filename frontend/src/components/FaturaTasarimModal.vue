@@ -1623,9 +1623,8 @@ const yazdir = async () => {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-  @page {
-    size: A4 portrait;
-    margin: 8mm;
-  }
+  /* NOT: @page kurali burada TANIMLANMAZ. Sabit "A4 portrait; 8mm" kurali
+     tasarimcinin sectigi sayfa boyutu/yonu/kenar boslugu ile CAKISIYORDU.
+     Sayfa kurali, bilesenin ust kismindaki dinamik <style> blogundan gelir. */
 }
 </style>

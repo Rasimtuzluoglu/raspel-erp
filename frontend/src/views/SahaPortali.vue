@@ -18,6 +18,15 @@
         </div>
         <div class="header-actions">
           <Button
+            v-if="sahaKuyruk.length > 0"
+            :label="t('sahaPortali.kuyrukBekliyor', { n: sahaKuyruk.length })"
+            icon="pi pi-cloud-upload"
+            class="p-button-sm"
+            severity="warning"
+            :loading="kuyrukSenkronizeEdiliyor"
+            @click="sahaKuyruguSenkronizeEt"
+          />
+          <Button
             :label="t('sahaPortali.hizliSiparis')"
             icon="pi pi-plus"
             class="p-button-warning p-button-sm font-semibold"
@@ -876,9 +885,11 @@ onUnmounted(() => {
 // ve bağlantı gelince otomatik gönderilir.
 const SAHA_KUYRUK_KEY = 'raspel_saha_kuyrugu'
 const sahaKuyruk = ref(JSON.parse(localStorage.getItem(SAHA_KUYRUK_KEY) || '[]'))
+const kuyrukSenkronizeEdiliyor = ref(false)
 const sahaKuyrukKaydet = () => localStorage.setItem(SAHA_KUYRUK_KEY, JSON.stringify(sahaKuyruk.value))
 const sahaKuyruguSenkronizeEt = async () => {
   if (!sahaKuyruk.value.length || !navigator.onLine) return
+  kuyrukSenkronizeEdiliyor.value = true
   const kalan = []
   let gonderilen = 0
   for (const kayit of sahaKuyruk.value) {
@@ -891,6 +902,7 @@ const sahaKuyruguSenkronizeEt = async () => {
   }
   sahaKuyruk.value = kalan
   sahaKuyrukKaydet()
+  kuyrukSenkronizeEdiliyor.value = false
   if (gonderilen > 0) {
     toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.cevrimdisiZiyaretGonderildi', { n: gonderilen }), life: 4000 })
   }
@@ -1581,5 +1593,33 @@ const hizliSiparisKaydet = async () => {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobil: saha portalı sahada telefondan kullanılır. Header'ı dikey yığ,
+   formları tek kolona indir, 7 sekmeyi yatay kaydırmayla erişilebilir tut. */
+@media (max-width: 640px) {
+  .saha-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .form-row-2 {
+    grid-template-columns: 1fr;
+  }
+  .performans-grid {
+    grid-template-columns: 1fr;
+  }
+  :deep(.p-tabview-nav) {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+  :deep(.p-tabview-nav li) {
+    flex-shrink: 0;
+  }
 }
 </style>

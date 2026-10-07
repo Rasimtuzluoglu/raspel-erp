@@ -51,30 +51,37 @@
       </div>
     </div>
 
-    <!-- AI FİNANSAL ZEKA & İÇGÖRÜ KARTI -->
+    <!-- AI FİNANSAL ZEKA & İÇGÖRÜ KARTI (tek kart: yerel analiz + AI Yönetici Özeti) -->
     <div class="ai-insight-box">
-      <div class="ai-insight-ic">
-        <div class="ai-insight-icon">
-          <i class="pi pi-sparkles ai-insight-icon-i" />
-        </div>
-        <div>
-          <div class="ai-insight-baslik">
-            <h4 class="ai-insight-title">
-              {{ t('yoneticiKokpiti.aiBaslik') }}
-            </h4>
-            <span class="ai-insight-rozet">{{ t('yoneticiKokpiti.aiRozet') }}</span>
+      <div class="ai-insight-ust">
+        <div class="ai-insight-ic">
+          <div class="ai-insight-icon">
+            <i class="pi pi-sparkles ai-insight-icon-i" />
           </div>
-          <p class="ai-insight-yorum">
-            {{ aiYorum }}
-          </p>
+          <div>
+            <div class="ai-insight-baslik">
+              <h4 class="ai-insight-title">
+                {{ t('yoneticiKokpiti.aiBaslik') }}
+              </h4>
+              <span class="ai-insight-rozet">{{ t('yoneticiKokpiti.aiRozet') }}</span>
+            </div>
+            <p class="ai-insight-yorum">
+              {{ aiYorum }}
+            </p>
+          </div>
         </div>
+        <Button
+          icon="pi pi-sync"
+          class="p-button-rounded p-button-text ai-insight-btn p-button-sm flex-shrink-0"
+          :title="t('yoneticiKokpiti.yenidenDegerlendir')"
+          @click="aiYorumOlustur"
+        />
       </div>
-      <Button
-        icon="pi pi-sync"
-        class="p-button-rounded p-button-text ai-insight-btn p-button-sm flex-shrink-0"
-        :title="t('yoneticiKokpiti.yenidenDegerlendir')"
-        @click="aiYorumOlustur"
-      />
+
+      <div class="ai-insight-ayrac" />
+
+      <!-- Dashboard'dan taşındı (eskiden anasayfada ayrı karttı). -->
+      <AiOzetKarti />
     </div>
 
     <!-- 1. TEMEL 4 FİNANSAL KPI KARTI -->
@@ -495,6 +502,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { yoneticiKokpitAPI } from '../api/index.js'
 import { useToast } from 'primevue/usetoast'
+import AiOzetKarti from '../components/AiOzetKarti.vue'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -820,16 +828,25 @@ const hatirlatWhatsApp = (cari) => {
 
 .ai-insight-box {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.75rem;
   padding: 1rem 1.25rem;
   border-radius: 0.75rem;
   margin-bottom: 1.25rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
+}
+.ai-insight-ust {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.ai-insight-ayrac {
+  height: 1px;
+  background: var(--border);
 }
 .ai-insight-ic {
   display: flex;

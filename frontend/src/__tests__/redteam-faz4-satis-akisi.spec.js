@@ -24,6 +24,23 @@ import { normalizeKalem } from '../utils/satisPayload.js'
  *     kullanilmiyordu (ayrica parametresiz oldugu icin 50 kayitlik tavana takiliyordu).
  *  5) Hardcoded Turkce: teslim durumu etiketleri ve termal fis metinleri dil
  *     degistiriciye bagli degildi.
+ *
+ * ---------------------------------------------------------------------------
+ * SINIFLANDIRMA (Yeni Satis penceresi revizyonu)
+ *
+ * `FaturaKalemleri.vue` artik MOUNT EDILEREK test ediliyor:
+ * `src/components/__tests__/FaturaKalemleri.spec.js`. Bu yuzden bilesenin
+ * kaynagini METIN olarak tarayan assertion'lar kaldirildi; ayni kurallar
+ * davranissal olarak dogrulanir:
+ *   - `iskontoOrani` null birakilir      -> "KRITIK: iskontoOrani NULL birakilir"
+ *   - `stokMiktar` kalemle tasinir        -> "KRITIK: stokMiktar kalemle tasinir"
+ *   - stok notu / yetersiz isareti        -> "stok uyarilari" bolumu
+ *
+ * Bu dosyada KALANLAR `Satis.vue`nin KENDI akisina ait kurallardir (kaydetme
+ * oncesi stok onayi, KDV varsayilani kaynagi, olu stokStore yoklugu, i18n);
+ * bunlarin mount edilebilir bir yuzeyi olmadigi icin kaynak denetimi olarak
+ * kalir.
+ * ---------------------------------------------------------------------------
  */
 
 const KOK = join(process.cwd(), 'src')
@@ -59,7 +76,10 @@ const scriptKodu = (s) => {
 
 describe('Satis.vue - indirim motoru canli olmali', () => {
   it('kalem eklerken iskonto alani null BIRAKILIR (motor calissin)', () => {
-    // Sabit `0` gondermek motoru atlatiyordu.
+    // Kural DAVRANISSAL olarak da dogrulanir:
+    //   components/__tests__/FaturaKalemleri.spec.js
+    //   > "KRITIK: iskontoOrani NULL birakilir (indirim motoru calissin)"
+    // Buradaki kaynak denetimi, ileride biri sabit `0` eklerse erken uyarir.
     expect(yorumsuz(kalemlerKaynak)).not.toMatch(/iskontoOrani:\s*0\b/)
   })
 
@@ -78,8 +98,12 @@ describe('Satis.vue - indirim motoru canli olmali', () => {
 
 describe('Satis.vue - stok kontrolu kayittan once yapilmali', () => {
   it('stok Miktarini kalemle birlikte tasir', () => {
-    expect(kalemlerKaynak).toMatch(/stokMiktar:\s*s\?\.miktar/)
-    expect(yorumsuz(satisKaynak)).toMatch(/k\.stokMiktar\s*=\s*stok\.miktar/)
+    // REDTEAM/Faz9: stok miktari artik `FaturaKalemleri.kalemPayload` icinde
+    // (hem hizli ekleme hem barkod yolu) tasinir; satir ici stok aramasi
+    // kaldirildigi icin Satis.vue'da ayri aktarim KALMADI.
+    // Davranis testi: FaturaKalemleri.spec.js
+    //   > "KRITIK: stokMiktar kalemle tasinir (kayittan once stok kontrolu)"
+    expect(yorumsuz(kalemlerKaynak)).toMatch(/stokMiktar:\s*s\?\.miktar/)
   })
 
   it('adet > stok satirlarini hesaplar ve onay ister', () => {
@@ -97,9 +121,12 @@ describe('Satis.vue - stok kontrolu kayittan once yapilmali', () => {
   })
 
   it('adet alani stokta kac adet oldugunu gosterir', () => {
-    expect(kalemlerKaynak).toContain('stokBilgisiGosterilebilir')
-    expect(kalemlerKaynak).toContain('stokYetersizMu')
-    expect(kalemlerKaynak).toContain('faturaKalemleri.stokMiktari')
+    // Davranis testleri: FaturaKalemleri.spec.js > "stok uyarilari" bolumu
+    // (yetersiz isareti, stok notu, stok miktari).
+    // Kaynak denetimi: kural bilesende kalmali.
+    expect(yorumsuz(kalemlerKaynak)).toContain('stokBilgisiGosterilebilir')
+    expect(yorumsuz(kalemlerKaynak)).toContain('stokYetersizMu')
+    expect(yorumsuz(kalemlerKaynak)).toContain('faturaKalemleri.stokMiktari')
   })
 })
 

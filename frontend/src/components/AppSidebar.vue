@@ -116,6 +116,14 @@
             v-if="m.path === '/onaylar' && onaySayisi"
             class="menu-sayac"
           >{{ onaySayisi }}</span>
+          <span
+            v-if="m.path === '/sohbet' && sohbetOkunmamis"
+            class="menu-sayac"
+          >{{ sohbetOkunmamis }}</span>
+          <span
+            v-if="m.path === '/ajanda' && ajandaGorevSayisi"
+            class="menu-sayac"
+          >{{ ajandaGorevSayisi }}</span>
           <i
             class="pi pi-star"
             :class="{ favori: isFav(m.path) }"
@@ -322,7 +330,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
-import { onaySayilariAPI } from '../api/index.js'
+import { onaySayilariAPI, sohbetOdaAPI, ajandaAPI } from '../api/index.js'
 import { useMarka } from '../composables/useMarka.js'
 import BildirimZili from './BildirimZili.vue'
 import ThemeSwitcher from './ThemeSwitcher.vue'
@@ -412,7 +420,8 @@ const isFav = (path) => favoriler.value.includes(path)
 const tumMenuler = [
   { path: '/', labelKey: 'nav.dashboard', icon: 'pi pi-home', grupKey: '' },
   { path: '/sohbet', labelKey: 'nav.sohbet', icon: 'pi pi-comments', grupKey: '' },
-  { path: '/ajanda', labelKey: 'nav.ajanda', icon: 'pi pi-calendar', grupKey: '' },
+      { path: '/ajanda', labelKey: 'nav.ajanda', icon: 'pi pi-calendar', grupKey: '' },
+      { path: '/iletisim', labelKey: 'nav.iletisim', icon: 'pi pi-envelope', grupKey: '' },
   { path: '/onaylar', labelKey: 'nav.onaylar', icon: 'pi pi-check-circle', grupKey: '' },
   { path: '/belgeler', labelKey: 'nav.belgeler', icon: 'pi pi-folder-open', grupKey: '' },
   { path: '/sistem-durum', labelKey: 'nav.sistemDurum', icon: 'pi pi-server', grupKey: '', admin: true },
@@ -447,7 +456,6 @@ const tumMenuler = [
   { path: '/iadeler', labelKey: 'nav.iade', icon: 'pi pi-replay', permission: 'SIPARIS_READ', grupKey: 'nav.ticaret', gelismis: true },
   { path: '/stoklar', labelKey: 'nav.stok', icon: 'pi pi-box', permission: 'STOK_READ', grupKey: 'nav.envanter' },
   { path: '/kritik-stok', labelKey: 'nav.kritikStok', icon: 'pi pi-exclamation-triangle', grupKey: 'nav.envanter', gelismis: true },
-  { path: '/toplu-stok', labelKey: 'nav.topluStok', icon: 'pi pi-database', grupKey: 'nav.envanter', gelismis: true },
   { path: '/depolar', labelKey: 'nav.depo', icon: 'pi pi-warehouse', permission: 'STOK_READ', grupKey: 'nav.envanter', gelismis: true },
   { path: '/stok-seriler', labelKey: 'nav.serilot', icon: 'pi pi-qrcode', permission: 'STOK_READ', grupKey: 'nav.envanter', gelismis: true },
   { path: '/stok-sayim', labelKey: 'nav.stokSayim', icon: 'pi pi-sort-alt', permission: 'STOK_READ', grupKey: 'nav.envanter', gelismis: true },
@@ -463,8 +471,8 @@ const tumMenuler = [
     labelKey: 'nav.maasBordro',
     icon: 'pi pi-credit-card',
     permission: 'IK_READ',
+    roller: ['ADMIN', 'MUHASEBE'],
     grupKey: 'nav.yonetim',
-    admin: true,
     gelismis: true
   },
   { path: '/vardiyalar', labelKey: 'nav.vardiya', icon: 'pi pi-clock', permission: 'IK_READ', grupKey: 'nav.yonetim', gelismis: true },
@@ -476,8 +484,7 @@ const tumMenuler = [
   { path: '/kategoriler', labelKey: 'nav.kategori', icon: 'pi pi-tags', permission: 'STOK_READ', grupKey: 'nav.sistem', gelismis: true },
   { path: '/notlar', labelKey: 'nav.notlar', icon: 'pi pi-pen-to-square', grupKey: 'nav.sistem' },
   { path: '/veri-aktar', labelKey: 'nav.veriAktar', icon: 'pi pi-upload', permission: 'SISTEM_READ', grupKey: 'nav.sistem', gelismis: true },
-  { path: '/kullanim-sartlari', labelKey: 'nav.kullanimSartlari', icon: 'pi pi-file', grupKey: 'nav.sistem', gelismis: true },
-  { path: '/gizlilik-politikasi', labelKey: 'nav.gizlilik', icon: 'pi pi-shield', grupKey: 'nav.sistem', gelismis: true },
+  { path: '/yasal', labelKey: 'nav.yasal', icon: 'pi pi-file-check', grupKey: 'nav.sistem', gelismis: true },
   { path: '/hesap-ayarlari', labelKey: 'nav.hesapAyarlari', icon: 'pi pi-cog', grupKey: 'nav.sistem', gelismis: true },
   { path: '/yedekler', labelKey: 'nav.yedek', icon: 'pi pi-save', permission: 'SISTEM_READ', grupKey: 'nav.sistem', admin: true, gelismis: true },
   { path: '/yonetici-kokpiti', labelKey: 'nav.yoneticiKokpiti', icon: 'pi pi-bolt', grupKey: 'nav.rapor', admin: true },
@@ -519,6 +526,8 @@ const gorunenMenuler = computed(() => {
 
     if (!gelismisMod.value && m.gelismis) return false
     if (m.admin && !authStore.isAdmin) return false
+    // Rolla sınırlı menüler (ör. bordro: ADMIN veya MUHASEBE).
+    if (m.roller && !m.roller.includes(authStore?.kullanici?.role)) return false
     return true
   })
 })
@@ -583,6 +592,8 @@ onMounted(() => {
   if (!authStore.isDriver && !authStore.isSaha) {
     onaySayisiniYukle()
   }
+  // Faz 3.4: sohbet okunmamış ve ajanda görev rozetleri.
+  rozetleriYukle()
   // Mobil alt menüdeki "Daha fazla" öğesi menü çekmecesini bu olayla açar.
   window.addEventListener('raspel:menu-ac', menuCekmecesiniAc)
 })
@@ -596,6 +607,8 @@ const menuCekmecesiniAc = () => {
 }
 
 const onaySayisi = ref(0)
+const sohbetOkunmamis = ref(0)
+const ajandaGorevSayisi = ref(0)
 
 const onaySayisiniYukle = async () => {
   try {
@@ -604,6 +617,24 @@ const onaySayisiniYukle = async () => {
     onaySayisi.value = (d.izin || 0) + (d.satinalma || 0) + (d.siparis || 0)
   } catch {
     onaySayisi.value = 0
+  }
+}
+
+// Faz 3.4: sohbet okunmamış toplamı + ajanda açık görev sayısı.
+const rozetleriYukle = async () => {
+  try {
+    const r = await sohbetOdaAPI.odalar()
+    const odalar = r.data || []
+    sohbetOkunmamis.value = odalar.reduce((t, o) => t + (o.okunmamisSayisi || 0), 0)
+  } catch {
+    sohbetOkunmamis.value = 0
+  }
+  try {
+    const r = await ajandaAPI.gorevler()
+    const gorevler = r.data || []
+    ajandaGorevSayisi.value = gorevler.filter((g) => g.tamamlandi !== true).length
+  } catch {
+    ajandaGorevSayisi.value = 0
   }
 }
 </script>

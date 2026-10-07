@@ -28,7 +28,7 @@
         @update:model-value="$emit('update:odemeDurumu', $event)"
       />
       <div
-        v-if="odemeDurumu !== 'yok'"
+        v-if="odemeAktif"
         class="odenen-satir"
       >
         <label>{{ t('hizliSatis.odenenTutar') }}</label>
@@ -45,7 +45,7 @@
       </div>
 
       <div
-        v-if="odemeDurumu !== 'yok' && odemeYontemi === 'NAKIT'"
+        v-if="odemeAktif && odemeYontemi === 'NAKIT'"
         class="odenen-satir"
       >
         <label>{{ t('hizliSatis.alinanNakit') }}</label>
@@ -86,7 +86,7 @@
       </div>
 
       <div
-        v-if="odemeDurumu !== 'yok'"
+        v-if="odemeAktif"
         class="odenen-satir"
       >
         <label>{{ t('hizliSatis.odemeYontemi') }}</label>
@@ -106,9 +106,19 @@
       </div>
 
       <div
-        v-if="odemeDurumu !== 'yok' && odemeYontemi === 'TAKSIT'"
+        v-if="odemeAktif && odemeYontemi === 'TAKSIT'"
         class="taksit-panel"
+        :class="{ 'alan-hata': hatalar && hatalar.taksit }"
       >
+        <!-- Taksit dogrulamasi basarisizsa alanlar kirmiziya doner ve
+             aciklama satir ici cikar; once yalniz toast vardi. -->
+        <small
+          v-if="hatalar && hatalar.taksit"
+          class="alan-hata-metin"
+        >
+          <i class="pi pi-exclamation-circle" />
+          {{ t('hizliSatis.taksitZorunlu') }}
+        </small>
         <div class="odenen-satir">
           <label>{{ t('hizliSatis.taksitKurum') }}</label>
           <InputText
@@ -158,7 +168,7 @@
       </div>
 
       <div
-        v-if="odemeDurumu !== 'yok' && (odemeYontemi === 'KART' || odemeYontemi === 'HAVALE')"
+        v-if="odemeAktif && (odemeYontemi === 'KART' || odemeYontemi === 'HAVALE')"
         class="odenen-satir"
       >
         <label>{{ odemeYontemi === 'KART' ? t('hizliSatis.kartBankaAktar') : t('hizliSatis.havaleBanka') }}</label>
@@ -175,7 +185,7 @@
       </div>
 
       <div
-        v-if="odemeDurumu !== 'yok' && odemeYontemi === 'KART'"
+        v-if="odemeAktif && odemeYontemi === 'KART'"
         class="odenen-satir pos-secim"
       >
         <label>{{ t('hizliSatis.posTerminali') }}</label>
@@ -219,10 +229,11 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatCurrency } from '../utils/format.js'
 
-defineProps({
+const props = defineProps({
   acik: { type: Boolean, default: true },
   odemeDurumu: { type: String, default: 'tam' },
   odemeTipleri: { type: Array, default: () => [] },
@@ -246,8 +257,14 @@ defineProps({
   genelToplam: { type: Number, default: 0 },
   kalanTutar: { type: Number, default: 0 },
   odemeDurumText: { type: String, default: '' },
-  odemeDurumSeverity: { type: String, default: 'secondary' }
+  odemeDurumSeverity: { type: String, default: 'secondary' },
+  /** Alan bazli dogrulama hatalari (orn. `{ taksit: true }`). */
+  hatalar: { type: Object, default: null }
 })
+
+// REDTEAM/Faz5: ayni kosul ("odeme yok degil") alti yerde tekrarlaniyordu.
+// Adlandirilmis kosul okunurlugu artirir; DAVRANIS AYNIDIR.
+const odemeAktif = computed(() => props.odemeDurumu !== 'yok')
 
 defineEmits([
   'toggle',

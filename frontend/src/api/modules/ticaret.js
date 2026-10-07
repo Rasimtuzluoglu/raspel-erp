@@ -49,6 +49,24 @@ export const cariHesapAPI = {
   },
   kart(id) {
     return apiClient.get(`/cari-hesaplar/${id}/kart`)
+  },
+  riskliCariler() {
+    return apiClient.get('/cari-hesaplar/riskli')
+  },
+  topluGuncelle(data) {
+    return apiClient.post('/cari-hesaplar/toplu-guncelle', data)
+  },
+  adresler(id) {
+    return apiClient.get(`/cari-hesaplar/${id}/adresler`)
+  },
+  adresEkle(id, data) {
+    return apiClient.post(`/cari-hesaplar/${id}/adresler`, data)
+  },
+  adresGuncelle(id, adresId, data) {
+    return apiClient.put(`/cari-hesaplar/${id}/adresler/${adresId}`, data)
+  },
+  adresSil(id, adresId) {
+    return apiClient.delete(`/cari-hesaplar/${id}/adresler/${adresId}`)
   }
 }
 
@@ -73,6 +91,12 @@ export const hareketAPI = {
   },
   delete(id) {
     return apiClient.delete(`/hareketler/${id}`)
+  },
+  iptal(id) {
+    return apiClient.post(`/hareketler/${id}/iptal`)
+  },
+  acilis(data) {
+    return apiClient.post('/hareketler/acilis', data)
   }
 }
 
@@ -208,8 +232,11 @@ export const irsaliyeAPI = {
 }
 
 export const siparisTakipAPI = {
-  zincir() {
-    return apiClient.get('/siparis-takip')
+  zincir(params) {
+    return apiClient.get('/siparis-takip', { params })
+  },
+  soforler() {
+    return apiClient.get('/siparis-takip/soforler')
   }
 }
 

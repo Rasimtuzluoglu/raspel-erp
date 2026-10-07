@@ -23,6 +23,10 @@
   flex-direction: column;
   gap: var(--pos-bolum-gap);
   min-width: 0;
+  /* REDTEAM/Faz5: Kaydirma kabugu flex column oldugu icin bolumler de
+     varsayilan `flex-shrink:1` ile eziliyordu; icerikleri kutu disina tasiyor,
+     ust uste biniyordu. Dogal yukseklik + kabuk kaydirir. */
+  flex-shrink: 0;
 }
 .pos-container .pos-bolum + .pos-bolum {
   border-top: 1px solid var(--border);
@@ -444,11 +448,21 @@
   font-weight: 700;
   cursor: pointer;
 }
+/* REDTEAM/Faz5: `flex-shrink: 0` KRITIK.
+   Sag panelin kabugu `display:flex; flex-direction:column; overflow-y:auto`
+   (HizliSatis.vue `.siparis-kart :deep(.p-card-content)`). Flexbox varsayilani
+   `flex-shrink:1` oldugu icin, icerik kart yuksekligini asinca kabuk
+   KAYDIRMAK yerine alt ogelerini EZIYORDU. Satir kutusu iceriginden kisalip
+   icerik tasiyor ve bir sonraki satirin ustune biniyordu: "malzeme kalemi
+   ekleyince tamami bir birine giriyor".
+   `min-height: 0` tek basina yetmez; o yalnizca ezilmeye izin verir.
+   Duzeltme: ogeler dogal yuksekliklerini korusun, tasma kabugun isinde olsun. */
 .pos-container .sepet-icerik {
   display: flex;
   flex-direction: column;
   gap: 8px;
   min-height: 0;
+  flex-shrink: 0;
 }
 .pos-container .sepet-bos {
   padding: 22px 12px;
@@ -457,6 +471,11 @@
   text-align: center;
 }
 .pos-container .sepet-item {
+  /* REDTEAM/Faz5: Kaydirma kabugu flex column (`HizliSatis.vue`
+     `.siparis-kart :deep(.p-card-content)`). Varsayilan `flex-shrink:1` ile
+     satir kutusu iceriginden kisalip icerik tasiyordu. Dogal yuksekligini
+     korusun; tasma yerine kabuk kaydirsin. */
+  flex-shrink: 0;
   padding: 10px 12px;
   border: 1px solid transparent;
   border-radius: 10px;
@@ -1009,4 +1028,21 @@
   .pos-container .odeme-yontem-btn i {
     transition: none;
   }
+}
+
+/* REDTEAM/Faz5 ? alan bazli satir ici dogrulama.
+   Once dogrulama yalnizca TOAST ile bildiriliyordu; kasiyer hangi alanin
+   eksik oldugunu ekranda goremiyordu. Ozellikle teslimat paneli KAPALIYKEN
+   zorunlu adres alani hic gorunmuyordu ("gizli zorunlu alan"). */
+.alan-hata .p-inputtext,
+.alan-hata input {
+  border-color: var(--danger, #dc2626) !important;
+}
+.alan-hata-metin {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  color: var(--danger, #dc2626);
+  font-size: 11.5px;
 }

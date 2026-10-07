@@ -118,12 +118,6 @@ const routes = [
     meta: { requiresAuth: true, permission: 'STOK_READ' }
   },
   {
-    path: '/toplu-stok',
-    name: 'TopluStok',
-    component: () => import('../views/TopluStok.vue'),
-    meta: { requiresAuth: true, permission: 'STOK_WRITE' }
-  },
-  {
     path: '/satislar',
     name: 'Satislar',
     component: () => import('../views/Satis.vue'),
@@ -337,7 +331,7 @@ const routes = [
     path: '/maas-bordro',
     name: 'MaasBordro',
     component: () => import('../views/MaasBordro.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true }
+    meta: { requiresAuth: true, roller: ['ADMIN', 'MUHASEBE'] }
   },
   {
     path: '/vardiyalar',
@@ -364,16 +358,18 @@ const routes = [
     meta: { requiresAuth: true, permission: 'SISTEM_READ' }
   },
   {
-    path: '/kullanim-sartlari',
-    name: 'KullanimSartlari',
-    component: () => import('../views/KullanimSartlari.vue'),
+    path: '/yasal',
+    name: 'YasalMetinler',
+    component: () => import('../views/YasalMetinler.vue'),
     meta: { requiresAuth: true }
   },
   {
+    path: '/kullanim-sartlari',
+    redirect: { path: '/yasal', query: { sekme: 'kullanim' } }
+  },
+  {
     path: '/gizlilik-politikasi',
-    name: 'GizlilikPolitikasi',
-    component: () => import('../views/GizlilikPolitikasi.vue'),
-    meta: { requiresAuth: true }
+    redirect: { path: '/yasal', query: { sekme: 'gizlilik' } }
   },
   {
     path: '/yetki-yonetimi',
@@ -446,6 +442,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/iletisim',
+    name: 'Iletisim',
+    component: () => import('../views/Iletisim.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/onaylar',
     name: 'Onaylar',
     component: () => import('../views/Onaylar.vue'),
@@ -487,6 +489,9 @@ router.beforeEach((to, from, next) => {
   } else if (to.path === '/giris' && authStore.isLoggedIn && to.name === 'Giris') {
     next('/')
   } else if (to.meta.requiresAdmin && !authStore.isAdmin) {
+    next('/yetki-reddi')
+  } else if (to.meta.roller && !to.meta.roller.includes(authStore?.kullanici?.role)) {
+    // Rolla sınırlı sayfalar (ör. bordro: ADMIN veya MUHASEBE).
     next('/yetki-reddi')
   } else if (to.meta.permission && !authStore.hasPermission(to.meta.permission)) {
     // Modül yetkisi yoksa erişim reddedilir. Saha/şoför rolleri kendi
@@ -536,6 +541,7 @@ const ROTA_BASLIK_ANAHTARLARI = {
   '/': 'nav.dashboard',
   '/sohbet': 'nav.sohbet',
   '/ajanda': 'nav.ajanda',
+  '/iletisim': 'nav.iletisim',
   '/onaylar': 'nav.onaylar',
   '/belgeler': 'nav.belgeler',
   '/sistem-durum': 'nav.sistemDurum',
@@ -570,7 +576,6 @@ const ROTA_BASLIK_ANAHTARLARI = {
   '/iadeler': 'nav.iade',
   '/stoklar': 'nav.stok',
   '/kritik-stok': 'nav.kritikStok',
-  '/toplu-stok': 'nav.topluStok',
   '/depolar': 'nav.depo',
   '/stok-seriler': 'nav.serilot',
   '/stok-sayim': 'nav.stokSayim',
@@ -591,8 +596,9 @@ const ROTA_BASLIK_ANAHTARLARI = {
   '/kategoriler': 'nav.kategori',
   '/notlar': 'nav.notlar',
   '/veri-aktar': 'nav.veriAktar',
-  '/kullanim-sartlari': 'nav.kullanimSartlari',
-  '/gizlilik-politikasi': 'nav.gizlilik',
+  '/kullanim-sartlari': 'nav.yasal',
+  '/gizlilik-politikasi': 'nav.yasal',
+  '/yasal': 'nav.yasal',
   '/hesap-ayarlari': 'nav.hesapAyarlari',
   '/yedekler': 'nav.yedek',
   '/yonetici-kokpiti': 'nav.yoneticiKokpiti',

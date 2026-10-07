@@ -56,18 +56,24 @@ describe('HesapAyarlari.vue', () => {
       global: { stubs, plugins: [pinia, ToastService, ConfirmationService, i18n] }
     })
     await flushPromises()
+    // Entegrasyonlar "Sistem" grubunda.
+    wrapper.vm.bolumGrubu = 'sistem'
+    await wrapper.vm.$nextTick()
     expect(wrapper.find('.ai-ayar-kart').exists()).toBe(true)
   })
 
-  it('dikey ayar menusu 8 bolum render eder ve secim degistirir', async () => {
+  it('sekme grupları: kişisel 4 sekme; sistem 4 sekme', async () => {
     const HesapAyarlari = (await import('../HesapAyarlari.vue')).default
     const wrapper = mount(HesapAyarlari, {
       global: { stubs, plugins: [createPinia(), ToastService, ConfirmationService, i18n] }
     })
     await flushPromises()
-    const sekmeler = wrapper.findAll('[role="tab"]')
-    expect(sekmeler.length).toBe(8)
-    await sekmeler[1].trigger('click')
-    expect(wrapper.findAll('[role="tab"]')[1].attributes('aria-selected')).toBe('true')
+    // Varsayılan grup: Kişisel (Profil, Güvenlik, Görünüm, Bildirimler).
+    expect(wrapper.findAll('[role="tab"]').length).toBe(4)
+
+    wrapper.vm.bolumGrubu = 'sistem'
+    await wrapper.vm.$nextTick()
+    expect(wrapper.findAll('[role="tab"]').length).toBe(4)
+    expect(wrapper.findAll('[role="tab"]')[0].attributes('aria-selected')).toBe('true')
   })
 })

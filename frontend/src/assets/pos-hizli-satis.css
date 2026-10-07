@@ -1,0 +1,1201 @@
+.pos-container {
+  padding: 0;
+  min-height: 0;
+  max-width: 100%;
+  /* Yatay tasmalara karsi emniyet: icerik kolonlari kendi icinde kaydirilir. */
+  overflow-x: clip;
+}
+/* Buyuk yazi modu: yasli/uzak mesafeden kullanan personel icin olcekler */
+.pos-buyuk {
+  font-size: 18px;
+}
+.pos-buyuk .breadcrumb,
+.pos-buyuk .user-info {
+  font-size: 16px;
+}
+/* Urun karti */
+.pos-buyuk .urun-sayaci {
+  font-size: 13px;
+}
+.pos-buyuk .cok-satan-ad {
+  font-size: 16px;
+}
+.pos-buyuk .cok-satan-fiyat {
+  font-size: 15px;
+}
+.pos-buyuk .cok-satan-chip {
+  padding: 11px 15px;
+}
+/* Bolum basliklari */
+.pos-buyuk .product-header h3 {
+  font-size: 18px;
+}
+/* NOT: Sepet / musteri / odeme panelinin buyuk yazi olcekleri
+   `assets/pos-panels.css` icinde (`.pos-container.pos-buyuk ...`). */
+/* Gunluk satislar */
+.pos-buyuk :deep(.gunluk-satis-cari) {
+  font-size: 14px;
+}
+.pos-buyuk :deep(.gunluk-satis-tutar) {
+  font-size: 16px;
+}
+.pos-buyuk :deep(.gunluk-satis-no) {
+  font-size: 15px;
+}
+/* Kisa yol ipucu */
+.pos-buyuk .pos-ipucu {
+  font-size: 14px;
+}
+/* Sticky tamamla */
+.pos-buyuk .sticky-tutar {
+  font-size: 16px;
+}
+.pos-buyuk .sticky-tutar strong {
+  font-size: 24px;
+}
+.pos-tercih-btn,
+.pos-ikon-btn {
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.pos-tercih-btn:hover,
+.pos-ikon-btn:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+.pos-tercih-btn.aktif {
+  background: var(--accent, var(--primary-color));
+  border-color: var(--accent, var(--primary-color));
+  color: var(--accent-contrast, #ffffff);
+}
+/* Bugunku satislar butonu + sayac rozeti */
+.bugunku-btn {
+  position: relative;
+}
+.bugunku-rozet {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-contrast, #04211d);
+  font-size: 10.5px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.satis-onay {
+  text-align: center;
+  padding: 8px 0;
+}
+.satis-onay-ikon {
+  font-size: 2.4rem;
+  color: var(--accent, var(--primary-color));
+  margin-bottom: 10px;
+}
+.satis-onay-metin {
+  font-size: 15px;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+.satis-onay-tutar {
+  font-size: 18px;
+  color: var(--text-primary);
+  margin: 0;
+}
+.pos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.breadcrumb {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.breadcrumb i {
+  margin-right: 4px;
+}
+.user-info {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.user-info i {
+  margin-right: 4px;
+}
+.pos-header-sag {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pos-ipucu-btn {
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.pos-ipucu-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.pos-ipucu {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+.pos-ipucu span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.pos-ipucu kbd {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--text-primary);
+}
+.pos-ipucu-kapat {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 6px;
+}
+.pos-ipucu-kapat:hover {
+  color: var(--text-primary);
+}
+.form-grup {
+  margin-bottom: 14px;
+}
+.form-grup label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.kurulum-iki-kolon {
+  display: flex;
+  gap: 12px;
+}
+.kurulum-iki-kolon .form-grup {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .kurulum-iki-kolon {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+/* Kaynak deger: POS govdesi iki sutun (urun / siparis). Dikey kilit C1 blogunda
+   eklenir; buradaki gap ortak olcek, C1 blogu tekrar tanimlamaz. */
+.pos-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(340px, 30vw, 420px);
+  gap: 14px;
+  align-items: stretch;
+}
+.pos-left {
+  min-width: 0;
+}
+.pos-right {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* NOT: Siparis paneli bilesenlerinin (PosMusteriPaneli / PosSepetPaneli /
+   PosOdemePaneli) stilleri `assets/pos-panels.css` icindedir. Scoped CSS
+   cocuk bilesenlere ulusmadigi icin burada tekrar tanimlanamaz.
+   .p-card-content yerlesimi C1 blogunda tek kez tanimlanir. */
+
+/* Sticky Satisi Tamamla */
+.sticky-tamamla {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 0 6px;
+  margin-top: 4px;
+  background: var(--bg-card);
+  border-top: 2px solid var(--border);
+}
+.sticky-tutar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.sticky-tutar strong {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--accent);
+}
+.fis-modu-satir {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.fis-modu-etiket {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.fis-modu-satir :deep(.p-selectbutton) {
+  flex: 1;
+  justify-content: flex-end;
+}
+.fis-modu-satir :deep(.p-selectbutton .p-button) {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.filter-card :deep(.p-card-content) {
+  padding-top: 0;
+}
+.filter-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+.filter-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.filter-select {
+  flex: 1;
+}
+
+.pos-arac-cubugu {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.4fr) auto;
+  gap: 8px;
+  align-items: stretch;
+  margin-bottom: 12px;
+}
+.pos-arac-cubugu .arama-kutusu {
+  display: block;
+  position: relative;
+}
+/* REDTEAM/Faz2 (canli E2E ile tespit): `:deep()` EKLENIYORDU.
+   Scoped CSS derlemesi son selector'a `[data-v-hash]` ekler:
+     .pos-arac-cubugu .arama-kutusu .p-inputtext[data-v-hash]
+   PrimeVue bilesenlerinin scope-id davranisi:
+     - <InputText> koku <input> -> scope-id ALIR  -> kural UYGULANIR
+     - <AutoComplete> koku <span class="p-autocomplete">, icindeki
+       <input class="p-inputtext"> ICE ICE oldugu icin scope-id ALMAZ
+       -> kural UYGULANMAZ
+   Sonuc: urun arama kutusunda global `app.css` padding'i (14px) kaliyordu,
+   `pi-search` ikonu ise `left: 0.9rem` (14.4px) + ~15px genislikle 14px'ten
+   baslayan yazinin USTUNE biniyordu. `height: 42px` de kayboluyordu; ayni
+   CSS'teki barkod kutusu (dogrudan InputText) 42px iken arama kutusu ~38px
+   kaliyor, hizasizlik gorunuyordu.
+
+   CANLI KANIT (Cypress redteam-faz2 2.2): padding-left 14px geliyordu
+   (beklenen > 30px).
+
+   Duzeltme: `:deep()` ile scope-id zorunlulugu kaldirilir. */
+.pos-arac-cubugu .arama-kutusu :deep(.p-inputtext) {
+  width: 100%;
+  height: 42px;
+  padding-left: 2.75rem !important;
+}
+.pos-arac-cubugu .barkod-kutu :deep(.p-inputtext) {
+  padding-right: 2.75rem !important;
+}
+.pos-arac-cubugu .arama-kutusu > i {
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-muted);
+  z-index: 1;
+}
+/* Barkod alanı içindeki kamera düğmesi (ayrı buton kalabalığını önler) */
+.alan-ikon-sag {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: var(--bg-muted, rgba(148, 163, 184, 0.12));
+  color: var(--text-secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--dur-fast, 0.15s) var(--ease-standard, ease);
+}
+.alan-ikon-sag:hover {
+  background: var(--accent-soft-strong);
+  color: var(--accent);
+}
+/* Filtreler popover düğmesi */
+.filtre-btn {
+  position: relative;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: all var(--dur-fast, 0.15s) var(--ease-standard, ease);
+}
+.filtre-btn:hover {
+  border-color: var(--accent-border);
+  color: var(--text-primary);
+}
+.filtre-btn.filtre-aktif {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.filtre-rozet {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-contrast, #04211d);
+  font-size: 11px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.filtre-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 260px;
+}
+.filtre-panel-baslik {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.filtre-alan label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+/* Aktif filtre çipleri */
+.aktif-filtreler {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: -4px 0 10px;
+}
+.aktif-filtre-cip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+.aktif-filtre-cip button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  padding: 2px;
+}
+.aktif-filtre-temizle {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+/* Tercihler popover paneli */
+.tercih-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 240px;
+}
+.tercih-baslik {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.tercih-satir {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+}
+.tercih-metin {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.katlanir-ikon-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 6px;
+}
+.katlanir-ikon-btn:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.pos-arac-cubugu .arac-dropdown {
+  height: 42px;
+  width: 100%;
+}
+.pos-arac-cubugu .arac-dropdown :deep(.p-select),
+.pos-arac-cubugu .arac-dropdown :deep(.p-dropdown) {
+  width: 100%;
+  height: 42px;
+}
+.pos-arac-cubugu .arac-dropdown :deep(.p-select-label),
+.pos-arac-cubugu .arac-dropdown :deep(.p-dropdown-label) {
+  line-height: 42px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.pos-arac-cubugu .p-button {
+  height: 42px;
+}
+
+@media (max-width: 900px) {
+  .pos-arac-cubugu {
+    grid-template-columns: 1fr 1fr;
+  }
+  .filtre-btn {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}
+@media (max-width: 520px) {
+  .pos-arac-cubugu {
+    grid-template-columns: 1fr;
+  }
+  .filtre-btn-metin {
+    display: none;
+  }
+}
+
+.product-section {
+  margin-top: 4px;
+}
+.product-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.product-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.product-header h3 i {
+  color: var(--accent);
+}
+.product-header-sag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.siralama-etiket {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.siralama-dropdown {
+  min-width: 130px;
+}
+.urun-sayaci {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 1px 8px;
+  border-radius: 10px;
+}
+.kategori-cipler {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+  scrollbar-width: thin;
+}
+.kategori-cip {
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--dur-fast, 0.15s) var(--ease-standard, ease);
+}
+.kategori-cip:hover {
+  border-color: var(--accent-border);
+  color: var(--text-primary);
+}
+.kategori-cip.aktif {
+  background: var(--accent-soft-strong);
+  border-color: var(--accent-border);
+  color: var(--accent);
+  font-weight: 700;
+}
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
+  gap: 12px;
+  max-height: calc(100vh - 230px);
+  max-height: calc(100dvh - 230px);
+  overflow-y: auto;
+  padding: 2px 2px 10px;
+}
+.daha-fazla {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 4px;
+}
+
+/* ---------------------------------------------------------------------
+   Izgara klabye modu (Faz4)
+   --------------------------------------------------------------------- */
+/* Odakli kart klavye ile secildiginde belirgin olsun: klavye kullanan
+   kullanici fareyi takip etmedigi icin odak halkasi olmazsa nerede
+   oldugunu bilemez. */
+.product-card.izgara-odakli {
+  outline: 3px solid var(--accent);
+  outline-offset: -1px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.product-card:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -1px;
+}
+
+/* Sag tik ile acilan adet penceresi. Izgara disina sabitlenir; `Escape`
+   ile kapanir (bkz. `handlePosKeys`). */
+.adet-popover {
+  position: fixed;
+  z-index: 1260; /* uygulama ici menu katmaninin uzerinde (bkz. main.js zIndex) */
+  width: min(320px, calc(100vw - 24px));
+  background: var(--surface, #fff);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  padding: 12px;
+}
+.adet-popover-ust {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+.adet-popover-ad {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.adet-popover-stok {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.adet-popover-govde {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.adet-popover-girdi {
+  width: 92px;
+}
+.empty-products {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+}
+.cok-satanlar-section {
+  margin-top: 8px;
+}
+.cok-satanlar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.cok-satan-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+.cok-satan-chip:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.cok-satan-chip.stok-yok {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.cok-satan-chip.stok-yok:hover {
+  border-color: var(--border);
+  transform: none;
+}
+.cok-satan-ad {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.cok-satan-fiyat {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.empty-products i {
+  font-size: 36px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+
+/* NOT: Musteri / teslimat / sepet / odeme paneli stilleri artik
+   `assets/pos-panels.css` dosyasindadir (bilesenlere scoped CSS ile
+   ulasilamadigi icin tasinmistir). Burada yalnizca POS sayfasina
+   ait duzen kurallari kalir. */
+
+.fis-card :deep(.p-card-content) {
+  padding: 0;
+}
+.fis-baslik-satir {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+.fis-baslik-satir::-webkit-details-marker {
+  display: none;
+}
+.fis-detay-ozet {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.fis-detay[open] .fis-detay-ozet .katlanir-ok {
+  transform: rotate(180deg);
+}
+.fis-detay-ozet .katlanir-ok {
+  color: var(--text-secondary);
+  font-size: 12px;
+  transition: transform 0.15s ease;
+}
+.fis-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.fis-ayarlar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fis-ayarlar .p-selectbutton .p-button {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+.fis-onizleme-kapsam {
+  overflow-x: auto;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 0 0 8px 8px;
+}
+
+
+.satis-buton {
+  margin-top: 4px;
+}
+
+.ym-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.ym-form-grid .full-width {
+  grid-column: span 2;
+}
+.dialog-footer-btns {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.field {
+  margin-bottom: 12px;
+}
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.required {
+  color: var(--danger);
+}
+
+@media (max-width: 1280px) {
+  /* Dar dizustu/tablet: sag sutun alta iner; sabit 400px yerine tam genislik. */
+  .pos-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 1100px) {
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr));
+  }
+}
+
+/* ======================= POS TASARIM YENILEME =======================
+   Görsel iyileştirme katmanı; işlev/akış değişmez, tümü tema değişkenli. */
+.pos-container {
+  gap: 14px;
+}
+.pos-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 10px 16px;
+  background: var(--bg-header, var(--bg-card));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+}
+.breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.pos-header-sag {
+  gap: 8px;
+}
+.pos-ikon-btn,
+.pos-tercih-btn,
+.pos-ipucu-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  transition: color var(--dur-fast, 0.15s) ease, border-color var(--dur-fast, 0.15s) ease, background var(--dur-fast, 0.15s) ease;
+}
+.pos-ikon-btn:hover,
+.pos-tercih-btn:hover,
+.pos-ipucu-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+.pos-tercih-btn.aktif {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+.pos-arac-cubugu {
+  gap: 10px;
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+.product-grid {
+  gap: 12px;
+}
+.siparis-kart {
+  border-radius: 14px;
+  border: 1px solid var(--border);
+}
+:deep(.siparis-kart .p-card-body) {
+  padding: 14px;
+}
+:deep(.siparis-kart .p-card-content) {
+  padding: 0;
+}
+.sticky-tamamla {
+  border-radius: 12px;
+  box-shadow: var(--elev-2, 0 8px 24px rgba(0, 0, 0, 0.35));
+}
+.empty-products {
+  color: var(--text-muted);
+}
+
+/* Marka + baslik */
+.pos-marka {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pos-marka-ikon {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  box-shadow: var(--elev-1, 0 2px 10px rgba(0, 0, 0, 0.25));
+}
+.pos-marka-metin {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.pos-marka-metin strong {
+  font-size: 15px;
+  color: var(--text-primary);
+}
+.pos-marka-metin small {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+/* Komut cubugu */
+.barkod-kutu :deep(.p-inputtext) {
+  font-weight: 600;
+}
+.arama-kutusu :deep(.p-inputtext) {
+  width: 100%;
+}
+.filtre-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--dur-fast, 0.15s) ease;
+}
+.filtre-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+.filtre-btn.filtre-aktif {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+.filtre-rozet {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-contrast, #04211d);
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Kategori + cok satan cipleri */
+.kategori-cip {
+  border-radius: 999px;
+  transition: all var(--dur-fast, 0.15s) ease;
+}
+.kategori-cip.aktif {
+  background: var(--accent);
+  color: var(--accent-contrast, #04211d);
+  border-color: var(--accent);
+}
+.cok-satan-chip {
+  border-radius: 12px;
+  transition: transform var(--dur-fast, 0.15s) ease, border-color var(--dur-fast, 0.15s) ease;
+}
+.cok-satan-chip:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--accent-border);
+}
+
+/* Sepet satiri */
+.sepet-icerik {
+  gap: 8px;
+}
+.sepet-item {
+  padding: 10px 12px;
+  border: 1px solid transparent;
+}
+.sepet-item:hover {
+  border-color: var(--border);
+}
+.sepet-tutar {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* ======================= C1: VIEWPORT'A BAGLI KASA =======================
+   Sayfa scroll'u kaldirilir; sol urun alani ve sag siparis paneli kendi
+   scroll'une sahip; toplam/odeme/tamamla sagda sabit (sticky) kalir. */
+.pos-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 52px);
+  min-height: 520px;
+  overflow: hidden;
+}
+.pos-header,
+.pos-ipucu {
+  flex: 0 0 auto;
+}
+.pos-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.pos-left {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.pos-arac-cubugu,
+.aktif-filtreler,
+.cok-satanlar-section {
+  flex: 0 0 auto;
+}
+.product-section {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.product-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none !important;
+  overflow-y: auto;
+  align-content: start;
+}
+.pos-right {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+}
+.pos-right :deep(.p-card),
+.siparis-kart {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.siparis-kart :deep(.p-card-body) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+/* Siparis paneli icerigi: dikey akis + kendi kaydirma. Tek tanim; C1
+   viewport kilidi bu duzeni kurar. */
+.siparis-kart :deep(.p-card-content) {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.sticky-tamamla {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: var(--bg-card);
+}
+@media (max-width: 1280px) {
+  /* Tek sutuna dusunce viewport kilidini kaldir; sayfa normal kaydirilsin. */
+  .pos-container {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+  .pos-body,
+  .pos-left,
+  .product-section,
+  .pos-right,
+  .siparis-kart :deep(.p-card-content) {
+    overflow: visible;
+  }
+  .product-grid {
+    overflow: visible;
+  }
+}
+
+/* NOT: Sepet paneli kurallari (sepet-bolum / sepet-icerik / sepet-baslik-toggle /
+   geri-al-bar / adet kontrolleri / hizli nakit) `assets/pos-panels.css`
+   icindedir. Burada yalnizca kart ici kaydirma davranisi duzenlenir. */
+.pos-container :deep(.sepet-bolum),
+.pos-container :deep(.sepet-icerik) {
+  max-height: none;
+}
+
+/* Sepet/odeme paneli kurallari -> assets/pos-panels.css (bilesen kapsami). */
+.filtre-alan-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+}
+.kategori-cip-daha {
+  border-style: dashed;
+}
+
+/* REDTEAM/Faz3 — katalog durum gostergeleri.
+   Yukleme / bos / hata AYRI gosterilir. Once ucu de ayniydi: istek
+   sirasinda izgara bos gorunuyor ve "urun bulunamadi" yaziliyordu; kasiyer
+   malzemenin olmadigini sanip aramaya devam ediyordu. */
+.product-durum {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px 16px;
+  color: var(--text-muted);
+  text-align: center;
+}
+.product-durum i {
+  font-size: 28px;
+  color: var(--text-muted);
+}
+.product-durum p {
+  margin: 0;
+  font-size: 13px;
+}
+.product-durum-hata i {
+  color: var(--danger, #dc2626);
+}
+
+/* Kategori cipindeki gercek urun sayisi. TUM katalogdan gelir; once
+   yalnizca yuklenen sayfadan turetiyordu ve yanlis gosteriyordu. */
+.kategori-cip-adet {
+  margin-left: 5px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+.kategori-cip.aktif .kategori-cip-adet {
+  background: color-mix(in srgb, #fff 25%, transparent);
+  opacity: 1;
+}

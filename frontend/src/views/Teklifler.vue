@@ -1087,6 +1087,10 @@ const whatsAppPaylas = () => {
 }
 
 @media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
   :global(body *) {
     visibility: hidden;
   }
@@ -1104,15 +1108,18 @@ const whatsAppPaylas = () => {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
+  /* Kalem tablosu basliklari tekrar etsin, satirlar bolunmesin. */
+  :global(#teklif-mektubu-alani thead) {
+    display: table-header-group;
+  }
+  :global(#teklif-mektubu-alani tr) {
+    break-inside: avoid;
+  }
   :global(.p-dialog),
   :global(.p-dialog-content),
   :global(.p-dialog-mask) {
     overflow: visible !important;
     transform: none !important;
   }
-}
-@page {
-  size: A4;
-  margin: 10mm;
 }
 </style>

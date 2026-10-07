@@ -40,6 +40,21 @@
           style="margin-right: 8px"
           @click="csvExport"
         />
+        <Button
+          :label="t('cariHesaplar.riskliCariler')"
+          icon="pi pi-exclamation-triangle"
+          class="p-button-sm p-button-outlined p-button-warning"
+          style="margin-right: 8px"
+          @click="riskliCarilerAc"
+        />
+        <Button
+          :label="t('cariHesaplar.topluGuncelle')"
+          icon="pi pi-pencil"
+          class="p-button-sm p-button-outlined"
+          style="margin-right: 8px"
+          :disabled="selectedCariHesaplar.length === 0"
+          @click="topluGuncelleAc"
+        />
         <!-- REDTEAM/Faz3.3: `p-input-icon-left` PrimeVue 4'te kaldirildi. -->
         <IconField>
           <InputIcon class="pi pi-search" />
@@ -106,8 +121,15 @@
         show-clear
         @change="filtreDegisti"
       />
+      <InputText
+        v-model="filtreEtiket"
+        :placeholder="t('cariHesaplar.etiketFiltre')"
+        class="filtre-select"
+        @keyup.enter="filtreEtiketAra"
+        @blur="filtreEtiketAra"
+      />
       <Button
-        v-if="filtreTur || filtreBakiye"
+        v-if="filtreTur || filtreBakiye || filtreEtiket"
         :label="t('cariHesaplar.temizle')"
         icon="pi pi-times"
         size="small"
@@ -258,6 +280,23 @@
               <i :class="borcluMu(slotProps.data.bakiye) ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
               {{ formatCurrency(Math.abs(slotProps.data.bakiye || 0)) }}
             </span>
+          </template>
+        </Column>
+        <Column
+          v-if="kolonlar[9].visible"
+          field="etiketler"
+          :header="t('cariHesaplar.etiketler')"
+          style="width: 160px"
+        >
+          <template #body="slotProps">
+            <span
+              v-if="slotProps.data.etiketler"
+              class="etiket-rozet"
+            >{{ slotProps.data.etiketler }}</span>
+            <span
+              v-else
+              class="gizli-veri"
+            >-</span>
           </template>
         </Column>
         <Column
@@ -543,6 +582,17 @@
                 class="w-full"
               />
             </div>
+            <div class="form-group">
+              <label for="paraBirimi">{{ t('cariHesaplar.paraBirimi') }}</label>
+              <Dropdown
+                id="paraBirimi"
+                v-model="form.paraBirimi"
+                :options="paraBirimiSecenekleri"
+                option-label="label"
+                option-value="value"
+                class="w-full"
+              />
+            </div>
           </div>
         </div>
 
@@ -567,6 +617,15 @@
               filter
               filter-by="ad,email"
               :loading="temsilcilerYukleniyor"
+            />
+          </div>
+          <div class="form-group">
+            <label for="etiketler">{{ t('cariHesaplar.etiketler') }}</label>
+            <InputText
+              id="etiketler"
+              v-model="form.etiketler"
+              :placeholder="t('cariHesaplar.etiketlerPlaceholder')"
+              class="w-full"
             />
           </div>
           <div class="form-group">
@@ -637,6 +696,20 @@
       </div>
 
       <div class="ekstre-arac">
+        <DatePicker
+          v-model="ekstreBaslangic"
+          :placeholder="t('cariHesaplar.ekstreBaslangic')"
+          date-format="dd.mm.yy"
+          show-icon
+          class="ekstre-tarih"
+        />
+        <DatePicker
+          v-model="ekstreBitis"
+          :placeholder="t('cariHesaplar.ekstreBitis')"
+          date-format="dd.mm.yy"
+          show-icon
+          class="ekstre-tarih"
+        />
         <Button
           :label="t('cariHesaplar.ekstreYazdir')"
           icon="pi pi-print"
@@ -1035,6 +1108,290 @@
       v-model:visible="kartDialogAcik"
       :cari-id="kartCariId"
     />
+
+    <Dialog
+      v-model:visible="acilisDialogVisible"
+      :header="t('cariHesaplar.acilisFisi')"
+      modal
+      :draggable="false"
+      :style="{ width: '440px', maxWidth: '95vw' }"
+    >
+      <p class="toplu-secim-bilgi">
+        {{ acilisCari?.ad }}
+      </p>
+      <div class="form-alani">
+        <label>{{ t('cariHesaplar.acilisTutar') }}</label>
+        <InputNumber
+          v-model="acilisForm.tutar"
+          :min-fraction-digits="2"
+          :max-fraction-digits="2"
+          class="w-full"
+          :placeholder="t('cariHesaplar.acilisTutarYardim')"
+        />
+      </div>
+      <div class="form-alani">
+        <label>{{ t('cariHesaplar.acilisTarih') }}</label>
+        <DatePicker
+          v-model="acilisForm.tarih"
+          date-format="dd.mm.yy"
+          show-icon
+          class="w-full"
+        />
+      </div>
+      <div class="form-alani">
+        <label>{{ t('cariHesaplar.acilisAciklama') }}</label>
+        <InputText
+          v-model="acilisForm.aciklama"
+          class="w-full"
+        />
+      </div>
+      <small>{{ t('cariHesaplar.acilisYardim') }}</small>
+      <template #footer>
+        <Button
+          :label="t('common.cancel')"
+          class="p-button-text"
+          @click="acilisDialogVisible = false"
+        />
+        <Button
+          :label="t('common.save')"
+          icon="pi pi-check"
+          :loading="acilisKaydediliyor"
+          @click="acilisKaydet"
+        />
+      </template>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="adresDialogVisible"
+      :header="t('cariHesaplar.adreslerBaslik')"
+      modal
+      :draggable="false"
+      :style="{ width: '760px', maxWidth: '95vw' }"
+    >
+      <p class="toplu-secim-bilgi">
+        {{ adresCari?.ad }}
+      </p>
+      <DataTable
+        :value="adresler"
+        data-key="id"
+        striped-rows
+        responsive-layout="scroll"
+        :paginator="adresler.length > 5"
+        :rows="5"
+      >
+        <Column
+          field="baslik"
+          :header="t('cariHesaplar.adresBaslik')"
+        />
+        <Column
+          field="adres"
+          :header="t('cariHesaplar.adres')"
+        />
+        <Column
+          field="il"
+          :header="t('cariHesaplar.il')"
+        />
+        <Column :header="t('cariHesaplar.adresVarsayilan')">
+          <template #body="{ data }">
+            <i
+              v-if="data.varsayilan"
+              class="pi pi-check"
+            />
+          </template>
+        </Column>
+        <Column
+          :header="t('common.actions')"
+          style="width: 80px"
+        >
+          <template #body="{ data }">
+            <Button
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-danger p-button-sm"
+              @click="adresSil(data)"
+            />
+          </template>
+        </Column>
+        <template #empty>
+          <p>{{ t('cariHesaplar.adresYok') }}</p>
+        </template>
+      </DataTable>
+
+      <Divider />
+
+      <div class="adres-form">
+        <InputText
+          v-model="adresForm.baslik"
+          :placeholder="t('cariHesaplar.adresBaslik')"
+        />
+        <InputText
+          v-model="adresForm.adres"
+          :placeholder="t('cariHesaplar.adres')"
+          class="genis"
+        />
+        <InputText
+          v-model="adresForm.il"
+          :placeholder="t('cariHesaplar.il')"
+        />
+        <InputText
+          v-model="adresForm.ilce"
+          :placeholder="t('cariHesaplar.ilce')"
+        />
+        <InputText
+          v-model="adresForm.yetkiliKisi"
+          :placeholder="t('cariHesaplar.yetkili')"
+        />
+        <InputText
+          v-model="adresForm.telefon"
+          :placeholder="t('cariHesaplar.telefon')"
+        />
+        <div class="varsayilan-alan">
+          <Checkbox
+            v-model="adresForm.varsayilan"
+            :binary="true"
+            input-id="adresVarsayilan"
+          />
+          <label for="adresVarsayilan">{{ t('cariHesaplar.adresVarsayilan') }}</label>
+        </div>
+        <Button
+          :label="t('common.add')"
+          icon="pi pi-plus"
+          :loading="adresKaydediliyor"
+          @click="adresEkleKaydet"
+        />
+      </div>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="topluDialogVisible"
+      :header="t('cariHesaplar.topluGuncelleBaslik')"
+      modal
+      :draggable="false"
+      :style="{ width: '460px', maxWidth: '95vw' }"
+    >
+      <p class="toplu-secim-bilgi">
+        {{ t('cariHesaplar.topluSecilen', { sayi: selectedCariHesaplar.length }) }}
+      </p>
+      <div class="form-alani">
+        <label>{{ t('cariHesaplar.tur') }}</label>
+        <Dropdown
+          v-model="topluForm.tur"
+          :options="cariTurSecenekleri"
+          option-label="label"
+          option-value="value"
+          show-clear
+          :placeholder="t('cariHesaplar.degisiklikYok')"
+          class="w-full"
+        />
+      </div>
+      <div class="form-alani">
+        <label>{{ t('cariHesaplar.krediLimiti') }}</label>
+        <InputNumber
+          v-model="topluForm.krediLimiti"
+          :min="0"
+          :min-fraction-digits="2"
+          :max-fraction-digits="2"
+          :placeholder="t('cariHesaplar.degisiklikYok')"
+          class="w-full"
+        />
+      </div>
+      <div class="form-alani">
+        <label>{{ t('cariHesaplar.vadeGun') }}</label>
+        <InputNumber
+          v-model="topluForm.odemeVadesi"
+          :min="0"
+          :placeholder="t('cariHesaplar.degisiklikYok')"
+          class="w-full"
+        />
+      </div>
+      <div class="form-alani">
+        <label>{{ t('cariHesaplar.durum') }}</label>
+        <Dropdown
+          v-model="topluForm.aktif"
+          :options="aktifSecenekleri"
+          option-label="label"
+          option-value="value"
+          show-clear
+          :placeholder="t('cariHesaplar.degisiklikYok')"
+          class="w-full"
+        />
+      </div>
+      <template #footer>
+        <Button
+          :label="t('common.cancel')"
+          class="p-button-text"
+          @click="topluDialogVisible = false"
+        />
+        <Button
+          :label="t('common.save')"
+          icon="pi pi-check"
+          :loading="topluKaydediliyor"
+          @click="topluGuncelleKaydet"
+        />
+      </template>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="riskDialogVisible"
+      :header="t('cariHesaplar.riskliCarilerBaslik')"
+      modal
+      :draggable="false"
+      :style="{ width: '760px', maxWidth: '95vw' }"
+    >
+      <div
+        v-if="riskYukleniyor"
+        class="loading-iskelet"
+      >
+        <SkeletonLoader
+          :count="4"
+          height="40px"
+        />
+      </div>
+      <DataTable
+        v-else
+        :value="riskliCariler"
+        data-key="cariId"
+        striped-rows
+        responsive-layout="scroll"
+        :paginator="riskliCariler.length > 10"
+        :rows="10"
+      >
+        <Column
+          field="cariAd"
+          :header="t('cariHesaplar.ad')"
+        />
+        <Column
+          :header="t('cariHesaplar.borc')"
+        >
+          <template #body="{ data }">
+            {{ formatCurrency(data.borc) }}
+          </template>
+        </Column>
+        <Column
+          :header="t('cariHesaplar.krediLimiti')"
+        >
+          <template #body="{ data }">
+            {{ formatCurrency(data.krediLimiti) }}
+          </template>
+        </Column>
+        <Column
+          :header="t('cariHesaplar.asimTutari')"
+        >
+          <template #body="{ data }">
+            <span class="negative">{{ formatCurrency(data.asimTutari) }}</span>
+          </template>
+        </Column>
+        <Column
+          :header="t('cariHesaplar.riskOrani')"
+        >
+          <template #body="{ data }">
+            %{{ data.riskOrani }}
+          </template>
+        </Column>
+        <template #empty>
+          <p>{{ t('cariHesaplar.riskliYok') }}</p>
+        </template>
+      </DataTable>
+    </Dialog>
   </div>
 </template>
 
@@ -1046,7 +1403,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useRouter } from 'vue-router'
-import { excelAPI, hareketAPI, notAPI, faturaAPI, stokAPI, cariHesapAPI, uploadAPI, kullaniciAPI } from '../api/index.js'
+import { excelAPI, hareketAPI, notAPI, faturaAPI, stokAPI, cariHesapAPI, uploadAPI, kullaniciAPI, raporAPI } from '../api/index.js'
 import { resimDogrula } from '../utils/dosyaDogrula.js'
 import { resimSikistir } from '../utils/resimSikistir.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
@@ -1086,7 +1443,8 @@ const varsayilanKolonlar = computed(() => [
   { field: 'krediLimiti', header: t('cariHesaplar.krediLimiti') },
   { field: 'odemeVadesi', header: t('cariHesaplar.vadeGun') },
   { field: 'temsilciAd', header: t('cariHesaplar.satisTemsilcisi') },
-  { field: 'bakiye', header: t('cariHesaplar.bakiye') }
+  { field: 'bakiye', header: t('cariHesaplar.bakiye') },
+  { field: 'etiketler', header: t('cariHesaplar.etiketler') }
 ])
 const kolonlar = computed(() =>
   varsayilanKolonlar.value.map((k) => ({ ...k, visible: kolonGorunurluk.value[k.field] !== false }))
@@ -1118,11 +1476,29 @@ const showDialog = ref(false)
 const showHareketlerDialog = ref(false)
 const kartDialogAcik = ref(false)
 const kartCariId = ref(null)
+const riskDialogVisible = ref(false)
+const riskliCariler = ref([])
+const riskYukleniyor = ref(false)
+const topluDialogVisible = ref(false)
+const topluKaydediliyor = ref(false)
+const topluForm = ref({ tur: null, krediLimiti: null, odemeVadesi: null, aktif: null })
+const adresDialogVisible = ref(false)
+const adresCari = ref(null)
+const adresler = ref([])
+const adresKaydediliyor = ref(false)
+const adresForm = ref({ baslik: '', adres: '', il: '', ilce: '', yetkiliKisi: '', telefon: '', varsayilan: false })
+const acilisDialogVisible = ref(false)
+const acilisCari = ref(null)
+const acilisKaydediliyor = ref(false)
+const acilisForm = ref({ tutar: null, tarih: null, aciklama: '' })
 const loading = ref(false)
 const saving = ref(false)
 const editingId = ref(null)
 const cariHareketler = ref([])
 const cariHareketlerYukleniyor = ref(false)
+// Faz 2.2: tarih aralıklı ekstre (boşsa tüm hareketler yazdırılır).
+const ekstreBaslangic = ref(null)
+const ekstreBitis = ref(null)
 const selectedCariHesaplar = ref([])
 const selectedCariHesap = ref(null)
 const aramaMetni = ref('')
@@ -1134,6 +1510,7 @@ onUnmounted(() => {
 
 const filtreTur = ref(null)
 const filtreBakiye = ref(null)
+const filtreEtiket = ref('')
 // Değerler backend'in beklediği ASCII sabitler; etiketler yerelleştirilir.
 const cariTurSecenekleri = computed(() => [
   { label: t('cariTur.musteri'), value: 'Musteri' },
@@ -1144,6 +1521,17 @@ const bakiyeFiltreleri = computed(() => [
   { label: t('cariHesaplar.bizeAlacakli'), value: 'alacak' },
   { label: t('cariHesaplar.bizeBorclu'), value: 'borc' }
 ])
+const aktifSecenekleri = computed(() => [
+  { label: t('common.active'), value: true },
+  { label: t('common.passive'), value: false }
+])
+// Faz 2.9: cari çalışma para birimi.
+const paraBirimiSecenekleri = [
+  { label: 'TRY (₺)', value: 'TRY' },
+  { label: 'USD ($)', value: 'USD' },
+  { label: 'EUR (€)', value: 'EUR' },
+  { label: 'GBP (£)', value: 'GBP' }
+]
 
 /**
  * Bakiye işareti kuralı (backend ile aynı): negatif = cari bize borçlu.
@@ -1163,14 +1551,145 @@ const cariOzetYukle = async () => {
   }
 }
 
+// Faz 2.1: kredi limitini aşan cariler (risk listesi).
+const riskliCarilerAc = async () => {
+  riskDialogVisible.value = true
+  if (riskliCariler.value.length) return
+  riskYukleniyor.value = true
+  try {
+    const r = await cariHesapAPI.riskliCariler()
+    riskliCariler.value = unwrapList(r.data) || []
+  } catch (e) {
+    toastBildirim.hata(e?.response?.data?.message || t('common.error'))
+  } finally {
+    riskYukleniyor.value = false
+  }
+}
+
+// Faz 2.3: seçili carilerde toplu alan güncelleme.
+const topluGuncelleAc = () => {
+  topluForm.value = { tur: null, krediLimiti: null, odemeVadesi: null, aktif: null }
+  topluDialogVisible.value = true
+}
+
+const topluGuncelleKaydet = async () => {
+  const payload = { idler: selectedCariHesaplar.value.map((c) => c.id) }
+  const f = topluForm.value
+  if (f.tur != null) payload.tur = f.tur
+  if (f.krediLimiti != null) payload.krediLimiti = f.krediLimiti
+  if (f.odemeVadesi != null) payload.odemeVadesi = f.odemeVadesi
+  if (f.aktif != null) payload.aktif = f.aktif
+  if (Object.keys(payload).length <= 1) {
+    toastBildirim.uyari(t('cariHesaplar.topluAlanSec'))
+    return
+  }
+  topluKaydediliyor.value = true
+  try {
+    await cariHesapAPI.topluGuncelle(payload)
+    toastBildirim.basarili(t('cariHesaplar.topluGuncellendi'))
+    topluDialogVisible.value = false
+    selectedCariHesaplar.value = []
+    loadCariHesaplar(cariSayfa.value, cariSayfaBoyutu.value)
+  } catch (e) {
+    toastBildirim.hata(e?.response?.data?.message || t('common.error'))
+  } finally {
+    topluKaydediliyor.value = false
+  }
+}
+
+// Faz 2.5: cari çoklu adres yönetimi.
+const bosAdresForm = () => ({ baslik: '', adres: '', il: '', ilce: '', yetkiliKisi: '', telefon: '', varsayilan: false })
+
+const adresleriYukle = async () => {
+  if (!adresCari.value) return
+  try {
+    const r = await cariHesapAPI.adresler(adresCari.value.id)
+    adresler.value = unwrapList(r.data) || []
+  } catch (e) {
+    toastBildirim.hata(e?.response?.data?.message || t('common.error'))
+  }
+}
+
+const adreslerAc = async (c) => {
+  adresCari.value = c
+  adresForm.value = bosAdresForm()
+  adresDialogVisible.value = true
+  await adresleriYukle()
+}
+
+const adresEkleKaydet = async () => {
+  if (!adresForm.value.adres || !adresForm.value.adres.trim()) {
+    toastBildirim.uyari(t('cariHesaplar.adresZorunlu'))
+    return
+  }
+  adresKaydediliyor.value = true
+  try {
+    await cariHesapAPI.adresEkle(adresCari.value.id, adresForm.value)
+    toastBildirim.basarili(t('cariHesaplar.adresEklendi'))
+    adresForm.value = bosAdresForm()
+    await adresleriYukle()
+  } catch (e) {
+    toastBildirim.hata(e?.response?.data?.message || t('common.error'))
+  } finally {
+    adresKaydediliyor.value = false
+  }
+}
+
+const adresSil = async (a) => {
+  try {
+    await cariHesapAPI.adresSil(adresCari.value.id, a.id)
+    toastBildirim.basarili(t('cariHesaplar.adresSilindi'))
+    await adresleriYukle()
+  } catch (e) {
+    toastBildirim.hata(e?.response?.data?.message || t('common.error'))
+  }
+}
+
+// Faz 2.8: açılış fişi / devir kaydı.
+const acilisAc = (c) => {
+  acilisCari.value = c
+  acilisForm.value = { tutar: null, tarih: new Date(), aciklama: '' }
+  acilisDialogVisible.value = true
+}
+
+const acilisKaydet = async () => {
+  if (!acilisForm.value.tutar) {
+    toastBildirim.uyari(t('cariHesaplar.acilisTutarZorunlu'))
+    return
+  }
+  acilisKaydediliyor.value = true
+  try {
+    await hareketAPI.acilis({
+      cariHesapId: acilisCari.value.id,
+      tutar: acilisForm.value.tutar,
+      tarih: acilisForm.value.tarih ? tarihIso(acilisForm.value.tarih) : null,
+      aciklama: acilisForm.value.aciklama
+    })
+    toastBildirim.basarili(t('cariHesaplar.acilisKaydedildi'))
+    acilisDialogVisible.value = false
+    loadCariHesaplar(cariSayfa.value, cariSayfaBoyutu.value)
+  } catch (e) {
+    toastBildirim.hata(e?.response?.data?.message || t('common.error'))
+  } finally {
+    acilisKaydediliyor.value = false
+  }
+}
+
 const filtreleriTemizle = () => {
   filtreTur.value = null
   filtreBakiye.value = null
+  filtreEtiket.value = ''
   cariSayfa.value = 0
   loadCariHesaplar(0, cariSayfaBoyutu.value)
 }
 
 const filtreDegisti = () => {
+  cariSayfa.value = 0
+  loadCariHesaplar(0, cariSayfaBoyutu.value)
+}
+
+// Faz 2.4: etiket filtresi (Enter/odak kaybında uygula).
+const filtreEtiketAra = () => {
   cariSayfa.value = 0
   loadCariHesaplar(0, cariSayfaBoyutu.value)
 }
@@ -1221,20 +1740,67 @@ const cariHareketlerBakiye = computed(() => {
   })
 })
 
-const cariEkstreYazdir = () => {
+// Faz 2.2: Date nesnesini YYYY-MM-DD'ye çevirir.
+const tarihIso = (d) => {
+  const x = new Date(d)
+  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
+}
+
+const cariEkstreYazdir = async () => {
   const cari = selectedCariHesap.value
   if (!cari) return
-  const satirlar = cariHareketlerBakiye.value
-    .map(
-      (h) => `<tr>
-        <td>${formatDate(h.hareketTarihi)}</td>
-        <td>${escapeHtml(hareketTuruEtiketi(h.tur))}</td>
-        <td class="sag">${formatCurrency(h.tutar)}</td>
-        <td class="sag ${h.bakiye >= 0 ? 'poz' : 'neg'}">${formatCurrency(h.bakiye)}</td>
-        <td>${escapeHtml(h.aciklama || '')}</td>
-      </tr>`
-    )
-    .join('')
+  const aralikli = !!(ekstreBaslangic.value && ekstreBitis.value)
+  let satirlar = ''
+  let basBakiye = null
+  let sonBakiye = guncelBakiye.value
+  try {
+    if (aralikli) {
+      // Faz 2.2: sunucudan tarih aralıklı, devir/yürüyen bakiyeli ekstre.
+      const r = await raporAPI.cariEkstre({
+        cariHesapId: cari.id,
+        baslangic: tarihIso(ekstreBaslangic.value),
+        bitis: tarihIso(ekstreBitis.value)
+      })
+      const e = r.data || {}
+      basBakiye = e.donemBasBakiye
+      sonBakiye = e.donemSonBakiye
+      satirlar = (e.hareketler || [])
+        .map(
+          (h) => `<tr>
+            <td>${formatDate(h.tarih)}</td>
+            <td>${escapeHtml(h.tur || '')}</td>
+            <td class="sag">${h.borc ? formatCurrency(h.borc) : ''}</td>
+            <td class="sag">${h.alacak ? formatCurrency(h.alacak) : ''}</td>
+            <td class="sag ${(h.yuruyenBakiye || 0) >= 0 ? 'poz' : 'neg'}">${h.yuruyenBakiye != null ? formatCurrency(h.yuruyenBakiye) : ''}</td>
+            <td>${escapeHtml(h.aciklama || '')}</td>
+          </tr>`
+        )
+        .join('')
+    } else {
+      satirlar = cariHareketlerBakiye.value
+        .map(
+          (h) => `<tr>
+            <td>${formatDate(h.hareketTarihi)}</td>
+            <td>${escapeHtml(hareketTuruEtiketi(h.tur))}</td>
+            <td class="sag">${h.tur === 'TAHSILAT' ? '' : formatCurrency(h.tutar)}</td>
+            <td class="sag">${h.tur === 'TAHSILAT' ? formatCurrency(h.tutar) : ''}</td>
+            <td class="sag ${h.bakiye >= 0 ? 'poz' : 'neg'}">${formatCurrency(h.bakiye)}</td>
+            <td>${escapeHtml(h.aciklama || '')}</td>
+          </tr>`
+        )
+        .join('')
+    }
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('common.error'))
+    return
+  }
+  const aralikMetni = aralikli
+    ? `${formatDate(tarihIso(ekstreBaslangic.value))} - ${formatDate(tarihIso(ekstreBitis.value))}`
+    : ''
+  const basSatiri =
+    basBakiye != null
+      ? `<div class="ozet">${escapeHtml(t('cariHesaplar.ekstreDevir'))}: ${formatCurrency(basBakiye)}</div>`
+      : ''
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
     <title>${escapeHtml(t('cariHesaplar.ekstreBaslik'))}</title>
     <style>
@@ -1250,15 +1816,17 @@ const cariEkstreYazdir = () => {
         <button onclick="window.print()">${escapeHtml(t('common.print'))}</button>
       </div>
       <h1>${escapeHtml(t('cariHesaplar.ekstreBaslik'))}</h1>
-      <h2>${escapeHtml(cari.ad || '')}</h2>
+      <h2>${escapeHtml(cari.ad || '')}${aralikMetni ? ' — ' + escapeHtml(aralikMetni) : ''}</h2>
       <table><thead><tr>
         <th>${escapeHtml(t('common.date'))}</th>
         <th>${escapeHtml(t('cariHesaplar.tur'))}</th>
+        <th class="sag">${escapeHtml(t('cariHesaplar.borc'))}</th>
         <th class="sag">${escapeHtml(t('common.amount'))}</th>
         <th class="sag">${escapeHtml(t('cariHesaplar.bakiye'))}</th>
         <th>${escapeHtml(t('common.description'))}</th>
       </tr></thead><tbody>${satirlar}</tbody></table>
-      <div class="ozet"><strong>${escapeHtml(t('cariHesaplar.guncelBakiye'))}: ${formatCurrency(guncelBakiye.value)}</strong></div>
+      ${basSatiri}
+      <div class="ozet"><strong>${escapeHtml(t('cariHesaplar.guncelBakiye'))}: ${formatCurrency(sonBakiye)}</strong></div>
     </body></html>`
   const pencere = fisPenceresiAcVeYazdir(html)
   if (!pencere) toastBildirim.hata(t('common.popupEngellendi'))
@@ -1300,9 +1868,11 @@ const form = ref({
   odemeVadesi: 0,
   temsilciId: null,
   notlar: '',
+  etiketler: '',
   fotoUrl: '',
   fotoThumbUrl: '',
-  aktif: true
+  aktif: true,
+  paraBirimi: 'TRY'
 })
 
 const fotoInput = ref(null)
@@ -1342,6 +1912,7 @@ const loadCariHesaplar = async (sayfa = cariSayfa.value, boyut = cariSayfaBoyutu
     if (aramaMetni.value.trim()) params.q = aramaMetni.value.trim()
     if (filtreTur.value) params.tur = filtreTur.value
     if (filtreBakiye.value) params.bakiyeYonu = filtreBakiye.value
+    if (filtreEtiket.value && filtreEtiket.value.trim().length >= 2) params.etiket = filtreEtiket.value.trim()
     await cariHesapStore.filtreliCari(params)
   } catch (error) {
     toastBildirim.hata(t('cariHesaplar.hataYukleme'))
@@ -1384,7 +1955,9 @@ const openDialog = () => {
     odemeVadesi: 0,
     temsilciId: null,
     notlar: '',
-    aktif: true
+    etiketler: '',
+    aktif: true,
+    paraBirimi: 'TRY'
   }
   submitted.value = false
   formTemizle()
@@ -1400,7 +1973,9 @@ const cariEylemleri = (c) => {
   const eylemler = [
     { etiket: t('cariHesaplar.tahsilat'), ikon: 'pi pi-money-bill', islem: () => tahsilatAc(c) },
     { etiket: t('cariHesaplar.borclandirma'), ikon: 'pi pi-plus-circle', islem: () => borclandirmaAc(c) },
+    { etiket: t('cariHesaplar.acilisFisi'), ikon: 'pi pi-flag', islem: () => acilisAc(c) },
     { etiket: t('cariHesaplar.hareketlerDetay'), ikon: 'pi pi-list', islem: () => viewHareketler(c) },
+    { etiket: t('cariHesaplar.adresler'), ikon: 'pi pi-map-marker', islem: () => adreslerAc(c) },
     { etiket: t('cariKart.baslik'), ikon: 'pi pi-id-card', islem: () => kartAc(c) }
   ]
   // Cari silme yalnizca ADMIN; islem kaydi olan cari backend'de engellenir.
@@ -1432,6 +2007,8 @@ const editCariHesap = (cariHesap) => {
     temsilciId: cariHesap.temsilciId ?? null,
     temsilciAd: cariHesap.temsilciAd || null,
     notlar: cariHesap.notlar || '',
+    etiketler: cariHesap.etiketler || '',
+    paraBirimi: cariHesap.paraBirimi || 'TRY',
     fotoUrl: cariHesap.fotoUrl || '',
     fotoThumbUrl: cariHesap.fotoThumbUrl || '',
     aktif: cariHesap.aktif !== false

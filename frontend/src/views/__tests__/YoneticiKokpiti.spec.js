@@ -97,4 +97,14 @@ describe('YoneticiKokpiti.vue', () => {
     expect(wrapper.text()).toContain('Yönetici & Finansal Nabız Kokpiti')
     expect(wrapper.text()).toContain('Aylık Ciro Gerçekleşme')
   })
+
+  it('Dashboard\'dan taşınan AI Yönetici Özeti kartını içerir', async () => {
+    const YoneticiKokpiti = (await import('../YoneticiKokpiti.vue')).default
+    const wrapper = mount(YoneticiKokpiti, {
+      global: { stubs, plugins: [createPinia(), ToastService, i18n] }
+    })
+    await flushPromises()
+    expect(wrapper.find('.ai-ozet-bolum').exists()).toBe(true)
+    expect(wrapper.text()).toContain('AI Yönetici Özeti')
+  })
 })

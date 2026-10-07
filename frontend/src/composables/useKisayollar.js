@@ -90,8 +90,14 @@ function handler(e) {
     }
     return
   }
-  // "?" ile kısayol rehberini aç
-  if (e.key === '?' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !girdiMi()) {
+  // "?" ile kisayol rehberini ac.
+  //
+  // REDTEAM/Faz5: Once `!e.shiftKey` sarti vardi ve bu kisayolu FIILEN OLU
+  // birakiyordu: klavyelerin ezici cogunlugunda `?` Shift gerektirir, yani
+  // `e.shiftKey` true gelir ve kosul hic saglanmaz. `e.key === '?'` zaten
+  // karakterin `?` oldugunu garanti ettigi icin shift kontrolu gereksiz ve
+  // zararliydi. (Ctrl/Cmd/Alt ile karismamasi icin onlar korunur.)
+  if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey && !girdiMi()) {
     // Sayfa kendi ipucunu acmak istiyorsa `ipucu` eylemi calisir ve global
     // rehber DEVREYE GIRMEZ. Boylece POS'ta `?` yerel kısayol şeridini açar.
     if (!calistir('ipucu')) {

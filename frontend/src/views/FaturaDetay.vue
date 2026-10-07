@@ -956,28 +956,36 @@ import { formatTarih as formatDate, formatTarihKisa as formatDateTime } from '..
 }
 
 @media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
   .no-print {
     display: none !important;
   }
-  body * {
-    visibility: hidden;
-  }
-  .fatura-kagit,
-  .fatura-kagit * {
-    visibility: visible;
+  /* visibility yerine display: yalnizca fatura kagidinin ATALARI gorunur kalir,
+     diger her sey akistan cikar. Once `visibility:hidden` kullaniliyordu; gizli
+     icerik YUKSEKLIK kaplamaya devam ettigi icin basina bos sayfa(lar) cikiyor
+     ve kenar kaymalari olusuyordu. */
+  body :not(.fatura-kagit):not(.fatura-kagit *):not(:has(.fatura-kagit)) {
+    display: none !important;
   }
   .fatura-kagit {
-    position: absolute;
-    left: 0;
-    top: 0;
     box-shadow: none;
-    padding: 20px;
+    padding: 0;
     max-width: 100%;
     border: none;
     border-radius: 0;
     /* Yazdırmada tema ne olursa olsun beyaz kağıt + koyu metin. */
     background: #ffffff !important;
     color: #111827 !important;
+  }
+  /* Tablo basliklari her sayfada tekrarlansin, satirlar bolunmesin. */
+  .fatura-kagit .fatura-tablo thead {
+    display: table-header-group;
+  }
+  .fatura-kagit .fatura-tablo tr {
+    break-inside: avoid;
   }
   .fatura-kagit .cari-bilgi,
   .fatura-kagit .fatura-ozet,

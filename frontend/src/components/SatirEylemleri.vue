@@ -194,6 +194,10 @@ onUnmounted(() => {
 .satir-eylemler {
   position: relative;
   display: inline-flex;
+  /* REDTEAM/Faz5: Satir eylem dugmesi flex satirlarda (POS sepet satiri) yer
+     aliyor. `flex-shrink` verilmedigi icin dar panelde ezilip dugme metni
+     kuculuyor/ekranda ust uste biniyordu. */
+  flex-shrink: 0;
 }
 .eylem-menu {
   /* REDTEAM/Faz2.5: 1200 idi. Dialog maski 1100'de oldugu icin bu menu

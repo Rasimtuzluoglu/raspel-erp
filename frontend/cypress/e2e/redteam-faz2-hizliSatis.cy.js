@@ -18,7 +18,7 @@ describe('REDTEAM Faz2 - Hizli Satış POS', () => {
     cy.girisYap()
 
     // REDTEAM Faz2.4: katalog artik 200 urun ister (backend varsayilani 50)
-    cy.intercept('GET', '/api/stoklar?*', {
+    cy.intercept('GET', '**/api/stoklar/filtreli*', {
       statusCode: 200,
       body: {
         content: Array.from({ length: 120 }, (_, i) => ({

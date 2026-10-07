@@ -511,7 +511,7 @@ img {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
+  padding: 6px 10px;
   color: var(--text-secondary);
   text-decoration: none;
   border-radius: var(--radius-sm);
@@ -774,7 +774,8 @@ img {
 .main-content {
   flex: 1 1 0;
   min-width: 0;
-  padding: 20px 24px 32px;
+  /* Kompakt yoğunluk: içerik kenarlara daha az yaslanır, alan daha verimli. */
+  padding: 14px 18px 24px;
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
@@ -891,7 +892,7 @@ img {
   font-size: 12px !important;
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
-  padding: 12px 14px !important;
+  padding: 8px 10px !important;
 }
 .p-datatable .p-datatable-tbody > tr {
   background: transparent !important;
@@ -903,7 +904,7 @@ img {
 }
 .p-datatable .p-datatable-tbody > tr > td {
   border-color: rgba(148, 163, 184, 0.06) !important;
-  padding: 12px 14px !important;
+  padding: 8px 10px !important;
   font-size: 13px !important;
 }
 .p-datatable .p-datatable-tbody > tr:nth-child(even) {
@@ -934,16 +935,16 @@ img {
   background: var(--bg-card) !important;
   color: var(--text-primary) !important;
   border-color: var(--border) !important;
-  padding: 20px 24px !important;
+  padding: 16px 20px !important;
   flex-shrink: 0;
 }
 .p-dialog .p-dialog-header .p-dialog-title {
   font-weight: 700 !important;
-  font-size: 17px !important;
+  font-size: 16px !important;
 }
 .p-dialog .p-dialog-content {
   background: var(--bg-card) !important;
-  padding: 20px 24px !important;
+  padding: 16px 20px !important;
   overflow-y: auto;
   flex: 1 1 auto;
   min-height: 0;
@@ -951,7 +952,7 @@ img {
 .p-dialog .p-dialog-footer {
   background: var(--bg-card) !important;
   border-color: var(--border) !important;
-  padding: 16px 24px !important;
+  padding: 12px 20px !important;
   flex-shrink: 0;
 }
 
@@ -972,10 +973,10 @@ img {
   background: var(--bg-card) !important;
   border: 1px solid var(--border) !important;
   border-radius: 12px !important;
-  padding: 14px 18px !important;
+  padding: 10px 14px !important;
   display: flex !important;
   flex-wrap: wrap !important;
-  gap: 10px !important;
+  gap: 8px !important;
   align-items: center !important;
   width: 100%;
   max-width: 100%;
@@ -1038,7 +1039,7 @@ img {
   border-color: var(--border) !important;
   color: var(--text-primary) !important;
   border-radius: 10px !important;
-  padding: 10px 14px !important;
+  padding: 8px 12px !important;
 }
 .p-inputtext:enabled:focus {
   border-color: var(--accent) !important;
@@ -1126,6 +1127,23 @@ img {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
+}
+/* Oneri satirindaki stok adedi rozeti. TELEPORT nedeniyle GLOBAL olmak
+   zorunda: oneri listesi body'ye tasinir, bilesenin scoped kurali oraya
+   ulasmaz (aksi halde rozet stilsiz kalip urun adi/fiyatla cakisirdi). */
+.stok-opsiyon-stok {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.stok-opsiyon-stok.yok {
+  background: rgba(220, 38, 38, 0.12);
+  color: var(--danger, #dc2626);
 }
 
 /* Cari musteri onerileri (Satis.vue / Faturalar.vue musteri AutoComplete'i).
@@ -1429,7 +1447,7 @@ img {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 24px;
+  padding: 18px;
   box-shadow: var(--shadow);
 }
 .page-title {
@@ -1863,8 +1881,11 @@ img {
   }
 }
 
-/* Dokunmatik hedef boyutları (mobil) */
-@media (max-width: 900px) {
+/* Dokunmatik hedef boyutları (mobil)
+   Yalnızca gerçek dokunmatik cihazlarda (hover yok + kaba işaretçi) uygulanır.
+   Önce yalnız genişliğe bakıyordu; dar bir masaüstü penceresinde de her şeyi
+   44px/16px yapıp arayüzü şişiriyordu. Erişilebilirlik dokunmatikte korunur. */
+@media (max-width: 900px) and (hover: none) and (pointer: coarse) {
   .p-button {
     min-height: 44px;
   }
@@ -2048,7 +2069,7 @@ h3 {
 .field-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
 }
 .filter-bar,
 .rapor-filtre {
@@ -2114,7 +2135,7 @@ h3 {
 .form-field label,
 .form-grup label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   font-size: 12.5px;
   font-weight: 600;
   color: var(--text-secondary);

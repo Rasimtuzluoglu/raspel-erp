@@ -50,7 +50,7 @@ describe('Hızlı Satış (POS)', () => {
 
   beforeEach(() => {
     cy.girisYap()
-    cy.intercept('GET', '/api/stoklar*', { statusCode: 200, body: { content: [urun, stoksuzUrun, kodluUrun] } }).as('stoklar')
+    cy.intercept('GET', '**/api/stoklar*', { statusCode: 200, body: { content: [urun, stoksuzUrun, kodluUrun] } }).as('stoklar')
     cy.intercept('POST', '/api/faturalar', {
       statusCode: 200,
       body: { id: 99, faturaNumarasi: 'FTR-TEST-0001' }
@@ -96,6 +96,13 @@ describe('Hızlı Satış (POS)', () => {
   // acar (useKisayollar'daki `ipucu` eylemi). Once ipucu yalnizca dugmeyle
   // acilabiliyordu; belgede "?" kisayolu varmis gibi anlatiliyordu.
   it('"?" yerel kısayol ipucu şeridini açar', () => {
+    // `useKisayollar`da `?` isleyicisi `girdiMi()` kontrolune takilir
+    // (`document.activeElement`). Barkod alani otomatik odakli oldugu icin once
+    // odagi birakmak gerekir; yoksa `?` metin alanina yazilir.
+    // Barkod alani otomatik odakli oldugu icin once odagi birakmak gerekir;
+    // yoksa `?` metin alanina yazilir. `.blur()` odakli eleman ister; garanti
+    // icin once `.focus()`.
+    cy.get('input[placeholder="Barkod okutun (Enter)"]').focus().blur()
     cy.get('.pos-ipucu').should('not.exist')
     cy.get('body').type('?')
     cy.get('.pos-ipucu').should('be.visible')
@@ -108,6 +115,8 @@ describe('Hızlı Satış (POS)', () => {
   // Faz4: urun izgarasi klavyeye acildi. Once kartlar YALNIZCA fareyle
   // secilebiliyordu; ok tuslari sepette geziyordu.
   it('↓ ile ürün ızgarasına girilir ve ok tuşları kartı gezer', () => {
+    // Urun katalogu asenkron yuklenir; islem oncesi kartlarin gelmesini bekle.
+    cy.get('.product-card').should('have.length.at.least', 1)
     cy.get('input[placeholder="Barkod okutun (Enter)"]').focus().type('{downarrow}')
     // Odakli kart isaretlenmeli
     cy.get('.product-grid .izgara-odakli').should('have.length', 1)
@@ -121,6 +130,7 @@ describe('Hızlı Satış (POS)', () => {
   })
 
   it('ızgarada Enter ürünü sepete ekler', () => {
+    cy.get('.product-card').should('have.length.at.least', 1)
     cy.get('input[placeholder="Barkod okutun (Enter)"]').focus().type('{downarrow}')
     cy.get('.product-grid .izgara-odakli .product-name').then(($ad) => {
       const ad = $ad.text()
@@ -132,6 +142,7 @@ describe('Hızlı Satış (POS)', () => {
 
   // Faz4: hizli adet. Once 20 adet almak icin karti 20 kez tiklamak gerekiyordu.
   it('ızgarada rakam + Enter miktarlı ekleme yapar', () => {
+    cy.get('.product-card').should('have.length.at.least', 1)
     cy.get('input[placeholder="Barkod okutun (Enter)"]').focus().type('{downarrow}')
     // Izgara STOKTA OLAN ilk karta odaklanir (stoksuz kart Enter'de sadece
     // uyari uretirdi; kasiyer olu secimle karsilasmasin diye).
@@ -143,11 +154,13 @@ describe('Hızlı Satış (POS)', () => {
       tusGonder('Enter')
       cy.get('.sepet-item').should('have.length', 1)
       cy.get('.sepet-item').should('contain', ad)
-      cy.get('.sepet-adet-input').should('have.value', '5')
+      // REDTEAM/Faz2: adet girdisi `PosAdetGirisi` bilesenine tasindi.
+      cy.get('.sepet-item .adet-girdi').should('have.value', '5')
     })
   })
 
   it('sağ tık adet penceresini açar', () => {
+    cy.get('.product-card').should('have.length.at.least', 1)
     cy.contains('.product-card', 'Test Ürün').rightclick()
     cy.get('.adet-popover').should('be.visible')
     cy.get('.adet-popover-ad').should('contain', 'Test Ürün')
@@ -161,6 +174,10 @@ describe('Hızlı Satış (POS)', () => {
   it('G ile son satır işlemi geri alınır', () => {
     cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
+    // Delete aktif satir uzerinde calisir; satiri sec (tutara tiklamak satiri
+    // aktive eder, urun adi dugmesine denk gelmez).
+    cy.get('.sepet-item').first().find('.sepet-tutar').click()
+    cy.get('.sepet-item.aktif-satir').should('exist')
     tusGonder('Delete')
     cy.get('.sepet-item').should('have.length', 0)
     // Silinen satır G ile geri gelir
@@ -172,7 +189,7 @@ describe('Hızlı Satış (POS)', () => {
   it('D ile aktif satır çoğaltılır ve G ile çoğaltma geri alınır', () => {
     cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
-    // Aktif satır seçili olmalı (ekleme satırı vurgular)
+    cy.get('.sepet-item').first().find('.sepet-tutar').click()
     cy.get('.sepet-item.aktif-satir').should('exist')
     tusGonder('d')
     cy.get('.sepet-item').should('have.length', 2)
@@ -184,11 +201,11 @@ describe('Hızlı Satış (POS)', () => {
   // Faz4: F8 fiş yazdırma. Once buton "Yazdır (F9)" etiketliydi ama F9
   // satisi tamamliyordu; yazdirma yalnizca Ctrl+P ile mumkundu.
   it('F8 fiş yazdırma kısayolu çalışır (yanlış F9 etiketi düzeltildi)', () => {
+    cy.get('.pos-container').should('exist')
     cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
-    cy.window().then((win) => {
-      cy.stub(win, 'open').as('pencere')
-    })
+    // `window.open` ve `print` zaten `beforeEach`'te stub'lanir; burada tekrar
+    // sarmak "already wrapped" hatasi verir.
     tusGonder('F8')
     // Fiş bölümü görünür olmalı ve düğme artık F8'i yazmalı
     cy.get('details.fis-detay').should('exist')
@@ -197,19 +214,21 @@ describe('Hızlı Satış (POS)', () => {
   })
 
   it('F7 bugünkü satışlar diyaloğunu açar', () => {
+    cy.get('.pos-container').should('exist')
     tusGonder('F7')
-    cy.get('body').then(($b) => {
-      expect($b.text(), 'bugünkü satışlar diyaloğu açılmadı').to.include('Bugünkü')
-    })
+    cy.get('.p-dialog').should('be.visible')
+    cy.get('.p-dialog').should('contain', 'Bugünkü')
   })
 
   // Faz4: ödeme yöntemi T (taksit) kısayolu eklendi; N/K/H vardı, T yoktu.
   it('T taksit ödeme yöntemini seçer', () => {
+    cy.get('.pos-container').should('exist')
     cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
     tusGonder('t')
     cy.get('.odeme-yontem-btn.active').should('contain', 'Taksit')
-    cy.get('.taksit-panel').should('be.visible')
+    // Taksit alanlari acilir (kurum / tutar / taksit sayisi)
+    cy.get('.taksit-panel').scrollIntoView().should('be.visible')
   })
 
   it('F2 sepeti temizler', () => {
@@ -233,14 +252,26 @@ describe('Hızlı Satış (POS)', () => {
     cy.contains('FTR-TEST-0001').should('exist')
   })
 
-  it('müşteri modu seçiliyken müşteri yoksa uyarı gösterir (F9)', () => {
+  // REDTEAM/Faz5: F9/F10 artik satisi TAMAMLAMAZ (kazara kayit engeli).
+  // Tamamlama acik bir eylemle yapilir; bu testte "Satisi Tamamla" butonu
+  // kullanilir ve musteri eksikligi uyarisi beklenir.
+  it('müşteri modu seçiliyken müşteri yoksa uyarı gösterir', () => {
     cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
     // Varsayılan Perakende; uyarı senaryosu için Müşteri moduna geç.
     cy.get('.musteri-modu').contains('Müşteri').click()
-    tusGonder('F9')
+    cy.get('.sticky-tamamla button').click()
     cy.contains('Müşteri gerekli').should('exist')
     cy.get('@satisOlustur.all').should('have.length', 0)
+  })
+
+  it('F9 yalnızca ödeme durumunu değiştirir, satışı tamamlamaz', () => {
+    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('.sepet-item').should('have.length', 1)
+    tusGonder('F9')
+    // Ödeme "Tam" seçilir ama satış OLUŞMAZ.
+    cy.get('@satisOlustur.all').should('have.length', 0)
+    cy.contains('.sticky-tamamla button', 'Satışı Tamamla').should('be.visible')
   })
 
   it('ürün kartları stok adedi, fiyat ve KDV notunu gösterir', () => {

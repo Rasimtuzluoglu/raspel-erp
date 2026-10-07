@@ -766,6 +766,23 @@
               class="w-full"
             />
           </div>
+          <div class="field baz-field">
+            <label>{{ t('uretim.bazMiktar') }}</label>
+            <div class="baz-satir">
+              <InputNumber
+                v-model="receteForm.bazMiktar"
+                :min="0.0001"
+                :min-fraction-digits="0"
+                :max-fraction-digits="4"
+                class="baz-miktar"
+              />
+              <InputText
+                v-model="receteForm.bazBirim"
+                class="baz-birim"
+                :placeholder="t('uretim.birim')"
+              />
+            </div>
+          </div>
           <div class="field field-switch">
             <label>{{ t('common.status') }}</label>
             <div class="switch-satir">
@@ -774,12 +791,33 @@
             </div>
           </div>
         </div>
+
         <div class="field">
-          <label>{{ t('uretim.hammaddeler') }}</label>
+          <div class="kalem-baslik-satir">
+            <label>{{ t('uretim.hammaddeler') }}</label>
+            <div class="olcek-girdi">
+              <span class="olcek-etiket">{{ t('uretim.uretimMiktari') }}</span>
+              <InputNumber
+                v-model="onizlemeMiktar"
+                :min="0"
+                :max-fraction-digits="4"
+                class="olcek-input"
+              />
+              <span class="olcek-birim">{{ receteForm.bazBirim }}</span>
+            </div>
+          </div>
+          <div class="kalem-grid kalem-grid-baslik">
+            <span>{{ t('uretim.hammadde') }}</span>
+            <span>{{ t('uretim.miktar') }}</span>
+            <span>{{ t('uretim.birim') }}</span>
+            <span>{{ t('uretim.kalemFireOrani') }}</span>
+            <span>{{ t('uretim.hesaplanan') }}</span>
+            <span />
+          </div>
           <div
             v-for="(k, i) in receteForm.kalemler"
             :key="i"
-            class="kalem-satir"
+            class="kalem-grid"
           >
             <Dropdown
               v-model="k.hammaddeId"
@@ -793,6 +831,7 @@
             <InputNumber
               v-model="k.miktar"
               :min="0"
+              :max-fraction-digits="4"
               class="kalem-miktar"
               :placeholder="t('uretim.miktar')"
             />
@@ -808,6 +847,7 @@
               class="kalem-fire"
               :placeholder="t('uretim.kalemFireOrani')"
             />
+            <span class="kalem-hesaplanan">{{ formatMiktar(kalemHesaplanan(k)) }}</span>
             <Button
               icon="pi pi-trash"
               :aria-label="$t('common.delete')"
@@ -889,7 +929,7 @@ function bosTamamlaForm() {
   return { uretilenMiktar: null, fireMiktar: 0, iscilikMaliyeti: 0, aciklama: '' }
 }
 function bosReceteForm() {
-  return { id: null, ad: '', urunId: null, fireOrani: 0, aktif: true, kalemler: [] }
+  return { id: null, ad: '', urunId: null, fireOrani: 0, bazMiktar: 1, bazBirim: '', aktif: true, kalemler: [] }
 }
 
 const durumSecenekleri = computed(() => [
@@ -1119,6 +1159,8 @@ const receteDialogAc = (r) => {
       ad: r.ad || '',
       urunId: r.urunId || null,
       fireOrani: Number(r.fireOrani) || 0,
+      bazMiktar: Number(r.bazMiktar) || 1,
+      bazBirim: r.bazBirim || '',
       aktif: r.aktif !== false,
       kalemler: (r.kalemler || []).map((k) => ({
         hammaddeId: k.hammaddeId,
@@ -1127,10 +1169,30 @@ const receteDialogAc = (r) => {
         fireOrani: Number(k.fireOrani) || 0
       }))
     }
+    onizlemeMiktar.value = Number(r.bazMiktar) || 1
   } else {
     receteForm.value = bosReceteForm()
+    onizlemeMiktar.value = 1
   }
   receteDialog.value = true
+}
+
+// Canlı ölçekleme önizlemesi: kalem miktarları `bazMiktar` içindir; istenen
+// üretim miktarı için fire+fire oranı dahil hesaplanır ("1 litre -> N litre").
+const onizlemeMiktar = ref(1)
+const kalemHesaplanan = (k) => {
+  const baz = Number(receteForm.value.bazMiktar) || 1
+  const istenen = Number(onizlemeMiktar.value) || 0
+  const katsayi = baz > 0 ? istenen / baz : 0
+  const receteFire = Number(receteForm.value.fireOrani) || 0
+  const toplam = katsayi * (1 + receteFire / 100)
+  const kalemFire = Number(k.fireOrani) || 0
+  return (Number(k.miktar) || 0) * toplam * (1 + kalemFire / 100)
+}
+
+const formatMiktar = (v) => {
+  const n = Number(v) || 0
+  return n.toLocaleString('tr-TR', { maximumFractionDigits: 4 })
 }
 
 const receteKalemEkle = () => {
@@ -1146,6 +1208,8 @@ const receteKaydet = async () => {
     ad: receteForm.value.ad,
     urunId: receteForm.value.urunId,
     fireOrani: receteForm.value.fireOrani,
+    bazMiktar: receteForm.value.bazMiktar,
+    bazBirim: receteForm.value.bazBirim || null,
     aktif: receteForm.value.aktif,
     kalemler: receteForm.value.kalemler.filter((k) => k.hammaddeId && k.miktar > 0)
   }
@@ -1400,6 +1464,77 @@ onMounted(yukle)
 }
 .kalem-fire {
   width: 110px;
+}
+
+/* Reçete kalemleri: etiketli grid + canlı ölçek önizlemesi. */
+.kalem-baslik-satir {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.olcek-girdi {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+.olcek-etiket {
+  white-space: nowrap;
+}
+.olcek-input {
+  width: 110px;
+}
+.olcek-birim {
+  color: var(--text-muted);
+  min-width: 20px;
+}
+.kalem-grid {
+  display: grid;
+  grid-template-columns: minmax(160px, 2fr) 96px 86px 100px 110px 40px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.kalem-grid-baslik {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.kalem-hesaplanan {
+  font-weight: 600;
+  color: var(--accent);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.baz-satir {
+  display: flex;
+  gap: 8px;
+}
+.baz-miktar {
+  width: 110px;
+}
+.baz-birim {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 768px) {
+  .kalem-grid {
+    grid-template-columns: minmax(120px, 1fr) 80px;
+    grid-auto-rows: auto;
+  }
+  .kalem-grid-baslik {
+    display: none;
+  }
+  .kalem-hesaplanan {
+    grid-column: 2;
+  }
 }
 
 .tamamla-ozet {

@@ -349,12 +349,12 @@
       </AppDataTable>
     </div>
 
-    <Dialog
+    <AppDialog
       v-model:visible="showDialog"
       :header="dialogBaslik"
-      :modal="true"
-      style="width: 920px; max-width: 96vw"
-      :closable="false"
+      width="1280px"
+      content-max-height="min(84vh, 900px)"
+      :close-on-escape="false"
     >
       <div class="form-grid">
         <div class="form-group">
@@ -642,11 +642,10 @@
         :ara-toplam="araToplam"
         :kdv-toplam="kdvToplam"
         :genel-toplam="genelToplam"
-        stok-arama
         :kdv-secenekleri="[0, 1, 8, 10, 18, 20]"
         @add="addKalem"
         @remove="removeKalem"
-        @stok-sec="stokSatirSecildi"
+        @geri-al="kalemGeriAl"
       />
 
       <template #footer>
@@ -663,7 +662,7 @@
           @click="saveFatura"
         />
       </template>
-    </Dialog>
+    </AppDialog>
 
     <Message
       v-if="faturaStore.error"
@@ -709,6 +708,7 @@ import { useKisayollar } from '../composables/useKisayollar.js'
 import { useTaslakKayit } from '../composables/useTaslakKayit.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
+import AppDialog from '../components/AppDialog.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
 import FaturaKalemleri from '../components/FaturaKalemleri.vue'
@@ -983,16 +983,8 @@ const addKalem = (row) => {
 }
 
 // Satir icinde stok secilince satiri stok bilgisiyle doldur (fiyat = satis fiyati).
-const stokSatirSecildi = ({ index, stok }) => {
-  const kalem = form.value.kalemler[index]
-  if (!kalem || !stok) return
-  kalem.stokId = stok.id
-  kalem.aciklama = stok.ad
-  if (!kalem.birimFiyat || kalem.birimFiyat === 0) {
-    kalem.birimFiyat = stok.satisFiyati || stok.fiyat || 0
-  }
-  if (stok.kdvOrani != null) kalem.kdvOrani = Number(stok.kdvOrani)
-}
+// REDTEAM/Faz9: satir ici stok aramasi KALDIRILDI (bkz. FaturaKalemleri).
+// Kalem ekleme tek yoldan: hizli ekleme satiri + barkod.
 
 const urunSecildi = () => {
   if (!urunSecimi.value) return
@@ -1171,6 +1163,12 @@ const sonFaturayiKopyala = async () => {
 
 const removeKalem = (index) => {
   form.value.kalemler.splice(index, 1)
+}
+
+/** Silinen kalemi ESKI KONUMUNA geri koyar (FaturaKalemleri geri-al bandi). */
+const kalemGeriAl = ({ index, kalem }) => {
+  const hedef = Math.min(Math.max(index, 0), form.value.kalemler.length)
+  form.value.kalemler.splice(hedef, 0, kalem)
 }
 
 const araToplam = computed(() => {

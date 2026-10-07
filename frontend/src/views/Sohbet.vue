@@ -177,6 +177,18 @@
             {{ t('sohbet.mesajYok') }}
           </div>
           <div
+            v-if="seciliOdaId !== null && dahaVar"
+            class="daha-eski"
+          >
+            <Button
+              :label="t('sohbet.dahaEski')"
+              icon="pi pi-angle-up"
+              class="p-button-sm p-button-text"
+              :loading="eskiYukleniyor"
+              @click="dahaEskiYukle"
+            />
+          </div>
+          <div
             v-for="m in aktifMesajlar"
             :key="m.id"
             class="mesaj"
@@ -521,6 +533,10 @@ const mesajKutusu = ref(null)
 const dosyaInput = ref(null)
 const sohbetDosyaInput = ref(null)
 const yaziyorKullanici = ref('')
+// Faz 3.3: oda mesajlarında cursor tabanlı "daha eski yükle".
+const mesajCursor = ref(null)
+const dahaVar = ref(false)
+const eskiYukleniyor = ref(false)
 
 const odaDialogAc = ref(false)
 const odaKaydediliyor = ref(false)
@@ -626,7 +642,34 @@ const hizliSoruSor = (soru) => {
   gonder()
 }
 
-// AI yanıtını yapısal uçtan (metin + tablo + grafik) getirir.
+// Faz 4.2: AI yapılandırılmışsa token token (SSE) akıtır; başarısız olursa
+// yapısal (kural tabanlı, grafik/tablo üreten) uca düşer. Kural tabanlı uçta
+// LLM olmadığı için akış yalnızca AI yapılandırıldığında anlamlıdır.
+const aiSseAkis = (metin, aiMesaj) =>
+  new Promise((resolve) => {
+    let alindi = false
+    let bitti = false
+    const base = import.meta.env.VITE_API_BASE_URL || '/api'
+    const es = new EventSource(`${base}/sohbet/ai-sorgu-stream?soru=${encodeURIComponent(metin)}`)
+    const kapat = (ok) => {
+      if (bitti) return
+      bitti = true
+      es.close()
+      resolve(ok)
+    }
+    es.addEventListener('token', (e) => {
+      try {
+        aiMesaj.metin += JSON.parse(e.data)
+        alindi = true
+        kaydir()
+      } catch {
+        /* tek token atlanır */
+      }
+    })
+    // Sunucu hata olayı ve bağlantı kapanması aynı isimde gelir; token alındıysa başarı.
+    es.onerror = () => kapat(alindi)
+  })
+
 const aiStreamGonder = async (metin) => {
   aiMesajlar.value.push({ rol: 'user', metin, zaman: new Date() })
   yeniMesaj.value = ''
@@ -634,6 +677,17 @@ const aiStreamGonder = async (metin) => {
   aiMesajlar.value.push(aiMesaj)
   kaydir()
   aiYukleniyor.value = true
+
+  if (aiYapilandirildi.value && typeof EventSource !== 'undefined') {
+    const basarili = await aiSseAkis(metin, aiMesaj)
+    if (basarili) {
+      aiYukleniyor.value = false
+      kaydir()
+      return
+    }
+    // SSE başarısız: yapısal uca düşmek için metni sıfırla.
+    aiMesaj.metin = ''
+  }
 
   try {
     const res = await sohbetAPI.aiSorgu(metin)
@@ -753,6 +807,8 @@ const kullanicilariYukle = async () => {
 
 const genelSec = () => {
   seciliOdaId.value = null
+  dahaVar.value = false
+  eskiYukleniyor.value = false
   odaAboneligiYenile()
   yukle()
 }
@@ -774,16 +830,46 @@ const odaSec = async (o) => {
   sohbetOdaAPI.okundu(o.id).catch(() => {})
 }
 
+const MESAJ_SAYFA = 50
+
 const odaMesajlariYukle = async (odaId) => {
   odaYukleniyor.value = true
+  mesajCursor.value = null
+  dahaVar.value = false
   try {
-    const r = await sohbetOdaAPI.mesajlar(odaId)
-    odaMesajlar.value = r.data || []
+    const r = await sohbetOdaAPI.mesajlar(odaId, { limit: MESAJ_SAYFA })
+    const liste = r.data || []
+    odaMesajlar.value = liste
+    // Dönen liste eskiden yeniye sıralıdır; en eski (ilk) mesajın id'si cursordur.
+    mesajCursor.value = liste.length ? liste[0].id : null
+    dahaVar.value = liste.length === MESAJ_SAYFA
     kaydir()
   } catch {
     odaMesajlar.value = []
   }
   odaYukleniyor.value = false
+}
+
+// Faz 3.3: cursor'dan önceki (daha eski) mesajları yükler ve başa ekler.
+const dahaEskiYukle = async () => {
+  if (!seciliOdaId.value || !dahaVar.value || !mesajCursor.value || eskiYukleniyor.value) return
+  eskiYukleniyor.value = true
+  try {
+    const r = await sohbetOdaAPI.mesajlar(seciliOdaId.value, {
+      cursor: mesajCursor.value,
+      limit: MESAJ_SAYFA
+    })
+    const eski = r.data || []
+    if (eski.length) {
+      odaMesajlar.value = [...eski, ...odaMesajlar.value]
+      mesajCursor.value = eski[0].id
+    }
+    dahaVar.value = eski.length === MESAJ_SAYFA
+  } catch {
+    /* sessiz: kullanıcı tekrar deneyebilir */
+  } finally {
+    eskiYukleniyor.value = false
+  }
 }
 
 const odaOlustur = async () => {

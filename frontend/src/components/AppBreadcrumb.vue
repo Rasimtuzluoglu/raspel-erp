@@ -77,7 +77,6 @@ const labelKeyMap = {
   '/anomaliler': 'nav.anomaliler',
   '/kategoriler': 'nav.kategori',
   '/adres-defteri': 'nav.adresDefteri',  '/kullanicilar': 'nav.kullanici',
-  '/toplu-stok': 'nav.topluStok',
   '/sirketler': 'nav.sirket',
   '/donemler': 'nav.donem',
   '/izinler': 'nav.izin',
@@ -90,8 +89,9 @@ const labelKeyMap = {
   '/banka-mutabakat': 'nav.bankaMutabakat',
   '/vergi-raporlari': 'nav.vergiRaporlari',
   '/veri-aktar': 'nav.veriAktar',
-  '/kullanim-sartlari': 'nav.kullanimSartlari',
-  '/gizlilik-politikasi': 'nav.gizlilik',
+  '/kullanim-sartlari': 'nav.yasal',
+  '/gizlilik-politikasi': 'nav.yasal',
+  '/yasal': 'nav.yasal',
   '/yetki-yonetimi': 'nav.yetkiler'
 }
 

@@ -15,6 +15,12 @@
           :options="['TRY', 'USD', 'EUR', 'GBP', 'SAR', 'GAU']"
           class="rapor-doviz-dropdown"
         />
+        <!-- Ekrandaki değerler seçilen para birimine çevrilir; indirilen PDF/Excel
+             ise sunucudan TRY üretilir. Farkı kullanıcıya açıkça bildir. -->
+        <small
+          v-if="dovizStore.aktifParaBirimi && dovizStore.aktifParaBirimi !== 'TRY'"
+          class="doviz-notu"
+        >{{ t('raporlar.exportParaBirimiNotu') }}</small>
       </div>
       <div class="rapor-arama">
         <AutoComplete
@@ -711,68 +717,7 @@
             {{ t('raporlar.tedarikciUrunleri') }}
           </div>
         </template>
-        <div class="rapor-filtre">
-          <div class="form-group">
-            <label>{{ $t('raporlar.tedarikciFiltresi') }}</label>
-            <Dropdown
-              v-model="tuFiltre"
-              :options="tuTedarikciler"
-              :placeholder="$t('raporlar.tumTedarikciler')"
-              class="w-full"
-              :show-clear="true"
-            />
-          </div>
-          <Button
-            :label="t('raporlar.yenile')"
-            icon="pi pi-refresh"
-            size="small"
-            class="p-button-outlined"
-            :loading="tuLoading"
-            @click="getTedarikciUrunler"
-          />
-        </div>
-        <DataTable
-          :value="tuFiltrelenmisData"
-          size="small"
-          striped-rows
-          :loading="tuLoading"
-          row-group-mode="subheader"
-          group-rows-by="cariHesapAd"
-        >
-          <template #empty>
-            <EmptyState />
-          </template>
-          <template #groupheader="{ group }">
-            <span class="tedarikci-grup"><i class="pi pi-building" /> {{ group.value }} ({{ $t('raporlar.tedarikci') }})</span>
-          </template>
-          <Column
-            field="stokKodu"
-            :header="$t('raporlar.stokKodu')"
-          />
-          <Column
-            field="stokAd"
-            :header="$t('raporlar.urun')"
-          />
-          <Column
-            field="toplamMiktar"
-            :header="$t('raporlar.toplamMiktar')"
-          />
-          <Column :header="$t('raporlar.sonBirimFiyat')">
-            <template #body="s">
-              {{ formatCurrency(s.data.sonBirimFiyat) }}
-            </template>
-          </Column>
-          <Column :header="$t('raporlar.sonAlisTarihi')">
-            <template #body="s">
-              {{ s.data.sonTarih }}
-            </template>
-          </Column>
-        </DataTable>
-        <Message
-          v-if="(!tuData || !tuData.length)"
-          severity="info"
-          :text="$t('raporlar.henuzAlisFaturasiYok')"
-        />
+        <RaporTedarikciUrunler v-if="aktifSekme === 5" />
       </TabPanel>
 
       <TabPanel>
@@ -786,65 +731,7 @@
             {{ t('raporlar.urunKarliligi') }}
           </div>
         </template>
-        <div class="rapor-filtre">
-          <Button
-            :label="t('raporlar.yenile')"
-            icon="pi pi-refresh"
-            size="small"
-            class="p-button-outlined"
-            :loading="ukLoading"
-            @click="getUrunKarlilik"
-          />
-        </div>
-        <DataTable
-          :value="ukData"
-          size="small"
-          striped-rows
-          :loading="ukLoading"
-        >
-          <template #empty>
-            <EmptyState />
-          </template>
-          <Column
-            field="stokKodu"
-            :header="$t('raporlar.stokKodu')"
-          />
-          <Column
-            field="stokAd"
-            :header="$t('raporlar.urun')"
-          />
-          <Column :header="$t('raporlar.alisMaliyeti')">
-            <template #body="s">
-              <span class="gizli-veri">{{ formatCurrency(s.data.alisFiyat) }}</span>
-            </template>
-          </Column>
-          <Column :header="$t('raporlar.satisFiyati')">
-            <template #body="s">
-              {{ formatCurrency(s.data.satisFiyati) }}
-            </template>
-          </Column>
-          <Column :header="$t('raporlar.kar')">
-            <template #body="s">
-              <span
-                class="gizli-veri"
-                :class="s.data.kar >= 0 ? 'positive' : 'negative'"
-              >{{ formatCurrency(s.data.kar) }}</span>
-            </template>
-          </Column>
-          <Column :header="$t('raporlar.karMarji')">
-            <template #body="s">
-              <span
-                class="gizli-veri"
-                :class="s.data.karMarji >= 0 ? 'positive' : 'negative'"
-              >%{{ s.data.karMarji }}</span>
-            </template>
-          </Column>
-        </DataTable>
-        <Message
-          v-if="(!ukData || !ukData.length)"
-          severity="info"
-          :text="$t('raporlar.henuzUrunYok')"
-        />
+        <RaporUrunKarlilik v-if="aktifSekme === 6" />
       </TabPanel>
 
       <!-- 8. Nakit Akışı Projeksiyonu -->
@@ -859,124 +746,7 @@
             {{ t('raporlar.nakitAkisiProjeksiyonu') }}
           </div>
         </template>
-        <div class="rapor-filtre">
-          <div class="form-group">
-            <label>{{ $t('raporlar.projeksiyonSuresi') }}</label>
-            <Dropdown
-              v-model="nakitGun"
-              :options="[
-                { label: $t('raporlar.projeksiyonGun', { n: 30 }), value: 30 },
-                { label: $t('raporlar.projeksiyonGun', { n: 60 }), value: 60 },
-                { label: $t('raporlar.projeksiyonGun', { n: 90 }), value: 90 }
-              ]"
-              option-label="label"
-              option-value="value"
-              class="w-full"
-              @change="getNakitAkisi"
-            />
-          </div>
-          <div class="form-group filtre-btn">
-            <label>&nbsp;</label>
-            <Button
-              :label="t('raporlar.yenile')"
-              icon="pi pi-refresh"
-              :loading="nakitLoading"
-              @click="getNakitAkisi"
-            />
-          </div>
-        </div>
-
-        <div
-          v-if="nakitData"
-          class="rapor-sonuc"
-        >
-          <div class="ozet-kartlar">
-            <div class="ozet-kart">
-              <span>{{ $t('raporlar.mevcutLikidite') }}</span>
-              <strong>{{ formatCurrency(nakitData.baslangicBakiyesi) }}</strong>
-            </div>
-            <div class="ozet-kart gelir">
-              <span>{{ $t('raporlar.beklenenTahsilatlar') }}</span>
-              <strong class="positive">+{{ formatCurrency(nakitData.toplamBeklenenGiris) }}</strong>
-            </div>
-            <div class="ozet-kart gider">
-              <span>{{ $t('raporlar.beklenenOdemeler') }}</span>
-              <strong class="negative">-{{ formatCurrency(nakitData.toplamBeklenenCikis) }}</strong>
-            </div>
-            <div
-              class="ozet-kart"
-              :class="nakitData.tahminiBitisBakiyesi >= 0 ? 'kar' : 'zarar'"
-            >
-              <span>{{ $t('raporlar.gunSonrakiTahminiKasa', { n: nakitGun }) }}</span>
-              <strong>{{ formatCurrency(nakitData.tahminiBitisBakiyesi) }}</strong>
-            </div>
-          </div>
-
-          <h3 style="margin-top: 25px">
-            {{ $t('raporlar.gunlukNakitAkisiDetayi') }}
-          </h3>
-          <DataTable
-            :value="nakitData.gunlukAkis"
-            striped-rows
-            size="small"
-            :rows="15"
-            :paginator="true"
-            paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-          >
-            <template #empty>
-              <EmptyState />
-            </template>
-            <Column
-              field="tarih"
-              :header="t('common.date')"
-              style="width: 120px"
-            >
-              <template #body="s">
-                {{ formatDate(s.data.tarih) }}
-              </template>
-            </Column>
-            <Column
-              field="beklenenGiris"
-              :header="$t('raporlar.girisTahsilat')"
-              style="width: 140px"
-            >
-              <template #body="s">
-                <span :class="s.data.beklenenGiris > 0 ? 'positive' : ''">{{ formatCurrency(s.data.beklenenGiris) }}</span>
-              </template>
-            </Column>
-            <Column
-              field="beklenenCikis"
-              :header="$t('raporlar.cikisOdeme')"
-              style="width: 140px"
-            >
-              <template #body="s">
-                <span :class="s.data.beklenenCikis > 0 ? 'negative' : ''">{{ formatCurrency(s.data.beklenenCikis) }}</span>
-              </template>
-            </Column>
-            <Column
-              field="netAkis"
-              :header="$t('raporlar.netGunlukAkis')"
-              style="width: 140px"
-            >
-              <template #body="s">
-                <span :class="s.data.netAkis >= 0 ? 'positive' : 'negative'">{{ formatCurrency(s.data.netAkis) }}</span>
-              </template>
-            </Column>
-            <Column
-              field="kumulatifBakiye"
-              :header="$t('raporlar.tahminiKasaBakiyesi')"
-              style="width: 170px"
-            >
-              <template #body="s">
-                <strong :class="s.data.kumulatifBakiye >= 0 ? 'positive' : 'negative'">{{ formatCurrency(s.data.kumulatifBakiye) }}</strong>
-              </template>
-            </Column>
-            <Column
-              field="aciklama"
-              :header="t('common.description')"
-            />
-          </DataTable>
-        </div>
+        <RaporNakitAkisi v-if="aktifSekme === 7" />
       </TabPanel>
 
       <TabPanel :header="$t('raporlar.pivotTablo')">
@@ -1000,99 +770,10 @@
             {{ t('raporlar.temsilciPerformans') }}
           </div>
         </template>
-        <div class="rapor-filtre">
-          <div class="form-group">
-            <label>{{ t('raporlar.baslangic') }}</label>
-            <DatePicker
-              v-model="tpBas"
-              date-format="dd.mm.yy"
-              show-icon
-            />
-          </div>
-          <div class="form-group">
-            <label>{{ t('raporlar.bitis') }}</label>
-            <DatePicker
-              v-model="tpBit"
-              date-format="dd.mm.yy"
-              show-icon
-            />
-          </div>
-          <Button
-            :label="t('raporlar.raporGetir')"
-            icon="pi pi-search"
-            :loading="tpLoading"
-            @click="getTemsilciPerformans"
-          />
-        </div>
-        <div
-          v-if="tpData"
-          class="rapor-sonuc"
-        >
-          <div class="yas-kova-ozet">
-            <div class="yas-kova-kart toplam">
-              <span class="yas-kova-ad">{{ t('raporlar.toplamSatis') }}</span>
-              <span class="yas-kova-tutar">{{ formatCurrency(tpData.toplamSatis ?? 0) }}</span>
-            </div>
-            <div class="yas-kova-kart">
-              <span class="yas-kova-ad">{{ t('raporlar.toplamFatura') }}</span>
-              <span class="yas-kova-tutar">{{ tpData.toplamFatura ?? 0 }}</span>
-            </div>
-            <div class="yas-kova-kart">
-              <span class="yas-kova-ad">{{ t('raporlar.temsilciAd') }}</span>
-              <span class="yas-kova-tutar">{{ tpData.satirlar?.length ?? 0 }}</span>
-            </div>
-          </div>
-          <DataTable
-            :value="tpData.satirlar || []"
-            striped-rows
-            :rows="10"
-            :paginator="true"
-            paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-          >
-            <template #empty>
-              <EmptyState />
-            </template>
-            <Column
-              field="temsilciAd"
-              :header="$t('raporlar.temsilciAd')"
-            >
-              <template #body="s">
-                <!-- Backend temsilci atanmamis satırda `temsilciAd` null doner;
-                     etiket burada yerellestirilir. -->
-                <span
-                  v-if="s.data.atanmamisMi || !s.data.temsilciAd"
-                  class="vade-badge risk-yok"
-                >
-                  {{ $t('raporlar.temsilciAtanmamis') }}
-                </span>
-                <span v-else>{{ s.data.temsilciAd }}</span>
-              </template>
-            </Column>
-            <Column
-              field="faturaSayisi"
-              :header="$t('raporlar.faturaSayisi')"
-              style="width: 120px"
-            />
-            <Column
-              field="toplamSatis"
-              :header="$t('raporlar.toplamSatis')"
-              style="width: 160px"
-            >
-              <template #body="s">
-                <span class="positive">{{ formatCurrency(s.data.toplamSatis) }}</span>
-              </template>
-            </Column>
-            <Column
-              field="ortalamaFatura"
-              :header="$t('raporlar.ortalamaFatura')"
-              style="width: 150px"
-            >
-              <template #body="s">
-                {{ formatCurrency(s.data.ortalamaFatura) }}
-              </template>
-            </Column>
-          </DataTable>
-        </div>
+        <RaporTemsilci
+          v-if="aktifSekme === 9"
+          :tarih-araligi="tarihAraligi || []"
+        />
       </TabPanel>
     </TabView>
 
@@ -1137,6 +818,10 @@ import { useDovizStore } from '../stores/dovizStore.js'
 import { raporAPI } from '../api/index.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import PivotRaporTab from '../components/PivotRaporTab.vue'
+import RaporTedarikciUrunler from '../components/RaporTedarikciUrunler.vue'
+import RaporUrunKarlilik from '../components/RaporUrunKarlilik.vue'
+import RaporNakitAkisi from '../components/RaporNakitAkisi.vue'
+import RaporTemsilci from '../components/RaporTemsilci.vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { Bar, Doughnut } from 'vue-chartjs'
@@ -1205,18 +890,27 @@ const tarihAraligi = ref(null)
 
 const raporFavori = (key) => favoriRaporlar.value.some((r) => r.key === key)
 
-const raporFavoriDegistir = (key, index, ad) => {
+// Favoriler ARTIK key tabanlı (sekme eklenince/sırası değişince kırılmaz).
+// `index` parametresi geriye uyum için alınır ama kaydedilmez.
+const raporFavoriDegistir = (key, _index, ad) => {
   const mevcut = favoriRaporlar.value.findIndex((r) => r.key === key)
   if (mevcut > -1) {
     favoriRaporlar.value.splice(mevcut, 1)
   } else {
-    favoriRaporlar.value.push({ key, index, ad, tarih: tarihAraligi.value ? [...tarihAraligi.value] : null })
+    favoriRaporlar.value.push({ key, ad, tarih: tarihAraligi.value ? [...tarihAraligi.value] : null })
   }
   safeSet(FAVORI_ANAHTAR, favoriRaporlar.value)
 }
 
 const favoriAc = (r) => {
-  aktifSekme.value = r.index
+  const hedef = RAPOR_SEKMELERI.value.find((s) => s.key === r.key)
+  if (hedef?.path) {
+    router.push(hedef.path)
+    return
+  }
+  // key -> güncel sekme index'i; eski (index'li) kayıtlar için fallback.
+  if (hedef && hedef.index != null) aktifSekme.value = hedef.index
+  else if (r.index != null) aktifSekme.value = r.index
   if (r.tarih) tarihAraligi.value = [...r.tarih]
 }
 
@@ -1309,29 +1003,7 @@ const kovaDegerSinif = (kova, satir) => {
   return 'risk-az'
 }
 
-// Temsilci performansı (sekme 9).
-const tpBas = ref(new Date(new Date().getFullYear(), 0, 1))
-const tpBit = ref(new Date())
-const tpData = ref(null)
-const tpLoading = ref(false)
-
-const getTemsilciPerformans = async () => {
-  tpLoading.value = true
-  try {
-    const r = await raporAPI.temsilciPerformans({
-      baslangic: formatDateForApi(tpBas.value),
-      bitis: formatDateForApi(tpBit.value)
-    })
-    tpData.value = r.data
-  } catch (err) {
-    toastBildirim.hata(
-      err?.response?.data?.message || err?.message || t('raporlar.temsilciPerformansHata')
-    )
-    tpData.value = null
-  } finally {
-    tpLoading.value = false
-  }
-}
+// Temsilci performansı (sekme 9) `RaporTemsilci.vue` bileşenine taşındı.
 
 const ckBas = ref(new Date(new Date().getFullYear(), 0, 1))
 const ckBit = ref(new Date())
@@ -1339,59 +1011,9 @@ const ckData = ref(null)
 const ckLoading = ref(false)
 const ckKart = ref(null)
 
-const tuData = ref([])
-const tuLoading = ref(false)
-const tuFiltre = ref(null)
-
-const tuTedarikciler = computed(() => {
-  const set = new Set(tuData.value.map((d) => d.cariHesapAd).filter(Boolean))
-  return [...set].sort()
-})
-
-const tuFiltrelenmisData = computed(() => {
-  if (!tuFiltre.value) return tuData.value
-  return tuData.value.filter((d) => d.cariHesapAd === tuFiltre.value)
-})
-
-const getTedarikciUrunler = async () => {
-  tuLoading.value = true
-  try {
-    const r = await raporAPI.tedarikciUrunler()
-    tuData.value = r.data || []
-  } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || t('raporlar.tedarikciRaporuHata'))
-  }
-  tuLoading.value = false
-}
-
-const ukData = ref([])
-const ukLoading = ref(false)
-
-const getUrunKarlilik = async () => {
-  ukLoading.value = true
-  try {
-    const r = await raporAPI.urunKarlilik()
-    ukData.value = r.data || []
-  } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || t('raporlar.urunKarlilikHata'))
-  }
-  ukLoading.value = false
-}
-
-const nakitGun = ref(30)
-const nakitData = ref(null)
-const nakitLoading = ref(false)
-
-const getNakitAkisi = async () => {
-  nakitLoading.value = true
-  try {
-    const r = await raporAPI.nakitAkisiProjeksiyonu(nakitGun.value)
-    nakitData.value = r.data
-  } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || err?.message || t('raporlar.nakitAkisiHata'))
-  }
-  nakitLoading.value = false
-}
+// Tedarikçi (5), ürün kârlılığı (6) ve nakit akışı (7) sekmeleri ayrı
+// bileşenlere (RaporTedarikciUrunler / RaporUrunKarlilik / RaporNakitAkisi)
+// taşındı; her biri kendi verisini kendi yükler.
 
 const ggChartData = computed(() => {
   const liste = ggData.value?.aylikDagilim || []
@@ -1428,20 +1050,25 @@ const ckChartData = computed(() => {
   }
 })
 
-watch(tarihAraligi, (v) => {
+// ÜST tarih aralığını sekmenin kendi filtresine uygular (tek yetkili kaynak).
+// 0 cari ekstre, 1 gelir/gider, 2 kdv, 4 cari kârlılık çift tarih;
+// 3 yaşlandırma tek referans tarihi kullanır (bitiş tarihi).
+// 9 temsilci artık kendi bileşeninde `tarihAraligi` prop'u ile uygular.
+const tarihAraliginiUygula = (idx) => {
+  const v = tarihAraligi.value
   if (!v || v.length !== 2 || !v[0]) return
-  if (aktifSekme.value === 0) {
-    ekstreBas.value = v[0]
-    ekstreBit.value = v[1]
-  } else if (aktifSekme.value === 1) {
-    ggBas.value = v[0]
-    ggBit.value = v[1]
-    getGelirGider()
-  } else if (aktifSekme.value === 2) {
-    kdvBas.value = v[0]
-    kdvBit.value = v[1]
-    getKdv()
-  }
+  const [bas, bit] = v
+  if (idx === 0) { ekstreBas.value = bas; ekstreBit.value = bit }
+  else if (idx === 1) { ggBas.value = bas; ggBit.value = bit }
+  else if (idx === 2) { kdvBas.value = bas; kdvBit.value = bit }
+  else if (idx === 3) { yasReferansTarih.value = bit }
+  else if (idx === 4) { ckBas.value = bas; ckBit.value = bit }
+}
+
+watch(tarihAraligi, () => {
+  // Tarih değişince aktif sekmenin filtresini güncelle ve yeniden yükle.
+  tarihAraliginiUygula(aktifSekme.value)
+  sekmeYukle(aktifSekme.value)
 })
 
 const formatDateForApi = (d) => {
@@ -1465,15 +1092,14 @@ onMounted(async () => {
 })
 
 // Raporları yalnızca ilgili sekme açıldığında yükle (ilk açılışta donmayı önler).
+// 5/6/7/9 sekmeleri kendi bileşenlerinde (v-if ile) açılışta yükler.
 const sekmeYukle = (idx) => {
+  // Sekmeye girerken üst tarih aralığı seçiliyse onu uygula (tek yetkili kaynak).
+  tarihAraliginiUygula(idx)
   if (idx === 1) getGelirGider()
   else if (idx === 2) getKdv()
   else if (idx === 3) getYaslandirma()
   else if (idx === 4) getCariKarlilik()
-  else if (idx === 5) getTedarikciUrunler()
-  else if (idx === 6) getUrunKarlilik()
-  else if (idx === 7) getNakitAkisi()
-  else if (idx === 9) getTemsilciPerformans()
 }
 
 watch(aktifSekme, (idx) => sekmeYukle(idx))
@@ -1546,8 +1172,15 @@ const getYaslandirma = async () => {
   }
 }
 
+// Dışa aktarılan PDF/Excel, ekrandaki para birimiyle aynı olmalı: seçili birim
+// TRY değilse `doviz` parametresi backend'e gönderilir ve tutarlar çevrilir.
+const dovizParam = () => {
+  const k = dovizStore.aktifParaBirimi
+  return k && k !== 'TRY' ? { doviz: k } : {}
+}
+
 const yaslandirmaPdfIndir = () => {
-  const params = {}
+  const params = { ...dovizParam() }
   if (yasReferansTarih.value) params.referansTarih = formatDateForApi(yasReferansTarih.value)
   pdfIndir(raporAPI.yaslandirmaPdf(params), `yaslandirma-${formatDateForApi(yasReferansTarih.value)}.pdf`)
 }
@@ -1588,13 +1221,15 @@ const ekstrePdfIstek = () =>
   raporAPI.cariEkstrePdf({
     cariHesapId: ekstreCariId.value,
     baslangic: formatDateForApi(ekstreBas.value),
-    bitis: formatDateForApi(ekstreBit.value)
+    bitis: formatDateForApi(ekstreBit.value),
+    ...dovizParam()
   })
 
 const ggPdfIstek = () =>
   raporAPI.gelirGiderPdf({
     baslangic: formatDateForApi(ggBas.value),
-    bitis: formatDateForApi(ggBit.value)
+    bitis: formatDateForApi(ggBit.value),
+    ...dovizParam()
   })
 
 const ekstrePdfIndir = () => pdfIndir(ekstrePdfIstek(), 'cari-ekstre.pdf')
@@ -1605,7 +1240,8 @@ const ckPdfIndir = () =>
   pdfIndir(
     raporAPI.cariKarlilikPdf({
       baslangic: formatDateForApi(ckBas.value),
-      bitis: formatDateForApi(ckBit.value)
+      bitis: formatDateForApi(ckBit.value),
+      ...dovizParam()
     }),
     'cari-karlilik.pdf'
   )
@@ -1658,15 +1294,22 @@ const ekstreCsvIndir = () => {
   // Tablo ile CSV ayni sutunlari icermeli; aksi halde indirilen dosya ekrandaki
   // rapordan farkli olur (fatura no ve vade tabloya eklendi).
   const basliklar = ['Tarih', 'Tur', 'Aciklama', 'Fatura No', 'Vade', 'Borc', 'Alacak', 'Bakiye']
+  // CSV de ekrandaki para birimiyle aynı olsun.
+  const csvDoviz = (v) => {
+    if (v == null || v === '') return ''
+    const birim = dovizStore.aktifParaBirimi
+    if (birim === 'TRY') return v
+    return dovizStore.convert(Number(v), 'TRY', birim).toFixed(2)
+  }
   const satirlar = ekstreSatirlari.value.map((s) => [
     s.tarih ? formatDate(s.tarih) : '',
     ekstreTurLabel(s.tur),
     (s.aciklama || '').replace(/;/g, ','),
     s.faturaNumarasi || '',
     s.vadeTarihi ? formatDate(s.vadeTarihi) : '',
-    s.borc ?? '',
-    s.alacak ?? '',
-    s.yuruyenBakiye ?? ''
+    csvDoviz(s.borc),
+    csvDoviz(s.alacak),
+    csvDoviz(s.yuruyenBakiye)
   ])
   const csv = [basliklar, ...satirlar].map((r) => r.join(';')).join('\n')
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
@@ -1713,6 +1356,12 @@ import { formatTarih as formatDate, getLocalDateString, vadeRiskSinifi } from '.
 }
 .rapor-doviz-dropdown {
   width: 110px;
+}
+.doviz-notu {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  max-width: 150px;
+  line-height: 1.25;
 }
 h1 {
   color: var(--text-primary);

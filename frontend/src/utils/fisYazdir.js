@@ -22,14 +22,38 @@ export function fisPenceresiAcVeYazdir(html, secenekler = {}) {
   pencere.document.write(html)
   pencere.document.close()
 
-  setTimeout(() => {
+  // Görselleri (özellikle uzaktaki şirket logosu) yüklenmeden yazdırırsak
+  // logo boş çıkar ve düzen kayar. Sabit gecikme yerine görselleri bekle.
+  const yazdir = () => {
     try {
       pencere.focus()
       pencere.print()
     } catch (e) {
       console.error('Termal yazıcı hatası:', e)
     }
-  }, gecikme)
+  }
+  const resimleriBekleVeYazdir = () => {
+    const doc = pencere.document
+    const resimler = doc && doc.images ? Array.from(doc.images) : []
+    const bekleyen = resimler.filter((img) => img && img.complete === false)
+    if (!bekleyen.length) {
+      yazdir()
+      return
+    }
+    let kalan = bekleyen.length
+    const azalt = () => {
+      kalan -= 1
+      if (kalan <= 0) yazdir()
+    }
+    bekleyen.forEach((img) => {
+      img.addEventListener?.('load', azalt)
+      img.addEventListener?.('error', azalt)
+    })
+    // Güvenlik: görsel takılırsa yazdırmayı askıya alma.
+    setTimeout(yazdir, Math.max(gecikme, 1500))
+  }
+
+  setTimeout(resimleriBekleVeYazdir, gecikme)
 
   return pencere
 }

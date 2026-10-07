@@ -54,12 +54,25 @@ vi.mock('../../composables/useToastBildirim.js', () => ({
 
 vi.mock('../../api/index.js', () => ({
   maasBordroAPI: {
-    getAll: vi.fn(() => Promise.resolve({ data: { content: maasBordroMock } })),
+    getAll: vi.fn(() => Promise.resolve({ data: { content: maasBordroMock, totalElements: maasBordroMock.length } })),
+    ozet: vi.fn(() => Promise.resolve({ data: { adet: 1, toplamBrut: 50000, toplamKesinti: 12500, toplamNet: 37500, odenenNet: 0 } })),
+    getById: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
     onayla: vi.fn(),
-    ode: vi.fn()
+    onayKaldir: vi.fn(),
+    ode: vi.fn(),
+    hesapla: vi.fn(() => Promise.resolve({ data: { toplamKesinti: 12500, netMaas: 37500 } })),
+    ayar: vi.fn(() => Promise.resolve({ data: { yil: 2026, asgariUcret: 20000, gelirVergisiDilimleri: '[]' } })),
+    ayarKaydet: vi.fn(),
+    topluUret: vi.fn(() => Promise.resolve({ data: { uretilen: 1, atlanan: 0 } })),
+    topluOnizleme: vi.fn(() => Promise.resolve({
+      data: [
+        { personelId: 7, personelAdi: 'Ali Veli', brutMaas: 50000, netMaas: 37500, durum: 'UYGUN' },
+        { personelId: 8, personelAdi: 'Ayşe Yılmaz', brutMaas: 0, netMaas: null, durum: 'MAAS_YOK' }
+      ]
+    }))
   },
   // REDTEAM: `/api/personel` Page (nesne) döndürür. Dizi DEĞİL.
   personelAPI: {
@@ -138,5 +151,35 @@ describe('REDTEAM Faz1.1 - MaasBordro sayfa yukleme (bordro odemesi olmusu)', ()
     expect(kasaAPI.getAll).toHaveBeenCalled()
     // Yükleme hatası olmadığının dolaylı kanıtı: hata toast'ı yok.
     expect(hataToast).not.toHaveBeenCalled()
+  })
+
+  it('canlı hesaplama motorunu çağırır ve kesintiyi doldurur', async () => {
+    const { default: MaasBordroView } = await MaasBordro()
+    wrapper = mount(MaasBordroView, {
+      global: { plugins: [createPinia(), ToastService, ConfirmationService, i18n], stubs }
+    })
+    await flushPromises()
+    const { maasBordroAPI } = await import('../../api/index.js')
+
+    wrapper.vm.form.personelId = 7
+    wrapper.vm.form.brutMaas = 50000
+    await wrapper.vm.hesaplaTetikle()
+    await flushPromises()
+
+    expect(maasBordroAPI.hesapla).toHaveBeenCalledWith(
+      expect.objectContaining({ personelId: 7, brutMaas: 50000 })
+    )
+    // Hesaplama dökümünden kesinti otomatik doldurulur (elle girilmediyse).
+    expect(wrapper.vm.form.kesintiler).toBe(12500)
+  })
+
+  it('KPI özetini (ozet) yükler', async () => {
+    const { default: MaasBordroView } = await MaasBordro()
+    wrapper = mount(MaasBordroView, {
+      global: { plugins: [createPinia(), ToastService, ConfirmationService, i18n], stubs }
+    })
+    await flushPromises()
+    const { maasBordroAPI } = await import('../../api/index.js')
+    expect(maasBordroAPI.ozet).toHaveBeenCalled()
   })
 })

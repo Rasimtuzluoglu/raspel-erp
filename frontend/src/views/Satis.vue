@@ -7,7 +7,6 @@
       <Button
         :label="t('satis.yeniSatis')"
         icon="pi pi-plus"
-        class="p-button-success"
         @click="openSatis"
       />
     </div>
@@ -24,13 +23,13 @@
         :baslik="t('satis.kpiCiro')"
         :deger="ozet.ciro"
         icon="pi pi-chart-line"
-        renk="#3b82f6"
+        renk="#0d9488"
       />
       <KpiKart
         :baslik="t('satis.kpiTahsil')"
         :deger="ozet.tahsilEdilen"
         icon="pi pi-wallet"
-        renk="#10b981"
+        renk="#2dd4bf"
       />
       <KpiKart
         :baslik="t('satis.kpiKalan')"
@@ -324,7 +323,6 @@
             v-if="detayFatura.durum === 'KESILDI' && Number(detayFatura.kalanTutar || 0) > 0"
             :label="t('satis.tahsilatAl')"
             icon="pi pi-money-bill"
-            class="p-button-success"
             @click="tahsilataGit(detayFatura)"
           />
           <Button
@@ -340,8 +338,9 @@
     <AppDialog
       v-model:visible="showSatisDialog"
       :header="dialogBaslik"
-      :closable="false"
-      width="920px"
+      width="1280px"
+      content-max-height="none"
+      :close-on-escape="false"
     >
       <div
         v-if="!duzenlenenId"
@@ -374,15 +373,27 @@
             :placeholder="t('satis.musteriSeciniz')"
             :empty-search-message="t('satis.musteriBulunamadi')"
             class="w-full"
-            dropdown
             force-selection
+            :loading="musteriYukleniyor"
             @complete="musteriAra"
             @option-select="musteriSecildi"
           >
+            <!-- ONERI SATIRI: once yalniz ad + (vergiNo/adres) vardi; vergi
+                 alani DTO'da `vergiNumarasi` oldugu icin `vergiNo` hep
+                 undefined kaliyor ve satir yalniz telefonu gosteriyordu
+                 ("sadece numarasi gorunuyor" sikayeti). Artik ad + hesap/
+                 vergi no + telefon birlikte gosterilir. -->
             <template #option="slotProps">
               <div class="musteri-opsiyon">
                 <span class="musteri-opsiyon-ad">{{ slotProps.option.ad }}</span>
-                <span class="musteri-opsiyon-detay">{{ slotProps.option.vergiNo || slotProps.option.telefon || '' }}</span>
+                <span class="musteri-opsiyon-detay">
+                  <template v-if="slotProps.option.vergiNumarasi">
+                    {{ t('satis.cariVergiNo') }}: {{ slotProps.option.vergiNumarasi }}
+                  </template>
+                  <template v-if="slotProps.option.telefon">
+                    <span class="musteri-opsiyon-ayrac"> · </span>{{ slotProps.option.telefon }}
+                  </template>
+                </span>
               </div>
             </template>
           </AutoComplete>
@@ -394,6 +405,54 @@
             date-format="dd.mm.yy"
             class="w-full"
           />
+        </div>
+      </div>
+
+      <!-- SECILI CARI KARTI: bakiye, kredi limiti/risk ve adres. Once secili
+           cariye dair ekranda HICBIR detay yoktu; yalniz isim gorunuyordu. -->
+      <div
+        v-if="seciliCari"
+        class="cari-kart"
+        :class="cariRisk ? `cari-kart-${cariRisk.seviye}` : ''"
+      >
+        <div class="cari-kart-ust">
+          <i class="pi pi-user cari-kart-ikon" />
+          <span class="cari-kart-ad">{{ seciliCari.ad }}</span>
+        </div>
+        <div class="cari-kart-satirlar">
+          <span class="cari-kart-satir">
+            <i class="pi pi-wallet" />
+            {{ t('satis.cariBakiye') }}:
+            <strong :class="bakiyeSinifi(seciliCari.bakiye)">{{ formatCurrency(seciliCari.bakiye || 0) }}</strong>
+          </span>
+          <span
+            v-if="seciliCari.krediLimiti != null"
+            class="cari-kart-satir"
+          >
+            <i class="pi pi-shield" />
+            {{ t('satis.cariKrediLimiti') }}: <strong>{{ formatCurrency(seciliCari.krediLimiti) }}</strong>
+          </span>
+          <span
+            v-if="seciliCari.odemeVadesi != null"
+            class="cari-kart-satir"
+          >
+            <i class="pi pi-calendar" />
+            {{ t('satis.cariVade') }}: <strong>{{ seciliCari.odemeVadesi }} {{ t('satis.cariGun') }}</strong>
+          </span>
+          <span
+            v-if="seciliCari.adres"
+            class="cari-kart-satir cari-kart-adres"
+          >
+            <i class="pi pi-map-marker" />
+            {{ seciliCari.adres }}<template v-if="seciliCari.il">, {{ seciliCari.il }}</template>
+          </span>
+        </div>
+        <div
+          v-if="cariRisk"
+          class="cari-kart-uyari"
+        >
+          <i :class="cariRisk.seviye === 'danger' ? 'pi pi-exclamation-triangle' : 'pi pi-info-circle'" />
+          {{ cariRisk.mesaj }}
         </div>
       </div>
 
@@ -409,10 +468,9 @@
             :genel-toplam="genelToplam"
             :kdv-secenekleri="kdvOranlari"
             :kdv-varsayilan="kdvVarsayilan"
-            stok-arama
             @add="kalemEkle"
             @remove="(i) => satisForm.kalemler.splice(i, 1)"
-            @stok-sec="stokSatirSecildi"
+            @geri-al="kalemGeriAl"
           />
         </div>
       </div>
@@ -636,6 +694,12 @@
       </details>
 
       <template #footer>
+        <!-- Birincil buton pasifken NEDEN'i gorunur metinle acikla; tooltip
+             direktifi projede kayitli olmadigi icin native `title` kullaniyoruz. -->
+        <span
+          v-if="tamamlaNeden"
+          class="footer-neden"
+        >{{ tamamlaNeden }}</span>
         <Button
           :label="t('common.cancel')"
           icon="pi pi-times"
@@ -646,7 +710,8 @@
           :label="duzenlenenId ? t('satis.guncelle') : (satisModu === 'TEKLIF' ? t('satis.teklifiKaydet') : t('satis.satisiTamamla'))"
           icon="pi pi-check"
           :loading="saving"
-          :disabled="satisForm.kalemler.length === 0 || (satisModu === 'SATIS' && !satisForm.cariHesapId)"
+          :disabled="!tamamlaAktif"
+          :title="tamamlaNeden || undefined"
           @click="satisiTamamla"
         />
       </template>
@@ -660,7 +725,7 @@ import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { faturaAPI, teklifAPI, kasaAPI, bankaAPI, posAPI, teslimatAPI } from '../api/index.js'
-import { useCariOnerileri } from '../composables/useCariOnerileri.js'
+import { useCariOnerileri, cariHesapCoz } from '../composables/useCariOnerileri.js'
 
 import { useAuthStore } from '../stores/authStore.js'
 import { useRouter, useRoute } from 'vue-router'
@@ -727,10 +792,41 @@ const satisForm = ref({
 
 // Musteri secimi: sunucu tarafli arama (tum carileri yuklemek yerine).
 const musteriSecim = ref(null)
-const { oneriler: musteriOnerileri, ara: musteriAra } = useCariOnerileri()
+/** Secili carinin TAM kaydi (bakiye/kredi limiti/adres karti icin). */
+const seciliCari = ref(null)
+const { oneriler: musteriOnerileri, yukleniyor: musteriYukleniyor, ara: musteriAra } = useCariOnerileri()
 const musteriSecildi = (event) => {
   const c = event?.value
-  if (c) satisForm.value.cariHesapId = c.id
+  seciliCari.value = c || null
+  satisForm.value.cariHesapId = c?.id ?? null
+}
+
+/**
+ * Secili carinin risk durumu.
+ *
+ * HizliSatis ile ayni kural: bakiye negatifse (cari bize borclu) ve mutlak
+ * degeri kredi limitini asiyorsa `danger`; limit yoksa/altindaysa `warn`.
+ * Once bu ekranda secili cariye dair HICBIR bilgi gosterilmiyordu.
+ * @returns {{seviye: 'danger'|'warn', mesaj: string}|null}
+ */
+const cariRisk = computed(() => {
+  const c = seciliCari.value
+  if (!c) return null
+  const bakiye = Number(c.bakiye || 0)
+  if (bakiye >= 0) return null // alacakli veya sifir: risk yok
+  const limit = c.krediLimiti != null ? Number(c.krediLimiti) : null
+  if (limit != null && limit > 0 && Math.abs(bakiye) >= limit) {
+    return { seviye: 'danger', mesaj: t('satis.cariKrediLimitiAsildi', { tutar: formatCurrency(Math.abs(bakiye)) }) }
+  }
+  return { seviye: 'warn', mesaj: t('satis.cariBorcUyari', { tutar: formatCurrency(Math.abs(bakiye)) }) }
+})
+
+/** Bakiye rengi: borcluysa kirmizi, alacakliysa yesil. */
+const bakiyeSinifi = (bakiye) => {
+  const v = Number(bakiye || 0)
+  if (v < 0) return 'bakiye-borc'
+  if (v > 0) return 'bakiye-alacak'
+  return ''
 }
 
 // Opsiyonel tahsilat + teslimat (POS ile ayni payload alanlari).
@@ -990,62 +1086,16 @@ const satisEylemleri = (s) => {
 // Kalem listesine yeni satir ekler (FaturaKalemleri hizli ekleme / cogaltma).
 const kalemEkle = (row) => satisForm.value.kalemler.push(row)
 
-// Satir icinde stok secilince satiri stok bilgisiyle doldurur (KDV: stokta
-// tanimliysa o, tanimli degilse 0 kalir).
-//
-// ONCE `if (!k.birimFiyat)` kosulu vardi: kullanici fiyati elle yazip sonra
-// urunu degistirdiginde ESKI fiyat yeni urunun fiyatiyla birlikte kaliyordu
-// (sessiz yanlis fiyat). Artik urun degisiyorsa fiyat/KDV yeni urune gore
-// yenilenir; elle girilmis bir fiyat varsa kullaniciya sorulur.
-const stokSatirSecildi = ({ index, stok }) => {
-  const k = satisForm.value.kalemler[index]
-  if (!k || !stok) return
-  const urunDegisti = k.stokId != null && k.stokId !== stok.id
-  const eskiFiyat = k.birimFiyat
-  const yeniFiyat = stok.satisFiyati || stok.fiyat || 0
-
-  const uygula = () => {
-    k.stokId = stok.id
-    k.aciklama = stok.ad
-    k.birimFiyat = yeniFiyat
-    if (stok.kdvOrani != null) k.kdvOrani = Number(stok.kdvOrani)
-    // Stok miktari satira tasinir: `stokYetersizKalemler` bunu kullanarak
-    // kayittan once adet > stok uyarisi verir.
-    k.stokMiktar = stok.miktar != null ? Number(stok.miktar) : null
-  }
-
-  if (!urunDegisti) {
-    uygula()
-    return
-  }
-  // Fiyat elle degistirilmis mi? Sifir degilse ve stok listesinde degisse
-  // kullanici karar versin.
-  const elleFiyatVar = Number(eskiFiyat) > 0 && Number(eskiFiyat) !== Number(yeniFiyat)
-  if (!elleFiyatVar) {
-    uygula()
-    return
-  }
-  confirm.require({
-    message: t('satis.urunDegistiFiyatSorusu', {
-      eski: formatCurrency(eskiFiyat),
-      yeni: formatCurrency(yeniFiyat)
-    }),
-    header: t('satis.urunDegistiBaslik'),
-    icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t('satis.yeniFiyatiKullan'),
-    rejectLabel: t('satis.eskiFiyatiKoru'),
-    accept: () => {
-      uygula()
-      toastBildirim.basarili(t('satis.fiyatYenilendi', { fiyat: formatCurrency(yeniFiyat) }))
-    },
-    reject: () => {
-      // Fiyat korunur ama urun degisir; bilincli bir tercih.
-      k.stokId = stok.id
-      k.aciklama = stok.ad
-      if (stok.kdvOrani != null) k.kdvOrani = Number(stok.kdvOrani)
-    }
-  })
+/** Silinen kalemi ESKI KONUMUNA geri koyar (FaturaKalemleri geri-al bandi). */
+const kalemGeriAl = ({ index, kalem }) => {
+  const hedef = Math.min(Math.max(index, 0), satisForm.value.kalemler.length)
+  satisForm.value.kalemler.splice(hedef, 0, kalem)
 }
+
+// REDTEAM/Faz9: satir ici stok aramasi KALDIRILDI (bkz. FaturaKalemleri).
+// Kalem ekleme tek yoldan yapilir: hizli ekleme satiri + barkod. Bu yuzden
+// `stokSatirSecildi` ve "urun degisti, fiyati koru mu?" onayi artik yok;
+// urunu degistirmek icin satir silinip yeniden eklenir.
 
 const araToplam = computed(() =>
   satisForm.value.kalemler.reduce((t, k) => t + kalemNetTutar(k), 0)
@@ -1063,6 +1113,7 @@ const dialogBaslik = computed(() => {
 const openSatis = () => {
   satisForm.value = { cariHesapId: null, tarih: new Date(), aciklama: '', kalemler: [] }
   musteriSecim.value = null
+  seciliCari.value = null
   musteriOnerileri.value = []
   duzenlenenId.value = null
   satisModu.value = 'SATIS'
@@ -1093,8 +1144,11 @@ const openSatisDuzenle = async (s) => {
         kdvOrani: k.kdvOrani ?? 0
       }))
     }
-    // Musteri AutoComplete secili kaydi gostersin.
+    // Musteri AutoComplete secili kaydi gostersin. Kartta bakiye/kredi
+    // limiti/adres gorunecegi icin carinin TAM kaydi cozulur (fatura yalnizca
+    // `cariHesapAd` tasir).
     musteriSecim.value = f.cariHesapAd ? { id: f.cariHesapId, ad: f.cariHesapAd } : null
+    seciliCari.value = f.cariHesapId ? await cariHesapCoz(f.cariHesapId, musteriOnerileri.value) : null
     musteriOnerileri.value = []
     showSatisDialog.value = true
   } catch (e) {
@@ -1137,6 +1191,15 @@ const stokYetersizOnayiSor = () => {
     })
   })
 }
+
+// Footer'da birincil butonun NEDEN pasif oldugunu gosterir. Tooltip direktifi
+// projede kayitli olmadigi icin gorunur metin + native `title` kullaniyoruz.
+const tamamlaNeden = computed(() => {
+  if (satisForm.value.kalemler.length === 0) return t('satis.enAzBirUrun')
+  if (satisModu.value === 'SATIS' && !satisForm.value.cariHesapId) return t('satis.musteriSecinizUyari')
+  return ''
+})
+const tamamlaAktif = computed(() => !tamamlaNeden.value)
 
 const satisiTamamla = async () => {
   if (satisModu.value === 'SATIS' && !satisForm.value.cariHesapId) {
@@ -1368,6 +1431,13 @@ const printTermalFis = (satisData) => {
 .satis-container {
   padding: 0;
   max-width: 100%;
+}
+/* Diyalog footer'i: pasif NEDEN metni sola yaslanir, butonlar sagda kalir. */
+.footer-neden {
+  margin-right: auto;
+  align-self: center;
+  font-size: 12.5px;
+  color: var(--text-secondary);
 }
 h1 {
   color: var(--text-primary);
@@ -1969,5 +2039,72 @@ h1 {
 }
 .teslimat-yok {
   color: var(--text-muted);
+}
+
+/* ---------------------------------------------------------------------------
+   SECILI CARI KARTI (bakiye / kredi limiti / risk / adres)
+   Once secili cariye dair ekranda hicbir detay yoktu.
+   --------------------------------------------------------------------------- */
+.cari-kart {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 0 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  background: var(--bg-primary);
+}
+.cari-kart-danger {
+  border-left-color: var(--danger, #dc2626);
+  background: color-mix(in srgb, var(--danger, #dc2626) 6%, var(--bg-primary));
+}
+.cari-kart-warn {
+  border-left-color: var(--warning, #f59e0b);
+}
+.cari-kart-ust {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.cari-kart-ikon {
+  color: var(--accent);
+}
+.cari-kart-satirlar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+.cari-kart-satir {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.cari-kart-satir i {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.cari-kart-adres {
+  flex-basis: 100%;
+}
+.bakiye-borc {
+  color: var(--danger, #dc2626);
+}
+.bakiye-alacak {
+  color: var(--success, #10b981);
+}
+.cari-kart-uyari {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--danger, #dc2626);
+}
+.cari-kart-warn .cari-kart-uyari {
+  color: var(--warning, #f59e0b);
 }
 </style>

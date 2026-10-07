@@ -2,6 +2,29 @@ import { createApp, defineAsyncComponent } from 'vue'
 import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import Lara from '@primevue/themes/lara'
+import { definePreset } from '@primevue/themes'
+
+// Faz 4.4: kurumsal tasarim dili. Marka TEAL paleti Lara preset'ine islenir;
+// `app.css` icindeki `--accent` (#14b8a6) ve `tailwind.config.cjs` `brand`
+// token'lariyla AYNI degerler. (Once indigo idi; app.css teal kullandigi icin
+// ekranda IKI farkli vurgu rengi olusuyordu.)
+const RaspelPreset = definePreset(Lara, {
+  semantic: {
+    primary: {
+      50: '#f0fdfa',
+      100: '#ccfbf1',
+      200: '#99f6e4',
+      300: '#5eead4',
+      400: '#2dd4bf',
+      500: '#14b8a6',
+      600: '#0d9488',
+      700: '#0f766e',
+      800: '#115e59',
+      900: '#134e4a',
+      950: '#042f2e'
+    }
+  }
+})
 import App from './App.vue'
 import router from './router/index.js'
 import i18n from './i18n.js'
@@ -80,7 +103,7 @@ app.use(createPinia())
 app.use(router)
 app.use(PrimeVue, {
     theme: {
-      preset: Lara,
+      preset: RaspelPreset,
       options: { darkModeSelector: false }
     },
     locale: pvTr,

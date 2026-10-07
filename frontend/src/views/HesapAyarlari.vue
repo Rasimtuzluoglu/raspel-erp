@@ -11,12 +11,22 @@
       :metin="t('hesapAyarlari.introText')"
     />
 
+    <div class="bolum-grup-secici">
+      <SelectButton
+        v-model="bolumGrubu"
+        :options="bolumGruplari"
+        option-label="ad"
+        option-value="deger"
+        :allow-empty="false"
+      />
+    </div>
+
     <div class="ayarlar-duzen">
       <TabView
         v-model:active-index="aktifBolum"
         class="ayar-icerik"
       >
-        <TabPanel>
+        <TabPanel v-if="kisiselMi(0)">
           <template #header>
             <span class="sekme-baslik"><i :class="bolumler[0].ikon" /> {{ bolumler[0].label }}</span>
           </template>
@@ -51,10 +61,38 @@
                       />
                     </div>
                     <div class="field">
-                      <label>Avatar URL</label>
+                      <label>{{ t('hesapAyarlari.avatar') }}</label>
+                      <div class="avatar-satir">
+                        <img
+                          v-if="profilForm.avatarUrl"
+                          :src="profilForm.avatarUrl"
+                          class="avatar-onizleme"
+                          alt=""
+                        >
+                        <span
+                          v-else
+                          class="avatar-bos"
+                        ><i class="pi pi-user" /></span>
+                        <Button
+                          :label="t('hesapAyarlari.avatarYukle')"
+                          icon="pi pi-upload"
+                          size="small"
+                          class="p-button-outlined"
+                          :loading="avatarYukleniyor"
+                          @click="avatarInput?.click()"
+                        />
+                        <input
+                          ref="avatarInput"
+                          type="file"
+                          accept="image/*"
+                          class="gizli-input"
+                          @change="avatarSec"
+                        >
+                      </div>
                       <InputText
                         v-model="profilForm.avatarUrl"
                         class="w-full"
+                        :placeholder="t('hesapAyarlari.avatarUrl')"
                       />
                     </div>
                     <Button
@@ -72,45 +110,22 @@
                   <i class="pi pi-lock" />{{ t('hesapAyarlari.sifreDegistir') }}
                 </template>
                 <template #content>
-                  <div class="form-grid">
-                    <div class="field">
-                      <label>{{ t('hesapAyarlari.mevcutSifre') }}</label>
-                      <InputText
-                        v-model="sifreForm.mevcutSifre"
-                        type="password"
-                        class="w-full"
-                      />
-                    </div>
-                    <div class="field">
-                      <label>{{ t('hesapAyarlari.yeniSifre') }}</label>
-                      <InputText
-                        v-model="sifreForm.yeniSifre"
-                        type="password"
-                        class="w-full"
-                      />
-                    </div>
-                    <div class="field">
-                      <label>{{ t('hesapAyarlari.yeniSifreTekrar') }}</label>
-                      <InputText
-                        v-model="sifreForm.yeniSifreTekrar"
-                        type="password"
-                        class="w-full"
-                      />
-                    </div>
-                    <Button
-                      :label="t('hesapAyarlari.sifreyiGuncelle')"
-                      icon="pi pi-key"
-                      :loading="kaydediliyor"
-                      @click="sifreKaydet"
-                    />
-                  </div>
+                  <p class="ai-aciklama">
+                    {{ t('hesapAyarlari.sifreDegistirAciklama') }}
+                  </p>
+                  <!-- Tek kaynak: ayni modal kenar cubugundan da acilir. -->
+                  <Button
+                    :label="t('hesapAyarlari.sifreDegistirBtn')"
+                    icon="pi pi-key"
+                    @click="sifreModalAcik = true"
+                  />
                 </template>
               </Card>
             </div>
           </div>
         </TabPanel>
 
-        <TabPanel>
+        <TabPanel v-if="kisiselMi(1)">
           <template #header>
             <span class="sekme-baslik"><i :class="bolumler[1].ikon" /> {{ bolumler[1].label }}</span>
           </template>
@@ -272,7 +287,7 @@
           </div>
         </TabPanel>
 
-        <TabPanel>
+        <TabPanel v-if="kisiselMi(2)">
           <template #header>
             <span class="sekme-baslik"><i :class="bolumler[2].ikon" /> {{ bolumler[2].label }}</span>
           </template>
@@ -361,7 +376,7 @@
           </div>
         </TabPanel>
 
-        <TabPanel>
+        <TabPanel v-if="kisiselMi(3)">
           <template #header>
             <span class="sekme-baslik"><i :class="bolumler[3].ikon" /> {{ bolumler[3].label }}</span>
           </template>
@@ -396,7 +411,7 @@
           </div>
         </TabPanel>
 
-        <TabPanel>
+        <TabPanel v-if="kisiselMi(4)">
           <template #header>
             <span class="sekme-baslik"><i :class="bolumler[4].ikon" /> {{ bolumler[4].label }}</span>
           </template>
@@ -560,7 +575,7 @@
           </div>
         </TabPanel>
 
-        <TabPanel>
+        <TabPanel v-if="kisiselMi(5)">
           <template #header>
             <span class="sekme-baslik"><i :class="bolumler[5].ikon" /> {{ bolumler[5].label }}</span>
           </template>
@@ -595,7 +610,7 @@
           </div>
         </TabPanel>
 
-        <TabPanel>
+        <TabPanel v-if="kisiselMi(6)">
           <template #header>
             <span class="sekme-baslik"><i :class="bolumler[6].ikon" /> {{ bolumler[6].label }}</span>
           </template>
@@ -669,7 +684,7 @@
           </div>
         </TabPanel>
 
-        <TabPanel>
+        <TabPanel v-if="kisiselMi(7)">
           <template #header>
             <span class="sekme-baslik"><i :class="bolumler[7].ikon" /> {{ bolumler[7].label }}</span>
           </template>
@@ -726,11 +741,12 @@
     </div>
 
     <FaturaTasarimModal v-model:visible="faturaTasarimModalAcik" />
+    <PasswordChangeModal v-model:visible="sifreModalAcik" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
@@ -743,8 +759,10 @@ import { useLocale } from '../composables/useLocale.js'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import FisYazdirmaAyarlari from '../components/FisYazdirmaAyarlari.vue'
 import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
+import PasswordChangeModal from '../components/PasswordChangeModal.vue'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
+import SelectButton from 'primevue/selectbutton'
 import { formatTarihKisa as formatTarih, formatTarihSaat } from '../utils/format.js'
 
 const { t } = useI18n()
@@ -761,6 +779,19 @@ const bolumler = computed(() => [
   { key: 'marka', label: t('hesapAyarlari.marka'), ikon: 'pi pi-image' }
 ])
 const faturaTasarimModalAcik = ref(false)
+
+// Sekme gruplama: kisisel (0-3) / sistem (4-7). Duz 8 sekmeli serit yerine
+// "Kisisel" ve "Sistem" secimi ile sayfa daha az dagilmis gorunur.
+const bolumGrubu = ref('kisisel')
+const bolumGruplari = computed(() => [
+  { deger: 'kisisel', ad: t('hesapAyarlari.grupKisisel') },
+  { deger: 'sistem', ad: t('hesapAyarlari.grupSistem') }
+])
+const kisiselMi = (i) => (bolumGrubu.value === 'kisisel') === (i <= 3)
+watch(bolumGrubu, () => { aktifBolum.value = 0 })
+
+// Sifre degistirme tek kaynaktan (PasswordChangeModal) yapilir.
+const sifreModalAcik = ref(false)
 
 // ---- Kurumsal marka (logo) ----
 const { sirketLogosu, logoIcon, yukle: markaYukle, ayarla: markaAyarla } = useMarka()
@@ -850,7 +881,25 @@ const kullanici = computed(() => authStore?.kullanici)
 const kaydediliyor = ref(false)
 
 const profilForm = ref({ displayName: '', companyName: '', avatarUrl: '' })
-const sifreForm = ref({ mevcutSifre: '', yeniSifre: '', yeniSifreTekrar: '' })
+
+// Avatar yukleme: URL elle girisi yerine dosya yukleme (onizlemeli).
+const avatarInput = ref(null)
+const avatarYukleniyor = ref(false)
+const avatarSec = async (e) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+  avatarYukleniyor.value = true
+  try {
+    const r = await uploadAPI.foto(file)
+    const url = r.data?.url || ''
+    if (url) profilForm.value.avatarUrl = url
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('hesapAyarlari.avatarYuklenemedi'))
+  } finally {
+    avatarYukleniyor.value = false
+    if (avatarInput.value) avatarInput.value.value = ''
+  }
+}
 
 const twoFactorDurum = ref('KAPALI') // ACIK / KAPALI / KURULUM
 const kurulumData = ref(null)
@@ -1076,7 +1125,9 @@ const bildirimTipleri = ref([
   { label: t('hesapAyarlari.bildirimVade'), value: 'VADE', secili: true },
   { label: t('hesapAyarlari.bildirimTahsilat'), value: 'TAKSILAT', secili: true },
   { label: t('hesapAyarlari.bildirimOdeme'), value: 'ODEME', secili: true },
-  { label: t('hesapAyarlari.bildirimMasraf'), value: 'MASRAF_TALEBI', secili: true }
+  { label: t('hesapAyarlari.bildirimMasraf'), value: 'MASRAF_TALEBI', secili: true },
+  // Bildirim zili ile ayni liste (AJANDA dahil) — iki yerde ayrismasin.
+  { label: t('hesapAyarlari.bildirimAjanda'), value: 'AJANDA', secili: true }
 ])
 const tercihKaydediliyor = ref(false)
 
@@ -1113,26 +1164,6 @@ const profilKaydet = async () => {
     toastBildirim.basarili(t('hesapAyarlari.profilGuncellendi'))
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('hesapAyarlari.profilGuncellenemedi'))
-  }
-  kaydediliyor.value = false
-}
-
-const sifreKaydet = async () => {
-  if (!sifreForm.value.mevcutSifre || !sifreForm.value.yeniSifre) {
-    toastBildirim.uyari(t('hesapAyarlari.tumAlanlarDoldurun'))
-    return
-  }
-  if (sifreForm.value.yeniSifre !== sifreForm.value.yeniSifreTekrar) {
-    toastBildirim.hata(t('hesapAyarlari.sifrelerEslesmiyor'))
-    return
-  }
-  kaydediliyor.value = true
-  try {
-    await kullaniciAPI.sifreDegistir({ mevcutSifre: sifreForm.value.mevcutSifre, yeniSifre: sifreForm.value.yeniSifre })
-    toastBildirim.basarili(t('hesapAyarlari.sifreGuncellendi'))
-    sifreForm.value = { mevcutSifre: '', yeniSifre: '', yeniSifreTekrar: '' }
-  } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || t('hesapAyarlari.sifreDegistirilemedi'))
   }
   kaydediliyor.value = false
 }
@@ -1532,6 +1563,30 @@ const kopyala = async (text) => {
 }
 .gizli-input {
   display: none;
+}
+.bolum-grup-secici {
+  margin-bottom: 1rem;
+}
+.avatar-satir {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.avatar-onizleme,
+.avatar-bos {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.avatar-bos {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-soft-strong);
+  color: var(--accent);
+  font-size: 20px;
 }
 </style>
 

@@ -133,21 +133,14 @@
         />
         <Column
           :header="t('common.actions')"
-          style="width: 140px"
+          style="width: 80px"
         >
           <template #body="slotProps">
-            <Button
-              icon="pi pi-pencil"
-              class="p-button-rounded p-button-info p-button-sm"
-              :title="t('common.edit')"
-              style="margin-right: 6px"
-              @click="openEditDialog(slotProps.data)"
-            />
-            <Button
-              icon="pi pi-trash"
-              class="p-button-rounded p-button-danger p-button-sm"
-              :title="t('common.delete')"
-              @click="confirmDelete(slotProps.data.id)"
+            <!-- Uygulama geneli desen: tek "..." menusu. Once 3 satir ici ikon
+                 (pencil/ban/trash) 140px'e sikisiyor ve aria-label'siz kaliyordu. -->
+            <SatirEylemleri
+              :gorunur="{ duzenle: false, cogalt: false, sil: false }"
+              :items="hareketEylemleri(slotProps.data)"
             />
           </template>
         </Column>
@@ -310,6 +303,7 @@ import { useCariOnerileri } from '../composables/useCariOnerileri.js'
 import { useHareketStore } from '../stores/hareketStore.js'
 import { hareketAPI, faturaAPI, excelAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
+import SatirEylemleri from '../components/SatirEylemleri.vue'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import { formatCurrency, getLocalDateString } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
@@ -450,6 +444,13 @@ const openDialog = () => {
   faturaSecenekleri.value = []
   showDialog.value = true
 }
+
+// Satir "..." menusu icin aksiyonlar. Uygulama geneli desene uyum saglar.
+const hareketEylemleri = (h) => [
+  { etiket: t('common.edit'), ikon: 'pi pi-pencil', islem: () => openEditDialog(h) },
+  { etiket: t('hareketler.iptal'), ikon: 'pi pi-ban', islem: () => iptalEt(h.id) },
+  { etiket: t('common.delete'), ikon: 'pi pi-trash', sinif: 'eylem-sil', islem: () => confirmDelete(h.id) }
+]
 
 const openEditDialog = (hareket) => {
   editingId.value = hareket.id
@@ -601,6 +602,26 @@ const topluSil = () => {
   })
 }
 
+
+// Faz 2.6: hareketi silmeden iptal et (soft iptal; bakiye etkisi geri alınır).
+const iptalEt = (id) => {
+  confirm.require({
+    message: t('hareketler.iptalOnay'),
+    header: t('hareketler.iptal'),
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('hareketler.iptal'), severity: 'warning', size: 'small' },
+    accept: async () => {
+      try {
+        await hareketAPI.iptal(id)
+        toastBildirim.basarili(t('hareketler.iptalEdildi'))
+        await loadData()
+      } catch (e) {
+        toastBildirim.hata(e?.response?.data?.message || t('common.error'))
+      }
+    }
+  })
+}
 
 import { formatTarih as formatDate } from '../utils/format.js'
 </script>
