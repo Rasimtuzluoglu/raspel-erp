@@ -73,9 +73,9 @@ raspel-erp/
 │   │   └── modules/          # Domain-based API modules
 │   │       ├── finans.js, ticaret.js, stok.js, ik.js, sistem.js, rapor.js, dosya.js
 │   ├── stores/               # 13 Pinia stores (auth, banka, cari, fatura, stok, etc.)
-│   ├── views/                # 76 views (lazy-loaded)
-│   ├── components/            # 73 shared components
-│   ├── composables/           # 21 composables
+│   ├── views/                # 75 views (lazy-loaded)
+│   ├── components/            # 81 shared components
+│   ├── composables/           # 27 composables
 │   ├── router/               # Vue Router with auth guards
 │   ├── locales/              # i18n (tr.json, en.json)
 │   └── assets/

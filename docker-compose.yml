@@ -315,7 +315,10 @@ services:
       APP_BACKUP_DB_NAME: raspelerp
       APP_BACKUP_DIR: /app/backups
       APP_BACKUP_RETENTION_DAYS: 30
-      APP_BACKUP_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      # pg_dump, uygulamanin kullandigi DB rolüyle baglanir (DB_USERNAME).
+      # Buraya POSTGRES_PASSWORD (superuser) verilirse kimlik dogrulama
+      # basarisiz olur ve HER yedek bos (0 bayt) dosya olarak birikir.
+      APP_BACKUP_DB_PASSWORD: ${APP_DB_PASSWORD:-}
       # Yedekleme saatleri birbirinden AYRILDIR: dort yedek de ayni dakikada
       # (03:00) tetiklenince disk/CPO doyuyor ve isler birbirini bekliyordu.
       APP_BACKUP_AUTO_CRON: ${APP_BACKUP_AUTO_CRON:-0 0 3 * * ?}
