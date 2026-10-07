@@ -69,11 +69,22 @@ public class HareketController {
 
     @GetMapping("/export/csv")
     @Operation(summary = "Hareketleri CSV dışa aktar", description = "Hareketleri CSV dosyası olarak dışa aktarır")
-    public ResponseEntity<byte[]> hareketlerCsv(HttpServletRequest request) {
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FINANS_EXPORT')")
+    public ResponseEntity<byte[]> hareketlerCsv(
+            @RequestParam(required = false) Long cariHesapId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis,
+            HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        log.info("GET /api/hareketler/export/csv - CSV dışa aktarım, sirketId: {}", sirketId);
-        List<HareketDTO> liste = hareketService.tumHareketleriGetir(sirketId,
-                org.springframework.data.domain.PageRequest.of(0, MAX_CSV_ROWS)).getContent();
+        log.info("GET /api/hareketler/export/csv - CSV dışa aktarım, sirketId: {}, cariId: {}, tarih: {}-{}",
+                sirketId, cariHesapId, baslangic, bitis);
+        // Faz 1.7: dışa aktarım artık liste ekranıyla aynı filtreleri uygular.
+        org.springframework.data.domain.Pageable sayfa =
+                org.springframework.data.domain.PageRequest.of(0, MAX_CSV_ROWS,
+                        Sort.by(Sort.Direction.DESC, "hareketTarihi"));
+        List<HareketDTO> liste = (cariHesapId != null || baslangic != null || bitis != null)
+                ? hareketService.hareketleriFiltrele(cariHesapId, baslangic, bitis, sayfa, sirketId).getContent()
+                : hareketService.tumHareketleriGetir(sirketId, sayfa).getContent();
 
         StringBuilder csv = new StringBuilder();
         csv.append("ID,Cari Hesap,Tür,Tutar,Tarih,Açıklama\n");
@@ -93,6 +104,18 @@ public class HareketController {
         return ResponseEntity.ok().headers(headers).body(bytes);
     }
 
+
+    record AcilisIstek(Long cariHesapId, java.math.BigDecimal tutar, LocalDate tarih, String aciklama) {}
+
+    @PostMapping("/acilis")
+    @Operation(summary = "Açılış fişi / devir kaydı",
+            description = "Cari için açılış/devir hareketi oluşturur. tutar > 0: cari bize borçlu; tutar < 0: biz cariye borçluyuz")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
+    public ResponseEntity<HareketDTO> acilis(@RequestBody AcilisIstek istek, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                hareketService.acilisKaydet(istek.cariHesapId(), istek.tutar(), istek.tarih(), istek.aciklama(), sirketId));
+    }
 
     @GetMapping
     @Operation(summary = "Tüm hareketleri getir/filtrele", description = "Tüm hareketleri getirir veya filtreleme yapar")
@@ -139,5 +162,14 @@ public class HareketController {
         log.info("DELETE /api/hareketler/{} - Hareket siliniliyor", id);
         hareketService.hareketSil(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/iptal")
+    @Operation(summary = "Hareket iptal (soft)",
+            description = "Hareketi silmeden iptal eder; bakiye/fatura/kasa-banka etkileri geri alınır, kayıt denetim için saklanır")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
+    public ResponseEntity<HareketDTO> hareketIptal(@PathVariable Long id) {
+        log.info("POST /api/hareketler/{}/iptal - Hareket iptal ediliyor", id);
+        return ResponseEntity.ok(hareketService.hareketIptal(id));
     }
 }

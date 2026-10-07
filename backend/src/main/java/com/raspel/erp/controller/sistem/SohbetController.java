@@ -23,6 +23,20 @@ import java.util.List;
 public class SohbetController {
 
     private final SohbetService sohbetService;
+    private final com.raspel.erp.service.sistem.AiService aiService;
+
+    @GetMapping("/ai-dashboard-ozet")
+    @Operation(summary = "Dashboard AI özeti",
+            description = "Şirketin güncel verilerinden yapay zeka ile kısa bir yönetici özeti üretir (AI yapılandırılmış olmalıdır)")
+    public ResponseEntity<java.util.Map<String, String>> aiDashboardOzet(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        String baglam = sohbetService.veriBaglami(sirketId);
+        String ozet = aiService.sorgula(sirketId,
+                "Sen bir ERP yönetici asistanısın. Verilen şirket verilerine dayanarak EN FAZLA 3 cümlelik, "
+                        + "Türkçe, net ve aksiyon önerisi içeren bir yönetici özeti yaz. Uydurma veri ekleme.",
+                baglam);
+        return ResponseEntity.ok(java.util.Map.of("ozet", ozet));
+    }
 
     @GetMapping
     @Operation(summary = "Son sohbet mesajlarını getir", description = "Şirketin son 50 sohbet mesajını getirir")

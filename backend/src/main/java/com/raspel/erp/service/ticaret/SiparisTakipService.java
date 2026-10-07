@@ -12,7 +12,6 @@ import com.raspel.erp.repository.ticaret.SiparisRepository;
 import com.raspel.erp.repository.ticaret.TeslimatRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,8 +34,24 @@ public class SiparisTakipService {
     private final CariHesapRepository cariHesapRepository;
 
     @Transactional(readOnly = true)
-    public List<SiparisTakipDTO> zincir(Long sirketId) {
-        List<Siparis> siparisler = siparisRepository.findBySirketIdOrderByTarihDesc(sirketId, PageRequest.of(0, 200)).getContent();
+    public org.springframework.data.domain.Page<SiparisTakipDTO> filtreliZincir(
+            Long sirketId, String q, String durum, String sofor,
+            org.springframework.data.domain.Pageable pageable) {
+        String qq = (q == null || q.isBlank()) ? null : q.trim();
+        String dd = (durum == null || durum.isBlank()) ? null : durum.trim();
+        String ss = (sofor == null || sofor.isBlank()) ? null : sofor.trim();
+        org.springframework.data.domain.Page<Siparis> sayfa =
+                siparisRepository.filtreliGetir(sirketId, qq, dd, ss, pageable);
+        List<SiparisTakipDTO> icerik = zenginlestir(sirketId, sayfa.getContent());
+        return new org.springframework.data.domain.PageImpl<>(icerik, pageable, sayfa.getTotalElements());
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> soforler(Long sirketId) {
+        return siparisRepository.findDistinctDriverAd(sirketId);
+    }
+
+    private List<SiparisTakipDTO> zenginlestir(Long sirketId, List<Siparis> siparisler) {
         if (siparisler.isEmpty()) return List.of();
 
         List<Long> siparisIdler = siparisler.stream().map(Siparis::getId).collect(Collectors.toList());

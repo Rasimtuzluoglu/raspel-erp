@@ -30,4 +30,12 @@ public interface SifreSifirlaTokenRepository extends JpaRepository<SifreSifirlaT
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE SifreSifirlaToken t SET t.kullanildi = true WHERE t.kullaniciId = :kullaniciId AND t.kullanildi = false")
     int kullaniciTokenlariniGecersizKil(@Param("kullaniciId") Long kullaniciId);
+
+    /**
+     * Faz 0.12: Tek-kullanim garantisi icin atomik isaretleme. Iki es zamanli
+     * onay isteginden yalnizca biri 1 alir; digeri 0 alir ve reddedilir.
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE SifreSifirlaToken t SET t.kullanildi = true WHERE t.id = :id AND t.kullanildi = false")
+    int tokenKullanildiIsaretle(@Param("id") Long id);
 }

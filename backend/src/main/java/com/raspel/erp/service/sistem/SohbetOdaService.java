@@ -61,7 +61,8 @@ public class SohbetOdaService {
                 .olusturanKullaniciId(kullaniciId)
                 .build();
         oda = odaRepository.save(oda);
-        uyeRepository.save(SohbetOdaUye.builder().odaId(oda.getId()).kullaniciId(kullaniciId).build());
+        // Faz 3.2: kurucu OWNER rolüyle üye olur.
+        uyeRepository.save(SohbetOdaUye.builder().odaId(oda.getId()).kullaniciId(kullaniciId).rol("OWNER").build());
         return toDTO(oda, kullaniciId, true);
     }
 
@@ -88,15 +89,15 @@ public class SohbetOdaService {
     @Transactional
     public SohbetOdaDTO uyeEkle(Long odaId, Long hedefKullaniciId, Long sirketId, Long istekSahibiId) {
         SohbetOda oda = uyeOdasiBul(odaId, sirketId);
-        boolean uyeMi = uyeRepository.existsByOdaIdAndKullaniciId(odaId, istekSahibiId);
-        if (!uyeMi) {
-            throw new BusinessException("Odaya üye olmadan üye ekleyemezsiniz");
+        // Faz 3.2: üye ekleme yalnızca OWNER/ADMIN (veya global ADMIN).
+        if (!odaYoneticisiMi(oda, odaId, istekSahibiId)) {
+            throw new BusinessException("Üye eklemek için oda yöneticisi olmalısınız");
         }
         if (hedefKullaniciId == null) {
             throw new BusinessException("Eklenecek kullanıcı belirtilmedi");
         }
         if (!uyeRepository.existsByOdaIdAndKullaniciId(odaId, hedefKullaniciId)) {
-            uyeRepository.save(SohbetOdaUye.builder().odaId(odaId).kullaniciId(hedefKullaniciId).build());
+            uyeRepository.save(SohbetOdaUye.builder().odaId(odaId).kullaniciId(hedefKullaniciId).rol("MEMBER").build());
         }
         return toDTO(oda, istekSahibiId, true);
     }
@@ -129,8 +130,23 @@ public class SohbetOdaService {
 
     @Transactional(readOnly = true)
     public List<SohbetMesajDTO> mesajlar(Long odaId, Long sirketId, Long kullaniciId) {
+        return mesajlar(odaId, sirketId, kullaniciId, null, null);
+    }
+
+    /**
+     * Faz 3.3: oda mesajları cursor (id) tabanlı sayfalanır. {@code cursor=null}
+     * ise en yeni {@code limit} mesaj; aksi halde cursor'dan eski mesajlar.
+     * Dönen liste ekranda eskiden yeniye olacak şekilde artan sırada verilir.
+     */
+    @Transactional(readOnly = true)
+    public List<SohbetMesajDTO> mesajlar(Long odaId, Long sirketId, Long kullaniciId,
+                                         Long cursor, Integer limit) {
         uyeKontrol(odaId, sirketId, kullaniciId);
-        List<SohbetMesaj> mesajlar = mesajRepository.findTop100ByOdaIdOrderByOlusturmaTarihiDesc(odaId);
+        int boyut = (limit == null || limit <= 0) ? 50 : Math.min(limit, 100);
+        org.springframework.data.domain.Pageable sayfa = org.springframework.data.domain.PageRequest.of(0, boyut);
+        List<SohbetMesaj> mesajlar = (cursor == null)
+                ? mesajRepository.findByOdaIdOrderByIdDesc(odaId, sayfa)
+                : mesajRepository.findByOdaIdAndIdLessThanOrderByIdDesc(odaId, cursor, sayfa);
         java.util.Collections.reverse(mesajlar);
         return mesajlar.stream().map(this::mesajDTO).collect(Collectors.toList());
     }
@@ -245,14 +261,28 @@ public class SohbetOdaService {
 
     private SohbetOda yetkiliOdaBul(Long odaId, Long sirketId, Long kullaniciId) {
         SohbetOda oda = odaBul(odaId, sirketId);
-        boolean yonetici = kullaniciRepository.findById(kullaniciId)
-                .map(k -> "ADMIN".equalsIgnoreCase(k.getRole()))
-                .orElse(false);
-        boolean kurucu = oda.getOlusturanKullaniciId() != null && oda.getOlusturanKullaniciId().equals(kullaniciId);
-        if (!yonetici && !kurucu) {
+        if (!odaYoneticisiMi(oda, odaId, kullaniciId)) {
             throw new BusinessException("Bu odayı yönetme yetkiniz yok");
         }
         return oda;
+    }
+
+    /**
+     * Faz 3.2: kullanıcı global ADMIN, oda kurucusu veya oda içi OWNER/ADMIN
+     * üyelik rolüne sahipse odanın yöneticisidir.
+     */
+    private boolean odaYoneticisiMi(SohbetOda oda, Long odaId, Long kullaniciId) {
+        if (kullaniciId == null) return false;
+        boolean globalAdmin = kullaniciRepository.findById(kullaniciId)
+                .map(k -> "ADMIN".equalsIgnoreCase(k.getRole()))
+                .orElse(false);
+        if (globalAdmin) return true;
+        if (oda.getOlusturanKullaniciId() != null && oda.getOlusturanKullaniciId().equals(kullaniciId)) {
+            return true;
+        }
+        return uyeRepository.findByOdaIdAndKullaniciId(odaId, kullaniciId)
+                .map(u -> "OWNER".equalsIgnoreCase(u.getRol()) || "ADMIN".equalsIgnoreCase(u.getRol()))
+                .orElse(false);
     }
 
     private void uyeKontrol(Long odaId, Long sirketId, Long kullaniciId) {
@@ -271,6 +301,7 @@ public class SohbetOdaService {
                 .map(u -> SohbetOdaUyeDTO.builder()
                         .kullaniciId(u.getKullaniciId())
                         .kullaniciAd(kullaniciAdi(u.getKullaniciId()))
+                        .rol(u.getRol())
                         .build())
                 .collect(Collectors.toList());
         long okunmamis = 0;

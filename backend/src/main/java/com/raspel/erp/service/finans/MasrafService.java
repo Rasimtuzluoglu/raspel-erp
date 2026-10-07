@@ -102,12 +102,29 @@ public class MasrafService {
         Masraf masraf = masrafRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Masraf", id));
         tenantChecker.check(masraf.getSirketId(), "Masraf");
+        // Faz 0.9: tutar/ödeme değişikliklerinde kasa/banka bakiyesi tutarlı
+        // kalsın diye önce ESKİ ödeme tersine çevrilir, sonra yeni ödeme işlenir.
+        if (dto.getTutar() != null && dto.getTutar().signum() <= 0) {
+            throw new BusinessException("Masraf tutarı sıfırdan büyük olmalıdır");
+        }
+        if (dto.getKasaId() != null && dto.getBankaId() != null) {
+            throw new BusinessException("Ödeme hem kasadan hem bankadan yapılamaz; tek hesap seçin");
+        }
+
+        // Eski ödeme (varsa) geri alınır; kasa/banka eski tutar kadar iade edilir.
+        odemeTersineCevir(masraf);
+
         if (dto.getTarih() != null) masraf.setTarih(dto.getTarih());
         if (dto.getTutar() != null) masraf.setTutar(dto.getTutar());
         if (dto.getAciklama() != null) masraf.setAciklama(dto.getAciklama());
         if (dto.getKategori() != null) masraf.setKategori(dto.getKategori());
         if (dto.getCariHesapId() != null) masraf.setCariHesapId(dto.getCariHesapId());
         if (dto.getBelgeNo() != null) masraf.setBelgeNo(dto.getBelgeNo());
+        if (dto.getOdemeYontemi() != null) masraf.setOdemeYontemi(dto.getOdemeYontemi());
+        // PUT (tam güncelleme): ödeme hesabı istemciden gelen değerle belirlenir
+        // (null = ödeme hesabı yok / kaldırılır). Böylece kasa↔banka geçişi doğru işler.
+        masraf.setKasaId(dto.getKasaId());
+        masraf.setBankaId(dto.getBankaId());
         // KDV yeniden ayrıştırılır (tutar KDV dahil).
         BigDecimal kdvOrani = dto.getKdvOrani() != null ? dto.getKdvOrani() : masraf.getKdvOrani();
         if (kdvOrani == null) kdvOrani = BigDecimal.ZERO;
@@ -116,6 +133,8 @@ public class MasrafService {
         masraf.setMatrah(satir.net());
         masraf.setKdvTutar(satir.kdv());
         Masraf kaydedilen = masrafRepository.save(masraf);
+        // Yeni ödeme işlenir (güncel tutar/hesap ile).
+        odemeIsle(kaydedilen);
         // Tutar/KDV değişmiş olabilir: eski fiş iptal edilip yenisi üretilir.
         otomatikMuhasebeService.kaynakFisIptal(kaydedilen.getSirketId(),
                 com.raspel.erp.service.muhasebe.OtomatikMuhasebeService.KAYNAK_MASRAF, kaydedilen.getId());

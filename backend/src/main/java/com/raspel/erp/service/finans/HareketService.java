@@ -34,7 +34,10 @@ import com.raspel.erp.service.sistem.BildirimService;
 @RequiredArgsConstructor
 @Slf4j
 public class HareketService {
-    
+
+    /** Sayfalamasız cari hareket listesi için üst sınır (Faz 1.5). */
+    private static final int MAX_CARI_HAREKET = 1000;
+
     private final HareketRepository hareketRepository;
     private final CariHesapRepository cariHesapRepository;
     private final CariHesapService cariHesapService;
@@ -93,8 +96,10 @@ public class HareketService {
         CariHesap cari = cariHesapRepository.findById(cariHesapId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", cariHesapId));
         tenantChecker.check(cari.getSirketId(), "Cari Hesap");
-        
-        return hareketRepository.findByCariHesapIdOrderByHareketTarihiDesc(cariHesapId)
+        // Faz 1.5: sayfalama verilmediğinde de üst sınır uygulanır (bellek koruması).
+        return hareketRepository.findByCariHesapId(cariHesapId,
+                        PageRequest.of(0, MAX_CARI_HAREKET))
+                .getContent()
                 .stream()
                 .map(this::entityDTOyeCevir)
                 .collect(Collectors.toList());
@@ -377,6 +382,46 @@ public class HareketService {
     }
 
     /**
+     * Faz 2.6: Hareketi soft-iptal eder. Sert silmenin aksine kayıt denetim için
+     * saklanır (iptal=true); bakiye/fatura/kasa-banka etkileri sert silmedeki gibi
+     * geri alınır. İptal kayıtlar @SQLRestriction ile sorgularda görünmez.
+     */
+    @Transactional
+    public HareketDTO hareketIptal(Long id) {
+        Hareket hareket = hareketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Hareket", id));
+        tenantChecker.check(hareket.getSirketId(), "Hareket");
+        donemService.kilitKontrol(hareket.getSirketId(), hareket.getHareketTarihi(), "hareket iptal");
+        if (Boolean.TRUE.equals(hareket.getIptal())) {
+            throw new BusinessException("Bu hareket zaten iptal edilmiş");
+        }
+
+        // Bakiye ters işlemi (tahsilat iptalinde bakiye azalır, ödeme/borç iptalinde artar).
+        BigDecimal bakiyeGuncellemeTutari = hareket.getTur() == Hareket.HareketTuru.TAHSILAT
+                ? hareket.getTutar().negate()
+                : hareket.getTutar();
+        cariHesapService.bakiyeGuncelle(hareket.getCariHesap().getId(), bakiyeGuncellemeTutari);
+
+        if (hareket.getFaturaId() != null) {
+            faturaOdemeUygula(hareket.getFaturaId(), hareket.getTutar().negate(),
+                    "Hareket #" + hareket.getId() + " iptal edildi");
+        }
+        int tersKasaBanka = kasaBankaTersKaydet(hareket);
+
+        hareket.setIptal(true);
+        hareket.setIptalTarihi(java.time.LocalDateTime.now());
+        Hareket kaydedilen = hareketRepository.save(hareket);
+
+        auditLogService.finansalSilmeLog("Hareket", id,
+                "Hareket iptal edildi: " + hareket.getTur() + " " + hareket.getTutar() + " TL - Cari: "
+                        + hareket.getCariHesap().getAd() + " (bakiye terslendi)"
+                        + (hareket.getFaturaId() != null ? " - Fatura: " + hareket.getFaturaId() : "")
+                        + (tersKasaBanka > 0 ? " - Bağlı kasa/banka hareketi ters kaydedildi (" + tersKasaBanka + ")" : ""));
+        log.info("Hareket iptal edildi - ID: {}", id);
+        return entityDTOyeCevir(kaydedilen);
+    }
+
+    /**
      * Cari harekete bağlı kasa/banka hareketlerini siler ve bakiyeleri düzeltir.
      * Bağlantı: kaynakTip='TAHSILAT', kaynakId=<cari hareket id>.
      */
@@ -430,8 +475,37 @@ public class HareketService {
                 .komisyonTutar(hareket.getKomisyonTutar())
                 .valorTarihi(hareket.getValorTarihi())
                 .faturaId(hareket.getFaturaId())
+                .acilis(hareket.getAcilis())
                 .olusturmaTarihi(hareket.getOlusturmaTarihi())
                 .build();
+    }
+
+    /**
+     * Faz 2.8: Açılış fişi/devir kaydı oluşturur. İşaret kuralı: {@code tutar > 0}
+     * ise cari bize borçludur (BORC hareketi, bakiye negatife çekilir);
+     * {@code tutar < 0} ise biz cariye borçluyuz (TAHSILAT hareketi, bakiye pozitif).
+     */
+    @Transactional
+    public HareketDTO acilisKaydet(Long cariHesapId, BigDecimal tutar, LocalDate tarih,
+                                   String aciklama, Long sirketId) {
+        if (tutar == null || tutar.signum() == 0) {
+            throw new BusinessException("Açılış/devir tutarı sıfır olamaz");
+        }
+        String tur = tutar.signum() > 0 ? "BORC" : "TAHSILAT";
+        HareketDTO dto = HareketDTO.builder()
+                .cariHesapId(cariHesapId)
+                .tur(tur)
+                .tutar(tutar.abs())
+                .hareketTarihi(tarih != null ? tarih : LocalDate.now())
+                .aciklama(aciklama != null && !aciklama.isBlank() ? aciklama : "Açılış fişi (devir)")
+                .build();
+        HareketDTO kaydedilen = hareketOlustur(dto, sirketId);
+        hareketRepository.findById(kaydedilen.getId()).ifPresent(h -> {
+            h.setAcilis(true);
+            hareketRepository.save(h);
+        });
+        kaydedilen.setAcilis(true);
+        return kaydedilen;
     }
 
     /** Ödeme yöntemini doğrular; geçersizse null döner. */

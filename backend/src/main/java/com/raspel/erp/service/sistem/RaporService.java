@@ -106,7 +106,8 @@ public class RaporService {
         satirlar.sort(java.util.Comparator.comparing(RaporDTO.CariEkstreSatiriDTO::getTarih,
                 java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())));
 
-        // Bakiye semantigi: pozitif = cari bize borclu. borc sutunu bakiyeyi artirir.
+        // Bakiye semantigi (kod genelinde tutarli): negatif = cari bize borclu.
+        // Borc sutunu bakiyeyi AZALTIR (cari borclanir), alacak sutunu artirir.
         BigDecimal donemSonu = cari.getBakiye() != null ? cari.getBakiye() : BigDecimal.ZERO;
         BigDecimal toplamBorc = BigDecimal.ZERO;
         BigDecimal toplamAlacak = BigDecimal.ZERO;
@@ -139,7 +140,7 @@ public class RaporService {
                 .hareketler(satirlar).build();
     }
 
-    /** Tur'e gore borc/alacak sutunlarini doldurur (borc bakiyeyi artirir). */
+    /** Tur'e gore borc/alacak sutunlarini doldurur (borc bakiyeyi AZALTIR). */
     private void borcAlacakUygula(RaporDTO.CariEkstreSatiriDTO s, BigDecimal tutar) {
         BigDecimal t = tutar != null ? tutar : BigDecimal.ZERO;
         String tur = s.getTur() != null ? s.getTur() : "";

@@ -44,6 +44,9 @@ class CariHesapControllerTest {
     @MockBean
     private com.raspel.erp.service.finans.CariKartService cariKartService;
 
+    @MockBean
+    private com.raspel.erp.service.finans.CariAdresService cariAdresService;
+
     @Test
     void shouldGetKart() throws Exception {
         var kart = com.raspel.erp.dto.finans.CariKartDTO.builder()

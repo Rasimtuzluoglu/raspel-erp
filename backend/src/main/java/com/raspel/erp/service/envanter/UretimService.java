@@ -57,6 +57,15 @@ public class UretimService {
 
     private static final BigDecimal YUZ = BigDecimal.valueOf(100);
 
+    /** Baz miktar 0/negatifse 1 kabul edilir (eski reçeteler bozulmaz). */
+    private static BigDecimal bazMiktarDegeri(BigDecimal v) {
+        return (v == null || v.signum() <= 0) ? BigDecimal.ONE : v;
+    }
+
+    private static BigDecimal receteBaz(Recete r) {
+        return r != null ? bazMiktarDegeri(r.getBazMiktar()) : BigDecimal.ONE;
+    }
+
     // ---------- Reçeteler ----------
 
     @Transactional(readOnly = true)
@@ -82,6 +91,8 @@ public class UretimService {
                 .aktif(dto.getAktif() != null ? dto.getAktif() : true)
                 .revizyon(dto.getRevizyon() != null ? dto.getRevizyon() : 1)
                 .fireOrani(dto.getFireOrani() != null ? dto.getFireOrani() : BigDecimal.ZERO)
+                .bazMiktar(bazMiktarDegeri(dto.getBazMiktar()))
+                .bazBirim(dto.getBazBirim())
                 .notlar(dto.getNotlar())
                 .build());
         kalemleriKaydet(r.getId(), dto.getKalemler());
@@ -98,6 +109,8 @@ public class UretimService {
         r.setAciklama(dto.getAciklama());
         if (dto.getAktif() != null) r.setAktif(dto.getAktif());
         if (dto.getFireOrani() != null) r.setFireOrani(dto.getFireOrani());
+        if (dto.getBazMiktar() != null) r.setBazMiktar(bazMiktarDegeri(dto.getBazMiktar()));
+        r.setBazBirim(dto.getBazBirim());
         r.setNotlar(dto.getNotlar());
         r.setRevizyon((r.getRevizyon() != null ? r.getRevizyon() : 1) + 1);
         receteRepository.save(r);
@@ -236,13 +249,15 @@ public class UretimService {
             throw new BusinessException("Fire miktarı negatif olamaz");
         }
 
-        Recete recete = receteRepository.findFirstBySirketIdAndUrunId(sirketId, e.getUrunId())
+        Recete recete = receteRepository.findFirstBySirketIdAndUrunIdAndAktifTrueOrderByRevizyonDesc(sirketId, e.getUrunId())
                 .orElseThrow(() -> new BusinessException("Bu ürün için tanımlı reçete bulunamadı"));
         List<ReceteKalem> kalemler = receteKalemRepository.findByReceteId(recete.getId());
         Long depoId = depoStokService.coz(e.getDepoId(), e.getSirketId());
 
         BigDecimal receteFire = recete.getFireOrani() != null ? recete.getFireOrani() : BigDecimal.ZERO;
-        BigDecimal toplamTuketim = uretilen.add(fire).multiply(BigDecimal.ONE.add(receteFire.divide(YUZ, 6, RoundingMode.HALF_UP)));
+        // Ölçekleme: baz miktar (varsayılan 1) üzerinden N birim çıktı.
+        BigDecimal uretimAdedi = uretilen.add(fire).divide(receteBaz(recete), 8, RoundingMode.HALF_UP);
+        BigDecimal toplamTuketim = uretimAdedi.multiply(BigDecimal.ONE.add(receteFire.divide(YUZ, 6, RoundingMode.HALF_UP)));
 
         BigDecimal hammaddeMaliyet = BigDecimal.ZERO;
         for (ReceteKalem k : kalemler) {
@@ -352,11 +367,13 @@ public class UretimService {
         if (urunId == null || miktar == null || miktar.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException("Ürün ve miktar zorunludur");
         }
-        Recete recete = receteRepository.findFirstBySirketIdAndUrunId(sirketId, urunId)
+        Recete recete = receteRepository.findFirstBySirketIdAndUrunIdAndAktifTrueOrderByRevizyonDesc(sirketId, urunId)
                 .orElseThrow(() -> new BusinessException("Bu ürün için tanımlı reçete bulunamadı"));
         List<ReceteKalem> kalemler = receteKalemRepository.findByReceteId(recete.getId());
         BigDecimal receteFire = recete.getFireOrani() != null ? recete.getFireOrani() : BigDecimal.ZERO;
-        BigDecimal toplamMiktar = miktar.multiply(BigDecimal.ONE.add(receteFire.divide(YUZ, 6, RoundingMode.HALF_UP)));
+        // Ölçekleme: baz miktar (varsayılan 1) üzerinden istenen miktar.
+        BigDecimal katsayi = miktar.divide(receteBaz(recete), 8, RoundingMode.HALF_UP);
+        BigDecimal toplamMiktar = katsayi.multiply(BigDecimal.ONE.add(receteFire.divide(YUZ, 6, RoundingMode.HALF_UP)));
 
         boolean yeterli = true;
         BigDecimal toplamMaliyet = BigDecimal.ZERO;
@@ -538,7 +555,10 @@ public class UretimService {
                 .urunId(r.getUrunId()).urunAd(stokAd(r.getUrunId()))
                 .aciklama(r.getAciklama())
                 .aktif(r.getAktif()).revizyon(r.getRevizyon())
-                .fireOrani(r.getFireOrani()).notlar(r.getNotlar())
+                .fireOrani(r.getFireOrani())
+                .bazMiktar(r.getBazMiktar() != null ? r.getBazMiktar() : BigDecimal.ONE)
+                .bazBirim(r.getBazBirim())
+                .notlar(r.getNotlar())
                 .kalemler(kalemler)
                 .build();
     }

@@ -75,7 +75,10 @@ public class CariKartService {
         List<CariFirsat> firsatlar = cariFirsatRepository
                 .findBySirketIdAndCariHesapIdOrderByOlusturmaTarihiDesc(sirketId, cariId);
         List<CariFiyat> fiyatlar = cariFiyatRepository.findByCariHesapIdOrderByStokId(cariId);
-        List<Hareket> hareketler = hareketRepository.findByCariHesapIdOrderByHareketTarihiDesc(cariId);
+        // Faz 1.3: mümkünse tenant filtreli sorgu (defense-in-depth).
+        List<Hareket> hareketler = sirketId != null
+                ? hareketRepository.findBySirketIdAndCariHesapIdOrderByHareketTarihiDesc(sirketId, cariId)
+                : hareketRepository.findByCariHesapIdOrderByHareketTarihiDesc(cariId);
         List<Taksit> taksitler = taksitRepository.findBySirketIdAndCariHesapIdOrderByVadeTarihiAsc(sirketId, cariId);
 
         Map<Long, Stok> stokMap = stokMapHazirla(fiyatlar);

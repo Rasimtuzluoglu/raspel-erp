@@ -9,12 +9,15 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPOutputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.mock;
 
 class BackupServiceTest {
@@ -199,5 +202,57 @@ class BackupServiceTest {
         assertThrows(RuntimeException.class, () -> backupService.manualBackup("DAILY"));
 
         assertEquals(1.0, registry.counter("raspel.yedek.islem", "tur", "DAILY", "sonuc", "hata").count());
+    }
+
+    @Test
+    void manualBackup_hataDurumundaYarimDosyaBirakmaz() throws Exception {
+        // Yarim dosyayi gzip yaratir; gzip yoksa (or. Windows) bu regresyon
+        // testi anlamsiz olur, bu yuzden sartli calistirilir.
+        assumeTrue(komutCalisiyor("gzip"), "gzip bulunamadi, test atlandi");
+        ReflectionTestUtils.setField(backupService, "dbHost", "127.0.0.1");
+        ReflectionTestUtils.setField(backupService, "dbPort", "1");
+
+        assertThrows(RuntimeException.class, () -> backupService.manualBackup("DAILY"));
+
+        List<String> kalan;
+        try (var akis = Files.list(tempDir)) {
+            kalan = akis.map(p -> p.getFileName().toString()).toList();
+        }
+        assertTrue(kalan.isEmpty(), "Basarisiz yedekten 0 baytlik sahte dosya kalmamali: " + kalan);
+    }
+
+    private static boolean komutCalisiyor(String komut) {
+        try {
+            Process p = new ProcessBuilder(komut, "--version").redirectErrorStream(true).start();
+            return p.waitFor() == 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Test
+    void aciklanabilirBoyut_bosGzipSifirDoner() throws Exception {
+        Path gz = tempDir.resolve("bos.sql.gz");
+        try (var out = new GZIPOutputStream(Files.newOutputStream(gz))) {
+            out.flush();
+        }
+
+        long acik = ReflectionTestUtils.invokeMethod(backupService, "aciklanabilirBoyut", gz);
+
+        assertEquals(0L, acik);
+    }
+
+    @Test
+    void aciklanabilirBoyut_doluGzipAcilmisBoyutuDoner() throws Exception {
+        String sql = "CREATE TABLE test (id int);\n";
+        Path gz = tempDir.resolve("dolu.sql.gz");
+        try (var out = new GZIPOutputStream(Files.newOutputStream(gz))) {
+            out.write(sql.getBytes(StandardCharsets.UTF_8));
+        }
+
+        long acik = ReflectionTestUtils.invokeMethod(backupService, "aciklanabilirBoyut", gz);
+
+        assertEquals(sql.getBytes(StandardCharsets.UTF_8).length, acik);
+        assertTrue(acik < Files.size(gz) + 64, "Gzip basligi eklenmis olmali");
     }
 }

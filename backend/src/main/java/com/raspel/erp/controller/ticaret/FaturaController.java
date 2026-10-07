@@ -322,6 +322,7 @@ public class FaturaController {
 
     @GetMapping("/export/csv")
     @Operation(summary = "Faturaları CSV dışa aktar", description = "Faturaları CSV dosyası olarak dışa aktarır")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FATURA_EXPORT')")
     public ResponseEntity<byte[]> exportCsv(HttpServletRequest request) {
         List<FaturaDTO> liste = faturaService.tumFaturalariGetir((Long) request.getAttribute("sirketId"), PageRequest.of(0, 10000)).getContent();
         StringBuilder csv = new StringBuilder("Fatura No,Tarih,Müşteri,Tutar,Durum\n");

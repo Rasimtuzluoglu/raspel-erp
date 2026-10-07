@@ -480,13 +480,19 @@ public class KullaniciService {
                 || token.getSonKullanma().isBefore(java.time.LocalDateTime.now())) {
             throw new BusinessException("Sıfırlama bağlantısının süresi dolmuş veya kullanılmış");
         }
-        Kullanici k = kullaniciRepository.findById(token.getKullaniciId())
-                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", token.getKullaniciId()));
+        // Faz 0.12: tek-kullanim garantisi atomik isaretleme ile saglanir. Ayni
+        // token'la iki es zamanli istek gelirse yalnizca biri 1 satir gunceller.
+        int isaretlendi = sifreSifirlaTokenRepository.tokenKullanildiIsaretle(token.getId());
+        if (isaretlendi == 0) {
+            throw new BusinessException("Sıfırlama bağlantısı zaten kullanılmış");
+        }
+        Long kullaniciId = token.getKullaniciId();
+        token.setKullanildi(true);
+        Kullanici k = kullaniciRepository.findById(kullaniciId)
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", kullaniciId));
         k.setPassword(passwordEncoder.encode(yeniSifre));
         k.setTokenVersion((k.getTokenVersion() != null ? k.getTokenVersion() : 0L) + 1);
         kullaniciRepository.save(k);
-        token.setKullanildi(true);
-        sifreSifirlaTokenRepository.save(token);
         log.info("Şifre sıfırlama tamamlandı: {}", k.getUsername());
     }
 
@@ -655,14 +661,15 @@ public class KullaniciService {
      * @return true ise bu kod daha önce kullanılmıştır (replay)
      */
     private boolean replayKontrolu(Kullanici k, long counter) {
-        Long son = k.getTwoFactorLastCounter();
-        if (son != null && counter <= son) {
-            log.warn("TOTP replay denemesi - kullanıcı: {}, counter: {} (son: {})",
-                    k.getUsername(), counter, son);
+        // Faz 0.11: atomik kosullu guncelleme. Iki es zamanli istekten yalnizca
+        // biri satiri gunceller; digeri 0 satir alir -> replay.
+        int guncellenen = kullaniciRepository.totpCounterGuncelle(k.getId(), counter);
+        if (guncellenen == 0) {
+            log.warn("TOTP replay denemesi - kullanıcı: {}, counter: {}",
+                    k.getUsername(), counter);
             return true;
         }
         k.setTwoFactorLastCounter(counter);
-        kullaniciRepository.save(k);
         return false;
     }
 

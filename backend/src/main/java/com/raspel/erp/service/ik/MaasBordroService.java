@@ -27,10 +27,54 @@ public class MaasBordroService {
     private final com.raspel.erp.repository.finans.KasaRepository kasaRepository;
     private final com.raspel.erp.repository.finans.KasaHareketRepository kasaHareketRepository;
     private final com.raspel.erp.service.sistem.DonemService donemService;
+    private final BordroHesaplamaService bordroHesaplamaService;
 
     @Transactional(readOnly = true)
     public Page<MaasBordroDTO> tumunuGetir(Long sirketId, Pageable pageable) {
-        return maasBordroRepository.findBySirketIdOrderByYilDescAyDesc(sirketId, pageable).map(this::entityToDTO);
+        return tumunuGetir(sirketId, null, null, null, null, null, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<MaasBordroDTO> tumunuGetir(Long sirketId, Integer yil, Integer ay, String durum,
+                                           String odemeDurumu, String q, Pageable pageable) {
+        String qq = (q == null || q.isBlank()) ? null : q.trim();
+        String dd = (durum == null || durum.isBlank()) ? null : durum.trim();
+        String oo = (odemeDurumu == null || odemeDurumu.isBlank()) ? null : odemeDurumu.trim();
+        return maasBordroRepository
+                .filtreliGetir(sirketId, yil, ay, dd, oo, qq, pageable)
+                .map(this::entityToDTO);
+    }
+
+    /** Filtreli KPI özeti (toplam brüt/kesinti/net, ödenen net, adet). */
+    @Transactional(readOnly = true)
+    public java.util.Map<String, Object> ozet(Long sirketId, Integer yil, Integer ay, String durum,
+                                               String odemeDurumu, String q) {
+        String qq = (q == null || q.isBlank()) ? null : q.trim();
+        String dd = (durum == null || durum.isBlank()) ? null : durum.trim();
+        String oo = (odemeDurumu == null || odemeDurumu.isBlank()) ? null : odemeDurumu.trim();
+        Object[] r = maasBordroRepository.ozet(sirketId, yil, ay, dd, oo, qq);
+        Object[] satir = (r != null && r.length > 0 && r[0] instanceof Object[]) ? (Object[]) r[0] : r;
+        java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+        m.put("adet", satir != null && satir.length > 4 ? satir[4] : 0);
+        m.put("toplamBrut", satir != null && satir.length > 0 ? satir[0] : BigDecimal.ZERO);
+        m.put("toplamKesinti", satir != null && satir.length > 1 ? satir[1] : BigDecimal.ZERO);
+        m.put("toplamNet", satir != null && satir.length > 2 ? satir[2] : BigDecimal.ZERO);
+        m.put("odenenNet", satir != null && satir.length > 3 ? satir[3] : BigDecimal.ZERO);
+        return m;
+    }
+
+    /** Brüt/yıl/ay/personel için hesaplama motorundan matrah ve işveren maliyeti alır. */
+    private com.raspel.erp.dto.ik.BordroHesaplamaDTO hesaplama(Long personelId, Integer yil, Integer ay,
+                                                               BigDecimal brut, Long sirketId) {
+        try {
+            return bordroHesaplamaService.hesapla(
+                    com.raspel.erp.dto.ik.BordroHesaplamaDTO.builder()
+                            .personelId(personelId).yil(yil).ay(ay).brutMaas(brut).build(),
+                    sirketId);
+        } catch (Exception e) {
+            // Hesaplama (ör. ayar eksik/bozuk) bordro kaydını engellemesin.
+            return null;
+        }
     }
 
     @Transactional(readOnly = true)
@@ -45,14 +89,23 @@ public class MaasBordroService {
         Personel personel = personelRepository.findById(dto.getPersonelId())
                 .orElseThrow(() -> new ResourceNotFoundException("Personel", dto.getPersonelId()));
         tenantChecker.check(personel.getSirketId(), "Personel");
+        // Hesaplama motorundan matrah (ve kesinti verilmediyse toplam kesinti) al.
+        com.raspel.erp.dto.ik.BordroHesaplamaDTO h = hesaplama(
+                personel.getId(), dto.getYil(), dto.getAy(), dto.getBrutMaas(), sirketId);
+        BigDecimal kesinti = dto.getKesintiler();
+        if (kesinti == null && h != null && h.getToplamKesinti() != null) {
+            kesinti = h.getToplamKesinti();
+        }
         MaasBordro bordro = MaasBordro.builder()
                 .personel(personel)
                 .yil(dto.getYil())
                 .ay(dto.getAy())
                 .brutMaas(dto.getBrutMaas())
-                .kesintiler(dto.getKesintiler() != null ? dto.getKesintiler() : BigDecimal.ZERO)
+                .kesintiler(kesinti != null ? kesinti : BigDecimal.ZERO)
                 // Net maaş sunucuda hesaplanır (brüt - kesinti); istemci değeri güvenilmez.
-                .netMaas(netHesapla(dto.getBrutMaas(), dto.getKesintiler()))
+                .netMaas(netHesapla(dto.getBrutMaas(), kesinti))
+                .gelirVergisiMatrahi(h != null && h.getGelirVergisiMatrahi() != null
+                        ? h.getGelirVergisiMatrahi() : BigDecimal.ZERO)
                 .odemeTarihi(dto.getOdemeTarihi())
                 .sirketId(sirketId)
                 .aciklama(dto.getAciklama())
@@ -86,6 +139,15 @@ public class MaasBordroService {
         }
         // Net maaş her zaman brüt - kesinti olarak yeniden hesaplanır.
         bordro.setNetMaas(netHesapla(bordro.getBrutMaas(), bordro.getKesintiler()));
+        // Matrahı (ve dolayısıyla kümülatif vergiyi) güncel brüt/dönem ile yenile.
+        if (bordro.getPersonel() != null) {
+            com.raspel.erp.dto.ik.BordroHesaplamaDTO h = hesaplama(
+                    bordro.getPersonel().getId(), bordro.getYil(), bordro.getAy(),
+                    bordro.getBrutMaas(), bordro.getSirketId());
+            if (h != null && h.getGelirVergisiMatrahi() != null) {
+                bordro.setGelirVergisiMatrahi(h.getGelirVergisiMatrahi());
+            }
+        }
         MaasBordro kaydedilen = maasBordroRepository.save(bordro);
         // Tutarlar değişmiş olabilir: eski fişi iptal edip yenisini üret.
         otomatikMuhasebeService.bordroIptal(kaydedilen.getId(), kaydedilen.getSirketId());
@@ -241,6 +303,7 @@ public class MaasBordroService {
                 .personelAdi(m.getPersonel() != null ? m.getPersonel().getAd() + " " + m.getPersonel().getSoyad() : null)
                 .yil(m.getYil()).ay(m.getAy())
                 .brutMaas(m.getBrutMaas()).kesintiler(m.getKesintiler()).netMaas(m.getNetMaas())
+                .gelirVergisiMatrahi(m.getGelirVergisiMatrahi())
                 .odemeTarihi(m.getOdemeTarihi()).sirketId(m.getSirketId())
                 .aciklama(m.getAciklama()).olusturmaTarihi(m.getOlusturmaTarihi())
                 .durum(m.getDurum()).onayTarihi(m.getOnayTarihi()).onaylayan(m.getOnaylayan())

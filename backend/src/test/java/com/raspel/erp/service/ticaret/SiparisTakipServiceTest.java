@@ -38,7 +38,7 @@ class SiparisTakipServiceTest {
     @Test
     void zincir_siparisinUretimSevkTeslimatDurumunuDoldurur() {
         Siparis s = Siparis.builder().id(1L).siparisNo("SP-1").durum("ONAYLANDI").cariHesapId(7L).tarih(LocalDate.now()).build();
-        when(siparisRepository.findBySirketIdOrderByTarihDesc(eq(1L), any(PageRequest.class)))
+        when(siparisRepository.filtreliGetir(eq(1L), isNull(), isNull(), isNull(), any(PageRequest.class)))
                 .thenReturn(new PageImpl<>(List.of(s)));
 
         when(uretimEmriRepository.findBySirketIdAndSiparisIdIn(eq(1L), any()))
@@ -50,7 +50,8 @@ class SiparisTakipServiceTest {
         when(cariHesapRepository.findAllById(any())).thenReturn(List.of(
                 com.raspel.erp.entity.finans.CariHesap.builder().id(7L).ad("A Ltd").build()));
 
-        List<SiparisTakipDTO> sonuc = takipService.zincir(1L);
+        var sayfa = takipService.filtreliZincir(1L, null, null, null, PageRequest.of(0, 25));
+        List<SiparisTakipDTO> sonuc = sayfa.getContent();
 
         assertEquals(1, sonuc.size());
         assertEquals("SP-1", sonuc.get(0).getSiparisNo());
@@ -62,9 +63,9 @@ class SiparisTakipServiceTest {
 
     @Test
     void zincir_bosSiparisListesindeBosDoner() {
-        when(siparisRepository.findBySirketIdOrderByTarihDesc(eq(1L), any(PageRequest.class)))
+        when(siparisRepository.filtreliGetir(eq(1L), isNull(), isNull(), isNull(), any(PageRequest.class)))
                 .thenReturn(new PageImpl<>(List.of()));
 
-        assertTrue(takipService.zincir(1L).isEmpty());
+        assertTrue(takipService.filtreliZincir(1L, null, null, null, PageRequest.of(0, 25)).getContent().isEmpty());
     }
 }

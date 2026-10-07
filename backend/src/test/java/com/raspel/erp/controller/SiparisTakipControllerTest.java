@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,7 +33,8 @@ class SiparisTakipControllerTest {
 
     @Test
     void shouldGetZincir() throws Exception {
-        when(takipService.zincir(1L)).thenReturn(List.of(SiparisTakipDTO.builder().build()));
+        when(takipService.filtreliZincir(any(), any(), any(), any(), any()))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(SiparisTakipDTO.builder().build())));
 
         mockMvc.perform(get("/api/siparis-takip").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk());
@@ -40,7 +42,8 @@ class SiparisTakipControllerTest {
 
     @Test
     void shouldReturnEmptyZincir() throws Exception {
-        when(takipService.zincir(1L)).thenReturn(List.of());
+        when(takipService.filtreliZincir(any(), any(), any(), any(), any()))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of()));
 
         mockMvc.perform(get("/api/siparis-takip").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk());

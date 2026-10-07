@@ -49,6 +49,27 @@ class TenantCheckerTest {
     }
 
     @Test
+    void check_requestVarAmaSirketBaglamiYoksaReddedilir() {
+        // Faz 0.1 fail-closed: HTTP istegi var ama sirketId baglami yok ise
+        // (or. JWT'de sirketId claim'i yok) tenant kontrolu atlanmaz.
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(req));
+        assertThrows(ResourceNotFoundException.class, () -> tenantChecker.check(2L, "Test"));
+        assertThrows(ResourceNotFoundException.class, () -> tenantChecker.check(null, "Test"));
+    }
+
+    @Test
+    void hasRequestContext_baglamVarkenTrue() {
+        oturumSirket(1L);
+        assertTrue(tenantChecker.hasRequestContext());
+    }
+
+    @Test
+    void hasRequestContext_baglamYokkenFalse() {
+        assertFalse(tenantChecker.hasRequestContext());
+    }
+
+    @Test
     void tenantKey_sirketBilgisiIcerir() {
         oturumSirket(3L);
         assertEquals("42:3", TenantChecker.tenantKey(42L));

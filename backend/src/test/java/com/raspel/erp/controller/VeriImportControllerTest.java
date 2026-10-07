@@ -6,6 +6,7 @@ import com.raspel.erp.service.ticaret.FaturaService;
 import com.raspel.erp.repository.envanter.StokRepository;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -22,7 +23,10 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import com.raspel.erp.entity.envanter.Stok;
+import com.raspel.erp.dto.envanter.StokDTO;
 import com.raspel.erp.controller.sistem.VeriImportController;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @WebMvcTest(VeriImportController.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -47,6 +51,9 @@ class VeriImportControllerTest {
 
     @MockBean
     private CariHesapRepository cariHesapRepository;
+
+    @MockBean
+    private com.raspel.erp.service.finans.HareketService hareketService;
 
     @Test
     void shouldImportStokFromCsv() throws Exception {
@@ -92,10 +99,43 @@ class VeriImportControllerTest {
     }
 
     @Test
+    void shouldImportHareketFromCsv() throws Exception {
+        String csv = "cariId;tarih;tur;tutar;aciklama\n" +
+                     "5;2026-01-10;TAHSILAT;1500;Nakit tahsilat\n" +
+                     "5;2026-01-11;ODEME;500;Ödeme";
+        MockMultipartFile dosya = new MockMultipartFile("file", "hareketler.csv", "text/csv", csv.getBytes());
+        when(hareketService.hareketOlustur(any(), eq(1L))).thenReturn(null);
+
+        mockMvc.perform(multipart("/api/import/hareket").file(dosya).requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.basarili").value(2))
+                .andExpect(jsonPath("$.hatalar").isEmpty());
+
+        verify(hareketService, times(2)).hareketOlustur(any(), eq(1L));
+    }
+
+    @Test
     void shouldReturn400ForEmptyFile() throws Exception {
         MockMultipartFile bos = new MockMultipartFile("file", "bos.csv", "text/csv", new byte[0]);
 
         mockMvc.perform(multipart("/api/import/stok").file(bos).requestAttr("sirketId", 1L))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldParseRafNoColumn() throws Exception {
+        // TopluStok ekrani kaldirildi; rafNo destegi import ucuna tasindi.
+        String csv = "ad;stokKodu;rafNo\n" +
+                     "Urun A;A-1;B3\n";
+        MockMultipartFile dosya = new MockMultipartFile("file", "stoklar.csv", "text/csv", csv.getBytes());
+        when(stokService.topluOlustur(anyList(), eq(1L))).thenReturn(1);
+
+        mockMvc.perform(multipart("/api/import/stok").file(dosya).requestAttr("sirketId", 1L))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
+        verify(stokService, times(1)).topluOlustur(captor.capture(), eq(1L));
+        StokDTO dto = (StokDTO) captor.getValue().get(0);
+        assertEquals("B3", dto.getRafNo());
     }
 }

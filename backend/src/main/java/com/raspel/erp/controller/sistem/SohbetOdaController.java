@@ -92,11 +92,16 @@ public class SohbetOdaController {
     }
 
     @GetMapping("/{id}/mesajlar")
-    @Operation(summary = "Odanın son mesajlarını getir")
-    public ResponseEntity<List<SohbetMesajDTO>> mesajlar(@PathVariable Long id, HttpServletRequest request) {
+    @Operation(summary = "Odanın mesajlarını getir (cursor sayfalama)",
+            description = "Varsayılan son 50 mesaj. Daha eski mesajlar için cursor (en eski mesajın id'si) ve limit verilir.")
+    public ResponseEntity<List<SohbetMesajDTO>> mesajlar(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(required = false) Integer limit,
+            HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
-        return ResponseEntity.ok(odaService.mesajlar(id, sirketId, kullaniciId));
+        return ResponseEntity.ok(odaService.mesajlar(id, sirketId, kullaniciId, cursor, limit));
     }
 
     @PostMapping("/{id}/mesajlar")

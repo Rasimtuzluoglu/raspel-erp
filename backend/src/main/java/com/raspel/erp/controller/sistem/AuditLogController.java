@@ -44,13 +44,15 @@ public class AuditLogController {
 
     @GetMapping("/islem-tipleri")
     @Operation(summary = "İşlem tiplerini getir", description = "Mevcut işlem tiplerinin listesini döndürür")
-    public ResponseEntity<List<String>> islemTipleri() {
-        return ResponseEntity.ok(auditLogService.islemTipleri());
+    public ResponseEntity<List<String>> islemTipleri(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(auditLogService.islemTipleri(sirketId));
     }
 
     @GetMapping("/entity-listesi")
     @Operation(summary = "Entity listesini getir", description = "Log'u tutulan entity adlarının listesini döndürür")
-    public ResponseEntity<List<String>> entityListesi() {
-        return ResponseEntity.ok(auditLogService.entityListesi());
+    public ResponseEntity<List<String>> entityListesi(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(auditLogService.entityListesi(sirketId));
     }
 }

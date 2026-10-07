@@ -68,7 +68,7 @@ class CariHesapServiceTest {
 
     @Test
     void cariHesapAra_returnsFiltered() {
-        when(cariHesapRepository.findBySirketIdAndAdContainingIgnoreCase(anyLong(), eq("test"))).thenReturn(List.of(createCariHesap(1L)));
+        when(cariHesapRepository.findTop50BySirketIdAndAdContainingIgnoreCaseOrderByAdAsc(anyLong(), eq("test"))).thenReturn(List.of(createCariHesap(1L)));
         var result = cariHesapService.cariHesapAra("test", 1L);
         assertEquals(1, result.size());
     }
@@ -94,6 +94,34 @@ class CariHesapServiceTest {
         when(cariHesapRepository.save(any(CariHesap.class))).thenReturn(saved);
         var result = cariHesapService.cariHesapOlustur(dto, 1L);
         assertEquals("Yeni Cari", result.getAd());
+    }
+
+    @Test
+    void cariHesapOlustur_mukerrerVergiNumarasiReddedilir() {
+        // Faz 1.2: aynı şirkette aynı vergi numarası ikinci kez açılamaz.
+        CariHesap mevcut = createCariHesap(5L);
+        mevcut.setAd("Mevcut Cari");
+        mevcut.setVergiNumarasi("9876543210");
+        when(cariHesapRepository.findFirstBySirketIdAndVergiNumarasiIgnoreCase(1L, "9876543210"))
+                .thenReturn(Optional.of(mevcut));
+
+        CariHesapDTO dto = CariHesapDTO.builder().ad("Yeni Cari").vergiNumarasi("9876543210").build();
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> cariHesapService.cariHesapOlustur(dto, 1L));
+        verify(cariHesapRepository, never()).save(any(CariHesap.class));
+    }
+
+    @Test
+    void cariHesapOlustur_vergiNumarasiBosIseKontrolEdilmez() {
+        CariHesap saved = createCariHesap(1L);
+        when(cariHesapRepository.save(any(CariHesap.class))).thenReturn(saved);
+        CariHesapDTO dto = CariHesapDTO.builder().ad("VKNsiz Cari").build();
+
+        var result = cariHesapService.cariHesapOlustur(dto, 1L);
+
+        assertEquals("Test Cari", result.getAd());
+        verify(cariHesapRepository, never()).findFirstBySirketIdAndVergiNumarasiIgnoreCase(any(), any());
     }
 
     @Test
@@ -153,6 +181,87 @@ class CariHesapServiceTest {
 
         // Bakiye artik oku-degistir-yaz yerine atomik DB guncellemesiyle artirilir.
         verify(cariHesapRepository).bakiyeArttir(1L, BigDecimal.valueOf(50));
+    }
+
+    @Test
+    void krediLimitiAsanlar_borcAsimVeRiskHesaplar() {
+        CariHesap c = createCariHesap(7L);
+        c.setAd("Riskli Cari");
+        c.setKrediLimiti(BigDecimal.valueOf(1000));
+        c.setBakiye(BigDecimal.valueOf(-1500));
+        when(cariHesapRepository.findKrediLimitiAsanlar(1L)).thenReturn(List.of(c));
+
+        var result = cariHesapService.krediLimitiAsanlar(1L);
+
+        assertEquals(1, result.size());
+        var r = result.get(0);
+        assertEquals("Riskli Cari", r.getCariAd());
+        assertEquals(0, r.getBorc().compareTo(BigDecimal.valueOf(1500)));
+        assertEquals(0, r.getAsimTutari().compareTo(BigDecimal.valueOf(500)));
+        assertEquals(0, r.getRiskOrani().compareTo(BigDecimal.valueOf(150)));
+    }
+
+    @Test
+    void krediLimitiAsanlar_sirketYoksaBosDoner() {
+        assertTrue(cariHesapService.krediLimitiAsanlar(null).isEmpty());
+        verify(cariHesapRepository, never()).findKrediLimitiAsanlar(any());
+    }
+
+    @Test
+    void cariHesapOlustur_etiketleriKaydeder() {
+        // Faz 2.4: etiketler kalıcı olarak kaydedilir.
+        org.mockito.ArgumentCaptor<CariHesap> cap = org.mockito.ArgumentCaptor.forClass(CariHesap.class);
+        when(cariHesapRepository.save(cap.capture())).thenReturn(createCariHesap(1L));
+        CariHesapDTO dto = CariHesapDTO.builder().ad("Etiketli Cari").etiketler("vip, bayilik").build();
+
+        cariHesapService.cariHesapOlustur(dto, 1L);
+
+        assertEquals("vip, bayilik", cap.getValue().getEtiketler());
+    }
+
+    @Test
+    void cariHesapOlustur_paraBirimiKaydeder() {
+        org.mockito.ArgumentCaptor<CariHesap> cap = org.mockito.ArgumentCaptor.forClass(CariHesap.class);
+        when(cariHesapRepository.save(cap.capture())).thenReturn(createCariHesap(1L));
+        cariHesapService.cariHesapOlustur(CariHesapDTO.builder().ad("Dövizli Cari").paraBirimi("USD").build(), 1L);
+        assertEquals("USD", cap.getValue().getParaBirimi());
+    }
+
+    @Test
+    void cariHesapOlustur_paraBirimiVarsayilanTRY() {
+        org.mockito.ArgumentCaptor<CariHesap> cap = org.mockito.ArgumentCaptor.forClass(CariHesap.class);
+        when(cariHesapRepository.save(cap.capture())).thenReturn(createCariHesap(1L));
+        cariHesapService.cariHesapOlustur(CariHesapDTO.builder().ad("TL Cari").build(), 1L);
+        assertEquals("TRY", cap.getValue().getParaBirimi());
+    }
+
+    @Test
+    void cariHesaplariTopluGuncelle_yalnizcaGonderilenAlanlariUygular() {
+        CariHesap c1 = createCariHesap(1L);
+        CariHesap c2 = createCariHesap(2L);
+        when(cariHesapRepository.findBySirketIdAndIdIn(eq(1L), anyList())).thenReturn(List.of(c1, c2));
+
+        var dto = com.raspel.erp.dto.finans.CariTopluGuncelleDTO.builder()
+                .idler(List.of(1L, 2L))
+                .krediLimiti(BigDecimal.valueOf(5000))
+                .aktif(false)
+                .build();
+        var sonuc = cariHesapService.cariHesaplariTopluGuncelle(dto, 1L);
+
+        assertEquals(2, sonuc.get("guncellenen"));
+        assertEquals(0, c1.getKrediLimiti().compareTo(BigDecimal.valueOf(5000)));
+        assertEquals(Boolean.FALSE, c1.getAktif());
+        // tur gönderilmediği için değişmemeli
+        assertNull(c1.getTur());
+        verify(cariHesapRepository).saveAll(anyList());
+    }
+
+    @Test
+    void cariHesaplariTopluGuncelle_bosListeReddedilir() {
+        var dto = com.raspel.erp.dto.finans.CariTopluGuncelleDTO.builder().idler(List.of()).build();
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> cariHesapService.cariHesaplariTopluGuncelle(dto, 1L));
+        verify(cariHesapRepository, never()).saveAll(anyList());
     }
 
     @Test

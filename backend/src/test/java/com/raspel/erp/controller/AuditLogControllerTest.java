@@ -69,7 +69,7 @@ class AuditLogControllerTest {
 
     @Test
     void shouldGetIslemTipleri() throws Exception {
-        when(auditLogService.islemTipleri()).thenReturn(List.of("GIRIS", "SIL"));
+        when(auditLogService.islemTipleri(any())).thenReturn(List.of("GIRIS", "SIL"));
 
         mockMvc.perform(get("/api/audit-log/islem-tipleri"))
                 .andExpect(status().isOk())

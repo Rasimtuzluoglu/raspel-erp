@@ -62,7 +62,9 @@ public class StokSayimService {
                 .beklenenMiktar(dto.getBeklenenMiktar() != null ? dto.getBeklenenMiktar() : BigDecimal.ZERO)
                 .sayilanMiktar(dto.getSayilanMiktar() != null ? dto.getSayilanMiktar() : BigDecimal.ZERO)
                 .fark(dto.getFark())
-                .durum(dto.getDurum() != null ? dto.getDurum() : "TASLAK")
+                // Faz 0.8: durum istemciden ALINMAZ. Yeni sayım her zaman TASLAK
+                // başlar; stok etkisi yalnızca durumGuncelle(TAMAMLANDI) ile uygulanır.
+                .durum("TASLAK")
                 .sirketId(sirketId)
                 .aciklama(dto.getAciklama())
                 .build();
@@ -77,7 +79,8 @@ public class StokSayimService {
         if (dto.getBeklenenMiktar() != null) sayim.setBeklenenMiktar(dto.getBeklenenMiktar());
         if (dto.getSayilanMiktar() != null) sayim.setSayilanMiktar(dto.getSayilanMiktar());
         if (dto.getFark() != null) sayim.setFark(dto.getFark());
-        if (dto.getDurum() != null) sayim.setDurum(dto.getDurum());
+        // Faz 0.8: durum güncellemede istemciden yazılmaz; yalnızca
+        // durumGuncelle(TASLAK/TAMAMLANDI/IPTAL) ile değiştirilebilir.
         if (dto.getAciklama() != null) sayim.setAciklama(dto.getAciklama());
         if (dto.getStokId() != null) {
             Stok stok = stokRepository.findById(dto.getStokId())

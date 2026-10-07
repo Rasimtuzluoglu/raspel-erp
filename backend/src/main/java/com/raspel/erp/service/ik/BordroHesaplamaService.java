@@ -21,9 +21,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Bordro hesaplama motoru. SGK işçi/işsizlik kesintisi, asgari ücret istisnalı gelir
@@ -82,8 +84,14 @@ public class BordroHesaplamaService {
         Integer yil = istek.getYil() != null ? istek.getYil() : LocalDate.now().getYear();
         BigDecimal brut = istek.getBrutMaas() != null ? istek.getBrutMaas()
                 : (personel != null && personel.getMaas() != null ? personel.getMaas() : BigDecimal.ZERO);
+        // Kümülatif matrah verilmediyse personelin aynı yıldaki ÖNCEKİ aylarından topla
+        // (dilimli verginin doğru hesaplanması için). Önce her ay "ilk ay" gibi hesaplanıyordu.
+        BigDecimal kumulatif = istek.getKumulatifMatrah();
+        if (kumulatif == null && personel != null && istek.getAy() != null) {
+            kumulatif = maasBordroRepository.kumulatifMatrah(sirketId, personel.getId(), yil, istek.getAy());
+        }
         BordroAyar ayar = ayarGetirVeyaOlustur(sirketId, yil);
-        return hesapla(brut, istek.getKumulatifMatrah(), ayar, personel);
+        return hesapla(brut, kumulatif, ayar, personel);
     }
 
     private BordroHesaplamaDTO hesapla(BigDecimal brutGirdi, BigDecimal kumulatifGirdi,
@@ -188,14 +196,27 @@ public class BordroHesaplamaService {
      */
     @Transactional
     public Map<String, Object> topluUret(Long sirketId, Integer yil, Integer ay) {
+        return topluUret(sirketId, yil, ay, null);
+    }
+
+    /**
+     * Toplu üretim (seçimli). {@code personelIds} null ise tüm aktif personel;
+     * verilirse yalnız seçilenler üretilir.
+     */
+    @Transactional
+    public Map<String, Object> topluUret(Long sirketId, Integer yil, Integer ay, List<Long> personelIds) {
         if (yil == null || ay == null || ay < 1 || ay > 12) {
             throw new BusinessException("Yıl ve ay (1-12) zorunludur");
         }
         BordroAyar ayar = ayarGetirVeyaOlustur(sirketId, yil);
         List<Personel> personeller = personelRepository.findBySirketIdAndAktifTrue(sirketId);
+        Set<Long> secili = personelIds == null ? null : new HashSet<>(personelIds);
         int uretilen = 0;
         int atlanan = 0;
         for (Personel p : personeller) {
+            if (secili != null && !secili.contains(p.getId())) {
+                continue; // kullanıcı bu personeli seçmedi
+            }
             if (maasBordroRepository.existsBySirketIdAndYilAndAyAndPersonelId(sirketId, yil, ay, p.getId())) {
                 atlanan++;
                 continue;
@@ -205,12 +226,15 @@ public class BordroHesaplamaService {
                 atlanan++;
                 continue;
             }
-            BordroHesaplamaDTO h = hesapla(brut, BigDecimal.ZERO, ayar, p);
+            // Kümülatif matrah: aynı yıldaki önceki ayların matrah toplamı.
+            BigDecimal kumulatif = maasBordroRepository.kumulatifMatrah(sirketId, p.getId(), yil, ay);
+            BordroHesaplamaDTO h = hesapla(brut, kumulatif, ayar, p);
             maasBordroRepository.save(MaasBordro.builder()
                     .personel(p).yil(yil).ay(ay)
                     .brutMaas(h.getBrutMaas())
                     .kesintiler(h.getToplamKesinti())
                     .netMaas(h.getNetMaas())
+                    .gelirVergisiMatrahi(h.getGelirVergisiMatrahi())
                     .odemeTarihi(LocalDate.of(yil, ay, 1))
                     .sirketId(sirketId)
                     .aciklama("Otomatik hesaplandı")
@@ -224,6 +248,38 @@ public class BordroHesaplamaService {
         sonuc.put("toplamPersonel", personeller.size());
         log.info("Toplu bordro üretimi - Şirket: {}, {}/{}, üretilen: {}, atlanan: {}",
                 sirketId, ay, yil, uretilen, atlanan);
+        return sonuc;
+    }
+
+    /**
+     * Toplu üretim ÖNİZLEMESİ: hangi personel üretilecek/atlanacak ve tahmini net.
+     * durum: UYGUN | MAAS_YOK | ZATEN_VAR.
+     */
+    @Transactional(readOnly = true)
+    public List<com.raspel.erp.dto.ik.BordroOnizlemeDTO> topluOnizleme(Long sirketId, Integer yil, Integer ay) {
+        if (yil == null || ay == null || ay < 1 || ay > 12) {
+            throw new BusinessException("Yıl ve ay (1-12) zorunludur");
+        }
+        // Önizleme salt-okunur: ayar yoksa kaydetmeden varsayılan kullan.
+        BordroAyar ayar = bordroAyarRepository.findBySirketIdAndYil(sirketId, yil)
+                .orElse(BordroAyar.builder().sirketId(sirketId).yil(yil).asgariUcret(java.math.BigDecimal.ZERO).build());
+        List<Personel> personeller = personelRepository.findBySirketIdAndAktifTrue(sirketId);
+        List<com.raspel.erp.dto.ik.BordroOnizlemeDTO> sonuc = new ArrayList<>();
+        for (Personel p : personeller) {
+            boolean varMi = maasBordroRepository.existsBySirketIdAndYilAndAyAndPersonelId(sirketId, yil, ay, p.getId());
+            BigDecimal brut = p.getMaas() != null ? p.getMaas() : BigDecimal.ZERO;
+            String durum = varMi ? "ZATEN_VAR" : (brut.signum() <= 0 ? "MAAS_YOK" : "UYGUN");
+            BigDecimal net = null;
+            if ("UYGUN".equals(durum)) {
+                BigDecimal kumulatif = maasBordroRepository.kumulatifMatrah(sirketId, p.getId(), yil, ay);
+                net = hesapla(brut, kumulatif, ayar, p).getNetMaas();
+            }
+            sonuc.add(com.raspel.erp.dto.ik.BordroOnizlemeDTO.builder()
+                    .personelId(p.getId())
+                    .personelAdi((p.getAd() != null ? p.getAd() : "") + " " + (p.getSoyad() != null ? p.getSoyad() : ""))
+                    .brutMaas(brut).netMaas(net).durum(durum)
+                    .build());
+        }
         return sonuc;
     }
 

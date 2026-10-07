@@ -423,6 +423,15 @@ public class SohbetService {
     }
 
     /** Şirketin güncel özet verisini LLM'e bağlam olarak üretir. */
+    /**
+     * Faz 4.3: AI özetleri için şirket veri bağlamını dışa açar (dashboard özeti,
+     * ajanda NL gibi ek AI özellikleri bu bağlamı kullanır).
+     */
+    @Transactional(readOnly = true)
+    public String veriBaglami(Long sirketId) {
+        return veriBaglamiOlustur(sirketId);
+    }
+
     private String veriBaglamiOlustur(Long sirketId) {
         try {
             StringBuilder sb = new StringBuilder();

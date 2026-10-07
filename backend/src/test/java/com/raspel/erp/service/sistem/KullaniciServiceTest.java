@@ -552,6 +552,8 @@ class KullaniciServiceTest {
         String dogruKod = TotpUtil.generateCode("JBSWY3DPEHPK3PXP", System.currentTimeMillis());
 
         when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
+        // Faz 0.11: atomik replay kontrolü ilk kullanımda 1 satır günceller.
+        when(kullaniciRepository.totpCounterGuncelle(eq(1L), anyLong())).thenReturn(1);
 
         LoginResponse resp = kullaniciService.giris2faTamamla(
                 TwoFactorGirisRequest.builder()
@@ -613,6 +615,7 @@ class KullaniciServiceTest {
         when(passwordEncoder.matches("pass", "encoded")).thenReturn(true);
         when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
         when(jwtUtil.generateToken(any(), any(), any())).thenReturn("jwt-token");
+        when(kullaniciRepository.totpCounterGuncelle(eq(1L), anyLong())).thenReturn(1);
 
         LoginResponse pending = kullaniciService.giris(LoginRequest.builder()
                 .username("testuser1").password("pass").build());
@@ -777,6 +780,7 @@ class KullaniciServiceTest {
                 .sonKullanma(java.time.LocalDateTime.now().plusHours(1))
                 .kullanildi(false).build();
         when(sifreSifirlaTokenRepository.findByTokenHash(any())).thenReturn(Optional.of(token));
+        when(sifreSifirlaTokenRepository.tokenKullanildiIsaretle(5L)).thenReturn(1);
         when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
         when(passwordEncoder.encode("YeniSifre123!")).thenReturn("yeni-hash");
 
@@ -784,8 +788,22 @@ class KullaniciServiceTest {
 
         assertEquals("yeni-hash", k.getPassword());
         assertEquals(1L, k.getTokenVersion());
-        assertTrue(token.getKullanildi());
-        verify(sifreSifirlaTokenRepository).save(token);
+        verify(sifreSifirlaTokenRepository).tokenKullanildiIsaretle(5L);
+    }
+
+    @Test
+    void sifreSifirlamaOnayla_zatenKullanilmisTokenReddedilir() {
+        // Faz 0.12: atomik işaretleme 0 satır güncellerse (başka istek kullandıysa) reddedilir.
+        var token = com.raspel.erp.entity.sistem.SifreSifirlaToken.builder()
+                .id(5L).kullaniciId(1L).tokenHash("h")
+                .sonKullanma(java.time.LocalDateTime.now().plusHours(1))
+                .kullanildi(false).build();
+        when(sifreSifirlaTokenRepository.findByTokenHash(any())).thenReturn(Optional.of(token));
+        when(sifreSifirlaTokenRepository.tokenKullanildiIsaretle(5L)).thenReturn(0);
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> kullaniciService.sifreSifirlamaOnayla("abc", "YeniSifre123!"));
+        verify(kullaniciRepository, never()).save(any());
     }
 
     @Test

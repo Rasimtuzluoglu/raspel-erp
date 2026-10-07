@@ -43,9 +43,10 @@ public class VeriImportController {
     private final FaturaService faturaService;
     private final StokRepository stokRepository;
     private final CariHesapRepository cariHesapRepository;
+    private final com.raspel.erp.service.finans.HareketService hareketService;
 
     @PostMapping("/stok")
-    @Operation(summary = "CSV ile stok aktar", description = "CSV dosyası ile toplu stok girişi yapar. Kolonlar: ad,stokKodu,barkod,birim,fiyat,miktar,minMiktar,kategori,stokGrubu,marka")
+    @Operation(summary = "CSV ile stok aktar", description = "CSV dosyası ile toplu stok girişi yapar. Kolonlar: ad,stokKodu,barkod,birim,fiyat,miktar,minMiktar,kategori,stokGrubu,marka,rafNo")
     public ResponseEntity<Map<String, Object>> stokImport(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Map<String, Object> result = new HashMap<>();
@@ -60,7 +61,7 @@ public class VeriImportController {
             String[] headers = headerLine.split(";");
             Map<String, Integer> kolonIndex = new HashMap<>();
             for (int i = 0; i < headers.length; i++) {
-                kolonIndex.put(headers[i].trim().toLowerCase(), i);
+                kolonIndex.put(headers[i].trim().toLowerCase(java.util.Locale.ROOT), i);
             }
 
             String line;
@@ -86,6 +87,10 @@ public class VeriImportController {
                             .kategori(normalizeSinfi(kolonDeger(cols, kolonIndex, "kategori", satirNo, null)))
                             .stokGrubu(normalizeSinfi(kolonDeger(cols, kolonIndex, "stokgrubu", satirNo, null)))
                             .marka(normalizeSinfi(kolonDeger(cols, kolonIndex, "marka", satirNo, null)))
+                            // Raf numarasi: eskiden yalniz `/stoklar/toplu` (TopluStok
+                            // ekrani) destekliyordu; o ekran kaldirildigi icin rafNo
+                            // destegi buraya tasindi (kabiliyet kaybi olmasin).
+                            .rafNo(kolonDeger(cols, kolonIndex, "rafno", satirNo, null))
                             .build();
                     if (dto.getAd() == null) {
                         hatalar.add("Satır " + satirNo + ": ad alanı zorunlu");
@@ -131,7 +136,7 @@ public class VeriImportController {
             String[] headers = headerLine.split(";");
             Map<String, Integer> kolonIndex = new HashMap<>();
             for (int i = 0; i < headers.length; i++) {
-                kolonIndex.put(headers[i].trim().toLowerCase(), i);
+                kolonIndex.put(headers[i].trim().toLowerCase(java.util.Locale.ROOT), i);
             }
 
             String line;
@@ -171,6 +176,74 @@ public class VeriImportController {
         return ResponseEntity.ok(result);
     }
 
+    @PostMapping("/hareket")
+    @Operation(summary = "CSV ile cari hareket aktar",
+            description = "CSV dosyası ile toplu cari hareket (tahsilat/ödeme/borçlandırma) girişi yapar. Kolonlar: cariId;tarih;tur;tutar;aciklama (tur: TAHSILAT/ODEME/BORC, tarih: YYYY-MM-DD)")
+    public ResponseEntity<Map<String, Object>> hareketImport(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        Map<String, Object> result = new HashMap<>();
+        List<String> hatalar = new ArrayList<>();
+        int basarili = 0;
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            String headerLine = br.readLine();
+            if (headerLine == null) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Dosya boş"));
+            }
+            String[] headers = headerLine.split(";");
+            Map<String, Integer> kolonIndex = new HashMap<>();
+            for (int i = 0; i < headers.length; i++) {
+                // Locale.ROOT: Türkçe locale'de "cariId" -> "cariıd" olur ve başlık eşleşmez.
+                kolonIndex.put(headers[i].trim().toLowerCase(java.util.Locale.ROOT), i);
+            }
+
+            String line;
+            int satirNo = 1;
+            while ((line = br.readLine()) != null) {
+                satirNo++;
+                if (satirNo > MAKS_SATIR) { hatalar.add("Dosya cok buyuk: en fazla " + MAKS_SATIR + " satir islenir"); break; }
+                if (line.trim().isEmpty()) continue;
+                String[] cols = line.split(";", -1);
+                try {
+                    Long cariId = parseLong(kolonDeger(cols, kolonIndex, "cariid", satirNo, hatalar));
+                    if (cariId == null) { hatalar.add("Satır " + satirNo + ": cariId zorunlu/geçersiz"); continue; }
+                    String tur = kolonDeger(cols, kolonIndex, "tur", satirNo, hatalar);
+                    BigDecimal tutar = parseBigDecimal(kolonDeger(cols, kolonIndex, "tutar", satirNo, hatalar));
+                    if (tur == null || tutar == null) { hatalar.add("Satır " + satirNo + ": tur/tutar zorunlu"); continue; }
+                    LocalDate tarih = parseTarih(kolonDeger(cols, kolonIndex, "tarih", satirNo, null));
+                    var dto = com.raspel.erp.dto.finans.HareketDTO.builder()
+                            .cariHesapId(cariId)
+                            .tur(tur)
+                            .tutar(tutar)
+                            .hareketTarihi(tarih)
+                            .aciklama(kolonDeger(cols, kolonIndex, "aciklama", satirNo, null))
+                            .build();
+                    hareketService.hareketOlustur(dto, sirketId);
+                    basarili++;
+                } catch (Exception e) {
+                    hatalar.add("Satır " + satirNo + ": " + (e.getMessage() != null ? e.getMessage() : "geçersiz değer"));
+                }
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Dosya okunamadı"));
+        }
+
+        result.put("basarili", basarili);
+        result.put("hatalar", hatalar);
+        result.put("mesaj", basarili + " cari hareket başarıyla aktarıldı" + (hatalar.isEmpty() ? "." : ", " + hatalar.size() + " hata."));
+        return ResponseEntity.ok(result);
+    }
+
+    private Long parseLong(String deger) {
+        if (deger == null || deger.isBlank()) return null;
+        try { return Long.parseLong(deger.trim()); } catch (NumberFormatException e) { return null; }
+    }
+
+    private LocalDate parseTarih(String deger) {
+        if (deger == null || deger.isBlank()) return null;
+        try { return LocalDate.parse(deger.trim()); } catch (Exception e) { return null; }
+    }
+
     @PostMapping("/alis-fatura")
     @Operation(summary = "CSV ile alış faturası aktar", description = "CSV dosyası ile toplu alış faturası girişi yapar. Kolonlar: faturaNo;tarih;cariId;stokKodu;aciklama;adet;birimFiyat;kdvOrani (aynı faturaNo'ya sahip satırlar tek faturada birleştirilir)")
     public ResponseEntity<Map<String, Object>> alisFaturaImport(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
@@ -190,7 +263,7 @@ public class VeriImportController {
             String[] headers = headerLine.split(";");
             Map<String, Integer> kolonIndex = new HashMap<>();
             for (int i = 0; i < headers.length; i++) {
-                kolonIndex.put(headers[i].trim().toLowerCase(), i);
+                kolonIndex.put(headers[i].trim().toLowerCase(java.util.Locale.ROOT), i);
             }
 
             String line;

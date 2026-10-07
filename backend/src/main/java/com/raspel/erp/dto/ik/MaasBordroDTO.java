@@ -38,6 +38,7 @@ public class MaasBordroDTO {
     private BigDecimal kesintiler;
 
     private BigDecimal netMaas;
+    private BigDecimal gelirVergisiMatrahi;
     private LocalDate odemeTarihi;
     private Long sirketId;
     private String aciklama;

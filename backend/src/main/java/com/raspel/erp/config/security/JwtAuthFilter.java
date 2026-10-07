@@ -166,15 +166,33 @@ request.setAttribute("kullaniciId", kullanici.getId());
 
                 // Sifre degistirildiyse eski token'lar gecersizdir (tokenVersion kontrolu)
                 boolean tokenGecerli = true;
+                Kullanici dbKullanici = null;
                 try {
-                    Long dbVersion = kullaniciRepository.findByUsername(username)
-                            .map(u -> u.getTokenVersion() != null ? u.getTokenVersion() : 0L)
-                            .orElse(null);
-                    if (dbVersion != null && tokenVersion != null && !dbVersion.equals(tokenVersion)) {
-                        tokenGecerli = false;
+                    dbKullanici = kullaniciRepository.findByUsername(username).orElse(null);
+                    if (dbKullanici != null) {
+                        long dbVersion = dbKullanici.getTokenVersion() != null ? dbKullanici.getTokenVersion() : 0L;
+                        if (tokenVersion != null && tokenVersion.longValue() != dbVersion) {
+                            tokenGecerli = false;
+                        }
                     }
                 } catch (Exception ignored) {
                     // Kullanici bulunamazsa tokenGecerli kalir, loadUserByUsername asagida hata verir
+                }
+
+                // Faz 0.2: Token'daki sirketId claim'i kullanicinin GERCEK uyeligiyle
+                // eslesmeli. ADMIN tum firmalari secebildigi icin muaftir. Aksi halde
+                // sirketten cikarilan kullanicinin eski JWT'si o sirketin verisine
+                // erismeye devam ederdi.
+                if (tokenGecerli && dbKullanici != null && sirketId != null
+                        && !"ADMIN".equals(dbKullanici.getRole())
+                        && !sirketId.equals(dbKullanici.getSirketId())) {
+                    try {
+                        if (!kullaniciRepository.sirketUyeligiVarMi(username, sirketId)) {
+                            tokenGecerli = false;
+                        }
+                    } catch (Exception ignored) {
+                        // DB hatasinda tokenVersion/aktifOturum kontrolleri devrede kalir.
+                    }
                 }
 
                 if (!tokenGecerli) {

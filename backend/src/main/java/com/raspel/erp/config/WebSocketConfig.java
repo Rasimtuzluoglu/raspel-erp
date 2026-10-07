@@ -18,6 +18,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final JwtUtil jwtUtil;
     private final com.raspel.erp.repository.sistem.KullaniciRepository kullaniciRepository;
     private final com.raspel.erp.service.sistem.AktifOturumService aktifOturumService;
+    private final com.raspel.erp.repository.sistem.SohbetOdaUyeRepository sohbetOdaUyeRepository;
 
     /**
      * true ise bildirim/sohbet yayınları RabbitMQ STOMP broker üzerinden yapılır
@@ -67,6 +68,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(new JwtChannelInterceptor(jwtUtil, kullaniciRepository, aktifOturumService));
+        registration.interceptors(new JwtChannelInterceptor(jwtUtil, kullaniciRepository, aktifOturumService, sohbetOdaUyeRepository));
     }
 }

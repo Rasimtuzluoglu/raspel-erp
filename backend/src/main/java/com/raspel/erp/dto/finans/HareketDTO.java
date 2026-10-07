@@ -25,6 +25,7 @@ public class HareketDTO {
 
     @NotNull(message = "Tutar girilmelidir")
     @DecimalMin(value = "0.01", message = "Tutar 0'dan büyük olmalıdır")
+    @Digits(integer = 17, fraction = 2, message = "Tutar en fazla 2 ondalık basamak olabilir")
     private BigDecimal tutar;
 
     private LocalDate hareketTarihi;
@@ -41,6 +42,7 @@ public class HareketDTO {
     private String taksitKurum;
 
     /** Taksit olarak çekilen tutar */
+    @Digits(integer = 17, fraction = 2, message = "Taksit tutarı en fazla 2 ondalık basamak olabilir")
     private BigDecimal taksitTutar;
 
     /** POS terminali ID (kart tek çekim) */
@@ -50,6 +52,7 @@ public class HareketDTO {
     private String posAd;
 
     /** Kart komisyon tutarı */
+    @Digits(integer = 17, fraction = 2, message = "Komisyon tutarı en fazla 2 ondalık basamak olabilir")
     private BigDecimal komisyonTutar;
 
     /** Valör (bankaya geçiş) tarihi */
@@ -57,6 +60,9 @@ public class HareketDTO {
 
     /** Bağlı fatura ID'si (opsiyonel): verilirse fatura ödeme durumu hareketle birlikte güncellenir */
     private Long faturaId;
+
+    /** Açılış fişi/devir kaydı mı (Faz 2.8). */
+    private Boolean acilis;
 
     private LocalDateTime olusturmaTarihi;
 }

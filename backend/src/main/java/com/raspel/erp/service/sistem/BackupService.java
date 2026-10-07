@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -257,6 +258,10 @@ public class BackupService {
                 }
             }
 
+            if (aciklanabilirBoyut(outputFile) == 0) {
+                throw new IllegalStateException("Yedek dosyasi bos: " + filename);
+            }
+
             long size = Files.size(outputFile);
             log.info("Backup created: {} ({} bytes, type={})", filename, size, type);
             if (otomatikBulutSenkronAktif()) {
@@ -266,11 +271,28 @@ public class BackupService {
             durumGuncelle(0, System.currentTimeMillis() / 1000);
             return filename;
         } catch (Exception e) {
+            // gzip, pg_dump bitmeden dosyayi olusturur; basarisiz bir denemede
+            // 0 baytlik sahte yedek kalmasin.
+            try {
+                Files.deleteIfExists(outputFile);
+            } catch (IOException silmeHatasi) {
+                log.warn("Yarim yedek dosyasi silinemedi: {}", outputFile, silmeHatasi);
+            }
             log.error("Backup failed", e);
             // Zamanlanmis gorevler bu hatayi yutar; metrik olmadan cron sessizce
             // basarisiz olur ve yedek bayatlayana kadar kimse fark etmez.
             yedekSayaci(type, "hata");
             throw new RuntimeException("Backup failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Sıkıştırılmış yedeğin açılmış boyutu. 0 dönüyorsa gzip yalnızca
+     * başlık/sonluk baytlarından oluşuyor, yani gerçek bir SQL yok.
+     */
+    private long aciklanabilirBoyut(Path gzDosya) throws IOException {
+        try (InputStream in = new GZIPInputStream(Files.newInputStream(gzDosya))) {
+            return in.transferTo(OutputStream.nullOutputStream());
         }
     }
 

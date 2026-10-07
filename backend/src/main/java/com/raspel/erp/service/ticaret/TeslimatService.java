@@ -445,6 +445,12 @@ public class TeslimatService {
         return pdfRaporService.teslimatFisiRaporu(id);
     }
 
+    /** Fişi istek diline göre üretir (Accept-Language). */
+    public byte[] teslimatFisiPdf(Long id, Long sirketId, Long kullaniciId, String dil) {
+        teslimatDogrula(id, sirketId, kullaniciId);
+        return pdfRaporService.teslimatFisiRaporu(id, com.raspel.erp.service.sistem.PdfMetin.of(dil));
+    }
+
     private Teslimat teslimatDogrula(Long id, Long sirketId, Long kullaniciId) {
         Teslimat t = teslimatRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Teslimat", id));

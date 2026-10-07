@@ -47,6 +47,14 @@ public class MaasBordro {
     @Column(name = "net_maas", nullable = false, precision = 19, scale = 2)
     private BigDecimal netMaas;
 
+    /**
+     * Gelir vergisi matrahı (bu ay). Yıl içi kümülatif dilimli vergi hesabı için
+     * önceki ayların toplamı alınır.
+     */
+    @Column(name = "gelir_vergisi_matrahi", precision = 19, scale = 2)
+    @Builder.Default
+    private BigDecimal gelirVergisiMatrahi = BigDecimal.ZERO;
+
     @Column(name = "odeme_tarihi")
     private LocalDate odemeTarihi;
 

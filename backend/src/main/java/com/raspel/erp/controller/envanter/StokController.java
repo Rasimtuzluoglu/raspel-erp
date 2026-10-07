@@ -8,6 +8,7 @@ import com.raspel.erp.service.envanter.StokAnalizService;
 import com.raspel.erp.service.sistem.QRService;
 import com.raspel.erp.service.sistem.BarkodService;
 import com.raspel.erp.service.sistem.PdfRaporService;
+import com.raspel.erp.service.sistem.PdfMetin;
 import com.raspel.erp.util.EtiketIcerikUtil;
 import com.raspel.erp.util.SayfalamaUtil;
 import com.raspel.erp.exception.BusinessException;
@@ -81,14 +82,15 @@ public class StokController {
     @Operation(summary = "Raf etiketi (PDF)", description = "Ürün adı, kod, barkod, QR, raf no ve fiyat içeren etiket PDF'i üretir")
     public ResponseEntity<byte[]> etiketPdf(
             @PathVariable Long id,
-            @RequestParam(defaultValue = "IKISI") String tip) {
+            @RequestParam(defaultValue = "IKISI") String tip,
+            HttpServletRequest request) {
         Stok stok = stokService.entityGetir(id);
         byte[] qr = qrService.qrPng(EtiketIcerikUtil.qrIcerik(stok), 600);
         byte[] barkod = barkodService.barkodPng(EtiketIcerikUtil.barkodIcerik(stok), 1200, 300);
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=etiket-" + stok.getId() + ".pdf")
-                .body(pdfRaporService.stokEtiketi(stok, qr, barkod, tip));
+                .body(pdfRaporService.stokEtiketi(stok, qr, barkod, tip, PdfMetin.of(request.getHeader("Accept-Language"))));
     }
 
     @PostMapping("/etiketler")
@@ -114,7 +116,7 @@ public class StokController {
         if (veriler.isEmpty()) {
             throw new BusinessException("Etiket üretilecek stok seçilmedi");
         }
-        byte[] pdf = pdfRaporService.stokEtiketleri(veriler);
+        byte[] pdf = pdfRaporService.stokEtiketleri(veriler, PdfMetin.of(request.getHeader("Accept-Language")));
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=etiketler.pdf")
@@ -130,6 +132,7 @@ public class StokController {
 
     @PostMapping("/barkod-uret")
     @Operation(summary = "Otomatik barkod üret", description = "Barkodu boş olan seçili stoklara EAN-13 barkod üretir ve kaydeder")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'STOK_WRITE')")
     public ResponseEntity<Map<String, Object>> barkodUret(@RequestBody BarkodUretIstek istek, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         int uretildi = stokService.barkodUret(istek != null ? istek.idler() : null, sirketId);
@@ -141,7 +144,7 @@ public class StokController {
     record BarkodUretIstek(List<Long> idler) {}
 
     @GetMapping("/filtreli")
-    @Operation(summary = "Stokları filtrele (sayfalı)", description = "Arama, kategori, marka, stok grubu ve fiyat aralığına göre sunucu tarafında filtreler")
+    @Operation(summary = "Stokları filtrele (sayfalı)", description = "Arama, kategori, marka, stok grubu, fiyat aralığı ve stokta olma durumuna göre sunucu tarafında filtreler")
     public ResponseEntity<Page<StokDTO>> filtreli(
             HttpServletRequest request,
             @PageableDefault(size = 25) Pageable pageable,
@@ -151,9 +154,13 @@ public class StokController {
             @RequestParam(required = false) String stokGrubu,
             @RequestParam(required = false) java.math.BigDecimal minFiyat,
             @RequestParam(required = false) java.math.BigDecimal maxFiyat,
-            @RequestParam(required = false) Long depoId) {
+            @RequestParam(required = false) Long depoId,
+            // POS katalogu: "sadece stokta" filtresi sunucuda cozulur, yoksa
+            // yalniz yuklenen sayfalar taranir ve sonuc yaniltici olur.
+            @RequestParam(required = false) Boolean sadeceStokta) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(stokService.filtreli(sirketId, q, kategori, marka, stokGrubu, minFiyat, maxFiyat, depoId, pageable));
+        return ResponseEntity.ok(stokService.filtreli(sirketId, q, kategori, marka, stokGrubu,
+                minFiyat, maxFiyat, depoId, sadeceStokta, pageable));
     }
 
     @GetMapping("/gruplama-dagilimi")
@@ -228,6 +235,7 @@ public class StokController {
 
     @PostMapping("/{id}/fiyatlar")
     @Operation(summary = "Stok fiyatı ekle", description = "Stoğa yeni bir fiyat tanımı ekler")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'STOK_WRITE')")
     public ResponseEntity<com.raspel.erp.dto.envanter.StokFiyatDTO> fiyatEkle(
             @PathVariable Long id,
             @jakarta.validation.Valid @RequestBody com.raspel.erp.dto.envanter.StokFiyatDTO dto,
@@ -238,6 +246,7 @@ public class StokController {
 
     @PutMapping("/fiyatlar/{fiyatId}")
     @Operation(summary = "Stok fiyatı güncelle", description = "Fiyat tanımını günceller")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'STOK_WRITE')")
     public ResponseEntity<com.raspel.erp.dto.envanter.StokFiyatDTO> fiyatGuncelle(
             @PathVariable Long fiyatId,
             @jakarta.validation.Valid @RequestBody com.raspel.erp.dto.envanter.StokFiyatDTO dto) {
@@ -306,6 +315,7 @@ public class StokController {
 
     @PostMapping("/{id}/hareketler")
     @Operation(summary = "Stok hareketi ekle", description = "Stoka yeni bir giriş/çıkış hareketi ekler")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'STOK_WRITE')")
     public ResponseEntity<StokHareketDTO> hareketEkle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid StokHareketDTO dto) {
         dto.setStokId(id);
         return ResponseEntity.status(HttpStatus.CREATED).body(stokService.hareketEkle(dto));

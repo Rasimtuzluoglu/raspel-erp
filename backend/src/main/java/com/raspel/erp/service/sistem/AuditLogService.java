@@ -103,11 +103,13 @@ public void finansalSilmeLog(String entityAdi, Long entityId, String detay) {
                 .ipAdresi(a.getIpAdresi()).tarih(a.getTarih()).build());
     }
 
-    public List<String> islemTipleri() {
-        return auditLogRepository.findDistinctIslem();
+    public List<String> islemTipleri(Long sirketId) {
+        if (sirketId == null) return List.of();
+        return auditLogRepository.findDistinctIslem(sirketId);
     }
 
-    public List<String> entityListesi() {
-        return auditLogRepository.findDistinctEntityAdi();
+    public List<String> entityListesi(Long sirketId) {
+        if (sirketId == null) return List.of();
+        return auditLogRepository.findDistinctEntityAdi(sirketId);
     }
 }

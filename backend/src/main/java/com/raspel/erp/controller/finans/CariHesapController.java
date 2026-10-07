@@ -40,6 +40,7 @@ public class CariHesapController {
 
     private final CariHesapService cariHesapService;
     private final com.raspel.erp.service.finans.CariKartService cariKartService;
+    private final com.raspel.erp.service.finans.CariAdresService cariAdresService;
     
     @GetMapping
     @Operation(summary = "Tüm cari hesapları getir (sayfalı)", description = "Şirkete ait tüm cari hesapları sayfalı olarak listeler")
@@ -59,9 +60,10 @@ public class CariHesapController {
             @PageableDefault(size = 25) Pageable pageable,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String tur,
+            @RequestParam(required = false) String etiket,
             @RequestParam(required = false) String bakiyeYonu) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(cariHesapService.filtreli(sirketId, q, tur, bakiyeYonu, pageable));
+        return ResponseEntity.ok(cariHesapService.filtreli(sirketId, q, tur, etiket, bakiyeYonu, pageable));
     }
 
     @GetMapping("/ozet")
@@ -71,9 +73,19 @@ public class CariHesapController {
         return ResponseEntity.ok(cariHesapService.ozet(sirketId));
     }
     
+    @GetMapping("/riskli")
+    @Operation(summary = "Kredi limitini aşan cariler",
+            description = "Tanımlı kredi limitini borcuyla aşan carileri risk oranına göre listeler")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
+    public ResponseEntity<List<com.raspel.erp.dto.finans.CariRiskDTO>> riskliCariler(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(cariHesapService.krediLimitiAsanlar(sirketId));
+    }
+
     @GetMapping("/export/csv")
     @Operation(summary = "Cari hesapları CSV dışa aktar",
             description = "Cari hesapları CSV olarak dışa aktarır. `ids` verilirse yalnızca seçili kayıtlar aktarılır.")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'CARI_EXPORT')")
     public ResponseEntity<byte[]> cariHesaplarCsv(
             @RequestParam(required = false) List<Long> ids,
             HttpServletRequest request) {
@@ -177,6 +189,60 @@ public class CariHesapController {
         sonuc.put("silinen", silinen);
         sonuc.put("atlanan", atlanan);
         return ResponseEntity.ok(sonuc);
+    }
+
+    @PostMapping("/toplu-guncelle")
+    @Operation(summary = "Cari hesapları toplu güncelle",
+            description = "Seçili carilerde yalnızca gönderilen alanları (tür, temsilci, kredi limiti, vade, aktif) günceller")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE') or @yetkiKontrol.kontrol(authentication, 'CARI_WRITE')")
+    public ResponseEntity<java.util.Map<String, Object>> cariHesaplariTopluGuncelle(
+            @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.finans.CariTopluGuncelleDTO dto,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(cariHesapService.cariHesaplariTopluGuncelle(dto, sirketId));
+    }
+
+    // CARİ ADRESLER (Faz 2.5)
+
+    @GetMapping("/{id}/adresler")
+    @Operation(summary = "Cari adresleri", description = "Cariye ait çoklu adres/iletişim kayıtlarını listeler")
+    public ResponseEntity<List<com.raspel.erp.dto.finans.CariAdresDTO>> adresler(@PathVariable Long id) {
+        return ResponseEntity.ok(cariAdresService.listele(id, null));
+    }
+
+    @PostMapping("/{id}/adresler")
+    @Operation(summary = "Cariye adres ekle", description = "Cariye yeni bir adres/iletişim kaydı ekler")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE') or @yetkiKontrol.kontrol(authentication, 'CARI_WRITE')")
+    public ResponseEntity<com.raspel.erp.dto.finans.CariAdresDTO> adresEkle(
+            @PathVariable Long id,
+            @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.finans.CariAdresDTO dto,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.status(HttpStatus.CREATED).body(cariAdresService.ekle(id, dto, sirketId));
+    }
+
+    @PutMapping("/{id}/adresler/{adresId}")
+    @Operation(summary = "Cari adresi güncelle", description = "Cariye ait adres kaydını günceller")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE') or @yetkiKontrol.kontrol(authentication, 'CARI_WRITE')")
+    public ResponseEntity<com.raspel.erp.dto.finans.CariAdresDTO> adresGuncelle(
+            @PathVariable Long id,
+            @PathVariable Long adresId,
+            @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.finans.CariAdresDTO dto,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(cariAdresService.guncelle(adresId, dto, sirketId));
+    }
+
+    @DeleteMapping("/{id}/adresler/{adresId}")
+    @Operation(summary = "Cari adresi sil", description = "Cariye ait adres kaydını siler")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE') or @yetkiKontrol.kontrol(authentication, 'CARI_WRITE')")
+    public ResponseEntity<Void> adresSil(
+            @PathVariable Long id,
+            @PathVariable Long adresId,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        cariAdresService.sil(adresId, sirketId);
+        return ResponseEntity.noContent().build();
     }
 
     // CARİYE ÖZEL FİYAT

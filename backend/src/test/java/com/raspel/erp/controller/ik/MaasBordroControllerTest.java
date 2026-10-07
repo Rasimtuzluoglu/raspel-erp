@@ -44,7 +44,7 @@ class MaasBordroControllerTest {
 
     @Test
     void shouldGetAll() throws Exception {
-        when(maasBordroService.tumunuGetir(anyLong(), any(Pageable.class)))
+        when(maasBordroService.tumunuGetir(anyLong(), any(), any(), any(), any(), any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(ornek())));
         mockMvc.perform(get("/api/maas-bordro").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())

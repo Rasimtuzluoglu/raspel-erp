@@ -105,7 +105,12 @@ public interface StokRepository extends JpaRepository<Stok, Long> {
             "AND (:stokGrubu IS NULL OR lower(s.stokGrubu) = :stokGrubu) " +
             "AND (:minFiyat IS NULL OR s.satisFiyati >= :minFiyat OR s.fiyat >= :minFiyat) " +
             "AND (:maxFiyat IS NULL OR s.satisFiyati <= :maxFiyat OR s.fiyat <= :maxFiyat) " +
-            "AND (:depoId IS NULL OR EXISTS (SELECT ds FROM DepoStok ds WHERE ds.stokId = s.id AND ds.depoId = :depoId))")
+            "AND (:depoId IS NULL OR EXISTS (SELECT ds FROM DepoStok ds WHERE ds.stokId = s.id AND ds.depoId = :depoId)) " +
+            // REDTEAM/Faz3 (POS): "sadece stokta" filtresi. POS katalogu artık
+            // sunucu tarafi sayfali geldigi icin bu filtre de SUNUCUDA
+            // cozulmelidir; istemcide yapilirsa yalniz yuklenen sayfalar
+            // taranir ve sonuc "sanki stok yokmus" gibi yaniltir.
+            "AND (:sadeceStokta IS NULL OR :sadeceStokta = false OR COALESCE(s.miktar, 0) > 0)")
     Page<Stok> filtreli(@Param("sirketId") Long sirketId,
                         @Param("q") String q,
                         @Param("kategori") String kategori,
@@ -114,6 +119,7 @@ public interface StokRepository extends JpaRepository<Stok, Long> {
                         @Param("minFiyat") BigDecimal minFiyat,
                         @Param("maxFiyat") BigDecimal maxFiyat,
                         @Param("depoId") Long depoId,
+                        @Param("sadeceStokta") Boolean sadeceStokta,
                         Pageable pageable);
 
     /**
@@ -133,4 +139,16 @@ public interface StokRepository extends JpaRepository<Stok, Long> {
             + "FROM Stok s WHERE s.sirketId = :sirketId AND s.stokGrubu IS NOT NULL "
             + "GROUP BY s.stokGrubu ORDER BY s.stokGrubu ASC")
     List<Object[]> stokGrubuDagilimi(@Param("sirketId") Long sirketId);
+
+    /**
+     * Marka dağılımı (değer + ürün sayısı), tüm katalogdan.
+     *
+     * <p>POS filtre panelindeki marka listesi önceden yüklenen sayfadan
+     * türetiliyordu; sayfalı katalog geçişiyle birlikte eksik kalacağı için
+     * kategori ve stok grubuyla aynı şekilde tüm katalogdan beslenir.
+     */
+    @Query("SELECT COALESCE(marka, '') AS deger, count(*) AS adet "
+            + "FROM Stok s WHERE s.sirketId = :sirketId AND s.marka IS NOT NULL "
+            + "GROUP BY s.marka ORDER BY s.marka ASC")
+    List<Object[]> markaDagilimi(@Param("sirketId") Long sirketId);
 }

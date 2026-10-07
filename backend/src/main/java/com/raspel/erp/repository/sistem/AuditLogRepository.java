@@ -18,11 +18,14 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     /** Saklama süresi dolan denetim kayıtlarını siler (retention job). */
     long deleteByTarihBefore(java.time.LocalDateTime tarih);
 
-    @Query(value = "SELECT DISTINCT a.islem FROM sistem.audit_log a ORDER BY a.islem", nativeQuery = true)
-    List<String> findDistinctIslem();
+    // Tenant-scoped: distinct degerler yalnizca ilgili sirketin kayitlarindan gelir.
+    // ONCEDEN sirket filtresi YOKTU; bir sirketin kullanicisi baska sirketlerin
+    // islem/entity adlarini filtre menu'sinde gorebiliyordu (capraz-tenant sizinti).
+    @Query(value = "SELECT DISTINCT a.islem FROM sistem.audit_log a WHERE a.sirket_id = CAST(:sirketId AS BIGINT) ORDER BY a.islem", nativeQuery = true)
+    List<String> findDistinctIslem(@Param("sirketId") Long sirketId);
 
-    @Query(value = "SELECT DISTINCT a.entity_adi FROM sistem.audit_log a ORDER BY a.entity_adi", nativeQuery = true)
-    List<String> findDistinctEntityAdi();
+    @Query(value = "SELECT DISTINCT a.entity_adi FROM sistem.audit_log a WHERE a.sirket_id = CAST(:sirketId AS BIGINT) ORDER BY a.entity_adi", nativeQuery = true)
+    List<String> findDistinctEntityAdi(@Param("sirketId") Long sirketId);
 
     @Query(value = "SELECT al.* FROM sistem.audit_log al WHERE " +
            "(CAST(:sirketId AS BIGINT) IS NULL OR al.sirket_id = CAST(:sirketId AS BIGINT)) AND " +

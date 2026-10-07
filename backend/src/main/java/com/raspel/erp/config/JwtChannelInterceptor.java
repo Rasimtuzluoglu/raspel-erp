@@ -3,6 +3,7 @@ package com.raspel.erp.config;
 import com.raspel.erp.config.security.JwtUtil;
 import com.raspel.erp.entity.sistem.Kullanici;
 import com.raspel.erp.repository.sistem.KullaniciRepository;
+import com.raspel.erp.repository.sistem.SohbetOdaUyeRepository;
 import com.raspel.erp.service.sistem.AktifOturumService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
@@ -21,10 +22,19 @@ import java.util.regex.Pattern;
 public class JwtChannelInterceptor implements ChannelInterceptor {
 
     private static final Pattern SIRKET_TOPIC_PATTERN =
-            Pattern.compile("^/topic/(bildirimler|sohbet)/(\\d+)$");
+            Pattern.compile("^/topic/(bildirimler)/(\\d+)$");
+
+    /** Genel sohbet kanalı ve silme olayı (Faz 3.1: sil de doğrulanır). */
+    private static final Pattern SOHBET_GENEL_PATTERN =
+            Pattern.compile("^/topic/sohbet/(\\d+)$");
+    private static final Pattern SOHBET_GENEL_SIL_PATTERN =
+            Pattern.compile("^/topic/sohbet/(\\d+)/sil$");
 
     private static final Pattern ODA_TOPIC_PATTERN =
             Pattern.compile("^/topic/sohbet/oda/(\\d+)/(\\d+)$");
+
+    private static final Pattern ODA_SIL_TOPIC_PATTERN =
+            Pattern.compile("^/topic/sohbet/oda/(\\d+)/(\\d+)/sil$");
 
     private static final Pattern ODA_YAZIYOR_TOPIC_PATTERN =
             Pattern.compile("^/topic/sohbet/oda/(\\d+)/(\\d+)/yaziyor$");
@@ -32,6 +42,7 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
     private final JwtUtil jwtUtil;
     private final KullaniciRepository kullaniciRepository;
     private final AktifOturumService aktifOturumService;
+    private final SohbetOdaUyeRepository sohbetOdaUyeRepository;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -74,6 +85,8 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
             accessor.setUser(() -> username);
             if (sessionAttrs != null) {
                 sessionAttrs.put("sirketId", sirketId);
+                // Faz 3.1: oda üyeliği doğrulaması için kullanıcı id'si oturuma konur.
+                sessionAttrs.put("kullaniciId", k.getId());
             }
             return message;
         }
@@ -85,6 +98,7 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
             @SuppressWarnings("unchecked")
             Map<String, Object> sessionAttrs = (Map<String, Object>) accessor.getSessionAttributes();
             Long oturumSirketId = sessionAttrs != null ? (Long) sessionAttrs.get("sirketId") : null;
+            Long kullaniciId = sessionAttrs != null ? (Long) sessionAttrs.get("kullaniciId") : null;
 
             Matcher m = SIRKET_TOPIC_PATTERN.matcher(destination);
             if (m.matches()) {
@@ -95,21 +109,34 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
                 return message;
             }
 
-            Matcher odaM = ODA_TOPIC_PATTERN.matcher(destination);
-            if (odaM.matches()) {
-                Long aboneSirketId = Long.valueOf(odaM.group(1));
+            // Genel sohbet kanalı (mesaj + silme olayı). Faz 3.1: /sil de doğrulanır.
+            Matcher genel = SOHBET_GENEL_PATTERN.matcher(destination);
+            Matcher genelSil = SOHBET_GENEL_SIL_PATTERN.matcher(destination);
+            if (genel.matches() || genelSil.matches()) {
+                Long aboneSirketId = Long.valueOf((genel.matches() ? genel : genelSil).group(1));
                 if (oturumSirketId == null || !oturumSirketId.equals(aboneSirketId)) {
-                    throw new MessageDeliveryException("Bu sohbet odasına abone olma yetkiniz yok");
+                    throw new MessageDeliveryException("Bu sirkete ait kanala abone olma yetkiniz yok");
                 }
                 return message;
             }
 
+            // Oda kanalları: mesaj + sil + yazıyor. Şirket VE oda üyeliği doğrulanır.
+            Matcher odaM = ODA_TOPIC_PATTERN.matcher(destination);
+            Matcher odaSilM = ODA_SIL_TOPIC_PATTERN.matcher(destination);
             Matcher yaziyorM = ODA_YAZIYOR_TOPIC_PATTERN.matcher(destination);
-            if (yaziyorM.matches()) {
-                Long aboneSirketId = Long.valueOf(yaziyorM.group(1));
+            if (odaM.matches() || odaSilM.matches() || yaziyorM.matches()) {
+                Matcher eslesen = odaM.matches() ? odaM : (odaSilM.matches() ? odaSilM : yaziyorM);
+                Long aboneSirketId = Long.valueOf(eslesen.group(1));
+                Long odaId = Long.valueOf(eslesen.group(2));
                 if (oturumSirketId == null || !oturumSirketId.equals(aboneSirketId)) {
                     throw new MessageDeliveryException("Bu sohbet odasına abone olma yetkiniz yok");
                 }
+                // Üyelik zorunlu: aynı şirkette olup odaya üye olmayan biri dinleyemez.
+                if (kullaniciId == null
+                        || !sohbetOdaUyeRepository.existsByOdaIdAndKullaniciId(odaId, kullaniciId)) {
+                    throw new MessageDeliveryException("Bu sohbet odasının üyesi değilsiniz");
+                }
+                return message;
             }
         }
         return message;

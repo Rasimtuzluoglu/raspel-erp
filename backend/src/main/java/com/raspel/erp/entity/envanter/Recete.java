@@ -42,6 +42,18 @@ public class Recete {
     @Builder.Default
     private BigDecimal fireOrani = BigDecimal.ZERO;
 
+    /**
+     * Reçetenin tanımlandığı baz çıktı miktarı (varsayılan 1). Kalem miktarları
+     * bu miktar içindir; N birim üretimde ölçek = N / bazMiktar.
+     */
+    @Column(name = "baz_miktar", precision = 19, scale = 4)
+    @Builder.Default
+    private BigDecimal bazMiktar = BigDecimal.ONE;
+
+    /** Baz miktarın birimi (opsiyonel, ör. "litre", "kg"). Yalnız etiketleme. */
+    @Column(name = "baz_birim", length = 20)
+    private String bazBirim;
+
     @Column(columnDefinition = "TEXT")
     private String notlar;
 

@@ -2,6 +2,7 @@ package com.raspel.erp.entity.finans;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -9,9 +10,13 @@ import java.time.LocalDateTime;
 /**
  * Hareket Entity
  * Cari hesaplara yapılan tahsilat veya ödeme işlemlerini temsil eder.
+ *
+ * <p>Faz 2.6: soft iptal. {@code iptal = true} kayıtlar tüm JPA sorgularından
+ * otomatik olarak hariç tutulur (denetim izi korunur, bakiye etkisi geri alınır).
  */
 @Entity
 @Table(name = "hareket", schema = "cari")
+@SQLRestriction("iptal = false")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -82,6 +87,19 @@ public class Hareket {
     @Column(name = "sirket_id")
     private Long sirketId;
 
+    /** Soft iptal bayrağı (Faz 2.6). true ise kayıt sorgularda görünmez. */
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean iptal = false;
+
+    @Column(name = "iptal_tarihi")
+    private LocalDateTime iptalTarihi;
+
+    /** Açılış fişi/devir kaydı mı (Faz 2.8). */
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean acilis = false;
+
     /** İyimser kilitleme (eşzamanlı güncellemelerde kayıp veriyi önler). */
     @Version
     private Long version;
@@ -93,6 +111,8 @@ public class Hareket {
     @PrePersist
     protected void onCreate() {
         this.olusturmaTarihi = LocalDateTime.now();
+        if (this.iptal == null) this.iptal = false;
+        if (this.acilis == null) this.acilis = false;
     }
     
     /**

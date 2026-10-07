@@ -96,11 +96,13 @@ class PersonelIzinControllerTest {
     @Test
     void shouldUpdateDurum() throws Exception {
         var dto = PersonelIzinDTO.builder().id(1L).durum("ONAYLANDI").build();
-        when(personelIzinService.durumGuncelle(eq(1L), anyString(), anyString())).thenReturn(dto);
+        // Faz 0.7: onaylayan artık istemciden değil, istek bağlamından (displayName) alınır.
+        when(personelIzinService.durumGuncelle(eq(1L), anyString(), eq("Yönetici"))).thenReturn(dto);
 
         mockMvc.perform(put("/api/personel-izin/1/durum")
+                        .requestAttr("displayName", "Yönetici")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(Map.of("durum", "ONAYLANDI", "onaylayan", "Yönetici"))))
+                        .content(objectMapper.writeValueAsString(Map.of("durum", "ONAYLANDI", "onaylayan", "Sahte"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.durum").value("ONAYLANDI"));
     }

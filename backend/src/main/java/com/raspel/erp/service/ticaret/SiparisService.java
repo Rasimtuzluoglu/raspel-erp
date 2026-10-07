@@ -68,7 +68,19 @@ public class SiparisService {
 
     @Transactional(readOnly = true)
     public Page<SiparisDTO> tumunuGetir(Long sirketId, Pageable pageable) {
-        Page<Siparis> sayfa = siparisRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable);
+        return tumunuGetir(sirketId, pageable, null);
+    }
+
+    /**
+     * Faz 0.4: {@code soforKullaniciId} doluysa (DRIVER rolu) yalnizca o söföre
+     * atanan siparişler döner; aksi halde şirketin tüm siparişleri. Böylece şoför
+     * başka müşterilerin sipariş/mali verilerini göremez.
+     */
+    @Transactional(readOnly = true)
+    public Page<SiparisDTO> tumunuGetir(Long sirketId, Pageable pageable, Long soforKullaniciId) {
+        Page<Siparis> sayfa = (soforKullaniciId != null)
+                ? siparisRepository.findBySirketIdAndDriverIdOrderByTarihDesc(sirketId, soforKullaniciId, pageable)
+                : siparisRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable);
         List<Siparis> siparisler = sayfa.getContent();
 
         // N+1 önlemi: kalemleri ve carileri tek sorguda topla
@@ -87,9 +99,21 @@ public class SiparisService {
 
     @Transactional(readOnly = true)
     public SiparisDTO getir(Long id) {
+        return getir(id, null);
+    }
+
+    /**
+     * Faz 0.4: {@code soforKullaniciId} doluysa (DRIVER) sipariş yalnızca o
+     * söföre atanmışsa görüntülenebilir; aksi halde bulunamadı döner.
+     */
+    @Transactional(readOnly = true)
+    public SiparisDTO getir(Long id, Long soforKullaniciId) {
         Siparis s = siparisRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sipariş", id));
         tenantChecker.check(s.getSirketId(), "Sipariş");
+        if (soforKullaniciId != null && !soforKullaniciId.equals(s.getDriverId())) {
+            throw new ResourceNotFoundException("Sipariş", id);
+        }
         return entityToDTO(s);
     }
 
@@ -127,8 +151,34 @@ public class SiparisService {
                     "Yeni Sipariş: " + siparisNo,
                     "Tutar: " + bildirimTutar + " ₺"));
         }
+        // Faz 2.1: proaktif kredi limiti uyarısı (engellemez, bilgilendirir).
+        krediLimitiUyarisiGonder(s.getCariHesapId(), sirketId, s.getGenelToplam(), siparisNo);
         cacheYardimci.commitSonrasiTemizle("dashboard");
         return entityToDTO(s);
+    }
+
+    /**
+     * Faz 2.1: Sipariş, müşterinin mevcut borcu + sipariş tutarı kredi limitini
+     * aşıyorsa (bloklamadan) bildirim gönderir. Fatura kesiminde limit zaten hard
+     * olarak zorlanır; bu uyarı sipariş aşamasında erken haberdar eder.
+     */
+    private void krediLimitiUyarisiGonder(Long cariHesapId, Long sirketId,
+                                          java.math.BigDecimal siparisTutar, String siparisNo) {
+        if (cariHesapId == null || sirketId == null || siparisTutar == null) return;
+        CariHesap cari = cariHesapRepository.findById(cariHesapId).orElse(null);
+        if (cari == null || cari.getKrediLimiti() == null || cari.getKrediLimiti().signum() <= 0) return;
+        java.math.BigDecimal bakiye = cari.getBakiye() != null ? cari.getBakiye() : java.math.BigDecimal.ZERO;
+        java.math.BigDecimal mevcutBorc = bakiye.signum() < 0 ? bakiye.negate() : java.math.BigDecimal.ZERO;
+        java.math.BigDecimal projekte = mevcutBorc.add(siparisTutar);
+        if (projekte.compareTo(cari.getKrediLimiti()) <= 0) return;
+        Long bildirimSirketId = sirketId;
+        java.math.BigDecimal limit = cari.getKrediLimiti();
+        String cariAd = cari.getAd();
+        com.raspel.erp.support.AfterCommitExecutor.calistir(() -> bildirimService.bildirimGonder(
+                bildirimSirketId, "KREDI_LIMITI",
+                "Kredi limiti uyarısı: " + cariAd,
+                "Sipariş " + siparisNo + " ile projekte borç " + projekte
+                        + " ₺, tanımlı limit " + limit + " ₺."));
     }
 
     public SiparisDTO guncelle(Long id, SiparisDTO dto) {

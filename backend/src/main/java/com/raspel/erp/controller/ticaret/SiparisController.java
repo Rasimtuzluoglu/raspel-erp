@@ -30,13 +30,24 @@ public class SiparisController {
     @Operation(summary = "Tüm siparişleri getir", description = "Tüm siparişleri listeler")
     public ResponseEntity<Page<SiparisDTO>> tumu(HttpServletRequest request, @PageableDefault(size = 50) Pageable pageable) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(siparisService.tumunuGetir(sirketId, pageable));
+        return ResponseEntity.ok(siparisService.tumunuGetir(sirketId, pageable, soforKullaniciId(request)));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "ID'ye göre sipariş getir", description = "Sipariş ID'sine göre detayları getirir")
-    public ResponseEntity<SiparisDTO> getir(@PathVariable Long id) {
-        return ResponseEntity.ok(siparisService.getir(id));
+    public ResponseEntity<SiparisDTO> getir(@PathVariable Long id, HttpServletRequest request) {
+        return ResponseEntity.ok(siparisService.getir(id, soforKullaniciId(request)));
+    }
+
+    /**
+     * Faz 0.4: Yalnızca DRIVER rolündeki (ve ADMIN/USER olmayan) kullanıcı için
+     * sipariş görünürlüğünü kendine atananlarla sınırlamak üzere kullanıcı id'si döner.
+     */
+    private Long soforKullaniciId(HttpServletRequest request) {
+        if (request.isUserInRole("DRIVER") && !request.isUserInRole("ADMIN") && !request.isUserInRole("USER")) {
+            return (Long) request.getAttribute("kullaniciId");
+        }
+        return null;
     }
 
     @PostMapping

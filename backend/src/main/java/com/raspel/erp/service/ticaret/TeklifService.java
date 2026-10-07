@@ -47,6 +47,24 @@ public class TeklifService {
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
 
+    // Faz 0.10: Teklif durum geçiş doğrulaması. Terminal durumlar yalnızca
+    // dönüştürme akışlarıyla (sipariş/fatura) atanır; /durum ucundan atanamaz.
+    private static final java.util.Set<String> GECERLI_DURUMLAR = java.util.Set.of(
+            "TASLAK", "GONDERILDI", "ONAYLANDI", "REDDEDILDI",
+            "SIPARISE_DONUSTU", "FATURALASTI", "IPTAL");
+    private static final java.util.Set<String> TERMINAL_DURUMLAR = java.util.Set.of(
+            "SIPARISE_DONUSTU", "FATURALASTI");
+
+    private void durumDogrula(String durum) {
+        if (durum == null || !GECERLI_DURUMLAR.contains(durum)) {
+            throw new BusinessException("Geçersiz teklif durumu: " + durum);
+        }
+        if (TERMINAL_DURUMLAR.contains(durum)) {
+            throw new BusinessException(
+                    "Bu durum yalnızca sipariş/fatura dönüştürme işlemiyle atanır.");
+        }
+    }
+
     /** Kalemde KDV/birim fiyat verilmediyse stok kartından çözer. */
     private BigDecimal kalemKdvOrani(TeklifKalemDTO k) {
         if (k.getKdvOrani() != null) return k.getKdvOrani();
@@ -208,7 +226,10 @@ public class TeklifService {
         t.setTarih(dto.getTarih() != null ? dto.getTarih() : t.getTarih());
         t.setGecerlilikTarihi(dto.getGecerlilikTarihi());
         t.setCariHesapId(dto.getCariHesapId());
-        if (dto.getDurum() != null) t.setDurum(dto.getDurum());
+        if (dto.getDurum() != null) {
+            durumDogrula(dto.getDurum());
+            t.setDurum(dto.getDurum());
+        }
         t.setTeslimatSarti(dto.getTeslimatSarti());
         t.setOdemeSarti(dto.getOdemeSarti());
         t.setGarantiSarti(dto.getGarantiSarti());
@@ -290,6 +311,12 @@ public class TeklifService {
         Teklif t = teklifRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Teklif", id));
         tenantChecker.check(t.getSirketId(), "Teklif");
+        // Faz 0.10: durum beyaz listesi + terminal koruması.
+        durumDogrula(yeniDurum);
+        if (TERMINAL_DURUMLAR.contains(t.getDurum())) {
+            throw new BusinessException(
+                    "Siparişe/faturaya dönüştürülmüş teklifin durumu değiştirilemez.");
+        }
         t.setDurum(yeniDurum);
         return entityToDTO(teklifRepository.save(t));
     }

@@ -63,8 +63,17 @@ public class PersonelIzinController {
     @PutMapping("/{id}/durum")
     @Operation(summary = "İzin durum güncelle", description = "İzin durumunu günceller (onayla/reddet)")
     @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
-    public ResponseEntity<PersonelIzinDTO> durumGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body) {
-        return ResponseEntity.ok(personelIzinService.durumGuncelle(id, body.getDurum(), body.getOnaylayan()));
+    public ResponseEntity<PersonelIzinDTO> durumGuncelle(
+            @PathVariable Long id,
+            @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body,
+            HttpServletRequest request) {
+        // Faz 0.7: onaylayan bilgisi istemciden ALINMAZ (sahte onay imzası
+        // üretilememesi için) JWT sahibinden (displayName/username) türetilir.
+        String onaylayan = (String) request.getAttribute("displayName");
+        if (onaylayan == null || onaylayan.isBlank()) {
+            onaylayan = (String) request.getAttribute("username");
+        }
+        return ResponseEntity.ok(personelIzinService.durumGuncelle(id, body.getDurum(), onaylayan));
     }
 
     @DeleteMapping("/{id}")

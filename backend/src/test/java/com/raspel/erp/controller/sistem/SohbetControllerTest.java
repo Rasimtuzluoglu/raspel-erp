@@ -37,6 +37,17 @@ class SohbetControllerTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
     @MockBean private SohbetService sohbetService;
+    @MockBean private com.raspel.erp.service.sistem.AiService aiService;
+
+    @Test
+    void shouldAiDashboardOzet() throws Exception {
+        when(sohbetService.veriBaglami(1L)).thenReturn("VERİ");
+        when(aiService.sorgula(eq(1L), any(), eq("VERİ"))).thenReturn("Kısa özet");
+
+        mockMvc.perform(get("/api/sohbet/ai-dashboard-ozet").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ozet").value("Kısa özet"));
+    }
 
     @Test
     void shouldGetSonMesajlar() throws Exception {

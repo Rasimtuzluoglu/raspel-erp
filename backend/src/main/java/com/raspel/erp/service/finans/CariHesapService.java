@@ -111,15 +111,22 @@ public class CariHesapService {
         CariHesap cari = cariHesapRepository.findById(cariHesapId)
                 .orElseThrow(() -> new ResourceNotFoundException("CariHesap", cariHesapId));
         tenantChecker.check(cari.getSirketId(), "CariHesap");
-        CariFiyat fiyat = cariFiyatRepository.findByCariHesapIdAndStokId(cariHesapId, dto.getStokId())
+        // Faz 1.4: fiyatın bağlandığı stok da aynı şirkete ait olmalı (cross-tenant
+        // stok bağlama engeli).
+        Stok stok = stokRepository.findById(dto.getStokId())
+                .orElseThrow(() -> new ResourceNotFoundException("Stok", dto.getStokId()));
+        tenantChecker.check(stok.getSirketId(), "Stok");
+        Long hedefSirketId = cari.getSirketId() != null ? cari.getSirketId() : sirketId;
+        // Faz 1.3: tenant filtreli tek kayıt araması.
+        CariFiyat fiyat = cariFiyatRepository
+                .findBySirketIdAndCariHesapIdAndStokId(hedefSirketId, cariHesapId, dto.getStokId())
                 .orElseGet(() -> CariFiyat.builder().cariHesapId(cariHesapId).stokId(dto.getStokId())
-                        .sirketId(sirketId).build());
+                        .sirketId(hedefSirketId).build());
         fiyat.setFiyat(dto.getFiyat() != null ? dto.getFiyat() : BigDecimal.ZERO);
         CariFiyat saved = cariFiyatRepository.save(fiyat);
-        Stok s = stokRepository.findById(saved.getStokId()).orElse(null);
         return CariFiyatDTO.builder().id(saved.getId()).cariHesapId(saved.getCariHesapId())
-                .stokId(saved.getStokId()).stokAd(s != null ? s.getAd() : null)
-                .stokKodu(s != null ? s.getStokKodu() : null).fiyat(saved.getFiyat())
+                .stokId(saved.getStokId()).stokAd(stok.getAd())
+                .stokKodu(stok.getStokKodu()).fiyat(saved.getFiyat())
                 .sirketId(saved.getSirketId()).olusturmaTarihi(saved.getOlusturmaTarihi()).build();
     }
 
@@ -151,8 +158,11 @@ public class CariHesapService {
      */
     public List<CariHesapDTO> disaAktarimListesi(Long sirketId, List<Long> ids, int maxSatir) {
         if (ids != null && !ids.isEmpty()) {
-            return cariHesapRepository.findBySirketIdAndIdIn(sirketId, ids).stream()
+            // Faz 1.5: seçili id yolu da üst sınırla korunur (aşırı büyük gövde/bellek).
+            return cariHesapRepository.findBySirketIdAndIdIn(sirketId,
+                            ids.size() > maxSatir ? ids.subList(0, maxSatir) : ids).stream()
                     .sorted(Comparator.comparing(CariHesap::getId))
+                    .limit(maxSatir)
                     .map(this::entityDTOyeCevir)
                     .collect(Collectors.toList());
         }
@@ -165,10 +175,14 @@ public class CariHesapService {
     /**
      * Sunucu tarafında filtrelenmiş, aranmış ve sayfalanmış cari listesi.
      */
-    public Page<CariHesapDTO> filtreli(Long sirketId, String q, String tur, String bakiyeYonu, Pageable pageable) {
+    public Page<CariHesapDTO> filtreli(Long sirketId, String q, String tur, String etiket,
+                                       String bakiyeYonu, Pageable pageable) {
         // Joker karakterler kaçışlanır; 1 karakterli arama reddedilir.
         String arama = com.raspel.erp.util.AramaTemizleyici.like(q);
-        return cariHesapRepository.filtreli(sirketId, arama, bosIseNull(tur), bosIseNull(bakiyeYonu), pageable)
+        // Faz 2.4: etiket filtresi (virgülle ayrık etiketler içinde LIKE).
+        String etiketArama = com.raspel.erp.util.AramaTemizleyici.like(etiket);
+        return cariHesapRepository.filtreli(sirketId, arama, bosIseNull(tur), etiketArama,
+                        bosIseNull(bakiyeYonu), pageable)
                 .map(this::entityDTOyeCevir);
     }
 
@@ -181,7 +195,8 @@ public class CariHesapService {
      */
     public List<CariHesapDTO> cariHesapAra(String query, Long sirketId) {
         log.debug("Cari hesaplar aranıyor: {}, sirketId: {}", query, sirketId);
-        return cariHesapRepository.findBySirketIdAndAdContainingIgnoreCase(sirketId, query)
+        // Faz 1.5: sınırsız liste yerine en fazla 50 kayıt.
+        return cariHesapRepository.findTop50BySirketIdAndAdContainingIgnoreCaseOrderByAdAsc(sirketId, query)
                 .stream()
                 .map(this::entityDTOyeCevir)
                 .collect(Collectors.toList());
@@ -205,7 +220,8 @@ public class CariHesapService {
     @CacheEvict(value = "cariHesaplar", allEntries = true)
     public CariHesapDTO cariHesapOlustur(CariHesapDTO dto, Long sirketId) {
         log.info("Yeni cari hesap oluşturuluyor: {}, sirketId: {}", dto.getAd(), sirketId);
-        
+        vergiNumarasiBenzersizliginiDogrula(sirketId, dto.getVergiNumarasi(), null);
+
         CariHesap cariHesap = CariHesap.builder()
                 .ad(dto.getAd())
                 .vergiNumarasi(dto.getVergiNumarasi())
@@ -220,8 +236,10 @@ public class CariHesapService {
                 .yetkiliTelefon(dto.getYetkiliTelefon())
                 .iban(dto.getIban())
                 .notlar(dto.getNotlar())
+                .etiketler(dto.getEtiketler())
                 .fotoUrl(dto.getFotoUrl())
                 .fotoThumbUrl(dto.getFotoThumbUrl())
+                .paraBirimi(dto.getParaBirimi() != null ? dto.getParaBirimi() : "TRY")
                 .krediLimiti(dto.getKrediLimiti())
                 .odemeVadesi(dto.getOdemeVadesi())
                 .bakiye(BigDecimal.ZERO)
@@ -246,7 +264,10 @@ public class CariHesapService {
         CariHesap cariHesap = cariHesapRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", id));
         tenantChecker.check(cariHesap.getSirketId(), "Cari Hesap");
-        
+        if (dto.getVergiNumarasi() != null) {
+            vergiNumarasiBenzersizliginiDogrula(cariHesap.getSirketId(), dto.getVergiNumarasi(), id);
+        }
+
         if (dto.getAd() != null) cariHesap.setAd(dto.getAd());
         if (dto.getVergiNumarasi() != null) cariHesap.setVergiNumarasi(dto.getVergiNumarasi());
         if (dto.getTelefon() != null) cariHesap.setTelefon(dto.getTelefon());
@@ -260,9 +281,11 @@ public class CariHesapService {
         if (dto.getYetkiliTelefon() != null) cariHesap.setYetkiliTelefon(dto.getYetkiliTelefon());
         if (dto.getIban() != null) cariHesap.setIban(dto.getIban());
         if (dto.getNotlar() != null) cariHesap.setNotlar(dto.getNotlar());
+        if (dto.getEtiketler() != null) cariHesap.setEtiketler(dto.getEtiketler());
         if (dto.getFotoUrl() != null) cariHesap.setFotoUrl(dto.getFotoUrl());
         if (dto.getFotoThumbUrl() != null) cariHesap.setFotoThumbUrl(dto.getFotoThumbUrl());
         if (dto.getAktif() != null) cariHesap.setAktif(dto.getAktif());
+        if (dto.getParaBirimi() != null) cariHesap.setParaBirimi(dto.getParaBirimi());
         if (dto.getKrediLimiti() != null) cariHesap.setKrediLimiti(dto.getKrediLimiti());
         if (dto.getOdemeVadesi() != null) cariHesap.setOdemeVadesi(dto.getOdemeVadesi());
         if (dto.getTemsilciId() != null) cariHesap.setTemsilciId(dto.getTemsilciId());
@@ -298,6 +321,43 @@ public class CariHesapService {
         auditLogService.finansalSilmeLog("CariHesap", id,
                 "Cari hesap silindi: " + cariHesap.getAd());
         log.info("Cari hesap başarıyla silindi - ID: {}", id);
+    }
+
+    /**
+     * Faz 2.3: Seçili carilerde yalnızca gönderilen (null olmayan) alanları toplu
+     * günceller. Tenant filtresi repository sorgusunda; ayrıca her kayıt için
+     * tenantChecker ile doğrulanır.
+     */
+    @CacheEvict(value = "cariHesaplar", allEntries = true)
+    public Map<String, Object> cariHesaplariTopluGuncelle(
+            com.raspel.erp.dto.finans.CariTopluGuncelleDTO dto, Long sirketId) {
+        if (dto == null || dto.getIdler() == null || dto.getIdler().isEmpty()) {
+            throw new BusinessException("Güncellenecek kayıt seçilmedi");
+        }
+        if (sirketId == null) {
+            throw new BusinessException("Şirket bağlamı bulunamadı");
+        }
+        List<Long> idler = dto.getIdler().stream().filter(java.util.Objects::nonNull)
+                .distinct().collect(Collectors.toList());
+        List<CariHesap> liste = cariHesapRepository.findBySirketIdAndIdIn(sirketId, idler);
+        List<CariHesap> degisenler = new java.util.ArrayList<>();
+        for (CariHesap c : liste) {
+            tenantChecker.check(c.getSirketId(), "Cari Hesap");
+            if (dto.getTur() != null) c.setTur(dto.getTur());
+            if (dto.getTemsilciId() != null) c.setTemsilciId(dto.getTemsilciId());
+            if (dto.getTemsilciAd() != null) c.setTemsilciAd(dto.getTemsilciAd());
+            if (dto.getKrediLimiti() != null) c.setKrediLimiti(dto.getKrediLimiti());
+            if (dto.getOdemeVadesi() != null) c.setOdemeVadesi(dto.getOdemeVadesi());
+            if (dto.getAktif() != null) c.setAktif(dto.getAktif());
+            degisenler.add(c);
+        }
+        if (!degisenler.isEmpty()) {
+            cariHesapRepository.saveAll(degisenler);
+        }
+        Map<String, Object> sonuc = new LinkedHashMap<>();
+        sonuc.put("istenen", idler.size());
+        sonuc.put("guncellenen", degisenler.size());
+        return sonuc;
     }
 
     /** Cariye bagli finansal/operasyonel kayit varsa silmeyi engeller. */
@@ -406,6 +466,50 @@ public class CariHesapService {
     }
 
     /**
+     * Faz 2.1: Kredi limitini aşan cariler. Bakiye kuralı: negatif = cari bize borçlu.
+     * Risk oranı = borç / limit * 100.
+     */
+    @Transactional(readOnly = true)
+    public List<com.raspel.erp.dto.finans.CariRiskDTO> krediLimitiAsanlar(Long sirketId) {
+        if (sirketId == null) return List.of();
+        return cariHesapRepository.findKrediLimitiAsanlar(sirketId).stream().map(c -> {
+            BigDecimal bakiye = c.getBakiye() != null ? c.getBakiye() : BigDecimal.ZERO;
+            BigDecimal borc = bakiye.signum() < 0 ? bakiye.negate() : BigDecimal.ZERO;
+            BigDecimal limit = c.getKrediLimiti();
+            BigDecimal asim = limit != null ? borc.subtract(limit) : BigDecimal.ZERO;
+            BigDecimal oran = (limit != null && limit.signum() > 0)
+                    ? borc.multiply(BigDecimal.valueOf(100)).divide(limit, 2, java.math.RoundingMode.HALF_UP)
+                    : null;
+            return com.raspel.erp.dto.finans.CariRiskDTO.builder()
+                    .cariId(c.getId())
+                    .cariAd(c.getAd())
+                    .telefon(c.getTelefon())
+                    .email(c.getEmail())
+                    .temsilciAd(c.getTemsilciAd())
+                    .bakiye(bakiye)
+                    .borc(borc)
+                    .krediLimiti(limit)
+                    .asimTutari(asim)
+                    .riskOrani(oran)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * Faz 1.2: Aynı şirkette aynı vergi numarasıyla ikinci cari açılmasını engeller.
+     * {@code haricId} güncelleme sırasında kaydın kendisini hariç tutar.
+     */
+    private void vergiNumarasiBenzersizliginiDogrula(Long sirketId, String vergiNumarasi, Long haricId) {
+        if (vergiNumarasi == null || vergiNumarasi.isBlank() || sirketId == null) return;
+        cariHesapRepository.findFirstBySirketIdAndVergiNumarasiIgnoreCase(sirketId, vergiNumarasi.trim())
+                .filter(c -> haricId == null || !haricId.equals(c.getId()))
+                .ifPresent(c -> {
+                    throw new BusinessException(
+                            "Bu vergi numarası başka bir cariye kayıtlı: " + c.getAd());
+                });
+    }
+
+    /**
      * Entity'yi DTO'ya çevir
      */
     private CariHesapDTO entityDTOyeCevir(CariHesap cariHesap) {
@@ -424,9 +528,11 @@ public class CariHesapService {
                 .yetkiliTelefon(cariHesap.getYetkiliTelefon())
                 .iban(cariHesap.getIban())
                 .notlar(cariHesap.getNotlar())
+                .etiketler(cariHesap.getEtiketler())
                 .fotoUrl(cariHesap.getFotoUrl())
                 .fotoThumbUrl(cariHesap.getFotoThumbUrl())
                 .aktif(cariHesap.getAktif())
+                .paraBirimi(cariHesap.getParaBirimi())
                 .krediLimiti(cariHesap.getKrediLimiti())
                 .odemeVadesi(cariHesap.getOdemeVadesi())
                 .bakiye(cariHesap.getBakiye())

@@ -45,7 +45,7 @@ class SiparisControllerTest {
     @Test
     void shouldGetAll() throws Exception {
         var list = List.of(SiparisDTO.builder().id(1L).siparisNo("SPR-001").durum("TEKLIF").build());
-        when(siparisService.tumunuGetir(isNull(), any(Pageable.class))).thenReturn(new PageImpl<>(list));
+        when(siparisService.tumunuGetir(isNull(), any(Pageable.class), isNull())).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/siparisler"))
                 .andExpect(status().isOk())
@@ -55,7 +55,7 @@ class SiparisControllerTest {
     @Test
     void shouldGetAllBySirket() throws Exception {
         var list = List.of(SiparisDTO.builder().id(1L).siparisNo("SPR-001").build());
-        when(siparisService.tumunuGetir(eq(1L), any(Pageable.class))).thenReturn(new PageImpl<>(list));
+        when(siparisService.tumunuGetir(eq(1L), any(Pageable.class), isNull())).thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/siparisler").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
@@ -65,7 +65,7 @@ class SiparisControllerTest {
     @Test
     void shouldGetById() throws Exception {
         var dto = SiparisDTO.builder().id(1L).siparisNo("SPR-001").build();
-        when(siparisService.getir(1L)).thenReturn(dto);
+        when(siparisService.getir(eq(1L), isNull())).thenReturn(dto);
 
         mockMvc.perform(get("/api/siparisler/1"))
                 .andExpect(status().isOk())
@@ -74,7 +74,7 @@ class SiparisControllerTest {
 
     @Test
     void shouldReturnNotFoundWhenGetById() throws Exception {
-        when(siparisService.getir(anyLong())).thenThrow(new ResourceNotFoundException("Sipariş bulunamadı: 999"));
+        when(siparisService.getir(anyLong(), isNull())).thenThrow(new ResourceNotFoundException("Sipariş bulunamadı: 999"));
 
         mockMvc.perform(get("/api/siparisler/999"))
                 .andExpect(status().isNotFound());

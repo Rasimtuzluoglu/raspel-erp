@@ -35,6 +35,38 @@ public class RaporController {
     private final com.raspel.erp.service.sistem.ExcelExportService excelExportService;
     private final com.raspel.erp.service.sistem.EmailService emailService;
     private final com.raspel.erp.service.sistem.EmailPolitikaService emailPolitikaService;
+    private final com.raspel.erp.service.finans.DovizCevirici dovizCevirici;
+
+    /**
+     * TRY tutarı hedef para birimine çevirip plâin metne döndürür (rapor
+     * dışa aktarmalarında ekrandaki değerlerle tutarlılık için). Hedef yoksa
+     * ham TRY değeri döner.
+     */
+    private String cevirStr(BigDecimal v) {
+        BigDecimal c = dovizCevirici.cevir(v);
+        return c != null ? c.toPlainString() : "0";
+    }
+
+    private String cevirObj(Object v) {
+        if (v == null) return "0";
+        if (v instanceof BigDecimal bd) return cevirStr(bd);
+        try {
+            return cevirStr(new BigDecimal(v.toString()));
+        } catch (Exception e) {
+            return v.toString();
+        }
+    }
+
+    /** PDF başlığına "(USD)" gibi para birimi sonekini ekler. */
+    private String paraBirimiSonek() {
+        String kod = dovizCevirici.hedef();
+        return (kod != null && !"TRY".equals(kod)) ? " (" + kod + ")" : "";
+    }
+
+    /** İstek diline göre PDF metin sözlüğü (Accept-Language). */
+    private com.raspel.erp.service.sistem.PdfMetin metin(HttpServletRequest request) {
+        return com.raspel.erp.service.sistem.PdfMetin.of(request.getHeader("Accept-Language"));
+    }
 
     @PostMapping(value = "/eposta", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Rapor PDF'ini e-posta ile gönder",
@@ -166,37 +198,46 @@ public class RaporController {
 
     @GetMapping("/yaslandirma/pdf")
     @Operation(summary = "Yaşlandırma raporu PDF", description = "Vade yaşlandırma raporunu kova matrisi olarak PDF üretir")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'RAPOR_EXPORT')")
     public ResponseEntity<byte[]> yaslandirmaPdf(
             HttpServletRequest request,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate referansTarih) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate referansTarih,
+            @RequestParam(required = false) String doviz) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        RaporDTO.YaslandirmaRaporDTO rapor = raporService.yaslandirmaRaporu(sirketId, referansTarih);
-        List<String> kovalar = RaporService.YASLANDIRMA_KOVALARI;
+        dovizCevirici.basla(doviz);
+        try {
+            var m = metin(request);
+            RaporDTO.YaslandirmaRaporDTO rapor = raporService.yaslandirmaRaporu(sirketId, referansTarih);
+            List<String> kovalar = RaporService.YASLANDIRMA_KOVALARI;
 
-        String[] basliklar = new String[kovalar.size() + 4];
-        basliklar[0] = "Cari";
-        for (int i = 0; i < kovalar.size(); i++) {
-            basliklar[i + 1] = yaslandirmaKovaEtiketi(kovalar.get(i));
-        }
-        basliklar[kovalar.size() + 1] = "Toplam";
-        basliklar[kovalar.size() + 2] = "Gecikmiş";
-        basliklar[kovalar.size() + 3] = "Maks. Gun";
-
-        List<String[]> satirlar = new ArrayList<>();
-        for (RaporDTO.YaslandirmaDTO s : rapor.getSatirlar()) {
-            String[] satir = new String[basliklar.length];
-            satir[0] = s.getCariAd();
+            String[] basliklar = new String[kovalar.size() + 4];
+            basliklar[0] = m.t("cari");
             for (int i = 0; i < kovalar.size(); i++) {
-                satir[i + 1] = formatTutar(s.getKovalar().get(kovalar.get(i)));
+                basliklar[i + 1] = yaslandirmaKovaEtiketi(kovalar.get(i));
             }
-            satir[kovalar.size() + 1] = formatTutar(s.getToplam());
-            satir[kovalar.size() + 2] = formatTutar(s.getGecikmisTutar());
-            satir[kovalar.size() + 3] = String.valueOf(s.getEnFazlaGecikmeGun());
-            satirlar.add(satir);
-        }
+            basliklar[kovalar.size() + 1] = m.t("toplam");
+            basliklar[kovalar.size() + 2] = m.t("gecikmis");
+            basliklar[kovalar.size() + 3] = m.t("maksGun");
 
-        byte[] pdf = pdfRaporService.tabloRaporu("VADE YASLANDIRMA - " + rapor.getReferansTarih(), basliklar, satirlar);
-        return pdfResponse("yaslandirma-" + rapor.getReferansTarih() + ".pdf", pdf);
+            List<String[]> satirlar = new ArrayList<>();
+            for (RaporDTO.YaslandirmaDTO s : rapor.getSatirlar()) {
+                String[] satir = new String[basliklar.length];
+                satir[0] = s.getCariAd();
+                for (int i = 0; i < kovalar.size(); i++) {
+                    satir[i + 1] = formatTutar(s.getKovalar().get(kovalar.get(i)));
+                }
+                satir[kovalar.size() + 1] = formatTutar(s.getToplam());
+                satir[kovalar.size() + 2] = formatTutar(s.getGecikmisTutar());
+                satir[kovalar.size() + 3] = String.valueOf(s.getEnFazlaGecikmeGun());
+                satirlar.add(satir);
+            }
+
+            byte[] pdf = pdfRaporService.tabloRaporu(
+                    m.t("vadeYaslandirma") + " - " + rapor.getReferansTarih() + paraBirimiSonek(), basliklar, satirlar);
+            return pdfResponse("yaslandirma-" + rapor.getReferansTarih() + ".pdf", pdf);
+        } finally {
+            dovizCevirici.temizle();
+        }
     }
 
     /** Kova anahtarını PDF başlığı için okunur metne çevirir. */
@@ -211,7 +252,11 @@ public class RaporController {
     }
 
     private String formatTutar(BigDecimal v) {
-        return v == null ? "-" : String.format("%,.2f", v);
+        // Sunucunun VARSAYILAN locale'ine gore formatlamak (ör. en-US) PDF/rapor
+        // basligi ve tutarlarla (tr-TR) çelişiyordu; sabit tr-TR kullanılır.
+        // Tutar, hedef para birimi ayarlıysa çevrilir.
+        BigDecimal c = dovizCevirici.cevir(v);
+        return c == null ? "-" : String.format(java.util.Locale.forLanguageTag("tr-TR"), "%,.2f", c);
     }
 
     @GetMapping("/kdv-beyanname")
@@ -319,107 +364,143 @@ public class RaporController {
 
     @GetMapping("/butce-gerceklesen/pdf")
     @Operation(summary = "Bütçe vs Gerçekleşen PDF", description = "Bütçe vs gerçekleşen raporunu PDF olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'RAPOR_EXPORT')")
     public ResponseEntity<byte[]> butceGerceklesenPdf(
             HttpServletRequest request,
             @RequestParam Integer yil,
-            @RequestParam(required = false) Integer ay) {
+            @RequestParam(required = false) Integer ay,
+            @RequestParam(required = false) String doviz) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        List<com.raspel.erp.dto.sistem.ButceGerceklesenDTO> rapor = raporService.butceGerceklesenRaporu(sirketId, yil, ay);
+        dovizCevirici.basla(doviz);
+        try {
+            var m = metin(request);
+            List<com.raspel.erp.dto.sistem.ButceGerceklesenDTO> rapor = raporService.butceGerceklesenRaporu(sirketId, yil, ay);
 
-        String[] kolonlar = {"Kategori", "Bütçe", "Gerçekleşen", "Sapma", "Kullanım %"};
-        List<String[]> satirlar = rapor.stream().map(r -> new String[]{
-                r.getKategori(),
-                r.getButce() != null ? r.getButce().toPlainString() : "0",
-                r.getGerceklesen() != null ? r.getGerceklesen().toPlainString() : "0",
-                r.getSapma() != null ? r.getSapma().toPlainString() : "0",
-                r.getKullanimYuzdesi() != null ? r.getKullanimYuzdesi().toPlainString() : "-"
-        }).collect(java.util.stream.Collectors.toList());
+            String[] kolonlar = {m.t("kategori"), m.t("butce"), m.t("gerceklesen"), m.t("sapma"), m.t("kullanimYuzdesi")};
+            List<String[]> satirlar = rapor.stream().map(r -> new String[]{
+                    r.getKategori(),
+                    cevirStr(r.getButce()),
+                    cevirStr(r.getGerceklesen()),
+                    cevirStr(r.getSapma()),
+                    r.getKullanimYuzdesi() != null ? r.getKullanimYuzdesi().toPlainString() : "-"
+            }).collect(java.util.stream.Collectors.toList());
 
-        byte[] pdf = raporService.butceGerceklesenPdf(kolonlar, satirlar, yil, ay);
-        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-        headers.setContentType(org.springframework.http.MediaType.APPLICATION_PDF);
-        headers.setContentDisposition(org.springframework.http.ContentDisposition.attachment()
-                .filename("butce-gerceklesen-" + yil + (ay != null ? "-" + ay : "") + ".pdf").build());
-        return ResponseEntity.ok().headers(headers).body(pdf);
+            byte[] pdf = raporService.butceGerceklesenPdf(kolonlar, satirlar, yil, ay);
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_PDF);
+            headers.setContentDisposition(org.springframework.http.ContentDisposition.attachment()
+                    .filename("butce-gerceklesen-" + yil + (ay != null ? "-" + ay : "") + ".pdf").build());
+            return ResponseEntity.ok().headers(headers).body(pdf);
+        } finally {
+            dovizCevirici.temizle();
+        }
     }
 
     @GetMapping("/cari-ekstre/pdf")
     @Operation(summary = "Cari ekstre PDF", description = "Cari ekstreyi PDF olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'CARI_EXPORT')")
     public ResponseEntity<byte[]> cariEkstrePdf(
+            HttpServletRequest request,
             @RequestParam Long cariHesapId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
-        RaporDTO.CariEkstreDTO ekstre = raporService.cariEkstreGetir(cariHesapId, baslangic, bitis);
-        String[] kolonlar = {"Tarih", "Tur", "Aciklama", "Borc", "Alacak", "Bakiye"};
-        List<String[]> satirlar = ekstre.getHareketler() == null ? List.of()
-                : ekstre.getHareketler().stream()
-                        .map(h -> new String[]{
-                                h.getTarih() != null ? h.getTarih().toString() : "-",
-                                h.getTur() != null ? h.getTur() : "-",
-                                h.getAciklama() != null ? h.getAciklama() : "-",
-                                h.getBorc() != null ? h.getBorc().toPlainString() : "0",
-                                h.getAlacak() != null ? h.getAlacak().toPlainString() : "0",
-                                h.getYuruyenBakiye() != null ? h.getYuruyenBakiye().toPlainString() : "0"
-                        })
-                        .collect(java.util.stream.Collectors.toList());
-        byte[] pdf = pdfRaporService.tabloRaporu(
-                "CARI EKSTRE - " + (ekstre.getCariAd() != null ? ekstre.getCariAd() : ""), kolonlar, satirlar);
-        return pdfResponse("cari-ekstre-" + cariHesapId + ".pdf", pdf);
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis,
+            @RequestParam(required = false) String doviz) {
+        dovizCevirici.basla(doviz);
+        try {
+            var m = metin(request);
+            RaporDTO.CariEkstreDTO ekstre = raporService.cariEkstreGetir(cariHesapId, baslangic, bitis);
+            String[] kolonlar = {m.t("tarih"), m.t("tur"), m.t("aciklama"), m.t("borc"), m.t("alacak"), m.t("bakiye")};
+            List<String[]> satirlar = ekstre.getHareketler() == null ? List.of()
+                    : ekstre.getHareketler().stream()
+                            .map(h -> new String[]{
+                                    h.getTarih() != null ? h.getTarih().toString() : "-",
+                                    h.getTur() != null ? h.getTur() : "-",
+                                    h.getAciklama() != null ? h.getAciklama() : "-",
+                                    cevirStr(h.getBorc()),
+                                    cevirStr(h.getAlacak()),
+                                    cevirStr(h.getYuruyenBakiye())
+                            })
+                            .collect(java.util.stream.Collectors.toList());
+            byte[] pdf = pdfRaporService.tabloRaporu(
+                    m.t("cariEkstre") + " - " + (ekstre.getCariAd() != null ? ekstre.getCariAd() : "") + paraBirimiSonek(),
+                    kolonlar, satirlar);
+            return pdfResponse("cari-ekstre-" + cariHesapId + ".pdf", pdf);
+        } finally {
+            dovizCevirici.temizle();
+        }
     }
 
     @GetMapping("/gelir-gider/pdf")
     @Operation(summary = "Gelir/Gider PDF", description = "Gelir/gider raporunu PDF olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'RAPOR_EXPORT')")
     public ResponseEntity<byte[]> gelirGiderPdf(
             HttpServletRequest request,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis,
+            @RequestParam(required = false) String doviz) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        RaporDTO.GelirGiderOzetDTO ozet = raporService.gelirGiderOzeti(baslangic, bitis, sirketId);
-        String[] kolonlar = {"Ay / Kalem", "Tutar"};
-        List<String[]> satirlar = new java.util.ArrayList<>();
-        if (ozet.getAylikDagilim() != null) {
-            for (Map<String, Object> m : ozet.getAylikDagilim()) {
-                satirlar.add(new String[]{String.valueOf(m.get("ay")), String.valueOf(m.get("net"))});
+        dovizCevirici.basla(doviz);
+        try {
+            var m = metin(request);
+            RaporDTO.GelirGiderOzetDTO ozet = raporService.gelirGiderOzeti(baslangic, bitis, sirketId);
+            String[] kolonlar = {m.t("ayKalem"), m.t("tutar")};
+            List<String[]> satirlar = new java.util.ArrayList<>();
+            if (ozet.getAylikDagilim() != null) {
+                for (Map<String, Object> mm : ozet.getAylikDagilim()) {
+                    satirlar.add(new String[]{String.valueOf(mm.get("ay")), cevirObj(mm.get("net"))});
+                }
             }
+            satirlar.add(new String[]{m.t("toplamGelir"), cevirStr(ozet.getToplamGelir())});
+            satirlar.add(new String[]{m.t("toplamGider"), cevirStr(ozet.getToplamGider())});
+            satirlar.add(new String[]{m.t("netKarZarar"), cevirStr(ozet.getNetKarZarar())});
+            byte[] pdf = pdfRaporService.tabloRaporu(
+                    m.t("gelirGiderRaporu") + " (" + baslangic + " - " + bitis + ")" + paraBirimiSonek(), kolonlar, satirlar);
+            return pdfResponse("gelir-gider.pdf", pdf);
+        } finally {
+            dovizCevirici.temizle();
         }
-        satirlar.add(new String[]{"Toplam Gelir", ozet.getToplamGelir() != null ? ozet.getToplamGelir().toPlainString() : "0"});
-        satirlar.add(new String[]{"Toplam Gider", ozet.getToplamGider() != null ? ozet.getToplamGider().toPlainString() : "0"});
-        satirlar.add(new String[]{"Net Kar/Zarar", ozet.getNetKarZarar() != null ? ozet.getNetKarZarar().toPlainString() : "0"});
-        byte[] pdf = pdfRaporService.tabloRaporu("GELIR/GIDER RAPORU (" + baslangic + " - " + bitis + ")", kolonlar, satirlar);
-        return pdfResponse("gelir-gider.pdf", pdf);
     }
 
     @GetMapping("/cari-karlilik/pdf")
     @Operation(summary = "Cari karlilik PDF", description = "Cari karlilik raporunu PDF olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'RAPOR_EXPORT')")
     public ResponseEntity<byte[]> cariKarlilikPdf(
             HttpServletRequest request,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis,
+            @RequestParam(required = false) String doviz) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        RaporDTO.CariKarlilikDTO rapor = raporService.cariKarlilikRaporu(baslangic, bitis, sirketId);
-        String[] kolonlar = {"Cari", "Satış", "Maliyet", "Kâr", "Marj %", "Fatura"};
-        List<String[]> satirlar = new java.util.ArrayList<>();
-        if (rapor.getSatirlar() != null) {
-            for (RaporDTO.CariKarlilikSatiriDTO s : rapor.getSatirlar()) {
-                satirlar.add(new String[]{
-                        s.getCariAd(),
-                        s.getToplamSatis() != null ? s.getToplamSatis().toPlainString() : "0",
-                        s.getToplamMaliyet() != null ? s.getToplamMaliyet().toPlainString() : "0",
-                        s.getKar() != null ? s.getKar().toPlainString() : "0",
-                        s.getKarMarji() != null ? s.getKarMarji().toPlainString() : "-",
-                        String.valueOf(s.getFaturaSayisi())
-                });
+        dovizCevirici.basla(doviz);
+        try {
+            var m = metin(request);
+            RaporDTO.CariKarlilikDTO rapor = raporService.cariKarlilikRaporu(baslangic, bitis, sirketId);
+            String[] kolonlar = {m.t("cari"), m.t("satis"), m.t("maliyet"), m.t("kar"), m.t("marjYuzdesi"), m.t("fatura")};
+            List<String[]> satirlar = new java.util.ArrayList<>();
+            if (rapor.getSatirlar() != null) {
+                for (RaporDTO.CariKarlilikSatiriDTO s : rapor.getSatirlar()) {
+                    satirlar.add(new String[]{
+                            s.getCariAd(),
+                            cevirStr(s.getToplamSatis()),
+                            cevirStr(s.getToplamMaliyet()),
+                            cevirStr(s.getKar()),
+                            s.getKarMarji() != null ? s.getKarMarji().toPlainString() : "-",
+                            String.valueOf(s.getFaturaSayisi())
+                    });
+                }
             }
+            satirlar.add(new String[]{
+                    m.t("toplam"),
+                    cevirStr(rapor.getToplamSatis()),
+                    cevirStr(rapor.getToplamMaliyet()),
+                    cevirStr(rapor.getToplamKar()),
+                    "", ""
+            });
+            byte[] pdf = pdfRaporService.tabloRaporu(
+                    m.t("cariKarlilikRaporu") + " (" + baslangic + " - " + bitis + ")" + paraBirimiSonek(), kolonlar, satirlar);
+            return pdfResponse("cari-karlilik.pdf", pdf);
+        } finally {
+            dovizCevirici.temizle();
         }
-        satirlar.add(new String[]{
-                "TOPLAM",
-                rapor.getToplamSatis() != null ? rapor.getToplamSatis().toPlainString() : "0",
-                rapor.getToplamMaliyet() != null ? rapor.getToplamMaliyet().toPlainString() : "0",
-                rapor.getToplamKar() != null ? rapor.getToplamKar().toPlainString() : "0",
-                "", ""
-        });
-        byte[] pdf = pdfRaporService.tabloRaporu("CARI KARLILIK RAPORU (" + baslangic + " - " + bitis + ")", kolonlar, satirlar);
-        return pdfResponse("cari-karlilik.pdf", pdf);
     }
 
     private static final String[] FG_KOLONLAR = {
@@ -445,6 +526,7 @@ public class RaporController {
 
     @GetMapping("/fatura-gecmis/pdf")
     @Operation(summary = "Fatura geçmişi PDF")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FATURA_EXPORT')")
     public ResponseEntity<byte[]> faturaGecmisPdf(
             HttpServletRequest request,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
@@ -463,6 +545,7 @@ public class RaporController {
 
     @GetMapping("/fatura-gecmis/excel")
     @Operation(summary = "Fatura geçmişi Excel")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FATURA_EXPORT')")
     public ResponseEntity<byte[]> faturaGecmisExcel(
             HttpServletRequest request,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,

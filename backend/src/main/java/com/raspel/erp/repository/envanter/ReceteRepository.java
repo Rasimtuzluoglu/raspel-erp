@@ -11,4 +11,10 @@ import java.util.Optional;
 public interface ReceteRepository extends JpaRepository<Recete, Long> {
     List<Recete> findBySirketIdOrderByAd(Long sirketId);
     Optional<Recete> findFirstBySirketIdAndUrunId(Long sirketId, Long urunId);
+
+    /**
+     * Üretimde kullanılacak AKTİF reçeteyi en yüksek revizyonla seçer.
+     * Önceki `findFirstBySirketIdAndUrunId` pasif/eski revizyonu seçebiliyordu.
+     */
+    Optional<Recete> findFirstBySirketIdAndUrunIdAndAktifTrueOrderByRevizyonDesc(Long sirketId, Long urunId);
 }

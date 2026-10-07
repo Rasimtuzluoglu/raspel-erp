@@ -153,19 +153,20 @@ public class StokService {
      */
     @Transactional(readOnly = true)
     public Page<StokDTO> filtreli(Long sirketId, String q, String kategori, String marka,
-                                  String stokGrubu, BigDecimal minFiyat, BigDecimal maxFiyat, Long depoId, Pageable pageable) {
+                                  String stokGrubu, BigDecimal minFiyat, BigDecimal maxFiyat, Long depoId,
+                                  Boolean sadeceStokta, Pageable pageable) {
         Page<Stok> page = stokRepository.filtreli(sirketId, likeDeseni(q), esitMiDeseni(kategori),
-                likeDeseni(marka), esitMiDeseni(stokGrubu), minFiyat, maxFiyat, depoId, pageable);
+                likeDeseni(marka), esitMiDeseni(stokGrubu), minFiyat, maxFiyat, depoId, sadeceStokta, pageable);
         Map<Long, String> tedarikciAdlari = tedarikciAdlari(page.getContent());
         Map<Long, List<StokFiyatDTO>> fiyatlar = fiyatHaritasi(page.getContent());
         return page.map(s -> entityToDTO(s, tedarikciAdlari, fiyatlar));
     }
 
     /**
-     * Kategori ve üretim tipi dağılımı (değer + ürün sayısı), tüm katalogdan.
-     * Liste ekranındaki grup çipleri ve toplu fiyat seçenekleri bu veriyi
-     * kullanır; önceden sayfa satırlarından hesaplandığı için hem eksik hem
-     * yanlış bilgi gösteriyordu.
+     * Kategori, üretim tipi ve marka dağılımı (değer + ürün sayısı), tüm
+     * katalogdan. Liste ekranındaki grup çipleri ve POS filtre seçenekleri bu
+     * veriyi kullanır; önceden sayfa satırlarından hesaplandığı için hem eksik
+     * hem yanlış bilgi gösteriyordu.
      */
     @Transactional(readOnly = true)
     public Map<String, Object> gruplamaDagilimi(Long sirketId) {
@@ -173,10 +174,12 @@ public class StokService {
         if (sirketId == null) {
             sonuc.put("kategoriler", List.of());
             sonuc.put("stokGruplari", List.of());
+            sonuc.put("markalar", List.of());
             return sonuc;
         }
         sonuc.put("kategoriler", dagilimHaritasi(stokRepository.kategoriDagilimi(sirketId)));
         sonuc.put("stokGruplari", dagilimHaritasi(stokRepository.stokGrubuDagilimi(sirketId)));
+        sonuc.put("markalar", dagilimHaritasi(stokRepository.markaDagilimi(sirketId)));
         return sonuc;
     }
 

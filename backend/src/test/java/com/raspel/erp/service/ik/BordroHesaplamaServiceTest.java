@@ -14,10 +14,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -101,5 +105,55 @@ class BordroHesaplamaServiceTest {
         // Asgari ücret istisnası da kümülatif dilimde: (158.000-150.000)x15% + 9.000x20% = 3.000
         // Ödenecek GV: 3.510 - 3.000 = 510.
         assertEquals(0, sonuc.getGelirVergisi().compareTo(new BigDecimal("510.00")));
+    }
+
+    @Test
+    void hesapla_kumulatifVerilmezseOncekiAylardanToplar() {
+        when(bordroAyarRepository.findBySirketIdAndYil(1L, 2026)).thenReturn(Optional.of(ayar()));
+        when(personelRepository.findById(5L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.ik.Personel.builder().id(5L).sirketId(1L).ad("A").soyad("B").build()));
+        when(maasBordroRepository.kumulatifMatrah(1L, 5L, 2026, 8)).thenReturn(new BigDecimal("100000"));
+
+        var sonuc = servis.hesapla(BordroHesaplamaDTO.builder()
+                .personelId(5L).yil(2026).ay(8).brutMaas(new BigDecimal("43000")).build(), 1L);
+
+        assertEquals(0, sonuc.getKumulatifMatrah().compareTo(new BigDecimal("100000")));
+        verify(maasBordroRepository).kumulatifMatrah(1L, 5L, 2026, 8);
+    }
+
+    @Test
+    void topluUret_kumulatifMatrahiKullanirVeKaydeder() {
+        when(bordroAyarRepository.findBySirketIdAndYil(1L, 2026)).thenReturn(Optional.of(ayar()));
+        var p = com.raspel.erp.entity.ik.Personel.builder()
+                .id(5L).sirketId(1L).ad("A").soyad("B").maas(new BigDecimal("43000")).build();
+        when(personelRepository.findBySirketIdAndAktifTrue(1L)).thenReturn(List.of(p));
+        when(maasBordroRepository.existsBySirketIdAndYilAndAyAndPersonelId(1L, 2026, 8, 5L)).thenReturn(false);
+        when(maasBordroRepository.kumulatifMatrah(1L, 5L, 2026, 8)).thenReturn(new BigDecimal("150000"));
+        when(maasBordroRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        var sonuc = servis.topluUret(1L, 2026, 8);
+
+        assertEquals(1, sonuc.get("uretilen"));
+        verify(maasBordroRepository).kumulatifMatrah(1L, 5L, 2026, 8);
+    }
+
+    @Test
+    void topluOnizleme_durumlariBelirler() {
+        when(bordroAyarRepository.findBySirketIdAndYil(1L, 2026)).thenReturn(Optional.of(ayar()));
+        var p1 = com.raspel.erp.entity.ik.Personel.builder().id(5L).sirketId(1L).ad("A").soyad("B").maas(new BigDecimal("43000")).build();
+        var p2 = com.raspel.erp.entity.ik.Personel.builder().id(6L).sirketId(1L).ad("C").soyad("D").maas(BigDecimal.ZERO).build();
+        var p3 = com.raspel.erp.entity.ik.Personel.builder().id(7L).sirketId(1L).ad("E").soyad("F").maas(new BigDecimal("50000")).build();
+        when(personelRepository.findBySirketIdAndAktifTrue(1L)).thenReturn(List.of(p1, p2, p3));
+        when(maasBordroRepository.existsBySirketIdAndYilAndAyAndPersonelId(eq(1L), eq(2026), eq(8), anyLong()))
+                .thenAnswer(inv -> Long.valueOf(7L).equals(inv.getArgument(3)));
+        when(maasBordroRepository.kumulatifMatrah(eq(1L), anyLong(), eq(2026), eq(8))).thenReturn(BigDecimal.ZERO);
+
+        var sonuc = servis.topluOnizleme(1L, 2026, 8);
+
+        assertEquals(3, sonuc.size());
+        assertEquals("UYGUN", sonuc.get(0).getDurum());
+        assertEquals("MAAS_YOK", sonuc.get(1).getDurum());
+        assertEquals("ZATEN_VAR", sonuc.get(2).getDurum());
+        assertNotNull(sonuc.get(0).getNetMaas());
     }
 }

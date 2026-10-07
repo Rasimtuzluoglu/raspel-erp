@@ -9,4 +9,6 @@ import lombok.*;
 public class SohbetOdaUyeDTO {
     private Long kullaniciId;
     private String kullaniciAd;
+    /** Faz 3.2: OWNER / ADMIN / MEMBER. */
+    private String rol;
 }

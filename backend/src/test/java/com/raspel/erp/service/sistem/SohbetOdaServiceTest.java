@@ -57,6 +57,47 @@ class SohbetOdaServiceTest {
     }
 
     @Test
+    void olustur_kurucuOwnerRoluyleUyeOlur() {
+        when(odaRepository.save(any(SohbetOda.class))).thenAnswer(inv -> {
+            SohbetOda o = inv.getArgument(0);
+            o.setId(1L);
+            return o;
+        });
+        odaService.olustur(SohbetOdaDTO.builder().ad("Satış Ekibi").build(), 1L, 10L);
+
+        verify(uyeRepository).save(argThat(u -> "OWNER".equals(u.getRol())
+                && u.getKullaniciId().equals(10L)));
+    }
+
+    @Test
+    void uyeEkle_uyeAmaYoneticiDegilseReddedilir() {
+        // Faz 3.2: sıradan MEMBER üye ekleyemez.
+        SohbetOda oda = SohbetOda.builder().id(1L).sirketId(1L).olusturanKullaniciId(10L).build();
+        when(odaRepository.findById(1L)).thenReturn(Optional.of(oda));
+        when(kullaniciRepository.findById(99L)).thenReturn(Optional.of(Kullanici.builder().id(99L).role("USER").build()));
+        when(uyeRepository.findByOdaIdAndKullaniciId(1L, 99L))
+                .thenReturn(Optional.of(SohbetOdaUye.builder().odaId(1L).kullaniciId(99L).rol("MEMBER").build()));
+
+        assertThrows(BusinessException.class,
+                () -> odaService.uyeEkle(1L, 5L, 1L, 99L));
+        verify(uyeRepository, never()).save(any(SohbetOdaUye.class));
+    }
+
+    @Test
+    void uyeEkle_ownerIseEkler() {
+        SohbetOda oda = SohbetOda.builder().id(1L).sirketId(1L).olusturanKullaniciId(10L).build();
+        when(odaRepository.findById(1L)).thenReturn(Optional.of(oda));
+        when(kullaniciRepository.findById(99L)).thenReturn(Optional.of(Kullanici.builder().id(99L).role("USER").build()));
+        when(uyeRepository.findByOdaIdAndKullaniciId(1L, 99L))
+                .thenReturn(Optional.of(SohbetOdaUye.builder().odaId(1L).kullaniciId(99L).rol("OWNER").build()));
+        when(uyeRepository.existsByOdaIdAndKullaniciId(1L, 5L)).thenReturn(false);
+
+        odaService.uyeEkle(1L, 5L, 1L, 99L);
+
+        verify(uyeRepository).save(argThat(u -> u.getKullaniciId().equals(5L) && "MEMBER".equals(u.getRol())));
+    }
+
+    @Test
     void mesajGonder_uyeDegilseHataVerir() {
         when(odaRepository.findById(1L)).thenReturn(Optional.of(SohbetOda.builder().id(1L).sirketId(1L).build()));
         when(kullaniciRepository.findById(99L)).thenReturn(Optional.of(Kullanici.builder().id(99L).role("USER").build()));
@@ -83,6 +124,39 @@ class SohbetOdaServiceTest {
 
         assertEquals("merhaba", sonuc.getMesaj());
         assertEquals(1L, sonuc.getOdaId());
+    }
+
+    @Test
+    void mesajlar_cursorIleEskiMesajlariDoner() {
+        // Faz 3.3: cursor verilince eski mesajlar artan sırada döner.
+        when(odaRepository.findById(1L)).thenReturn(Optional.of(SohbetOda.builder().id(1L).sirketId(1L).build()));
+        when(uyeRepository.existsByOdaIdAndKullaniciId(1L, 99L)).thenReturn(true);
+        when(kullaniciRepository.findById(99L)).thenReturn(Optional.of(Kullanici.builder().id(99L).role("USER").build()));
+        when(mesajRepository.findByOdaIdAndIdLessThanOrderByIdDesc(eq(1L), eq(5L), any()))
+                .thenReturn(new java.util.ArrayList<>(java.util.List.of(
+                        SohbetMesaj.builder().id(4L).odaId(1L).mesaj("d").build(),
+                        SohbetMesaj.builder().id(3L).odaId(1L).mesaj("c").build())));
+
+        var sonuc = odaService.mesajlar(1L, 1L, 99L, 5L, 2);
+
+        assertEquals(2, sonuc.size());
+        assertEquals(3L, sonuc.get(0).getId());
+        assertEquals(4L, sonuc.get(1).getId());
+    }
+
+    @Test
+    void mesajlar_cursorYoksaEnYenileriDoner() {
+        when(odaRepository.findById(1L)).thenReturn(Optional.of(SohbetOda.builder().id(1L).sirketId(1L).build()));
+        when(uyeRepository.existsByOdaIdAndKullaniciId(1L, 99L)).thenReturn(true);
+        when(kullaniciRepository.findById(99L)).thenReturn(Optional.of(Kullanici.builder().id(99L).role("USER").build()));
+        when(mesajRepository.findByOdaIdOrderByIdDesc(eq(1L), any()))
+                .thenReturn(new java.util.ArrayList<>(java.util.List.of(
+                        SohbetMesaj.builder().id(9L).odaId(1L).mesaj("yeni").build())));
+
+        var sonuc = odaService.mesajlar(1L, 1L, 99L, null, null);
+
+        assertEquals(1, sonuc.size());
+        assertEquals(9L, sonuc.get(0).getId());
     }
 
     @Test

@@ -56,6 +56,9 @@ class RaporControllerTest {
     @MockBean
     private com.raspel.erp.service.sistem.Gorunum360Service gorunum360Service;
 
+    @MockBean
+    private com.raspel.erp.service.finans.DovizCevirici dovizCevirici;
+
     @Test
     void shouldGetCariEkstre() throws Exception {
         var dto = RaporDTO.CariEkstreDTO.builder().cariAd("ABC Müşteri").donemBasBakiye(BigDecimal.ZERO).donemSonBakiye(BigDecimal.valueOf(5000)).build();
@@ -161,6 +164,21 @@ class RaporControllerTest {
         mockMvc.perform(get("/api/raporlar/yaslandirma/pdf").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", containsString("yaslandirma-2026-03-15.pdf")));
+    }
+
+    @Test
+    void shouldApplyDovizParamForPdf() throws Exception {
+        var rapor = RaporDTO.YaslandirmaRaporDTO.builder()
+                .satirlar(List.of()).referansTarih(java.time.LocalDate.of(2026, 3, 15))
+                .ozet(RaporDTO.YaslandirmaOzetDTO.builder().build()).build();
+        when(raporService.yaslandirmaRaporu(any(), any())).thenReturn(rapor);
+        when(pdfRaporService.tabloRaporu(anyString(), any(), any())).thenReturn(new byte[]{1});
+
+        mockMvc.perform(get("/api/raporlar/yaslandirma/pdf").param("doviz", "USD").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk());
+
+        verify(dovizCevirici).basla("USD");
+        verify(dovizCevirici).temizle();
     }
 
     @Test

@@ -85,7 +85,7 @@ public class TaksitController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<TaksitDTO> ode(
             @PathVariable Long id,
-            @RequestBody(required = false) TaksitOdeDTO dto,
+            @jakarta.validation.Valid @RequestBody(required = false) TaksitOdeDTO dto,
             HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(taksitService.ode(id, dto, sirketId));

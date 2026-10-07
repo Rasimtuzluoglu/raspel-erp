@@ -68,9 +68,82 @@ class HareketServiceTest {
     @Test
     void cariHesapHareketleriGetir_returnsHareketler() {
         when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(createCariHesap()));
-        when(hareketRepository.findByCariHesapIdOrderByHareketTarihiDesc(1L)).thenReturn(List.of(createHareket(1L)));
+        when(hareketRepository.findByCariHesapId(eq(1L), any(Pageable.class)))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(createHareket(1L))));
         var result = hareketService.cariHesapHareketleriGetir(1L);
         assertEquals(1, result.size());
+    }
+
+    @Test
+    void hareketIptal_bakiyeyiTerslerVeKaydeder() {
+        Hareket h = createHareket(1L);
+        h.getCariHesap().setId(7L);
+        when(hareketRepository.findById(1L)).thenReturn(Optional.of(h));
+        when(hareketRepository.save(any(Hareket.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var sonuc = hareketService.hareketIptal(1L);
+
+        assertTrue(h.getIptal());
+        assertNotNull(h.getIptalTarihi());
+        assertEquals("TAHSILAT", sonuc.getTur());
+        // TAHSILAT iptalinde bakiye -tutar kadar geri alınır.
+        verify(cariHesapService).bakiyeGuncelle(eq(7L), eq(BigDecimal.valueOf(-500)));
+        verify(hareketRepository).save(h);
+    }
+
+    @Test
+    void hareketIptal_zatenIptalIseReddeder() {
+        Hareket h = createHareket(1L);
+        h.setIptal(true);
+        when(hareketRepository.findById(1L)).thenReturn(Optional.of(h));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> hareketService.hareketIptal(1L));
+        verify(hareketRepository, never()).save(any(Hareket.class));
+    }
+
+    @Test
+    void acilisKaydet_pozitifTutarBorcOlarakIslenir() {
+        Hareket h = createHareket(1L);
+        h.getCariHesap().setId(7L);
+        when(cariHesapRepository.findById(7L)).thenReturn(Optional.of(h.getCariHesap()));
+        when(hareketRepository.save(any(Hareket.class))).thenAnswer(inv -> {
+            Hareket x = inv.getArgument(0);
+            if (x.getId() == null) x.setId(50L);
+            return x;
+        });
+        when(hareketRepository.findById(50L)).thenReturn(Optional.of(h));
+
+        var dto = hareketService.acilisKaydet(7L, BigDecimal.valueOf(1000), LocalDate.now(), "Devir", 1L);
+
+        assertEquals("BORC", dto.getTur());
+        assertTrue(Boolean.TRUE.equals(dto.getAcilis()));
+        // BORC: bakiye -tutar (cari bize borçlu).
+        verify(cariHesapService).bakiyeGuncelle(eq(7L), eq(BigDecimal.valueOf(-1000)));
+    }
+
+    @Test
+    void acilisKaydet_negatifTutarTahsilatOlarakIslenir() {
+        Hareket h = createHareket(1L);
+        h.getCariHesap().setId(7L);
+        when(cariHesapRepository.findById(7L)).thenReturn(Optional.of(h.getCariHesap()));
+        when(hareketRepository.save(any(Hareket.class))).thenAnswer(inv -> {
+            Hareket x = inv.getArgument(0);
+            if (x.getId() == null) x.setId(51L);
+            return x;
+        });
+        when(hareketRepository.findById(51L)).thenReturn(Optional.of(h));
+
+        var dto = hareketService.acilisKaydet(7L, BigDecimal.valueOf(-500), LocalDate.now(), null, 1L);
+
+        assertEquals("TAHSILAT", dto.getTur());
+        verify(cariHesapService).bakiyeGuncelle(eq(7L), eq(BigDecimal.valueOf(500)));
+    }
+
+    @Test
+    void acilisKaydet_sifirTutarReddedilir() {
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> hareketService.acilisKaydet(7L, BigDecimal.ZERO, LocalDate.now(), null, 1L));
     }
 
     @Test

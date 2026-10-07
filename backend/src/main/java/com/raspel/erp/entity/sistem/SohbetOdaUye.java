@@ -26,6 +26,11 @@ public class SohbetOdaUye {
     @Column(name = "kullanici_id", nullable = false)
     private Long kullaniciId;
 
+    /** Faz 3.2: oda üyelik rolü (OWNER/ADMIN/MEMBER). */
+    @Column(length = 20)
+    @Builder.Default
+    private String rol = "MEMBER";
+
     @Column(name = "son_okuma")
     private Instant sonOkuma;
 

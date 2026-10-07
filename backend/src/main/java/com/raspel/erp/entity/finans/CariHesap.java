@@ -68,6 +68,10 @@ public class CariHesap {
     @Column(length = 1000)
     private String notlar;
 
+    /** Virgülle ayrık etiketler (ör. "vip, bayilik"). Faz 2.4. */
+    @Column(name = "etiketler", length = 500)
+    private String etiketler;
+
     @Column(name = "foto_url", length = 500)
     private String fotoUrl;
 
@@ -78,6 +82,11 @@ public class CariHesap {
     @Column(nullable = false)
     private Boolean aktif;
 
+    /** Cari çalışma para birimi (TRY/USD/EUR/GBP). Faz 2.9. */
+    @Column(name = "para_birimi", length = 3)
+    @Builder.Default
+    private String paraBirimi = "TRY";
+
     /** Kredi limiti (TL) */
     @Column(name = "kredi_limiti", precision = 19, scale = 2)
     private BigDecimal krediLimiti;
@@ -86,7 +95,7 @@ public class CariHesap {
     @Column(name = "odeme_vadesi")
     private Integer odemeVadesi;
 
-    /** Cari hesabın bakiyesi (Alacak pozitif, Borç negatif) */
+    /** Cari hesabın bakiyesi (negatif = cari bize borçlu, pozitif = biz cariye borçluyuz) */
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal bakiye;
 

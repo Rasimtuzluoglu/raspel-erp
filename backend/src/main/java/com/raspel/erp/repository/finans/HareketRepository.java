@@ -26,14 +26,14 @@ public interface HareketRepository extends JpaRepository<Hareket, Long> {
     @Query(value = "SELECT TO_CHAR(h.hareket_tarihi, 'YYYY-MM') AS ay, " +
            "COALESCE(SUM(CASE WHEN h.tur = 'TAHSILAT' THEN h.tutar ELSE 0 END), 0) AS gelir, " +
            "COALESCE(SUM(CASE WHEN h.tur = 'ODEME' THEN h.tutar ELSE 0 END), 0) AS gider " +
-           "FROM cari.hareket h WHERE h.hareket_tarihi >= :baslangic AND h.sirket_id = :sirketId " +
+           "FROM cari.hareket h WHERE h.hareket_tarihi >= :baslangic AND h.sirket_id = :sirketId AND h.iptal = false " +
            "GROUP BY ay ORDER BY ay", nativeQuery = true)
     List<Object[]> aylikGelirGider(@Param("baslangic") LocalDate baslangic, @Param("sirketId") Long sirketId);
 
     @Query(value = "SELECT TO_CHAR(h.hareket_tarihi, 'YYYY-MM-DD') AS gun, " +
            "COALESCE(SUM(CASE WHEN h.tur = 'TAHSILAT' THEN h.tutar ELSE 0 END), 0) AS gelir, " +
            "COALESCE(SUM(CASE WHEN h.tur = 'ODEME' THEN h.tutar ELSE 0 END), 0) AS gider " +
-           "FROM cari.hareket h WHERE h.hareket_tarihi >= :baslangic AND h.sirket_id = :sirketId " +
+           "FROM cari.hareket h WHERE h.hareket_tarihi >= :baslangic AND h.sirket_id = :sirketId AND h.iptal = false " +
            "GROUP BY gun ORDER BY gun", nativeQuery = true)
     List<Object[]> gunlukNakitAkisi(@Param("baslangic") LocalDate baslangic, @Param("sirketId") Long sirketId);
 
@@ -42,6 +42,13 @@ public interface HareketRepository extends JpaRepository<Hareket, Long> {
 
     @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findByCariHesapIdOrderByHareketTarihiDesc(Long cariHesapId);
+
+    /**
+     * Faz 1.3: Tenant filtreli cari hareketleri (defense-in-depth). Çağıran sirketId
+     * verir; sorgu katmanında da izolasyon sağlanır.
+     */
+    @EntityGraph(attributePaths = {"cariHesap"})
+    List<Hareket> findBySirketIdAndCariHesapIdOrderByHareketTarihiDesc(Long sirketId, Long cariHesapId);
 
     @EntityGraph(attributePaths = {"cariHesap"})
     Page<Hareket> findByCariHesapId(Long cariHesapId, Pageable pageable);

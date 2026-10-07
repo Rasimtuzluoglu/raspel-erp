@@ -38,6 +38,16 @@ public class LoginRateLimitFilter implements Filter {
 
     private final StringRedisTemplate redisTemplate;
 
+    /**
+     * Faz 0.3: X-Forwarded-For yalnizca bu listedeki proxy IP'lerinden gelirse
+     * dikkate alinir. Bos ise geriye donuk uyumlu varsayilan (loopback + ozel ag)
+     * kullanilir. Ornek: "127.0.0.1,172.18.0.0/16".
+     */
+    @org.springframework.beans.factory.annotation.Value("${app.security.trusted-proxies:}")
+    private String trustedProxiesConfig;
+
+    private volatile java.util.Set<String> trustedProxyCache;
+
     public LoginRateLimitFilter(ObjectProvider<StringRedisTemplate> redisProvider) {
         this.redisTemplate = redisProvider.getIfAvailable();
     }
@@ -183,15 +193,50 @@ public class LoginRateLimitFilter implements Filter {
     private String getClientIp(HttpServletRequest req) {
         String xForwardedFor = req.getHeader("X-Forwarded-For");
         String remoteAddr = req.getRemoteAddr();
-        // X-Forwarded-For yalnızca güvenilir proxy'den (özel/loopback ağ) geldiğinde kullanılır.
+        // X-Forwarded-For yalnızca güvenilir proxy'den geldiğinde kullanılır.
         if (xForwardedFor != null && !xForwardedFor.isBlank() && guvenilirProxyMu(remoteAddr)) {
-            return xForwardedFor.split(",")[0].trim();
+            // Güvenilir proxy, gerçek istemci adresini zincirin SONUNA ekler;
+            // istemcinin gönderdiği (sahte) değerler baştadır. Bu yüzden İLK değil
+            // SON geçerli değeri alırız (spoofing ile rate-limit baypasını engeller).
+            String[] parcalar = xForwardedFor.split(",");
+            for (int i = parcalar.length - 1; i >= 0; i--) {
+                String aday = parcalar[i].trim();
+                if (!aday.isEmpty()) return aday;
+            }
         }
         return remoteAddr;
     }
 
+    private java.util.Set<String> trustedProxies() {
+        java.util.Set<String> mevcut = trustedProxyCache;
+        if (mevcut != null) return mevcut;
+        java.util.Set<String> set = new java.util.HashSet<>();
+        if (trustedProxiesConfig != null) {
+            for (String p : trustedProxiesConfig.split(",")) {
+                String t = p.trim();
+                if (!t.isEmpty()) set.add(t);
+            }
+        }
+        trustedProxyCache = set;
+        return set;
+    }
+
     private boolean guvenilirProxyMu(String addr) {
         if (addr == null) return false;
+        java.util.Set<String> configured = trustedProxies();
+        if (!configured.isEmpty()) {
+            // Yapılandırılmış liste: yalnızca tam IP veya basit önek (CIDR) eşleşmesi.
+            for (String t : configured) {
+                if (t.equals(addr)) return true;
+                if (t.contains("/")) {
+                    if (cidrIcerir(t, addr)) return true;
+                } else if (t.endsWith(".") && addr.startsWith(t)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        // Config verilmemisse geriye dönük uyumlu varsayılan (loopback + özel ağ).
         if (addr.equals("127.0.0.1") || addr.equals("::1") || addr.equals("0:0:0:0:0:0:0:1")) return true;
         if (addr.startsWith("10.")) return true;
         if (addr.startsWith("192.168.")) return true;
@@ -204,6 +249,27 @@ public class LoginRateLimitFilter implements Filter {
             }
         }
         return false;
+    }
+
+    /** Basit IPv4 CIDR kontrolü (yalnızca /0../32). Hatalı girdide false döner. */
+    private boolean cidrIcerir(String cidr, String addr) {
+        try {
+            String[] parca = cidr.split("/");
+            String[] agParcalari = parca[0].split("\\.");
+            String[] adresParcalari = addr.split("\\.");
+            if (agParcalari.length != 4 || adresParcalari.length != 4) return false;
+            int prefix = Integer.parseInt(parca[1]);
+            if (prefix < 0 || prefix > 32) return false;
+            long ag = 0, adres = 0;
+            for (int i = 0; i < 4; i++) {
+                ag = (ag << 8) | (Integer.parseInt(agParcalari[i]) & 0xFF);
+                adres = (adres << 8) | (Integer.parseInt(adresParcalari[i]) & 0xFF);
+            }
+            long maske = prefix == 0 ? 0 : (0xFFFFFFFFL << (32 - prefix)) & 0xFFFFFFFFL;
+            return (ag & maske) == (adres & maske);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /** Süresi dolmuş in-memory kayıtları temizler. */

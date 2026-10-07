@@ -9,6 +9,20 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @Component
 public class TenantChecker {
 
+    /**
+     * O an bir HTTP istek bağlamı olup olmadığını döndürür. Zamanlanmış işler
+     * (ShedLock) ve unit testler request bağlamı olmadan çalışır; bu ayrım
+     * fail-closed davranışın iç çağrıları kırmaması için gereklidir.
+     */
+    public boolean hasRequestContext() {
+        try {
+            RequestContextHolder.currentRequestAttributes();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public Long getCurrentSirketId() {
         try {
             HttpServletRequest req = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
@@ -44,13 +58,15 @@ public class TenantChecker {
     }
 
     public void check(Long entitySirketId, String entityName) {
-        Long currentSirketId = getCurrentSirketId();
-        if (currentSirketId == null) {
-            // Request context yoksa (test / dahili cagri) dogrulama yapilamaz.
+        // Request baglami yoksa (zamanlanmis is / unit test) tenant dogrulamasi
+        // yapilamaz; bu durumda ic cagri oldugu icin izin verilir.
+        if (!hasRequestContext()) {
             return;
         }
-        // Fail-closed: tenant bilgisi olmayan kayitlar da erisilemez.
-        if (entitySirketId == null || !currentSirketId.equals(entitySirketId)) {
+        Long currentSirketId = getCurrentSirketId();
+        // Fail-closed: HTTP isteginde tenant baglami YOKSA (or. JWT'de sirketId
+        // claim'i yoksa) tenant kontrolu sessizce atlanmaz; erisim reddedilir.
+        if (currentSirketId == null || entitySirketId == null || !currentSirketId.equals(entitySirketId)) {
             throw new ResourceNotFoundException(entityName + " bu sirkete ait degil");
         }
     }

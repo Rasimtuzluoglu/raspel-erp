@@ -154,7 +154,7 @@ public class TeslimatController {
     public ResponseEntity<byte[]> teslimatFisi(@PathVariable Long id, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
-        byte[] pdf = teslimatService.teslimatFisiPdf(id, sirketId, kullaniciId);
+        byte[] pdf = teslimatService.teslimatFisiPdf(id, sirketId, kullaniciId, request.getHeader("Accept-Language"));
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"teslimat-fisi-" + id + ".pdf\"")
                 .contentType(MediaType.APPLICATION_PDF)

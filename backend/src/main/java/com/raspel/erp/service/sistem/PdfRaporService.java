@@ -448,7 +448,6 @@ public class PdfRaporService {
             int adet = kolonlar != null ? kolonlar.length : 0;
             float[] genislikler = new float[adet];
             boolean[] sag = new boolean[adet];
-            for (int i = 0; i < adet; i++) genislikler[i] = PAGE_WIDTH / adet;
             // Bir sutundaki tum degerler sayisal ise saga hizala.
             if (satirlar != null) {
                 for (int c = 0; c < adet; c++) {
@@ -462,6 +461,38 @@ public class PdfRaporService {
                     }
                     sag[c] = dolu && hepsiSayi;
                 }
+            }
+            // Icerik-duyarli kolon genisligi: her kolonun ortalama metin uzunluguna
+            // gore agirlik verilir. ONCEDEN her kolon esit (PAGE_WIDTH/adet) idi;
+            // 10 kolonlu raporlarda ~50pt'ye dusup karakter karakter kiriliyordu.
+            float[] agirlik = new float[adet];
+            for (int c = 0; c < adet; c++) {
+                double toplam = 0;
+                int sayi = 0;
+                if (satirlar != null) {
+                    for (String[] s : satirlar) {
+                        if (s != null && c < s.length && s[c] != null && !s[c].isBlank()) {
+                            toplam += s[c].length();
+                            sayi++;
+                        }
+                    }
+                }
+                double ort = sayi > 0 ? toplam / sayi : 8;
+                if (kolonlar[c] != null) ort = Math.max(ort, kolonlar[c].length());
+                agirlik[c] = (float) Math.max(6.0, Math.min(ort, 48.0));
+            }
+            float toplamAgirlik = 0f;
+            for (float a : agirlik) toplamAgirlik += a;
+            if (toplamAgirlik <= 0) toplamAgirlik = Math.max(1, adet);
+            float minG = Math.min(60f, PAGE_WIDTH / Math.max(1, adet));
+            float dagitilan = 0f;
+            for (int i = 0; i < adet; i++) {
+                genislikler[i] = Math.max(minG, PAGE_WIDTH * agirlik[i] / toplamAgirlik);
+                dagitilan += genislikler[i];
+            }
+            if (dagitilan > 0) {
+                float olcek = PAGE_WIDTH / dagitilan;
+                for (int i = 0; i < adet; i++) genislikler[i] *= olcek;
             }
             List<Kolon> kol = new ArrayList<>();
             for (int i = 0; i < adet; i++) kol.add(new Kolon(kolonlar[i], genislikler[i], sag[i]));
@@ -554,7 +585,14 @@ public class PdfRaporService {
             if (satirlar == null || satirlar.isEmpty()) return yy;
             for (String s : satirlar) {
                 for (String p : sar(s, font.regular, 9.5f, genislik)) {
-                    if (yy < ALT_SINIR) break;
+                    if (yy < ALT_SINIR) {
+                        // Sayfa dolduysa yeni sayfa ac; adres gibi uzun metinler
+                        // SESSIZCE kirpilmasin (once `break` ile kesiliyordu).
+                        yeniSayfa();
+                        yy = y;
+                        cs.setFont(font.regular, 9.5f);
+                        cs.setNonStrokingColor(0f, 0f, 0f);
+                    }
                     cs.beginText(); cs.newLineAtOffset(x, yy); cs.showText(p); cs.endText();
                     yy -= 12.5f;
                 }
@@ -844,13 +882,21 @@ public class PdfRaporService {
         return stokEtiketleri(List.of(new EtiketVeri(stok, qrPng, barkodPng, tip)));
     }
 
+    public byte[] stokEtiketi(Stok stok, byte[] qrPng, byte[] barkodPng, String tip, PdfMetin m) {
+        return stokEtiketleri(List.of(new EtiketVeri(stok, qrPng, barkodPng, tip)), m);
+    }
+
     public record EtiketVeri(Stok stok, byte[] qrPng, byte[] barkodPng, String tip) {}
 
     public byte[] stokEtiketleri(List<EtiketVeri> etiketler) {
+        return stokEtiketleri(etiketler, PdfMetin.tr());
+    }
+
+    public byte[] stokEtiketleri(List<EtiketVeri> etiketler, PdfMetin m) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); PDDocument doc = new PDDocument()) {
             FontSet font = fontlar(doc);
             for (EtiketVeri v : etiketler) {
-                etiketSayfasi(doc, v, font);
+                etiketSayfasi(doc, v, font, m);
             }
             doc.save(baos);
             return baos.toByteArray();
@@ -859,7 +905,7 @@ public class PdfRaporService {
         }
     }
 
-    private void etiketSayfasi(PDDocument doc, EtiketVeri v, FontSet font) throws IOException {
+    private void etiketSayfasi(PDDocument doc, EtiketVeri v, FontSet font, PdfMetin m) throws IOException {
         Stok stok = v.stok();
         boolean barkodGoster = v.barkodPng() != null && v.barkodPng().length > 0 && !"QR".equalsIgnoreCase(v.tip());
         boolean qrGoster = v.qrPng() != null && v.qrPng().length > 0 && !"BARKOD".equalsIgnoreCase(v.tip());
@@ -868,7 +914,7 @@ public class PdfRaporService {
         try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
             float y = PDRectangle.A4.getHeight() - MARGIN;
             cs.setFont(font.bold, 16f);
-            cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("RAF ETİKETİ"); cs.endText();
+            cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText(m.t("rafEtiketi")); cs.endText();
             y -= 16f;
             cs.setLineWidth(0.5f);
             cs.moveTo(MARGIN, y);
@@ -885,18 +931,22 @@ public class PdfRaporService {
             String raf = stok.getRafNo() != null ? stok.getRafNo() : "-";
 
             cs.setFont(font.bold, 20f);
+            int adSatir = 0;
             for (String p : sar(ad, font.bold, 20f, PAGE_WIDTH)) {
+                // Çok uzun ürün adı etiketi taşırmasın (fiyat/kod alanı aşağı itilmesin).
+                if (adSatir >= 3) break;
                 cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText(p); cs.endText();
                 y -= 24f;
+                adSatir++;
             }
             y -= 6f;
 
             cs.setFont(font.regular, 14f);
-            cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Kod: " + kod); cs.endText();
+            cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText(m.t("kod") + ": " + kod); cs.endText();
             y -= 20f;
-            cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Barkod: " + barkod + (barkodYerineKod ? " (stok kodu)" : "")); cs.endText();
+            cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText(m.t("barkod") + ": " + barkod + (barkodYerineKod ? " " + m.t("stokKoduEk") : "")); cs.endText();
             y -= 20f;
-            cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText("Raf No: " + raf); cs.endText();
+            cs.beginText(); cs.newLineAtOffset(MARGIN, y); cs.showText(m.t("rafNo") + ": " + raf); cs.endText();
             y -= 30f;
 
             // Kod gorselleri (barkod/QR) ayni tabandan cizilir; fiyat hepsinin altina gelir.
@@ -925,7 +975,7 @@ public class PdfRaporService {
                 cs.setFont(font.regular, 9f);
                 cs.beginText();
                 cs.newLineAtOffset(qrX, kodTaban - qrBoyut - 12);
-                cs.showText("Karekod ile tarayıp say");
+                cs.showText(m.t("karekodTarayipSay"));
                 cs.endText();
                 kodAlt = Math.min(kodAlt, kodTaban - qrBoyut - 16);
             }
@@ -933,7 +983,8 @@ public class PdfRaporService {
             // Fiyat: kodun/QR'in altinda, buyuk ve ortali (raf etiketi duzeni).
             java.math.BigDecimal fiyatDeger = stok.getSatisFiyati() != null ? stok.getSatisFiyati() : stok.getFiyat();
             String fiyat = fiyatDeger != null ? para(fiyatDeger, "TL") : "-";
-            y = kodAlt - 34f;
+            // Fiyat satiri sayfa tabaninin altina inmesin (barkod/QR buyukse).
+            y = Math.max(kodAlt - 34f, MARGIN + 6f);
             cs.setFont(font.bold, 24f);
             float fiyatGenislik = metinGenislik(fiyat, font.bold, 24f);
             cs.beginText();
@@ -941,7 +992,7 @@ public class PdfRaporService {
             cs.showText(fiyat);
             cs.endText();
             cs.setFont(font.regular, 9f);
-            cs.beginText(); cs.newLineAtOffset(MARGIN, MARGIN - 18); cs.showText("RasPel ERP - Otomatik Oluşturulmuştur"); cs.endText();
+            cs.beginText(); cs.newLineAtOffset(MARGIN, MARGIN - 18); cs.showText(m.t("otomatikOlusturuldu")); cs.endText();
         }
     }
 

@@ -20,7 +20,7 @@ import org.springframework.data.web.PageableDefault;
 @RestController
 @RequestMapping("/api/maas-bordro")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
 public class MaasBordroController {
 
     private final MaasBordroService maasBordroService;
@@ -59,21 +59,55 @@ public class MaasBordroController {
 
     @PostMapping("/toplu-uret")
     @Operation(summary = "Toplu bordro üret",
-            description = "Aktif personel için verilen ayın TASLAK bordrolarını hesaplayıp üretir; mevcut kayıtlar atlanır")
+            description = "Aktif personel için verilen ayın TASLAK bordrolarını hesaplayıp üretir; mevcut kayıtlar atlanır. personelIds verilirse yalnız seçilenler üretilir")
     @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
     public ResponseEntity<java.util.Map<String, Object>> topluUret(
             HttpServletRequest request,
             @RequestParam Integer yil,
+            @RequestParam Integer ay,
+            @RequestBody(required = false) java.util.List<Long> personelIds) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(bordroHesaplamaService.topluUret(sirketId, yil, ay, personelIds));
+    }
+
+    @GetMapping("/toplu-onizleme")
+    @Operation(summary = "Toplu bordro önizlemesi",
+            description = "Verilen ay için hangi personelin üretileceğini/atlanacağını ve tahmini neti döndürür")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
+    public ResponseEntity<java.util.List<com.raspel.erp.dto.ik.BordroOnizlemeDTO>> topluOnizleme(
+            HttpServletRequest request,
+            @RequestParam Integer yil,
             @RequestParam Integer ay) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(bordroHesaplamaService.topluUret(sirketId, yil, ay));
+        return ResponseEntity.ok(bordroHesaplamaService.topluOnizleme(sirketId, yil, ay));
     }
 
     @GetMapping
-    @Operation(summary = "Tüm maaş bordrolarını getir", description = "Tüm maaş bordro kayıtlarını listeler")
-    public ResponseEntity<Page<MaasBordroDTO>> tumu(HttpServletRequest request, @PageableDefault(size = 50) Pageable pageable) {
+    @Operation(summary = "Tüm maaş bordrolarını getir",
+            description = "Bordro kayıtlarını personel/dönem/durum filtreleriyle sayfalı listeler")
+    public ResponseEntity<Page<MaasBordroDTO>> tumu(
+            HttpServletRequest request,
+            @RequestParam(required = false) Integer yil,
+            @RequestParam(required = false) Integer ay,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) String odemeDurumu,
+            @RequestParam(required = false) String q,
+            @PageableDefault(size = 25) Pageable pageable) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(maasBordroService.tumunuGetir(sirketId, pageable));
+        return ResponseEntity.ok(maasBordroService.tumunuGetir(sirketId, yil, ay, durum, odemeDurumu, q, pageable));
+    }
+
+    @GetMapping("/ozet")
+    @Operation(summary = "Bordro KPI özeti", description = "Filtreli toplam brüt/kesinti/net ve ödenen net tutarları")
+    public ResponseEntity<java.util.Map<String, Object>> ozet(
+            HttpServletRequest request,
+            @RequestParam(required = false) Integer yil,
+            @RequestParam(required = false) Integer ay,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) String odemeDurumu,
+            @RequestParam(required = false) String q) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(maasBordroService.ozet(sirketId, yil, ay, durum, odemeDurumu, q));
     }
 
     @GetMapping("/{id}")

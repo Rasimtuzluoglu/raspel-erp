@@ -40,6 +40,18 @@ public interface CariHesapRepository extends JpaRepository<CariHesap, Long> {
     List<CariHesap> findBySirketIdAndAdContainingIgnoreCase(Long sirketId, String query);
 
     /**
+     * Faz 1.2: Aynı şirkette vergi numarası benzersiz olmalı (mükerrer cari
+     * engeli). Boş/null vergi numaraları kapsam dışıdır.
+     */
+    Optional<CariHesap> findFirstBySirketIdAndVergiNumarasiIgnoreCase(Long sirketId, String vergiNumarasi);
+
+    /**
+     * Faz 1.5: Cari arama ucunun sınırsız liste döndürmesini engeller
+     * (en fazla {@code limit} kayıt).
+     */
+    List<CariHesap> findTop50BySirketIdAndAdContainingIgnoreCaseOrderByAdAsc(Long sirketId, String query);
+
+    /**
      * Toplu seçimden gelen dışa aktarma için tenant izolasyonlu id listesi.
      * findAllById kullanmıyoruz: o yol sirketId filtresi içermez ve başka
      * şirketin cari kayıtlarını döndürebilir.
@@ -80,6 +92,17 @@ public interface CariHesapRepository extends JpaRepository<CariHesap, Long> {
     int bakiyeArttir(@Param("id") Long id, @Param("tutar") BigDecimal tutar);
 
     /**
+     * Faz 2.1: Kredi limitini aşan cariler (borç = negatif bakiyenin mutlak değeri).
+     * Yalnızca tanımlı limiti (>0) olan ve borcu limitini geçen cariler; borcu en
+     * yüksek olan başta. Native/DB-bağımsız HQL.
+     */
+    @Query("SELECT c FROM CariHesap c WHERE c.sirketId = :sirketId " +
+            "AND c.krediLimiti IS NOT NULL AND c.krediLimiti > 0 " +
+            "AND c.bakiye < 0 AND (c.bakiye * -1) > c.krediLimiti " +
+            "ORDER BY c.bakiye ASC")
+    List<CariHesap> findKrediLimitiAsanlar(@Param("sirketId") Long sirketId);
+
+    /**
      * Sunucu tarafında aranmış, filtrelenmiş ve sayfalanmış cari listesi.
      *
      * <p>Bakiye işareti kuralı: <b>negatif = cari bize borçlu</b>. Buna göre
@@ -98,10 +121,12 @@ public interface CariHesapRepository extends JpaRepository<CariHesap, Long> {
             "            OR lower(c.vergiNumarasi) LIKE :q ESCAPE '\\' " +
             "            OR lower(c.telefon) LIKE :q ESCAPE '\\') " +
             "AND (:tur IS NULL OR c.tur = :tur OR c.tur = 'Her Ikisi') " +
+            "AND (:etiket IS NULL OR lower(c.etiketler) LIKE :etiket ESCAPE '\\') " +
             "AND (:bakiyeYonu IS NULL OR (:bakiyeYonu = 'alacak' AND c.bakiye < 0) OR (:bakiyeYonu = 'borc' AND c.bakiye > 0))")
     Page<CariHesap> filtreli(@Param("sirketId") Long sirketId,
                              @Param("q") String q,
                              @Param("tur") String tur,
+                             @Param("etiket") String etiket,
                              @Param("bakiyeYonu") String bakiyeYonu,
                              Pageable pageable);
 }

@@ -71,7 +71,7 @@ class UretimServiceTest {
         Stok mamul = stok(10L, "Masa", "0");
 
         when(uretimEmriRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(emri));
-        when(receteRepository.findFirstBySirketIdAndUrunId(1L, 10L)).thenReturn(Optional.of(recete));
+        when(receteRepository.findFirstBySirketIdAndUrunIdAndAktifTrueOrderByRevizyonDesc(1L, 10L)).thenReturn(Optional.of(recete));
         when(receteKalemRepository.findByReceteId(5L)).thenReturn(List.of(kalem));
         when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(hammadde));
         when(stokRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(mamul));
@@ -93,7 +93,7 @@ class UretimServiceTest {
         Stok hammadde = stok(1L, "MDF", "10");
 
         when(uretimEmriRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(emri));
-        when(receteRepository.findFirstBySirketIdAndUrunId(1L, 10L)).thenReturn(Optional.of(recete));
+        when(receteRepository.findFirstBySirketIdAndUrunIdAndAktifTrueOrderByRevizyonDesc(1L, 10L)).thenReturn(Optional.of(recete));
         when(receteKalemRepository.findByReceteId(5L)).thenReturn(List.of(kalem));
         when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(hammadde));
 
@@ -144,7 +144,7 @@ class UretimServiceTest {
         Stok mamul = stok(10L, "Masa", "0");
 
         when(uretimEmriRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(emri));
-        when(receteRepository.findFirstBySirketIdAndUrunId(1L, 10L)).thenReturn(Optional.of(recete));
+        when(receteRepository.findFirstBySirketIdAndUrunIdAndAktifTrueOrderByRevizyonDesc(1L, 10L)).thenReturn(Optional.of(recete));
         when(receteKalemRepository.findByReceteId(5L)).thenReturn(List.of(kalem));
         when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(hammadde));
         when(stokRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(mamul));
@@ -181,7 +181,7 @@ class UretimServiceTest {
         Stok mamul = stok(10L, "Masa", "0");
 
         when(uretimEmriRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(emri));
-        when(receteRepository.findFirstBySirketIdAndUrunId(1L, 10L)).thenReturn(Optional.of(recete));
+        when(receteRepository.findFirstBySirketIdAndUrunIdAndAktifTrueOrderByRevizyonDesc(1L, 10L)).thenReturn(Optional.of(recete));
         when(receteKalemRepository.findByReceteId(5L)).thenReturn(List.of(kalem));
         when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(hammadde));
         when(stokRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(mamul));
@@ -206,7 +206,7 @@ class UretimServiceTest {
         ReceteKalem kalem = ReceteKalem.builder().id(1L).receteId(5L).hammaddeId(1L).miktar(new BigDecimal("3")).build();
         Stok hammadde = stok(1L, "MDF", "2");
 
-        when(receteRepository.findFirstBySirketIdAndUrunId(1L, 10L)).thenReturn(Optional.of(recete));
+        when(receteRepository.findFirstBySirketIdAndUrunIdAndAktifTrueOrderByRevizyonDesc(1L, 10L)).thenReturn(Optional.of(recete));
         when(receteKalemRepository.findByReceteId(5L)).thenReturn(List.of(kalem));
         when(stokRepository.findById(1L)).thenReturn(Optional.of(hammadde));
 
@@ -214,5 +214,45 @@ class UretimServiceTest {
 
         assertFalse(ihtiyac.isYeterli());
         assertEquals(0, ihtiyac.getKalemler().get(0).getEksik().compareTo(new BigDecimal("4"))); // gerekli 6, mevcut 2
+    }
+
+    /** Özellik: reçete baz miktarı (ör. "2 litre kola") üzerinden ölçekleme. */
+    @Test
+    void ihtiyacAnalizi_bazMiktarOlarakOlcekler() {
+        Recete recete = Recete.builder().id(5L).sirketId(1L).ad("Kola").urunId(10L)
+                .bazMiktar(new BigDecimal("2")).build();
+        ReceteKalem kalem = ReceteKalem.builder().id(1L).receteId(5L).hammaddeId(1L).miktar(new BigDecimal("3")).build();
+        Stok hammadde = stok(1L, "Seker", "100");
+
+        when(receteRepository.findFirstBySirketIdAndUrunIdAndAktifTrueOrderByRevizyonDesc(1L, 10L)).thenReturn(Optional.of(recete));
+        when(receteKalemRepository.findByReceteId(5L)).thenReturn(List.of(kalem));
+        when(stokRepository.findById(1L)).thenReturn(Optional.of(hammadde));
+
+        // Baz 2 birim icin kalem 3 -> 10 birim icin 10/2 * 3 = 15
+        UretimIhtiyacDTO ihtiyac = uretimService.ihtiyacAnalizi(10L, new BigDecimal("10"), 1L);
+        assertEquals(0, ihtiyac.getKalemler().get(0).getGerekli().compareTo(new BigDecimal("15")));
+    }
+
+    @Test
+    void emirTamamla_bazMiktarOlarakOlcekler() {
+        UretimEmri emri = UretimEmri.builder().id(1L).sirketId(1L).urunId(10L)
+                .miktar(new BigDecimal("4")).durum("URETIMDE").build();
+        Recete recete = Recete.builder().id(5L).sirketId(1L).ad("Kola").urunId(10L)
+                .bazMiktar(new BigDecimal("2")).build();
+        ReceteKalem kalem = ReceteKalem.builder().id(1L).receteId(5L).hammaddeId(1L).miktar(new BigDecimal("3")).build();
+        Stok hammadde = stok(1L, "Seker", "100");
+        Stok mamul = stok(10L, "Kola", "0");
+
+        when(uretimEmriRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(emri));
+        when(receteRepository.findFirstBySirketIdAndUrunIdAndAktifTrueOrderByRevizyonDesc(1L, 10L)).thenReturn(Optional.of(recete));
+        when(receteKalemRepository.findByReceteId(5L)).thenReturn(List.of(kalem));
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(hammadde));
+        when(stokRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(mamul));
+
+        uretimService.emirTamamla(1L, 1L,
+                UretimTamamlaIstek.builder().uretilenMiktar(new BigDecimal("4")).build(), null);
+
+        // Baz 2 -> 4/2 = 2 katsayi; tuketim 3 * 2 = 6; mevcut 100 -> 94
+        assertEquals(0, hammadde.getMiktar().compareTo(new BigDecimal("94")));
     }
 }

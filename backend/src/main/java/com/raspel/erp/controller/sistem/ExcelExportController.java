@@ -56,6 +56,7 @@ public class ExcelExportController {
     @GetMapping("/kdv-beyanname")
     @Operation(summary = "KDV beyannamesini Excel dışa aktar",
             description = "YYYY-MM dönemi KDV beyanname hazırlığını (matrah + KDV oran bazlı) Excel (.xlsx) olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'RAPOR_EXPORT')")
     public ResponseEntity<byte[]> kdvBeyanname(HttpServletRequest req, @RequestParam String donem) {
         Long sirketId = (Long) req.getAttribute("sirketId");
         var kdv = raporService.kdvBeyannameGetir(donem, sirketId);
@@ -84,6 +85,7 @@ public class ExcelExportController {
     @GetMapping("/ba-bs")
     @Operation(summary = "BA/BS formunu Excel dışa aktar",
             description = "Belirtilen dönem için BA (alış) veya BS (satış) formu kayıtlarını Excel (.xlsx) olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'RAPOR_EXPORT')")
     public ResponseEntity<byte[]> baBs(
             HttpServletRequest req,
             @RequestParam String donem,
@@ -105,6 +107,7 @@ public class ExcelExportController {
 
     @GetMapping("/cari-hesaplar")
     @Operation(summary = "Cari hesapları Excel dışa aktar", description = "Cari hesapları Excel (.xlsx) dosyası olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'CARI_EXPORT')")
     public ResponseEntity<byte[]> cariHesaplar(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
         var list = cariHesapService.tumCariHesaplariGetir(sirketId, MAX_EXPORT_PAGE).getContent();
@@ -119,6 +122,7 @@ public class ExcelExportController {
 
     @GetMapping("/faturalar")
     @Operation(summary = "Faturaları Excel dışa aktar", description = "Faturaları Excel (.xlsx) dosyası olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FATURA_EXPORT')")
     public ResponseEntity<byte[]> faturalar(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
         var list = faturaService.tumFaturalariGetir(sirketId, MAX_EXPORT_PAGE).getContent();
@@ -133,6 +137,7 @@ public class ExcelExportController {
 
     @GetMapping("/hareketler")
     @Operation(summary = "Hareketleri Excel dışa aktar", description = "Hareketleri Excel (.xlsx) dosyası olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FINANS_EXPORT')")
     public ResponseEntity<byte[]> hareketler(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
         var list = hareketService.tumHareketleriGetir(sirketId, MAX_EXPORT_PAGE).getContent();
@@ -147,6 +152,7 @@ public class ExcelExportController {
 
     @GetMapping("/stoklar")
     @Operation(summary = "Stokları Excel dışa aktar", description = "Stokları Excel (.xlsx) dosyası olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'STOK_EXPORT')")
     public ResponseEntity<byte[]> stoklar(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
         var list = stokService.tumunuGetir(sirketId, MAX_EXPORT_PAGE).getContent();
@@ -170,6 +176,7 @@ public class ExcelExportController {
 
     @GetMapping("/personel")
     @Operation(summary = "Personeli Excel dışa aktar", description = "Personel kayıtlarını Excel (.xlsx) dosyası olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'IK_EXPORT')")
     public ResponseEntity<byte[]> personel(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
         var list = personelService.tumunuGetir(sirketId, MAX_EXPORT_PAGE).getContent();
@@ -185,6 +192,7 @@ public class ExcelExportController {
 
     @GetMapping("/bankalar")
     @Operation(summary = "Bankaları Excel dışa aktar", description = "Bankaları Excel (.xlsx) dosyası olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FINANS_EXPORT')")
     public ResponseEntity<byte[]> bankalar(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
         var list = bankaService.tumBankalariGetir(sirketId, MAX_EXPORT_PAGE).getContent();
@@ -199,6 +207,7 @@ public class ExcelExportController {
 
     @GetMapping("/kasalar")
     @Operation(summary = "Kasaları Excel dışa aktar", description = "Kasaları Excel (.xlsx) dosyası olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FINANS_EXPORT')")
     public ResponseEntity<byte[]> kasalar(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
         var list = kasaService.tumKasalarGetir(sirketId, MAX_EXPORT_PAGE).getContent();
@@ -212,6 +221,7 @@ public class ExcelExportController {
 
     @GetMapping("/denetim-log")
     @Operation(summary = "Denetim loglarını Excel dışa aktar", description = "Denetim log kayıtlarını Excel (.xlsx) dosyası olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'SISTEM_EXPORT')")
     public ResponseEntity<byte[]> denetimLog(
             jakarta.servlet.http.HttpServletRequest request,
             @RequestParam(required = false) Long kullaniciId,
@@ -233,6 +243,7 @@ public class ExcelExportController {
 
     @GetMapping("/bilanco")
     @Operation(summary = "Bilançoyu Excel dışa aktar", description = "Bilançoyu (aktif/pasif) Excel (.xlsx) dosyası olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'RAPOR_EXPORT')")
     public ResponseEntity<byte[]> bilanco(HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
         BilancoDTO b = muhasebeService.bilancoGetir(sirketId);
@@ -258,6 +269,7 @@ public class ExcelExportController {
 
     @GetMapping("/kar-zarar")
     @Operation(summary = "Kâr/Zararı Excel dışa aktar", description = "Kâr/Zarar (gelir tablosu) özetini Excel (.xlsx) dosyası olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'RAPOR_EXPORT')")
     public ResponseEntity<byte[]> karZarar(
             HttpServletRequest req,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,

@@ -101,7 +101,8 @@ public class PersonelIzinService {
         izin.setGunSayisi(dto.getGunSayisi());
         if (dto.getDurum() != null) izin.setDurum(dto.getDurum());
         izin.setAciklama(dto.getAciklama());
-        izin.setOnaylayan(dto.getOnaylayan());
+        // Faz 0.7: onaylayan istemciden yazılmaz; yalnızca durum onay akışında
+        // (durumGuncelle) sunucu tarafından atanır.
         cacheYardimci.commitSonrasiTemizle("dashboard");
         return entityToDTO(izinRepository.save(izin));
     }

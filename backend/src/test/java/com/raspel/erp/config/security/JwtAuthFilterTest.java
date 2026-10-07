@@ -77,7 +77,7 @@ class JwtAuthFilterTest {
         when(jwtUtil.getUsernameFromToken("tok")).thenReturn("ali");
         when(jwtUtil.getTokenVersionFromToken("tok")).thenReturn(0L);
         when(kullaniciRepository.findByUsername("ali"))
-                .thenReturn(Optional.of(Kullanici.builder().tokenVersion(0L).build()));
+                .thenReturn(Optional.of(Kullanici.builder().tokenVersion(0L).sirketId(7L).role("USER").build()));
         when(userDetailsService.loadUserByUsername("ali")).thenReturn(kullaniciDetay());
 
         filter.doFilterInternal(request, new MockHttpServletResponse(), filterChain);
@@ -115,7 +115,7 @@ class JwtAuthFilterTest {
         when(jwtUtil.getUsernameFromToken("cookieTok")).thenReturn("veli");
         when(jwtUtil.getTokenVersionFromToken("cookieTok")).thenReturn(0L);
         when(kullaniciRepository.findByUsername("veli"))
-                .thenReturn(Optional.of(Kullanici.builder().tokenVersion(0L).build()));
+                .thenReturn(Optional.of(Kullanici.builder().tokenVersion(0L).sirketId(3L).role("USER").build()));
         when(userDetailsService.loadUserByUsername("veli")).thenReturn(kullaniciDetay());
 
         filter.doFilterInternal(request, new MockHttpServletResponse(), filterChain);
@@ -189,7 +189,7 @@ class JwtAuthFilterTest {
         when(jwtUtil.getUsernameFromToken("tok")).thenReturn("ali");
         when(jwtUtil.getTokenVersionFromToken("tok")).thenReturn(0L);
         when(kullaniciRepository.findByUsername("ali"))
-                .thenReturn(Optional.of(Kullanici.builder().tokenVersion(0L).build()));
+                .thenReturn(Optional.of(Kullanici.builder().tokenVersion(0L).sirketId(7L).role("USER").build()));
         when(userDetailsService.loadUserByUsername("ali")).thenReturn(
                 org.springframework.security.core.userdetails.User
                         .withUsername("ali").password("p").disabled(true).authorities("ROLE_ADMIN").build());
@@ -197,6 +197,56 @@ class JwtAuthFilterTest {
         filter.doFilterInternal(request, new MockHttpServletResponse(), filterChain);
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    void tokenSirketiKullaniciUyeligindeDegilse_authYok() throws Exception {
+        // Faz 0.2: non-ADMIN kullanicinin token'indaki sirket, ev sirketi degil ve
+        // uyelik tablosunda da yoksa token gecersiz sayilir.
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/faturalar");
+        request.addHeader("Authorization", "Bearer tok");
+        when(jwtUtil.validateToken("tok")).thenReturn(true);
+        when(jwtUtil.getJtiFromToken("tok")).thenReturn("jti1");
+        when(aktifOturumService.iptalEdilmis("jti1")).thenReturn(false);
+        when(aktifOturumService.aktifOturumMu(5L, "jti1")).thenReturn(true);
+        when(jwtUtil.getUserIdFromToken("tok")).thenReturn(5L);
+        when(jwtUtil.getSirketIdFromToken("tok")).thenReturn(99L);
+        when(jwtUtil.getDisplayNameFromToken("tok")).thenReturn("Ali");
+        when(jwtUtil.getUsernameFromToken("tok")).thenReturn("ali");
+        when(jwtUtil.getTokenVersionFromToken("tok")).thenReturn(0L);
+        when(kullaniciRepository.findByUsername("ali"))
+                .thenReturn(Optional.of(Kullanici.builder().tokenVersion(0L).sirketId(7L).role("USER").build()));
+        when(kullaniciRepository.sirketUyeligiVarMi("ali", 99L)).thenReturn(false);
+
+        filter.doFilterInternal(request, new MockHttpServletResponse(), filterChain);
+
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(userDetailsService, never()).loadUserByUsername(anyString());
+    }
+
+    @Test
+    void tokenSirketiKullanicininUyeligindeyse_authAyarlanir() throws Exception {
+        // Faz 0.2: kullanici ev sirketi olmasa da uye oldugu sirkete erisebilir.
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/faturalar");
+        request.addHeader("Authorization", "Bearer tok");
+        when(jwtUtil.validateToken("tok")).thenReturn(true);
+        when(jwtUtil.getJtiFromToken("tok")).thenReturn("jti1");
+        when(aktifOturumService.iptalEdilmis("jti1")).thenReturn(false);
+        when(aktifOturumService.aktifOturumMu(5L, "jti1")).thenReturn(true);
+        when(jwtUtil.getUserIdFromToken("tok")).thenReturn(5L);
+        when(jwtUtil.getSirketIdFromToken("tok")).thenReturn(99L);
+        when(jwtUtil.getDisplayNameFromToken("tok")).thenReturn("Ali");
+        when(jwtUtil.getUsernameFromToken("tok")).thenReturn("ali");
+        when(jwtUtil.getTokenVersionFromToken("tok")).thenReturn(0L);
+        when(kullaniciRepository.findByUsername("ali"))
+                .thenReturn(Optional.of(Kullanici.builder().tokenVersion(0L).sirketId(7L).role("USER").build()));
+        when(kullaniciRepository.sirketUyeligiVarMi("ali", 99L)).thenReturn(true);
+        when(userDetailsService.loadUserByUsername("ali")).thenReturn(kullaniciDetay());
+
+        filter.doFilterInternal(request, new MockHttpServletResponse(), filterChain);
+
+        assertEquals(99L, request.getAttribute("sirketId"));
+        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test

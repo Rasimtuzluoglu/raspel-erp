@@ -102,6 +102,42 @@ class SiparisServiceTest {
     }
 
     @Test
+    void olustur_krediLimitiAsilirsaUyariGonderir() {
+        // Faz 2.1: proaktif kredi limiti uyarısı (engellemez).
+        SiparisKalemDTO kalem = SiparisKalemDTO.builder().stokId(1L).aciklama("K").miktar(BigDecimal.ONE)
+                .birim("Adet").birimFiyat(BigDecimal.valueOf(1200)).kdvOrani(BigDecimal.ZERO)
+                .tutar(BigDecimal.valueOf(1200)).build();
+        SiparisDTO dto = SiparisDTO.builder().siparisNo("SPR-777").tarih(LocalDate.now())
+                .cariHesapId(1L).sirketId(1L).kalemler(List.of(kalem)).build();
+        Siparis saved = createSiparis(1L);
+        when(siparisRepository.save(any(Siparis.class))).thenReturn(saved);
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.finans.CariHesap.builder().id(1L).ad("Riskli Cari")
+                        .krediLimiti(BigDecimal.valueOf(1000)).bakiye(BigDecimal.valueOf(-500)).build()));
+
+        siparisService.olustur(dto, 1L);
+
+        verify(bildirimService).bildirimGonder(eq(1L), eq("KREDI_LIMITI"), anyString(), anyString());
+    }
+
+    @Test
+    void olustur_krediLimitiAsilmazsaUyariGondermez() {
+        SiparisKalemDTO kalem = SiparisKalemDTO.builder().stokId(1L).aciklama("K").miktar(BigDecimal.ONE)
+                .birim("Adet").birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.ZERO)
+                .tutar(BigDecimal.valueOf(100)).build();
+        SiparisDTO dto = SiparisDTO.builder().siparisNo("SPR-778").tarih(LocalDate.now())
+                .cariHesapId(1L).sirketId(1L).kalemler(List.of(kalem)).build();
+        when(siparisRepository.save(any(Siparis.class))).thenReturn(createSiparis(1L));
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.finans.CariHesap.builder().id(1L).ad("Normal Cari")
+                        .krediLimiti(BigDecimal.valueOf(10000)).bakiye(BigDecimal.ZERO).build()));
+
+        siparisService.olustur(dto, 1L);
+
+        verify(bildirimService, never()).bildirimGonder(eq(1L), eq("KREDI_LIMITI"), anyString(), anyString());
+    }
+
+    @Test
     void durumGuncelle_updates() {
         Siparis siparis = createSiparis(1L);
         when(siparisRepository.findById(1L)).thenReturn(Optional.of(siparis));

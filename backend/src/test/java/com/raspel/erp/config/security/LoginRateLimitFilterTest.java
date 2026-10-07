@@ -10,6 +10,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -140,5 +141,68 @@ class LoginRateLimitFilterTest {
         filter.doFilter(request, blok, chain);
 
         assertEquals(429, blok.getStatus());
+    }
+
+    /** Güvenilir proxy (127.0.0.1) arkasından, sahte XFF öneki + gerçek istemci gönderir. */
+    private MockHttpServletResponse basarisizDenemeXff(String gercekIp, String sahteOnek, String kullaniciAdi) throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/kullanicilar/giris");
+        request.setRequestURI("/api/kullanicilar/giris");
+        request.setRemoteAddr("127.0.0.1");
+        request.addHeader("X-Forwarded-For", sahteOnek + ", " + gercekIp);
+        request.setContent(("{\"username\":\"" + kullaniciAdi + "\",\"password\":\"x\"}")
+                .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        filter.doFilter(request, response, (req, res) -> ((MockHttpServletResponse) res).setStatus(401));
+        return response;
+    }
+
+    @Test
+    void xffSahteOnekYoksayilir_gercekSonElemanKullanilir() throws Exception {
+        // Faz 0.3: aynı sahte önek (1.2.3.4) ile 5 farklı gerçek istemciden başarısız
+        // deneme. İlk (sahte) değer kullanılsaydı hepsi aynı sayaca düşer ve 6. istek
+        // engellenirdi. Son (gerçek) değer kullanıldığı için 6. istek farklı IP'dedir.
+        for (int i = 0; i < 5; i++) {
+            assertEquals(401, basarisizDenemeXff("203.0.113." + (10 + i), "1.2.3.4", "kullanici" + i).getStatus());
+        }
+        // Yeni gerçek istemci: engellenmemeli (sahte önek yok sayıldı)
+        assertEquals(401, basarisizDenemeXff("203.0.113.50", "1.2.3.4", "yeniKullanici").getStatus());
+
+        // Aynı gerçek istemciden 6. deneme engellenmeli
+        for (int i = 0; i < 5; i++) {
+            basarisizDenemeXff("203.0.113.60", "1.2.3.4", "kullaniciB" + i);
+        }
+        assertEquals(429, basarisizDenemeXff("203.0.113.60", "1.2.3.4", "kullaniciC").getStatus());
+    }
+
+    @Test
+    void guvenilirProxyYapilandirmasi_xffYalnizcaListedekindenGelirseKullanilir() {
+        ReflectionTestUtils.setField(filter, "trustedProxiesConfig", "10.9.9.9");
+        ReflectionTestUtils.setField(filter, "trustedProxyCache", null);
+
+        MockHttpServletRequest listedenGelen = new MockHttpServletRequest();
+        listedenGelen.setRemoteAddr("10.9.9.9");
+        listedenGelen.addHeader("X-Forwarded-For", "203.0.113.7");
+        assertEquals("203.0.113.7", ReflectionTestUtils.invokeMethod(filter, "getClientIp", listedenGelen));
+
+        MockHttpServletRequest listedeOlmayan = new MockHttpServletRequest();
+        listedeOlmayan.setRemoteAddr("8.8.8.8");
+        listedeOlmayan.addHeader("X-Forwarded-For", "203.0.113.7");
+        assertEquals("8.8.8.8", ReflectionTestUtils.invokeMethod(filter, "getClientIp", listedeOlmayan));
+    }
+
+    @Test
+    void cidrYapilandirmasi_altAgiKapsar() {
+        ReflectionTestUtils.setField(filter, "trustedProxiesConfig", "172.18.0.0/16");
+        ReflectionTestUtils.setField(filter, "trustedProxyCache", null);
+
+        MockHttpServletRequest cidrde = new MockHttpServletRequest();
+        cidrde.setRemoteAddr("172.18.5.4");
+        cidrde.addHeader("X-Forwarded-For", "203.0.113.9");
+        assertEquals("203.0.113.9", ReflectionTestUtils.invokeMethod(filter, "getClientIp", cidrde));
+
+        MockHttpServletRequest disinda = new MockHttpServletRequest();
+        disinda.setRemoteAddr("172.19.0.1");
+        disinda.addHeader("X-Forwarded-For", "203.0.113.9");
+        assertEquals("172.19.0.1", ReflectionTestUtils.invokeMethod(filter, "getClientIp", disinda));
     }
 }

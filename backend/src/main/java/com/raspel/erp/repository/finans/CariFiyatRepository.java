@@ -20,6 +20,9 @@ public interface CariFiyatRepository extends JpaRepository<CariFiyat, Long> {
 
     Optional<CariFiyat> findByCariHesapIdAndStokId(Long cariHesapId, Long stokId);
 
+    /** Faz 1.3/1.4: Tenant filtreli tek kayıt araması (defense-in-depth). */
+    Optional<CariFiyat> findBySirketIdAndCariHesapIdAndStokId(Long sirketId, Long cariHesapId, Long stokId);
+
     long countByCariHesapId(Long cariHesapId);
     void deleteByCariHesapId(Long cariHesapId);
 }

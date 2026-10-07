@@ -97,7 +97,7 @@ class CariKartServiceTest {
                 CariFiyat.builder().id(60L).cariHesapId(1L).stokId(5L).fiyat(new BigDecimal("99"))
                         .sirketId(1L).build()));
 
-        when(hareketRepository.findByCariHesapIdOrderByHareketTarihiDesc(1L)).thenReturn(List.of(
+        when(hareketRepository.findBySirketIdAndCariHesapIdOrderByHareketTarihiDesc(1L, 1L)).thenReturn(List.of(
                 Hareket.builder().id(70L).tur(Hareket.HareketTuru.TAHSILAT).tutar(new BigDecimal("1000")).build(),
                 Hareket.builder().id(71L).tur(Hareket.HareketTuru.ODEME).tutar(new BigDecimal("200")).build()));
 
