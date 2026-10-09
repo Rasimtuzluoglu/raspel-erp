@@ -63,20 +63,25 @@
           </span>
         </div>
         <div class="kart-islem">
+          <!-- Ikon-only butonlarda v-tooltip ekran okuyucuya AD tasimaz
+               (tooltip yalnizca gorunur). aria-label zorunlu. -->
           <Button
             v-tooltip.top="t('kullanicilar.sifreSifirlaBaslik')"
+            :aria-label="t('kullanicilar.sifreSifirlaBaslik')"
             icon="pi pi-key"
             class="p-button-rounded p-button-sm islem-btn sifirla"
             @click="sifreSifirlaAc(u)"
           />
           <Button
             v-tooltip.top="t('common.edit')"
+            :aria-label="t('common.edit')"
             icon="pi pi-pencil"
             class="p-button-rounded p-button-sm islem-btn duzenle"
             @click="editKullanici(u)"
           />
           <Button
             v-tooltip.top="t('common.delete')"
+            :aria-label="t('common.delete')"
             icon="pi pi-trash"
             class="p-button-rounded p-button-sm islem-btn sil"
             :disabled="u.id === authStore?.kullanici?.id"

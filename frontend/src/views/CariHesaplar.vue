@@ -1205,6 +1205,8 @@
         >
           <template #body="{ data }">
             <Button
+              :aria-label="t('common.delete')"
+              :title="t('common.delete')"
               icon="pi pi-trash"
               class="p-button-rounded p-button-danger p-button-sm"
               @click="adresSil(data)"
