@@ -37,8 +37,12 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import SparkLine from './SparkLine.vue'
+import { computed, defineAsyncComponent } from 'vue'
+// SparkLine, vue-chartjs'in ~180 KB'lik chart-vendor chunk'ini getirir. KPI
+// karti her zaman gorunur ama sparkline cogu zaman bos olur (v-if), yani
+// grafik kodu hic kullanilmiyor. Asenkron yukleme sayesinde bu chunk yalnizca
+// sparkline gercekten cizildiginde indirilir.
+const SparkLine = defineAsyncComponent(() => import('./SparkLine.vue'))
 import { useSayac } from '../composables/useSayac.js'
 import { formatCurrency } from '../utils/format.js'
 

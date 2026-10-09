@@ -894,6 +894,14 @@ public class RaporService {
     @Transactional(readOnly = true)
     public com.raspel.erp.dto.sistem.StokAnalizDTO.Degerleme stokDegerleme(Long sirketId) {
         List<com.raspel.erp.entity.envanter.Stok> stoklar = stokRepository.findBySirketIdOrderByAd(sirketId);
+        // REDTEAM/perf: maliyet hareketleri stok başına ayrı ayrı çekiliyordu
+        // (1 + N sorgu; 5000 stokta 5001 sorgu). Tek sorguda alınıp stokId'ye
+        // göre gruplanıyor: sorgu sayısı stok sayısından bağımsız hale geldi.
+        java.util.Map<Long, List<com.raspel.erp.entity.envanter.StokMaliyetHareket>> hareketlerByStok =
+                stokMaliyetHareketRepository.findBySirketIdOrderByTarihAscIdAsc(sirketId).stream()
+                        .filter(m -> m.getStokId() != null)
+                        .collect(java.util.stream.Collectors.groupingBy(
+                                com.raspel.erp.entity.envanter.StokMaliyetHareket::getStokId));
         List<com.raspel.erp.dto.sistem.StokAnalizDTO.DegerlemeSatiri> satirlar = new java.util.ArrayList<>();
         BigDecimal toplamOrtalama = BigDecimal.ZERO;
         BigDecimal toplamFifo = BigDecimal.ZERO;
@@ -906,7 +914,7 @@ public class RaporService {
 
             // FIFO katmanları: GIRIS katman ekler, CIKIS en eski katmandan tüketir.
             java.util.Deque<BigDecimal[]> katmanlar = new java.util.ArrayDeque<>();
-            for (var m : stokMaliyetHareketRepository.findByStokIdOrderByTarihAscIdAsc(s.getId())) {
+            for (var m : hareketlerByStok.getOrDefault(s.getId(), java.util.List.of())) {
                 BigDecimal mh = nz(m.getMiktar());
                 if ("GIRIS".equals(m.getTur())) {
                     katmanlar.addLast(new BigDecimal[]{mh, nz(m.getBirimMaliyet())});

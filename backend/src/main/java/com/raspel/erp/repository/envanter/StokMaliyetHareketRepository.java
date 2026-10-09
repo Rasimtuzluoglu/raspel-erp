@@ -12,6 +12,16 @@ public interface StokMaliyetHareketRepository extends JpaRepository<StokMaliyetH
 
     List<StokMaliyetHareket> findByStokIdOrderByTarihAscIdAsc(Long stokId);
 
+    /**
+     * Şirketin tüm maliyet hareketlerini tek sorguda getirir.
+     *
+     * <p>FIFO değerleme raporunda stok başına sorgu atmak (1 + N) katalog
+     * büyüdükçe raporu dakikalara uzatıyordu. Tek sorgu + bellekte gruplama
+     * aynı sonucu verir; {@code idx_smh_sirket (sirket_id, tarih)} indeksi
+     * zaten mevcut.
+     */
+    List<StokMaliyetHareket> findBySirketIdOrderByTarihAscIdAsc(Long sirketId);
+
     @Query("SELECT m FROM StokMaliyetHareket m WHERE m.stokId = :stokId ORDER BY m.tarih DESC, m.id DESC")
     List<StokMaliyetHareket> sonHareketler(@Param("stokId") Long stokId);
 

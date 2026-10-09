@@ -23,6 +23,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.entity.envanter.Stok;
+import com.raspel.erp.entity.envanter.StokMaliyetHareket;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.service.finans.CariHesapService;
 import com.raspel.erp.repository.ticaret.FaturaKalemRepository;
@@ -437,13 +439,13 @@ class RaporServiceTest {
                 .id(1L).stokKodu("STK-1").ad("Ürün").miktar(new BigDecimal("5")).sirketId(1L).build();
         when(stokRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of(stok));
         when(maliyetService.ortalamaMaliyet(stok)).thenReturn(new BigDecimal("6"));
-        when(stokMaliyetHareketRepository.findByStokIdOrderByTarihAscIdAsc(1L)).thenReturn(List.of(
+        when(stokMaliyetHareketRepository.findBySirketIdOrderByTarihAscIdAsc(1L)).thenReturn(List.of(
                 com.raspel.erp.entity.envanter.StokMaliyetHareket.builder()
-                        .tur("GIRIS").miktar(new BigDecimal("10")).birimMaliyet(new BigDecimal("5")).build(),
+                        .stokId(1L).tur("GIRIS").miktar(new BigDecimal("10")).birimMaliyet(new BigDecimal("5")).build(),
                 com.raspel.erp.entity.envanter.StokMaliyetHareket.builder()
-                        .tur("GIRIS").miktar(new BigDecimal("10")).birimMaliyet(new BigDecimal("7")).build(),
+                        .stokId(1L).tur("GIRIS").miktar(new BigDecimal("10")).birimMaliyet(new BigDecimal("7")).build(),
                 com.raspel.erp.entity.envanter.StokMaliyetHareket.builder()
-                        .tur("CIKIS").miktar(new BigDecimal("15")).build()));
+                        .stokId(1L).tur("CIKIS").miktar(new BigDecimal("15")).build()));
 
         var sonuc = raporService.stokDegerleme(1L);
 
@@ -452,6 +454,41 @@ class RaporServiceTest {
         assertEquals(0, sonuc.getToplamOrtalamaDeger().compareTo(new BigDecimal("30.00")));
         assertEquals(0, sonuc.getToplamFifoDeger().compareTo(new BigDecimal("35.00")));
         assertEquals(0, sonuc.getSatirlar().get(0).getFifoBirimMaliyet().compareTo(new BigDecimal("7.00")));
+    }
+
+    /**
+     * REDTEAM/perf: maliyet hareketleri stok başına ayrı sorguyla çekiliyordu
+     * (1 + N; 5000 stokta 5001 sorgu). Artık tek sorgu alınmalı ve FIFO değeri
+     * stok bazında DOĞRU hesaplanmaya devam etmeli.
+     */
+    @Test
+    void stokDegerleme_maliyetHareketleriTekSorgudaAlir() {
+        List<com.raspel.erp.entity.envanter.Stok> stoklar = new java.util.ArrayList<>();
+        List<com.raspel.erp.entity.envanter.StokMaliyetHareket> hareketler = new java.util.ArrayList<>();
+        for (long i = 1; i <= 50; i++) {
+            Stok st = Stok.builder().id(i).stokKodu("STK-" + i).ad("Ürün " + i)
+                    .miktar(new BigDecimal("5")).sirketId(1L).build();
+            stoklar.add(st);
+            hareketler.add(StokMaliyetHareket.builder()
+                    .stokId(i).tur("GIRIS").miktar(new BigDecimal("10")).birimMaliyet(new BigDecimal("4")).build());
+        }
+        when(stokRepository.findBySirketIdOrderByAd(1L)).thenReturn(stoklar);
+        when(stokMaliyetHareketRepository.findBySirketIdOrderByTarihAscIdAsc(1L)).thenReturn(hareketler);
+        for (Stok st : stoklar) {
+            when(maliyetService.ortalamaMaliyet(st)).thenReturn(new BigDecimal("4"));
+        }
+
+        var sonuc = raporService.stokDegerleme(1L);
+
+        assertEquals(50, sonuc.getKalemSayisi());
+        // 50 stok, 50 hareket → toplam sorgu 1 (stoklar) + 1 (hareketler).
+        // Stok başına sorgu olsaydı bu 51 olurdu.
+        verify(stokMaliyetHareketRepository, times(1)).findBySirketIdOrderByTarihAscIdAsc(1L);
+        verify(stokMaliyetHareketRepository, never()).findByStokIdOrderByTarihAscIdAsc(any());
+        // FIFO, kalan katmanı değerler: 10 adet x 4 TL = 40 TL/stok -> 50 x 40.
+        // (Ağırlıklı ortalama ise mevcut miktarı kullanır: 5 x 4 = 20 TL/stok.)
+        assertEquals(0, sonuc.getToplamFifoDeger().compareTo(new BigDecimal("2000.00")));
+        assertEquals(0, sonuc.getToplamOrtalamaDeger().compareTo(new BigDecimal("1000.00")));
     }
 
     @Test

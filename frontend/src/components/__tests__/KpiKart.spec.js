@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import KpiKart from '../KpiKart.vue'
 import i18n from '../../i18n.js'
 
@@ -46,11 +46,27 @@ describe('KpiKart', () => {
     expect(wrapper.find('.kpi-trend').classes()).toContain('dusus')
   })
 
-  it('sparkline verisi varsa mini grafik render eder', () => {
-    const wrapper = mount(KpiKart, {
-      props: { baslik: 'X', deger: 10, paraBirimi: false, sparkline: [1, 2, 3] },
-      global: { plugins: [i18n] }
-    })
+// SparkLine defineAsyncComponent ile yuklendigi icin grafik bir sonraki
+// tick'te mount olur; bu, chart-vendor chunk'inin yalnizca gercekten grafik
+// cizildiginde cekilmesini saglar.
+it('sparkline verisi varsa mini grafik render eder', async () => {
+  const wrapper = mount(KpiKart, {
+    props: { baslik: 'X', deger: 10, paraBirimi: false, sparkline: [1, 2, 3] },
+    global: { plugins: [i18n] }
+  })
+  // Asenkron bilesen: mount, import cozumlemesi ve render birden fazla
+  // tick sonra tamamlanir.
+  await vi.waitFor(() => {
     expect(wrapper.find('.chart-line').exists()).toBe(true)
   })
+})
+
+it('sparkline yoksa grafik chunk hic yuklenmez', async () => {
+  const wrapper = mount(KpiKart, {
+    props: { baslik: 'X', deger: 10, paraBirimi: false, sparkline: [] },
+    global: { plugins: [i18n] }
+  })
+  await flushPromises()
+  expect(wrapper.find('.chart-line').exists()).toBe(false)
+})
 })

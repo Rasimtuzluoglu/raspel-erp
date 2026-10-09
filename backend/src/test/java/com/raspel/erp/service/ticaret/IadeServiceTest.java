@@ -24,6 +24,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,12 +61,59 @@ class IadeServiceTest {
                 .sirketId(1L).build();
     }
 
-    @Test
+@Test
     void tumunuGetir_returnsPage() {
         when(iadeRepository.findBySirketIdOrderByTarihDesc(anyLong(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(ornekIade(1L))));
         var sonuc = iadeService.tumunuGetir(1L, Pageable.unpaged());
         assertEquals(1, sonuc.getContent().size());
+    }
+
+    /**
+     * REDTEAM/perf: kalemler iade basina ayri cekiliyordu; 50 satirlik sayfa
+     * 50 kalem + 50 stok sorgusu demekti. Artik kalemler tek sorguda alinip
+     * iadeId'ye gore gruplanir.
+     */
+    @Test
+    void tumunuGetir_kalemleriTekSorgudaAlir() {
+        List<Iade> iadeler = new ArrayList<>();
+        List<IadeKalem> kalemler = new ArrayList<>();
+        for (long i = 1; i <= 30; i++) {
+            Iade iade = Iade.builder()
+                    .id(i).faturaId(1L).tarih(LocalDate.now())
+                    .tutar(new BigDecimal("100")).durum("TASLAK").sirketId(1L).build();
+            iadeler.add(iade);
+            kalemler.add(IadeKalem.builder()
+                    .id(i).iadeId(i).stokId(i)
+                    .miktar(new BigDecimal("2")).birim("AD").tutar(new BigDecimal("100")).build());
+        }
+        when(iadeRepository.findBySirketIdOrderByTarihDesc(anyLong(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(iadeler));
+        when(iadeKalemRepository.findByIadeIdIn(any())).thenReturn(kalemler);
+
+        var sonuc = iadeService.tumunuGetir(1L, Pageable.unpaged());
+
+        assertEquals(30, sonuc.getContent().size());
+        verify(iadeKalemRepository, times(1)).findByIadeIdIn(any());
+        // Kalem basina ayri sorgu KALDIRILDI.
+        verify(iadeKalemRepository, never()).findByIadeId(anyLong());
+        // Her iadenin 1 kalemi olmali (toplu yukleme dogru eslenmis olmali).
+        assertEquals(30, sonuc.getContent().size());
+        for (IadeDTO d : sonuc.getContent()) {
+            assertEquals(1, d.getKalemler().size());
+        }
+    }
+
+    /** Sayfa bosken gereksiz kalem sorgusu atilmamali. */
+    @Test
+    void tumunuGetir_bosSayfadaKalemSorgusuYok() {
+        when(iadeRepository.findBySirketIdOrderByTarihDesc(anyLong(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        var sonuc = iadeService.tumunuGetir(1L, Pageable.unpaged());
+
+        assertEquals(0, sonuc.getContent().size());
+        verify(iadeKalemRepository, never()).findByIadeIdIn(any());
     }
 
     @Test

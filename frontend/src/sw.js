@@ -44,12 +44,28 @@ registerRoute(
 
 precacheAndRoute(self.__WB_MANIFEST)
 
-// Aktivasyonda TUM onbellekleri temizle: eski (stale) index.html ve asset'ler
-// kalmasin; yeni SW devreye girer girmez taze uygulama kabugu sunulur.
-// (Asset'ler icerik-hash'li oldugu icin temizlemek guvenlidir; yeniden doldurulur.)
+// KAPSAM DARALTILDI (onceki hali: tum onbellekleri sil).
+//
+// Sorun: aktivasyonda caches.keys().map(delete) her deploy'da `static-assets`
+// (100 girdi, 1 yil TTL, CacheFirst), `pages`, `api-read` ve `google-fonts`
+// onbelleklerini de siliyordu. Kullanici her surumden sonra butun asset'leri
+// yeniden indiriyor, yani PWA'nin sundugu "aninda acilma" her release'de
+// sifirlaniyordu.
+//
+// Simdi yalnizca emekli surum onbellekleri (RAPASEL-ESKI- onekiyle isaretlenen)
+// silinir. Workbox'un precache onbellegi `cleanupOutdatedCaches()` tarafindan
+// yonetilir. Eski index.html endisesi zaten yonetim siralamasiyla cozulmus
+// durumda: SPA gezinme rotasi (NetworkFirst) precache rotasindan ONCE
+// kayitlidir, yani uygulama kabugu asla precache'ten servis edilmez.
+const EMEKLI_ONEK_ONEKI = 'raspel-eski-'
+
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((anahtarlar) => Promise.all(anahtarlar.map((k) => caches.delete(k)))).catch(() => undefined)
+    caches.keys().then((anahtarlar) => Promise.all(
+      anahtarlar
+        .filter((k) => k.startsWith(EMEKLI_ONEK_ONEKI))
+        .map((k) => caches.delete(k))
+    )).catch(() => undefined)
   )
 })
 

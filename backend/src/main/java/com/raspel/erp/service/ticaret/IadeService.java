@@ -61,7 +61,31 @@ public class IadeService {
 
     @Transactional(readOnly = true)
     public Page<IadeDTO> tumunuGetir(Long sirketId, Pageable pageable) {
-        return iadeRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable).map(this::entityToDTO);
+        Page<Iade> sayfa = iadeRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable);
+        Map<Long, List<IadeKalem>> kalemlerByIade = topluKalemler(sayfa.getContent());
+        return sayfa.map(iade -> entityToDTO(iade,
+                kalemlerByIade.getOrDefault(iade.getId(), List.of())));
+    }
+
+    /**
+     * Sayfadaki iadelerin kalemlerini TEK sorguda alip iadeId'ye gore gruplar.
+     *
+     * <p>REDTEAM/perf: {@code entityToDTO} kalemleri iade basina cekiyordu
+     * ({@code findByIadeId}); 50 satirlik sayfa 50 + 50 stok sorgusu demekti.
+     * Liste ekrani en sik kullanilan ekranlardan biri oldugu icin sorgu sayisi
+     * sabitlendi.
+     */
+    private Map<Long, List<IadeKalem>> topluKalemler(List<Iade> iadeler) {
+        if (iadeler == null || iadeler.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> idler = iadeler.stream().map(Iade::getId).filter(Objects::nonNull).distinct().toList();
+        if (idler.isEmpty()) {
+            return Map.of();
+        }
+        return iadeKalemRepository.findByIadeIdIn(idler).stream()
+                .filter(k -> k.getIadeId() != null)
+                .collect(Collectors.groupingBy(IadeKalem::getIadeId));
     }
 
     @Transactional(readOnly = true)
@@ -554,8 +578,11 @@ public class IadeService {
     }
 
     private IadeDTO entityToDTO(Iade i) {
-        List<IadeKalem> kalemEntities = iadeKalemRepository.findByIadeId(i.getId());
+        return entityToDTO(i, iadeKalemRepository.findByIadeId(i.getId()));
+    }
 
+    /** Kalemleri onceden toplu yuklenmis hali (liste ekranlari icin). */
+    private IadeDTO entityToDTO(Iade i, List<IadeKalem> kalemEntities) {
         List<Long> stokIdler = kalemEntities.stream()
                 .map(IadeKalem::getStokId)
                 .filter(Objects::nonNull)
