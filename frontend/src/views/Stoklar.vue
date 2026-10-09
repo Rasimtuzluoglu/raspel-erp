@@ -201,37 +201,21 @@
       />
     </div>
 
-    <div
-      v-if="stokStore.loading"
-      class="loading-iskelet"
-      :aria-label="t('common.loading')"
-    >
-      <SkeletonLoader
-        :count="6"
-        height="44px"
-      />
-    </div>
+    <!-- Ortak ust uc durum bileseni: iskelet / hata / bos liste.
+         DataTable'i gizlemeden ONCESI bu blok basilir; boylece veri
+         gelmeden "kayit yok" gorunmez ve yukleme sirasinda tablo
+         yerlesimi ziplamaz. -->
+    <ListeDurumu
+      v-if="gosterim === 'tablo' && (stokStore.loading || stokStore.error || !filtreAktifMi())"
+      :yukleniyor="stokStore.loading"
+      :hata="stokStore.error"
+      :bos="!stokStore.loading && !stokStore.error"
+      :bos-mesaj="t('stoklar.empty')"
+      :bos-ipucu="t('stoklar.emptyHint')"
+      :yeniden-dene="stoklariYukle"
+    />
 
-    <!-- Yukleme hatasi: "veri yok" ile karismamasi icin ayri hata durumu + tekrar dene. -->
-    <div
-      v-if="!stokStore.loading && stokStore.error"
-      class="yukleme-hatasi"
-      role="alert"
-    >
-      <i class="pi pi-exclamation-triangle" />
-      <div class="yukleme-hatasi-metin">
-        <strong>{{ t('common.yuklenemedi') }}</strong>
-        <span>{{ stokStore.error }}</span>
-      </div>
-      <Button
-        :label="t('common.tekrarDene')"
-        icon="pi pi-refresh"
-        class="p-button-sm p-button-outlined"
-        @click="stoklariYukle"
-      />
-    </div>
-
-    <template v-if="!stokStore.loading && !stokStore.error && gosterim === 'tablo'">
+    <template v-if="!stokStore.loading && !stokStore.error && gosterim === 'tablo' && filtreAktifMi()">
       <AppDataTable
         v-model:selection="seciliStoklar"
         v-model:expanded-rows="expandedRows"
@@ -1038,6 +1022,7 @@ import { useCariOnerileri } from '../composables/useCariOnerileri.js'
 import { stokAPI, excelAPI, uploadAPI, depoAPI, raporAPI } from '../api/index.js'
 import { unwrapList } from '../api/utils/unwrap.js'
 import EmptyState from '../components/EmptyState.vue'
+import ListeDurumu from '../components/ListeDurumu.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import StokHareketDialog from '../components/StokHareketDialog.vue'
 import StokTopluFiyatDialog from '../components/StokTopluFiyatDialog.vue'
@@ -1393,6 +1378,19 @@ onMounted(async () => {
     gruplamaDagilimiYukle()
   ])
 })
+
+// Herhangi bir filtre acik mi? Bos durum mesaji "sonuc bulunamadi"
+// ile "kayit hic yok" arasinda ayrim yapabilsin diye.
+const filtreAktifMi = () =>
+  Boolean(
+    filtreArama.value ||
+    filtreKategori.value ||
+    filtreMarka.value ||
+    filtreStokGrubu.value ||
+    filtreDepo.value ||
+    filtreMinFiyat.value ||
+    filtreMaxFiyat.value
+  )
 
 const filtreTemizle = () => {
   filtreArama.value = ''
