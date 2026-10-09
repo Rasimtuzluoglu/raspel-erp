@@ -493,6 +493,32 @@ Doğrulama: backend **1664/1664** (1 skip) · frontend **1534/1534** · lint/i18
 
 Doğrulama: frontend **1578/1578** (108 dosya) · backend **1664/1664** · lint/i18n temiz · build başarılı.
 
+## Dalga 4 — Şifre Kasası (tamamlandı)
+
+Kullanıcı talebi: şifreleri unutmamak için not alınacak bir kasa; herkes kendi şifresini yazabilsin, ayrıca şirket geneli paylaşılan şifreler seçilebilsin.
+
+**Güvenlik modeli (onaylanan tasarım):**
+
+| Kapsam | Yazan | Okuyan | Şifreyi açan |
+|---|---|---|---|
+| Kişisel | kaydi tutan kullanici | kaydi tutan kullanici | sahibi |
+| Şirket + Sadece yönetici | ADMIN | herkes | yazan + ADMIN |
+| Şirket + Şirkette herkes | ADMIN | herkes | **herkes** (ör. ofis Wi-Fi) |
+
+- Şifreler **düz metin saklanmaz**; mevcut `util/AesGcmUtil` (AES-256-GCM) ile şifrelenir. Aynı şifre iki kez kaydedilse bile cipher farklıdır (rastgele IV).
+- Liste/özet uçları şifre metnini **dönmez**; açma yalnız `GET /{id}/sifre` ile, `Cache-Control: no-store` başlığıyla ve **her açma denetim izine** (`SIFRE_GORUNTULENME`) yazılarak yapılır.
+- Yetki yoksa varlık sızdırmamak için 404 döner.
+- Anahtar (`APP_VAULT_ENCRYPTION_KEY`, AI anahtarından **ayrı**) yoksa kasa sessizce geçici anahtar üretmez; açık hata verir. Prod'da anahtar yoksa uygulama başlamaz (`ProdGuvenlikKontrolu`).
+- **Arşivleme (soft delete):** fiziksel silme yok; kayıt `aktif=false` olur ve geri alınabilir. Denetimde "SIL" değil "ARSIVLE" olarak görünür.
+- **Geçerlilik:** sabit 14 gün uyarı eşiği; `SÜRESİZ/GECERLİ/SURE_YAKLASTI/SÜRESİ_BİTTİ`. Şifre metni değişmedikçe süre referansı kaymaz. Arşivlenen kayıtlar uyarıya girmez.
+
+**Kapsam:** V164 migration (`sistem.sifre_kasa` + 2 indeks) · entity/repository/DTO/servis · 7 uçlu controller (`hasAnyRole('ADMIN','USER','MUHASEBE')`; SAHA/DRIVER 403) · sidebar süre rozeti · kişisel/şirket sekmeleri, kategori+arama+durum filtreleri, göz + panoya kopyala, onaylı arşivleme/geri alma.
+
+**Testler:** 1664→**1718** backend (servis 40, controller 7, güvenlik +5, audit +1, prod güvenlik +1) · 1578→**1602** frontend (view 16).
+Kırmızı doğrulama: servis 3 mutasyon → 14 kırmızı · rol kapısına SAHA/DRIVER → 2 kırmızı · audit deseni + çift gönderim guard'ı → 1'er kırmızı.
+
+**Operasyon:** `APP_VAULT_ENCRYPTION_KEY` `.env`'e üretildi (gitignore'da). Bu anahtar kaybolursa kasaya kaydedilen şifreler kalıcı olarak çözülemez.
+
 ## Planlı Epikler (v2.0)
 
 ### Epik 1 — Ürün Maliyet/ Kârlılık Analiz Sistemi (YARININ ODAĞI)

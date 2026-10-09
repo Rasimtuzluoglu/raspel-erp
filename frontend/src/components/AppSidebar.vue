@@ -124,6 +124,11 @@
             v-if="m.path === '/ajanda' && ajandaGorevSayisi"
             class="menu-sayac"
           >{{ ajandaGorevSayisi }}</span>
+          <!-- Suresi dolan/yaklasan sifre kasasi kayitlari icin uyari rozeti. -->
+          <span
+            v-if="m.path === '/sifre-kasasi' && sifreUyariSayisi"
+            class="menu-sayac"
+          >{{ sifreUyariSayisi }}</span>
           <i
             class="pi pi-star"
             :class="{ favori: isFav(m.path) }"
@@ -330,7 +335,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
-import { onaySayilariAPI, sohbetOdaAPI, ajandaAPI } from '../api/index.js'
+import { onaySayilariAPI, sohbetOdaAPI, ajandaAPI, sifreKasaAPI } from '../api/index.js'
 import { useMarka } from '../composables/useMarka.js'
 import BildirimZili from './BildirimZili.vue'
 import ThemeSwitcher from './ThemeSwitcher.vue'
@@ -482,7 +487,8 @@ const tumMenuler = [
   { path: '/kullanicilar', labelKey: 'nav.kullanici', icon: 'pi pi-user', permission: 'SISTEM_READ', grupKey: 'nav.sistem', admin: true, gelismis: true },
   { path: '/yetki-yonetimi', labelKey: 'nav.yetkiler', icon: 'pi pi-key', permission: 'SISTEM_READ', grupKey: 'nav.sistem', admin: true, gelismis: true },
   { path: '/kategoriler', labelKey: 'nav.kategori', icon: 'pi pi-tags', permission: 'STOK_READ', grupKey: 'nav.sistem', gelismis: true },
-  { path: '/notlar', labelKey: 'nav.notlar', icon: 'pi pi-pen-to-square', grupKey: 'nav.sistem' },
+      { path: '/notlar', labelKey: 'nav.notlar', icon: 'pi pi-pen-to-square', grupKey: 'nav.sistem' },
+      { path: '/sifre-kasasi', labelKey: 'nav.sifreKasasi', icon: 'pi pi-lock', grupKey: 'nav.sistem' },
   { path: '/veri-aktar', labelKey: 'nav.veriAktar', icon: 'pi pi-upload', permission: 'SISTEM_READ', grupKey: 'nav.sistem', gelismis: true },
   { path: '/yasal', labelKey: 'nav.yasal', icon: 'pi pi-file-check', grupKey: 'nav.sistem', gelismis: true },
   { path: '/hesap-ayarlari', labelKey: 'nav.hesapAyarlari', icon: 'pi pi-cog', grupKey: 'nav.sistem', gelismis: true },
@@ -591,6 +597,7 @@ onMounted(() => {
   // kullanıcılarında bu uçlar 403 döndürdüğü için hiç çağrılmaz.
   if (!authStore.isDriver && !authStore.isSaha) {
     onaySayisiniYukle()
+    sifreUyariYukle()
   }
   // Faz 3.4: sohbet okunmamış ve ajanda görev rozetleri.
   rozetleriYukle()
@@ -609,6 +616,8 @@ const menuCekmecesiniAc = () => {
 const onaySayisi = ref(0)
 const sohbetOkunmamis = ref(0)
 const ajandaGorevSayisi = ref(0)
+// Suresi dolan / yaklasan sifre kasasi kayitlari (uyari rozeti).
+const sifreUyariSayisi = ref(0)
 
 const onaySayisiniYukle = async () => {
   try {
@@ -617,6 +626,17 @@ const onaySayisiniYukle = async () => {
     onaySayisi.value = (d.izin || 0) + (d.satinalma || 0) + (d.siparis || 0)
   } catch {
     onaySayisi.value = 0
+  }
+}
+
+// Sifre kasasi uyari rozeti. SAHA/DRIVER uc 403 alacagi icin
+// cagrilmaz (onay sayaci ile ayni koruma).
+const sifreUyariYukle = async () => {
+  try {
+    const r = await sifreKasaAPI.ozet()
+    sifreUyariSayisi.value = r.data?.uyari || 0
+  } catch {
+    sifreUyariSayisi.value = 0
   }
 }
 

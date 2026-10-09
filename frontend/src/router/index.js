@@ -352,6 +352,15 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    // Sifre kasasi: her oturum acmis kullanici kendi kasasina erisir.
+    // Sirket geneli kayitlari yalniz ADMIN yazabilir (backend'de zorlanir).
+    // SAHA/DRIVER asagidaki rol guard'lariyla disarida tutulur.
+    path: '/sifre-kasasi',
+    name: 'SifreKasasi',
+    component: () => import('../views/SifreKasasi.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/veri-aktar',
     name: 'VeriImport',
     component: () => import('../views/VeriImport.vue'),
@@ -595,6 +604,7 @@ const ROTA_BASLIK_ANAHTARLARI = {
   '/yetki-yonetimi': 'nav.yetkiler',
   '/kategoriler': 'nav.kategori',
   '/notlar': 'nav.notlar',
+  '/sifre-kasasi': 'nav.sifreKasasi',
   '/veri-aktar': 'nav.veriAktar',
   '/kullanim-sartlari': 'nav.yasal',
   '/gizlilik-politikasi': 'nav.yasal',

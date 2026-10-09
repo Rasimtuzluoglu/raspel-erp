@@ -466,3 +466,32 @@ export const onaySayilariAPI = {
   }
 }
 
+// Sifre kasasi. `sifreAc` sifre metnini duz dondurur; sunucu tarafi
+// Cache-Control: no-store gonderir ve her cagriyi denetim izine yazar.
+export const sifreKasaAPI = {
+  getAll(params) {
+    return apiClient.get('/sifre-kasa', { params })
+  },
+  getById(id) {
+    return apiClient.get(`/sifre-kasa/${id}`)
+  },
+  olustur(data) {
+    return apiClient.post('/sifre-kasa', data)
+  },
+  guncelle(id, data) {
+    return apiClient.put(`/sifre-kasa/${id}`, data)
+  },
+  arsivle(id) {
+    return apiClient.delete(`/sifre-kasa/${id}`)
+  },
+  geriAl(id) {
+    return apiClient.post(`/sifre-kasa/${id}/geri-al`)
+  },
+  sifreAc(id) {
+    return apiClient.get(`/sifre-kasa/${id}/sifre`)
+  },
+  ozet() {
+    return apiClient.get('/sifre-kasa/ozet')
+  }
+}
+

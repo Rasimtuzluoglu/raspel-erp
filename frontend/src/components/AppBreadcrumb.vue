@@ -56,6 +56,7 @@ const labelKeyMap = {
   '/raporlar/fatura-gecmis': 'nav.faturaGecmisRaporu',
   '/hareketler': 'nav.hareket',
   '/notlar': 'nav.notlar',
+  '/sifre-kasasi': 'nav.sifreKasasi',
   '/satislar': 'nav.satis',
   '/satinalma': 'nav.satinalma',
   '/cek-senet': 'nav.ceksenet',
