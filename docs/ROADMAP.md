@@ -428,6 +428,48 @@ Doğrulama: `lint` temiz · `i18n:check` temiz · `test` **1305/1305** · `build
 
 Doğrulama: `lint` temiz · `i18n:check` temiz · `test` **1290/1290** · `build` başarılı. (E2E ertelendi.)
 
+## Dalga 0 — Güvenilirlik ve Veri Bütünlüğü (tamamlandı)
+
+Her faz küçük tutuldu; faz sonunda tam kapı (lint · i18n · test · build · Docker sağlık) çalıştırıldı.
+
+| Faz | Konu | Sonuç |
+|---|---|---|
+| 0.1 | `client.js` sessiz hataları (`hataYayinla`, bağlantı/zaman aşımı/sunucu ayrımı, çevrimdışı bayrağı) | spec 11→18 |
+| 0.2 | `MaasBordroService` kasa ödemesi dashboard cache'ini temizlemiyordu | test 12→14 |
+| 0.3 | Tahsilat idempotency (`X-Idempotency-Key` + çift gönderim guard'ı) | controller 2→6, dialog 1→4 |
+| 0.4 | Tahsilat dönem kilidi: güvenlik `hareketOlustur` içindeydi, mesaj yanlıştı | test 8→10 |
+| 0.5 | Saha portalı çevrimdışı imzalı teslimat kuyruğu | spec 1→4 |
+| 0.6 | Export/rapor uçlarına 180 sn timeout (tek yerden, URL deseni) | spec 18→21 |
+
+Ayrıca: `docker-compose.yml` yedekleme şifresi hatası (tüm yedekler başarısızdı) ve `BackupService` yarım dosya/boş gzip kabulü düzeltildi.
+
+## Dalga 1 — Performans ve PWA (tamamlandı)
+
+| Faz | Konu | Ölçüm |
+|---|---|---|
+| 1.1 | `RaporService.stokDegerleme` N+1 → tek sorgu | 50 stok, `times(1)` + `never()` |
+| 1.2 | V163 indeks `(sirket_id, iptal, hareket_tarihi DESC)` | 16.807 ms → **0.149 ms** (~113x) |
+| 1.3 | `KpiKart` SparkLine'ı async (chart-vendor 181.8 KB) | Satis/Uretim/Gorunumler360 |
+| 1.4 | `sw.js` activate: blanket cache silme yerine yalnız `raspel-eski-*` | 2 test |
+| 1.5 | `IadeService.tumunuGetir` N+1 → `findByIadeIdIn` | 27→29 |
+
+## Dalga 2 — Güvenlik ve Veri Bütünlüğü (tamamlandı)
+
+**Yöntem notu:** Her denetim maddesi kodla doğrulandı. 5 maddenin 3'ü **abartı/yanlıştı** ve raporda düzeltildi; gerçek açıklar denetimin işaret etmediği yerlerdeydi.
+
+| Faz | Konu | Sonuç |
+|---|---|---|
+| 2.1 | PDF rapor uçları — aktif açık **yoktu**; MUHASEBE sınıf kuralında eksikti (muhasebeci PDF basamıyordu) | SecurityConfig 9→15 |
+| 2.2 | `AuditAspect` kapsamı 16→51 desen (depo, bordro, poz, dönem kilidi, mutasyonlar) | 7 test |
+| 2.3 | Bordro ayarı: oran sınırsızdı; bozuk dilim JSON'u herkese sessizce %15 uyguluyordu | test 7→14 |
+| 2.4 | `/api/import` alan bazlı yetki (STOK/CARI/FINANS/FATURA `_WRITE`) + MUHASEBE erişimi | 15→24 |
+
+Kritik ders: method-level `@PreAuthorize` class-level'ın **yerine geçer** (birleşmez). Faz 2.4'te rol filtresi metot ifadelerinin içine de yazıldı; SAHA senaryosu bu hatanın testte **kırmızı** olduğunu gösterdi.
+
+Bilinçli ertelendi: `SirketService.konsolideOzet` 6×N (N küçük) · Dashboard 11 grafiğinin ayrıştırılması (görsel doğrulama yok) · Raporlar'ın kalan sekmeleri.
+
+Doğrulama: backend **1664/1664** (1 skip) · frontend **1534/1534** · lint/i18n temiz · build başarılı · Docker healthy.
+
 ## Planlı Epikler (v2.0)
 
 ### Epik 1 — Ürün Maliyet/ Kârlılık Analiz Sistemi (YARININ ODAĞI)

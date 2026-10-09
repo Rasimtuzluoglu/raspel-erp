@@ -57,7 +57,49 @@ public class AuditAspect {
             + "|| execution(* com.raspel.erp.controller..*.*ode(..)) "
             + "|| execution(* com.raspel.erp.controller..*.*tamamla(..)) "
             + "|| execution(* com.raspel.erp.controller..*.*eslestir(..)) "
-            + "|| execution(* com.raspel.erp.controller..*.*kilit(..))")
+            + "|| execution(* com.raspel.erp.controller..*.*Kilit(..)) "
+            // --- REDTEAM (Wave 2.2): asagidaki kalemler stok miktari, kasa,
+            // donem kilidi veya bordro/onay durumu degistiriyordu ama denetim
+            // izi birakmiyordu. Depo giris/cikar/transfer, stok duzeltme,
+            // POS gun sonu, acilis devri, mali donem kilidi, bordro hesabi/
+            // onayi, masraf talebi ve depo transferi onayi bu gruptadir.
+            // Stok sayiminda "bu hareketi kim yapti?" sorusunun cevabi
+            // bulunamazsa sayim tartismasi cozulemez.
+            + "|| execution(* com.raspel.erp.controller..*.*Ekle(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Cikar(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Transfer(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Onayla(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*onayla(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*OnayKaldir(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*onayKaldir(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Reddet(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*reddet(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*kilitle(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*kilidiAc(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Kilitle(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*KilidiAc(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Kapat(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*kapat(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*aktifYap(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*duzelt(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.tara(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Tara(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*hesapla(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Hesapla(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*topluUret(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*TopluUret(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*gunSonu(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*GunSonu(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*acilis(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Acilis(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.aktar(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*aktarimYap(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Donustur(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Cevir(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*gonder(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Gonder(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Dosya(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Test(..))")
     public void kritikPointcut() {}
 
     @AfterReturning("kritikPointcut()")

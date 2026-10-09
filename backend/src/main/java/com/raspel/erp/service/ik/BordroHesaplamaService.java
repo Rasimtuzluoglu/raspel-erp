@@ -61,6 +61,17 @@ public class BordroHesaplamaService {
         if (dto.getAsgariUcret() == null || dto.getAsgariUcret().signum() < 0) {
             throw new BusinessException("Asgari ücret negatif olamaz");
         }
+        // REDTEAM (Wave 2.3): oranlar sınırsız kaydedilebiliyordu. Negatif veya
+        // 100'den büyük bir SGK/damga oranı sessizce TÜM bordroların kesintisini
+        // bozuyordu; ayar ekranında da hata görünmüyordu.
+        oranKontrol("SGK işçi oranı", dto.getSgkIsciOrani());
+        oranKontrol("İşsizlik işçi oranı", dto.getIssizlikIsciOrani());
+        oranKontrol("SGK işveren oranı", dto.getSgkIsverenOrani());
+        oranKontrol("İşsizlik işveren oranı", dto.getIssizlikIsverenOrani());
+        oranKontrol("Damga oranı", dto.getDamgaOrani());
+        // Bozuk dilim JSON'u önceden reddet: aksi halde dilimleriCoz() hatayı
+        // yutup HERKESE %15 uyguluyor ve kullanıcı nedenini göremiyordu.
+        dilimleriDogrula(dto.getGelirVergisiDilimleri());
         BordroAyar ayar = bordroAyarRepository.findBySirketIdAndYil(sirketId, dto.getYil())
                 .orElseGet(() -> BordroAyar.builder().sirketId(sirketId).yil(dto.getYil()).build());
         ayar.setAsgariUcret(dto.getAsgariUcret());
@@ -168,6 +179,65 @@ public class BordroHesaplamaService {
             if (matrah.compareTo(limit) <= 0) break;
         }
         return vergi;
+    }
+
+    private static final BigDecimal YUZDE_MAX = new BigDecimal("100");
+
+    /** Kesinti oranı 0-100 aralığında olmalı; aksi halde bordro kesintisi bozulur. */
+    private void oranKontrol(String ad, BigDecimal oran) {
+        if (oran == null) return;
+        if (oran.signum() < 0 || oran.compareTo(YUZDE_MAX) > 0) {
+            throw new BusinessException(ad + " 0 ile 100 arasında olmalıdır. Girilen: " + oran.stripTrailingZeros());
+        }
+    }
+
+    /**
+     * Gelir vergisi dilimlerini kaydetmeden ÖNCE doğrular.
+     * <p>Bozuk JSON ya da mantıksız dilimler sessizce {@code %15} sabit
+     * uygulamaya düşüyordu; yani bir yazım hatası tüm personelin net maaşını
+     * ve vergi sorumluluğunu değiştiriyordu.
+     */
+    private void dilimleriDogrula(String json) {
+        if (json == null || json.isBlank()) return;
+        JsonNode node;
+        try {
+            node = objectMapper.readTree(json);
+        } catch (Exception e) {
+            throw new BusinessException("Gelir vergisi dilimleri geçerli JSON değil: " + e.getMessage());
+        }
+        if (!node.isArray() || node.isEmpty()) {
+            throw new BusinessException("Gelir vergisi dilimleri boş olamaz");
+        }
+        BigDecimal oncekiLimit = null;
+        boolean oncekiLimitsiz = false;
+        int boyut = node.size();
+        for (int i = 0; i < boyut; i++) {
+            JsonNode d = node.get(i);
+            if (!d.hasNonNull("oran")) {
+                throw new BusinessException((i + 1) + ". dilimde 'oran' zorunludur");
+            }
+            oranKontrol((i + 1) + ". dilim oranı", d.get("oran").decimalValue());
+            boolean sonDilim = (i == boyut - 1);
+            BigDecimal limit = d.hasNonNull("limit") ? d.get("limit").decimalValue() : null;
+            if (oncekiLimitsiz) {
+                throw new BusinessException("Limit alanı yalnızca son dilimde boş bırakılabilir");
+            }
+            if (limit == null) {
+                if (!sonDilim) {
+                    throw new BusinessException("Yalnızca son dilimin limiti boş bırakılabilir");
+                }
+                oncekiLimitsiz = true;
+            } else {
+                if (limit.signum() <= 0) {
+                    throw new BusinessException((i + 1) + ". dilim limiti pozitif olmalıdır");
+                }
+                if (oncekiLimit != null && limit.compareTo(oncekiLimit) <= 0) {
+                    throw new BusinessException("Dilim limitleri küçükten büyüğe artmalıdır ("
+                            + oncekiLimit.stripTrailingZeros() + " -> " + limit.stripTrailingZeros() + ")");
+                }
+                oncekiLimit = limit;
+            }
+        }
     }
 
     /** JSON dilimlerini çözer: [{"limit":158000,"oran":15},{"limit":null,"oran":40}] */

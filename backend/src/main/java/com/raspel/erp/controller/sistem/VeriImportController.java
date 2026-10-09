@@ -32,11 +32,27 @@ import com.raspel.erp.entity.envanter.Stok;
 @RequestMapping("/api/import")
 @RequiredArgsConstructor
 @Slf4j
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
 public class VeriImportController {
 
     /** Bellek/Doppler korumasi: tek import islemi icin ust satir siniri. */
     private static final int MAKS_SATIR = 50_000;
+
+    // REDTEAM (Wave 2.4): import uclari yalnizca ROLE'e bakiyordu; yazdiklari
+    // alanin yetki kodu hic kontrol edilmiyordu. Artik her uc kendi alaninin
+    // yazma yetkisini istiyor (ExcelExportController modeli). Boylece yonetici
+    // bir kullanicidan CARI_WRITE'i geri aldiginda toplu cari yazimi da kapanir.
+    // Not 1: Spring'de metot duzeyindeki @PreAuthorize sinif duzeyinin YERINE
+    //         gecer (birlesmez). Bu yuzden SINIF kurali metot ifadelerinin
+    //         ICINE de yazildi: aksi halde rol filtresi tamamen kaybolur ve
+    //         SAHA/DRIVER da yetki kodu varsa import ucuna girerdi.
+    //         (Guvenlik testinde SAHA senaryosu bu hatayi yakaladi.)
+    // Not 2: Import, yazmanin bir alternatifi oldugu icin ayri bir IMPORT yetki
+    //         kodu uretilmedi; kanit gerektirmeyen yeni kod yerine mevcut
+    //         alan kodu kullanildi. Ayrica MUHASEBE rolu sinif kuralinda
+    //         yer almIYORDU; kendi CARI/FATURA/FINANS_WRITE yetkileri varken
+    //         toplu aktaramiyordu.
+    private final com.raspel.erp.config.security.YetkiKontrol yetkiKontrol;
 
     private final StokService stokService;
     private final CariHesapService cariHesapService;
@@ -47,6 +63,7 @@ public class VeriImportController {
 
     @PostMapping("/stok")
     @Operation(summary = "CSV ile stok aktar", description = "CSV dosyası ile toplu stok girişi yapar. Kolonlar: ad,stokKodu,barkod,birim,fiyat,miktar,minMiktar,kategori,stokGrubu,marka,rafNo")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE') and (hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'STOK_WRITE'))")
     public ResponseEntity<Map<String, Object>> stokImport(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Map<String, Object> result = new HashMap<>();
@@ -122,6 +139,7 @@ public class VeriImportController {
 
     @PostMapping("/cari")
     @Operation(summary = "CSV ile cari hesap aktar", description = "CSV dosyası ile toplu cari hesap girişi yapar. Kolonlar: ad,vergiNo,telefon,eposta,il,ilce,adres")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE') and (hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'CARI_WRITE'))")
     public ResponseEntity<Map<String, Object>> cariImport(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Map<String, Object> result = new HashMap<>();
@@ -179,6 +197,7 @@ public class VeriImportController {
     @PostMapping("/hareket")
     @Operation(summary = "CSV ile cari hareket aktar",
             description = "CSV dosyası ile toplu cari hareket (tahsilat/ödeme/borçlandırma) girişi yapar. Kolonlar: cariId;tarih;tur;tutar;aciklama (tur: TAHSILAT/ODEME/BORC, tarih: YYYY-MM-DD)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE') and (hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FINANS_WRITE'))")
     public ResponseEntity<Map<String, Object>> hareketImport(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Map<String, Object> result = new HashMap<>();
@@ -246,6 +265,7 @@ public class VeriImportController {
 
     @PostMapping("/alis-fatura")
     @Operation(summary = "CSV ile alış faturası aktar", description = "CSV dosyası ile toplu alış faturası girişi yapar. Kolonlar: faturaNo;tarih;cariId;stokKodu;aciklama;adet;birimFiyat;kdvOrani (aynı faturaNo'ya sahip satırlar tek faturada birleştirilir)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE') and (hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FATURA_WRITE'))")
     public ResponseEntity<Map<String, Object>> alisFaturaImport(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");

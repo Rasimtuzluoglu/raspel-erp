@@ -18,10 +18,11 @@ import com.raspel.erp.entity.ticaret.Siparis;
 @RestController
 @RequestMapping("/api/rapor")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
 public class PdfRaporController {
 
     private final PdfRaporService pdfRaporService;
+
 
     /** Accept-Language başlığından belge dilini çözer (tr varsayılan, en desteklenir). */
     private PdfMetin dil(HttpServletRequest request) {

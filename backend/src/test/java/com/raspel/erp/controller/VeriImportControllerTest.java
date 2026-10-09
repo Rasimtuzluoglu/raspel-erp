@@ -55,6 +55,12 @@ class VeriImportControllerTest {
     @MockBean
     private com.raspel.erp.service.finans.HareketService hareketService;
 
+    // Metot duzeyindeki @PreAuthorize ifadeleri bu beani SpEL ile cagirir.
+    // Bu testte filtreler kapali (addFilters = false), dolayisiyla cagri
+    // yapilmaz; ancak bean bulunmazsa context ayaga kalkamaz.
+    @MockBean
+    private com.raspel.erp.config.security.YetkiKontrol yetkiKontrol;
+
     @Test
     void shouldImportStokFromCsv() throws Exception {
         String csv = "ad;stokKodu;barkod;birim;fiyat;miktar;minMiktar\n" +

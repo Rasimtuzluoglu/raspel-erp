@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.dto.ik.BordroHesaplamaDTO;
 import com.raspel.erp.entity.ik.BordroAyar;
+import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.repository.ik.BordroAyarRepository;
 import com.raspel.erp.repository.ik.MaasBordroRepository;
 import com.raspel.erp.repository.ik.PersonelRepository;
@@ -51,6 +52,84 @@ class BordroHesaplamaServiceTest {
     void kur() {
         servis = new BordroHesaplamaService(bordroAyarRepository, personelRepository,
                 maasBordroRepository, tenantChecker, new ObjectMapper());
+    }
+
+    // --- REDTEAM (Wave 2.3): ayar kaydinda dogrulama eksikti ---
+
+    private BordroAyar ayarDeger(BigDecimal sgk, String dilimler) {
+        return BordroAyar.builder()
+                .yil(2026).asgariUcret(new BigDecimal("20000"))
+                .sgkIsciOrani(sgk).damgaOrani(new BigDecimal("0.759"))
+                .gelirVergisiDilimleri(dilimler)
+                .build();
+    }
+
+    @Test
+    void ayarKaydet_negatifSgkOraniniReddeder() {
+        var hata = assertThrows(BusinessException.class, () ->
+                servis.ayarKaydet(1L, ayarDeger(new BigDecimal("-14"), null)));
+        assertTrue(hata.getMessage().contains("0 ile 100"));
+    }
+
+    @Test
+    void ayarKaydet_yuzdenBuyukOraniReddeder() {
+        var hata = assertThrows(BusinessException.class, () ->
+                servis.ayarKaydet(1L, ayarDeger(new BigDecimal("140"), null)));
+        assertTrue(hata.getMessage().contains("0 ile 100"));
+    }
+
+    @Test
+    void ayarKaydet_negatifDamgaOraniniReddeder() {
+        var ayar = BordroAyar.builder()
+                .yil(2026).asgariUcret(new BigDecimal("20000"))
+                .sgkIsciOrani(new BigDecimal("14"))
+                .damgaOrani(new BigDecimal("-0.759"))
+                .build();
+        var hata = assertThrows(BusinessException.class, () -> servis.ayarKaydet(1L, ayar));
+        assertTrue(hata.getMessage().contains("Damga"));
+    }
+
+    /** Bozuk JSON sessizce herkese %15 uyguluyordu; kayıt anında reddedilmeli. */
+    @Test
+    void ayarKaydet_bozukDilimJsoniniReddeder() {
+        var hata = assertThrows(BusinessException.class, () ->
+                servis.ayarKaydet(1L, ayarDeger(new BigDecimal("14"), "{bozuk json")));
+        assertTrue(hata.getMessage().contains("JSON"));
+    }
+
+    @Test
+    void ayarKaydet_azalanDilimLimitleriniReddeder() {
+        var hata = assertThrows(BusinessException.class, () ->
+                servis.ayarKaydet(1L, ayarDeger(new BigDecimal("14"),
+                        "[{\"limit\":300000,\"oran\":15},{\"limit\":158000,\"oran\":20}]")));
+        assertTrue(hata.getMessage().contains("küçükten büyüğe"));
+    }
+
+    @Test
+    void ayarKaydet_limitSadeceSonDilimdeBosOlabilir() {
+        var hata = assertThrows(BusinessException.class, () ->
+                servis.ayarKaydet(1L, ayarDeger(new BigDecimal("14"),
+                        "[{\"limit\":null,\"oran\":15},{\"limit\":158000,\"oran\":20}]")));
+        assertTrue(hata.getMessage().contains("son dilim"));
+    }
+
+    @Test
+    void ayarKaydet_dilimOraniYuzdenBuyukseReddeder() {
+        var hata = assertThrows(BusinessException.class, () ->
+                servis.ayarKaydet(1L, ayarDeger(new BigDecimal("14"),
+                        "[{\"limit\":158000,\"oran\":150}]")));
+        assertTrue(hata.getMessage().contains("0 ile 100"));
+    }
+
+    @Test
+    void ayarKaydet_gecerliAyarKaydedilir() {
+        when(bordroAyarRepository.findBySirketIdAndYil(1L, 2026)).thenReturn(Optional.empty());
+        when(bordroAyarRepository.save(any(BordroAyar.class))).thenAnswer(i -> i.getArgument(0));
+
+        var sonuc = servis.ayarKaydet(1L, ayarDeger(new BigDecimal("14"),
+                "[{\"limit\":158000,\"oran\":15},{\"limit\":null,\"oran\":20}]"));
+
+        assertEquals(0, sonuc.getSgkIsciOrani().compareTo(new BigDecimal("14")));
     }
 
     @Test
