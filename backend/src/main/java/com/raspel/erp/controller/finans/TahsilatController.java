@@ -41,6 +41,8 @@ public class TahsilatController {
     // FINANS_WRITE verilmez (YetkiService seed'i).
     private final com.raspel.erp.config.security.YetkiKontrol yetkiKontrol;
 
+    private final com.raspel.erp.service.sistem.IdempotencyService idempotencyService;
+
     @GetMapping
     @Operation(summary = "Tahsilat özeti", description = "Ödenmemiş alacakların cari bazlı yaşlandırma özetini getirir")
     public ResponseEntity<TahsilatDTO> ozet(HttpServletRequest request) {
@@ -79,15 +81,49 @@ public class TahsilatController {
     public ResponseEntity<Map<String, Object>> tahsilatGir(
             Authentication authentication,
             @RequestBody @Valid TahsilatGirisDTO dto,
-            HttpServletRequest request) {
+            HttpServletRequest request,
+            @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        Map<String, Object> sonuc = tahsilatService.tahsilatGir(
-                dto.getCariId(), dto.getTutar(), dto.getOdemeYontemi(),
-                dto.getTaksitKurum(), dto.getTaksitTutar(), dto.getAciklama(),
-                dto.getHareketTarihi(), sirketId,
-                dto.getPosTerminaliId(), dto.getKomisyonTutar(), dto.getValorTarihi(),
-                dto.getTaksitId(), dto.getKasaId(), dto.getBankaId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(sonuc);
+
+        // Çift kayıt koruması. Tahsilat cari bakiyeyi, kasa/banka bakiyesini ve
+        // fatura odenen/kalan tutarlarını kalıcı olarak değiştirir; aynı isteğin
+        // iki kez işlenmesi çift tahsilat demektir. Anahtarı kaydetmeden ÖNCE
+        // rezerve et (FaturaController ile aynı desen).
+        String anahtar = null;
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            anahtar = "idem:tahsilat:" + (sirketId != null ? sirketId : 0L) + ":" + idempotencyKey.trim();
+            if (!idempotencyService.deneKilit(anahtar)) {
+                // Aynı anahtarla ikinci istek: ya ilk istek hâlâ sürüyor ya da
+                // bu TTL içinde tamamlanmış. İkisinde de tekrar tahsilat YAPILMAZ.
+                throw new com.raspel.erp.exception.BusinessException(
+                        "Bu tahsilat kaydı zaten işleniyor veya kaydedilmiş. Mükerrer kayıt oluşmadı; "
+                        + "tahsilat geçmişinden kontrol edebilirsiniz.");
+            }
+        }
+
+        try {
+            Map<String, Object> sonuc = tahsilatService.tahsilatGir(
+                    dto.getCariId(), dto.getTutar(), dto.getOdemeYontemi(),
+                    dto.getTaksitKurum(), dto.getTaksitTutar(), dto.getAciklama(),
+                    dto.getHareketTarihi(), sirketId,
+                    dto.getPosTerminaliId(), dto.getKomisyonTutar(), dto.getValorTarihi(),
+                    dto.getTaksitId(), dto.getKasaId(), dto.getBankaId());
+            if (anahtar != null) {
+                Object hareketId = sonuc.get("hareketId");
+                if (hareketId instanceof Number n) {
+                    idempotencyService.tamamla(anahtar, n.longValue());
+                } else {
+                    // Sonuç okunabilir değilse kilidi hemen bırak: yeniden denemede
+                    // yeni tahsilat yapılabilsin (sunucu tarafında zaten tutar
+                    // doğrulaması ve dönem kilidi var).
+                    idempotencyService.serbestBirak(anahtar);
+                }
+            }
+            return ResponseEntity.status(HttpStatus.CREATED).body(sonuc);
+        } catch (RuntimeException e) {
+            if (anahtar != null) idempotencyService.serbestBirak(anahtar);
+            throw e;
+        }
     }
 
     @Data

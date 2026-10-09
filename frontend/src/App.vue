@@ -35,7 +35,7 @@
           class="offline-banner"
         >
           <i class="pi pi-wifi" />
-          <span>{{ $t('app.cevrimdisiMod') }}</span>
+          <span>{{ cevrimdisiMesaji }}</span>
           <button
             class="offline-tekrar-dene"
             @click="window.location.reload()"
@@ -222,7 +222,10 @@ const taksitAcik = ref(false)
 const marjAcik = ref(false)
 const ibanAcik = ref(false)
 const tcAcik = ref(false)
-const offlineBannerVisible = computed(() => !networkStatus.online && networkStatus.showBanner)
+const offlineBannerVisible = computed(() => networkStatus.showBanner && (!networkStatus.online || networkStatus.sunucuyaUlasilamiyor))
+const cevrimdisiMesaji = computed(() => networkStatus.sunucuyaUlasilamiyor && networkStatus.online
+  ? t('app.sunucuyaUlasilamiyor')
+  : t('app.cevrimdisiMod'))
 
 // Çevrimdışı satış kuyruğu: bekleyen sayısı görünür ve elle gönderilebilir.
 const { bekleyen: bekleyenSatis, senkronizeEt: kuyrukSenkronizeEt, yenile: kuyrukYenile } = useOfflineSatisKuyrugu()
@@ -276,7 +279,10 @@ watch(escape, (v) => {
 // Aynı hatanın iki kez görünmemesi için global bildirim bir sonraki tura
 // ertelenir (view toast'ı önce çıkar) ve paylaşımlı dedupe devreye girer.
 const handleApiError = (e) => {
-  const mesaj = e.detail?.message
+  const d = e.detail || {}
+  // Sunucu mesaji varsa o (is kuralina ozgu, yerellestirilmis); yoksa hata
+  // kodundan turetilen sabit mesaj.
+  const mesaj = d.anahtar ? t(d.anahtar) : d.message
   if (!mesaj) return
   setTimeout(() => {
     toastBildirim.hata(mesaj, t('common.islemBasarisiz'))

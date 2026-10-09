@@ -33,6 +33,7 @@ class MaasBordroServiceTest {
     @Mock private com.raspel.erp.repository.finans.KasaRepository kasaRepository;
     @Mock private com.raspel.erp.repository.finans.KasaHareketRepository kasaHareketRepository;
     @Mock private com.raspel.erp.service.sistem.DonemService donemService;
+    @Mock private com.raspel.erp.config.CacheYardimci cacheYardimci;
     @InjectMocks private MaasBordroService maasBordroService;
 
     private Personel createPersonel() {
@@ -219,5 +220,39 @@ class MaasBordroServiceTest {
         assertThrows(com.raspel.erp.exception.BusinessException.class,
                 () -> maasBordroService.ode(1L, 5L));
         verify(maasBordroRepository, never()).findByIdForUpdate(any());
+    }
+
+    /**
+     * Kasa bakiyesi dogrudan yazildigi icin KasaService'in cache temizlemesi
+     * devreye girmiyor; dashboard'daki kasa bakiyesi TTL boyunca bayat kalirdi.
+     */
+    @Test
+    void ode_dashboardCacheTemizlenir() {
+        MaasBordro onayli = createBordro(1L);
+        onayli.setDurum("ONAYLANDI");
+        when(maasBordroRepository.findById(1L)).thenReturn(Optional.of(onayli));
+        when(maasBordroRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(onayli));
+        when(kasaRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(kasa("100000")));
+        when(maasBordroRepository.save(any(MaasBordro.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        maasBordroService.ode(1L, 5L);
+
+        verify(cacheYardimci).commitSonrasiTemizle("dashboard");
+    }
+
+    /** Onay kaldirma, odemeyi geri alir ve kasa bakiyesini yukler. */
+    @Test
+    void onayKaldir_dashboardCacheTemizlenir() {
+        MaasBordro onayli = createBordro(1L);
+        onayli.setDurum("ONAYLANDI");
+        onayli.setOdemeDurumu("ODENDI");
+        onayli.setOdemeKasaId(5L);
+        when(maasBordroRepository.findById(1L)).thenReturn(Optional.of(onayli));
+        when(maasBordroRepository.save(any(MaasBordro.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(kasaHareketRepository.findByKaynakTipAndKaynakId("BORDRO", 1L)).thenReturn(java.util.List.of());
+
+        maasBordroService.onayKaldir(1L);
+
+        verify(cacheYardimci).commitSonrasiTemizle("dashboard");
     }
 }

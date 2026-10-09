@@ -50,6 +50,7 @@ public class TahsilatService {
     private final com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
     private final com.raspel.erp.config.TenantChecker tenantChecker;
     private final com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
+    private final com.raspel.erp.service.sistem.DonemService donemService;
 
     private static final List<String> ODENDI_DURUMLARI = List.of("ODENDI", "IPTAL");
     private static final List<String> GECERLI_ODEME_YONTEMLERI = List.of("NAKIT", "KART", "TAKSIT", "HAVALE");
@@ -145,6 +146,14 @@ public class TahsilatService {
         if (tutar == null || tutar.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException("Tahsilat tutarı 0'dan büyük olmalıdır");
         }
+        // Dönem kilidi. Güvenlik zaten hareketOlustur içinde uygulanıyor
+        // (her tahsilat en az bir hareket yazar); buradaki kontrol iki işe yarar:
+        //   1) Kullanıcı "Tahsilat Al" dedi ama ekranda "hareket oluşturma
+        //      yapılamaz" görüyordu. Artık ne yaptığını söyleyen bir mesaj alır.
+        //   2) Fatura taraması ve olası kısmi yazmalar başlamadan hızlıca
+        //      reddeder.
+        donemService.kilitKontrol(sirketId,
+                hareketTarihi != null ? hareketTarihi : LocalDate.now(), "tahsilat");
         CariHesap cari = cariHesapRepository.findById(cariId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", cariId));
 
@@ -265,6 +274,10 @@ public class TahsilatService {
         Map<String, Object> sonuc = new java.util.LinkedHashMap<>();
         sonuc.put("cariId", cariId);
         sonuc.put("cariAd", cari.getAd());
+        // Idempotency yanıtının kilitlenebilmesi için: anahtarı tamamlamak
+        // hareket id'si gerektirir. Aynı zamanda istemci (mükerrer istek
+        // doğrulaması) kaydı geçmişten teyit edebilir.
+        sonuc.put("hareketId", ilkHareketId);
         sonuc.put("tutar", tutar);
         sonuc.put("odemeYontemi", odemeYontemi);
         sonuc.put("uygulananFaturalar", uygulananFaturalar);

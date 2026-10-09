@@ -45,6 +45,8 @@ class TahsilatServiceTest {
     private com.raspel.erp.service.finans.TaksitService taksitService;
     @Mock
     private com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
+    @Mock
+    private com.raspel.erp.service.sistem.DonemService donemService;
     @InjectMocks
     private TahsilatService tahsilatService;
 
@@ -194,5 +196,40 @@ class TahsilatServiceTest {
                 new BigDecimal("1000"), null, LocalDate.now(), 1L, null, null, null, 55L);
 
         verify(taksitService).ode(eq(55L), any(com.raspel.erp.dto.finans.TaksitOdeDTO.class), eq(1L));
+    }
+
+    /**
+     * Kilitli donemde tahsilat reddedilir ve hicbir yazma olmaz. Kontrol
+     * hareketOlustur'da da var ama oradaki mesaj "hareket oluşturma" der;
+     * kullanici ne yaptigini bilmez. Burada "tahsilat" adiyla ve erken
+     * reddedilir.
+     */
+    @Test
+    void tahsilatGir_kilitliDonemdeErkenReddeder() {
+        LocalDate kilitliTarih = LocalDate.of(2026, 1, 15);
+        doThrow(new BusinessException("Bu tarih kilitli bir döneme ait olduğu için tahsilat yapılamaz."))
+                .when(donemService).kilitKontrol(eq(1L), eq(kilitliTarih), eq("tahsilat"));
+
+        BusinessException hata = assertThrows(BusinessException.class, () ->
+                tahsilatService.tahsilatGir(1L, new BigDecimal("1000"), "NAKIT", null, null, null,
+                        kilitliTarih, 1L, null, null, null));
+
+        assertTrue(hata.getMessage().contains("tahsilat"));
+        verify(cariHesapRepository, never()).findById(any());
+        verify(hareketService, never()).hareketOlustur(any(), any());
+    }
+
+    /** Tarih verilmezse kontrol bugun icin yapilir. */
+    @Test
+    void tahsilatGir_tarihYoksaBugunKontrolEdilir() {
+        CariHesap c1 = cari(1L, "A Ltd", null);
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(c1));
+        when(faturaRepository.findTahsilatEdilecekByCari(any(), any(), any(), any(), anyList())).thenReturn(List.of());
+        when(hareketService.hareketOlustur(any(), eq(1L))).thenReturn(null);
+
+        tahsilatService.tahsilatGir(1L, new BigDecimal("500"), "NAKIT", null, null, null,
+                null, 1L, null, null, null);
+
+        verify(donemService).kilitKontrol(eq(1L), eq(LocalDate.now()), eq("tahsilat"));
     }
 }

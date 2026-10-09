@@ -19,7 +19,7 @@
         <div class="header-actions">
           <Button
             v-if="sahaKuyruk.length > 0"
-            :label="t('sahaPortali.kuyrukBekliyor', { n: sahaKuyruk.length })"
+            :label="kuyrukEtiketi"
             icon="pi pi-cloud-upload"
             class="p-button-sm"
             severity="warning"
@@ -881,22 +881,64 @@ onUnmounted(() => {
 })
 
 // ---- Saha çevrimdışı kuyruğu (ziyaret notları) ----
-// Finansal işlemler (tahsilat) çevrimdışı kaydedilmez; ziyaret notları kuyruğa alınır
-// ve bağlantı gelince otomatik gönderilir.
+// Finansal işlemler (tahsilat) çevrimdışı kaydedilmez; ziyaret notları ve
+// TESLİMAT ONAYI (imza dahil) kuyruğa alınır, bağlantı gelince otomatik
+// gönderilir.
+// Kuyruk öğesi `tur` ile ayrılır: 'NOT' (ziyaret notu) ve 'TESLIMAT'
+// (sipariş teslimi + imza). `tur` alanı olmayan eski kayıtlar NOT sayılır.
 const SAHA_KUYRUK_KEY = 'raspel_saha_kuyrugu'
+const KUYRUK_TUR_NOT = 'NOT'
+const KUYRUK_TUR_TESLIMAT = 'TESLIMAT'
+// localStorage kotası sınırlıdır; imza görüntüleri büyüktür. Aşırı büyüme
+// yerine kuyruğu reddetmek, tüm oturumu düşürmekten iyidir.
+const KUYRUK_MAKS_ADET = 10
 const sahaKuyruk = ref(JSON.parse(localStorage.getItem(SAHA_KUYRUK_KEY) || '[]'))
 const kuyrukSenkronizeEdiliyor = ref(false)
 const sahaKuyrukKaydet = () => localStorage.setItem(SAHA_KUYRUK_KEY, JSON.stringify(sahaKuyruk.value))
+
+const kuyrugaEkle = (kayit) => {
+  if (sahaKuyruk.value.length >= KUYRUK_MAKS_ADET) return false
+  sahaKuyruk.value.push(kayit)
+  sahaKuyrukKaydet()
+  return true
+}
+
+const kuyruktakiTeslimatlar = computed(() =>
+  sahaKuyruk.value.filter((k) => (k.tur || KUYRUK_TUR_NOT) === KUYRUK_TUR_TESLIMAT).length)
+
+// Kuyrukta imza bekleyen teslimat varsa kullanıcı bunu bilmeli: teslimat
+// kaydedilmedi, gönderilmeyi bekliyor.
+const kuyrukEtiketi = computed(() => {
+  const teslimat = kuyruktakiTeslimatlar.value
+  return teslimat > 0
+    ? t('sahaPortali.kuyrukTeslimatBekliyor', { n: sahaKuyruk.value.length, teslimat })
+    : t('sahaPortali.kuyrukBekliyor', { n: sahaKuyruk.value.length })
+})
+
 const sahaKuyruguSenkronizeEt = async () => {
   if (!sahaKuyruk.value.length || !navigator.onLine) return
   kuyrukSenkronizeEdiliyor.value = true
   const kalan = []
   let gonderilen = 0
+  let basarisiz = 0
   for (const kayit of sahaKuyruk.value) {
+    const tur = kayit.tur || KUYRUK_TUR_NOT
     try {
-      await notAPI.create(kayit)
+      if (tur === KUYRUK_TUR_TESLIMAT) {
+        // dataURL -> File; tarayıcı çevrimdışıyken File yok, sonradan üretilir.
+        const dosya = veriUrlesiDosyaya(kayit.imzaDataUrl, `imza-${kayit.siparisId}.png`)
+        await teslimatAPI.teslimEtSiparis(kayit.siparisId, {
+          teslimAlanAd: kayit.teslimAlanAd,
+          teslimNotu: kayit.teslimNotu
+        }, dosya)
+      } else {
+        await notAPI.create(kayit)
+      }
       gonderilen++
     } catch {
+      // Gönderilemeyen kayıt kuyrukta kalır; kullanıcıya da söylenmeli, yoksa
+      // rozet sayısı hiç değişmiyor ve nedenini anlamıyor.
+      basarisiz++
       kalan.push(kayit)
     }
   }
@@ -906,6 +948,18 @@ const sahaKuyruguSenkronizeEt = async () => {
   if (gonderilen > 0) {
     toast.add({ severity: 'success', summary: t('sahaPortali.basarili'), detail: t('sahaPortali.cevrimdisiZiyaretGonderildi', { n: gonderilen }), life: 4000 })
   }
+  if (basarisiz > 0) {
+    toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: t('sahaPortali.cevrimdisiGonderilemedi', { n: basarisiz }), life: 6000 })
+  }
+}
+
+const veriUrlesiDosyaya = (dataUrl, dosyaAdi) => {
+  const parcalar = String(dataUrl).split(',')
+  const mime = (parcalar[0].match(/data:(.*?);/) || [])[1] || 'image/png'
+  const bayt = atob(parcalar[1] || '')
+  const dizi = new Uint8Array(bayt.length)
+  for (let i = 0; i < bayt.length; i++) dizi[i] = bayt.charCodeAt(i)
+  return new File([dizi], dosyaAdi, { type: mime })
 }
 
 const tumunuYukle = async () => {
@@ -982,12 +1036,37 @@ const teslimatOnayla = async () => {
       toast.add({ severity: 'warn', summary: t('sahaPortali.eksikBilgi'), detail: t('sahaPortali.imzaZorunlu'), life: 3000 })
       return
     }
-    const dosya = new File([blob], `imza-${seciliSiparis.value.id}.png`, { type: 'image/png' })
-    await teslimatAPI.teslimEtSiparis(
-      seciliSiparis.value.id,
-      { teslimAlanAd: imzaForm.value.teslimAlan.trim(), teslimNotu: imzaForm.value.notlar },
-      dosya
-    )
+    const siparisId = seciliSiparis.value.id
+    const govde = {
+      teslimAlanAd: imzaForm.value.teslimAlan.trim(),
+      teslimNotu: imzaForm.value.notlar
+    }
+
+    // Çevrimdışıysa imza sessizce kaybolurdu: müşteri imzalamış, teslim
+    // edilmiş görünmüyordu. İmza dataURL olarak kuyruğa alınır, bağlantı
+    // gelince aynı siparişe gönderilir.
+    if (!navigator.onLine) {
+      const eklendi = kuyrugaEkle({
+        tur: KUYRUK_TUR_TESLIMAT,
+        siparisId,
+        ...govde,
+        imzaDataUrl: await blobToDataUrl(blob),
+        tarih: new Date().toISOString()
+      })
+      imzaModal.value = false
+      imzaForm.value = { teslimAlan: '', notlar: '' }
+      if (eklendi) {
+        // Siparisin durumu DEGISTIRILMEZ: sunucuya ulasmadi, siparis henuz
+        // teslim edilmedi. Kuyruk rozeti bekleyeni gosterir.
+        toast.add({ severity: 'info', summary: t('sahaPortali.cevrimdisi'), detail: t('sahaPortali.cevrimdisiTeslimatKuyruk'), life: 5000 })
+      } else {
+        toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: t('sahaPortali.cevrimdisiKuyrukDolu'), life: 6000 })
+      }
+      return
+    }
+
+    const dosya = new File([blob], `imza-${siparisId}.png`, { type: 'image/png' })
+    await teslimatAPI.teslimEtSiparis(siparisId, govde, dosya)
     seciliSiparis.value.durum = 'TESLIM_EDILDI'
     toast.add({ severity: 'success', summary: t('sahaPortali.teslimEdildi'), detail: t('sahaPortali.siparisTeslimEdildi'), life: 3000 })
     imzaModal.value = false
@@ -998,6 +1077,13 @@ const teslimatOnayla = async () => {
     teslimEdiliyor.value = false
   }
 }
+
+const blobToDataUrl = (blob) => new Promise((cozumle, reddet) => {
+  const okuyucu = new FileReader()
+  okuyucu.onload = () => cozumle(okuyucu.result)
+  okuyucu.onerror = () => reddet(new Error('imza okunamadi'))
+  okuyucu.readAsDataURL(blob)
+})
 
 const durumSecModal = ref(false)
 const seciliYeniDurum = ref('BEKLIYOR')
@@ -1159,8 +1245,10 @@ const ziyaretKaydet = async () => {
     }
     if (!navigator.onLine) {
       // Çevrimdışı: ziyaret notu kuyruğa alınır; bağlantı gelince otomatik gönderilir.
-      sahaKuyruk.value.push(notKaydi)
-      sahaKuyrukKaydet()
+      if (!kuyrugaEkle({ ...notKaydi, tur: KUYRUK_TUR_NOT })) {
+        toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: t('sahaPortali.cevrimdisiKuyrukDolu'), life: 6000 })
+        return
+      }
       toast.add({ severity: 'info', summary: t('sahaPortali.cevrimdisi'), detail: t('sahaPortali.cevrimdisiZiyaretKuyruk'), life: 4000 })
       ziyaretForm.value.notlar = ''
       ziyaretForm.value.cariHesapId = null

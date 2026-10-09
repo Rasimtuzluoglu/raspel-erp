@@ -3,6 +3,7 @@ package com.raspel.erp.service.ik;
 import com.raspel.erp.dto.ik.MaasBordroDTO;
 import com.raspel.erp.entity.ik.Personel;
 import com.raspel.erp.entity.ik.MaasBordro;
+import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.ik.PersonelRepository;
 import com.raspel.erp.repository.ik.MaasBordroRepository;
@@ -28,6 +29,7 @@ public class MaasBordroService {
     private final com.raspel.erp.repository.finans.KasaHareketRepository kasaHareketRepository;
     private final com.raspel.erp.service.sistem.DonemService donemService;
     private final BordroHesaplamaService bordroHesaplamaService;
+    private final CacheYardimci cacheYardimci;
 
     @Transactional(readOnly = true)
     public Page<MaasBordroDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -253,6 +255,9 @@ public class MaasBordroService {
                 .build());
         bordro.setOdemeDurumu("ODENDI");
         bordro.setOdemeKasaId(kasaId);
+        // Kasa bakiyesi dogrudan yazildigi icin KasaService'in temizlemesi devreye
+        // girmiyor; dashboard'daki kasa bakiyesi TTL boyunca bayat kalirdi.
+        cacheYardimci.commitSonrasiTemizle("dashboard");
         return maasBordroRepository.save(bordro);
     }
 
@@ -278,6 +283,8 @@ public class MaasBordroService {
         }
         bordro.setOdemeDurumu("ODENMEDI");
         bordro.setOdemeKasaId(null);
+        // Kasa bakiyesi geri yuklendi; dashboard cache'i de dusmeli.
+        cacheYardimci.commitSonrasiTemizle("dashboard");
     }
 
     public void sil(Long id) {

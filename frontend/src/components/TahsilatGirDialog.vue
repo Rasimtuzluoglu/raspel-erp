@@ -241,6 +241,7 @@ import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { tahsilatAPI, bankaAPI, posAPI, kasaAPI } from '../api/index.js'
+import { idempotencyAnahtari as yeniIdempotencyAnahtari } from '../api/idempotency.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useCariOnerileri } from '../composables/useCariOnerileri.js'
 import { formatCurrency, formatDate } from '../utils/format.js'
@@ -286,10 +287,23 @@ const emit = defineEmits(['update:visible', 'kaydedildi'])
 // gelen sonuçlar üzerinde çalışır (fatura tutarlarını bozmamak için).
 const { oneriler: cariOnerileri, ara: cariOnerileriAra, hemenAra: cariOnerileriYukle } = useCariOnerileri()
 
+// Idempotency anahtarı form AÇILDIĞINDA üretilir ve başarıya kadar sabit
+// kalır: çift tıklama, ağ titremesi ve "tekrar dene" aynı anahtarla gider ve
+// sunucu ikinci kaydı reddeder. Çağrı başına yeni anahtar üretilirse koruma
+// çalışmaz.
+const idempotencyAnahtari = ref(yeniIdempotencyAnahtari())
+const idempotencyAnahtariDegistir = () => {
+  idempotencyAnahtari.value = yeniIdempotencyAnahtari()
+}
+
 watch(
   () => props.visible,
   (acik) => {
-    if (acik) cariOnerileriYukle()
+    if (acik) {
+      cariOnerileriYukle()
+      // Her açılış yeni bir kullanıcı eylemidir: yeni anahtar.
+      idempotencyAnahtariDegistir()
+    }
   },
   { immediate: true }
 )
@@ -436,6 +450,9 @@ watch(
 
 const kaydet = async () => {
   if (!gecerli.value) return
+  // Buton :loading ile kapansa da Enter/form yolları ve çok hızlı çift tıklama
+  // atlayabiliyor; JS seviyesinde ikinci çağrıyı reddet.
+  if (kaydediliyor.value) return
   kaydediliyor.value = true
   try {
     await tahsilatAPI.gir({
@@ -452,12 +469,16 @@ const kaydet = async () => {
       bankaId: form.value.odemeYontemi === 'HAVALE' ? form.value.bankaId : null,
       aciklama: form.value.aciklama || null,
       hareketTarihi: form.value.hareketTarihi ? form.value.hareketTarihi.toISOString().slice(0, 10) : null
-    })
+    }, idempotencyAnahtari)
     toastBildirim.basarili('Tahsilat kaydedildi')
     emit('kaydedildi')
     emit('update:visible', false)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || 'Tahsilat kaydedilemedi')
+    // Anahtar BURADA yenilenmez. Yenilense, kullanıcı "tekrar dene" dediğinde
+    // sunucu isteği yeni görür ve mükerrer tahsilat oluşurdu. Sunucu hata
+    // durumunda kilidi serbest bıraktığı için aynı anahtarla yeniden denemek
+    // güvenlidir: işlem yarım kalmadıysa çalışır, tamamlandıysa reddedilir.
   } finally {
     kaydediliyor.value = false
   }

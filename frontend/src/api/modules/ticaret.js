@@ -1,14 +1,5 @@
 import { apiClient } from '../client.js'
-
-// Idempotency anahtari üretir (tarayici destegi yoksa zaman damgasi + rastgele ile).
-function idempotencyAnahtari() {
-  try {
-    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
-  } catch {
-    /* yoksay */
-  }
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`
-}
+import { idempotencyAnahtari } from '../idempotency.js'
 
 export const cariHesapAPI = {
   getAll(params) {

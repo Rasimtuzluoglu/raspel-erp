@@ -6,11 +6,16 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 export const networkStatus = reactive({
   online: navigator.onLine,
-  showBanner: false
+  showBanner: false,
+  // Tarayici "online" dese bile sunucuya ulasilamiyor olabilir (kapali port,
+  // bozuk DNS, gateway). Bu bayrak ayri tutulur; online bayragini yalanla
+  // cevrimdisi saymamak icin.
+  sunucuyaUlasilamiyor: false
 })
 
 window.addEventListener('online', () => {
   networkStatus.online = true
+  networkStatus.sunucuyaUlasilamiyor = false
   networkStatus.showBanner = false
 })
 window.addEventListener('offline', () => {
@@ -21,9 +26,18 @@ window.addEventListener('focus', () => {
   if (navigator.onLine) networkStatus.showBanner = false
 })
 
+const VARSAYILAN_TIMEOUT_MS = 30000
+// PDF/Excel/rapor üretimi sunucuda senkrondur (byte[] bellekte üretilir) ve veri
+// hacmine göre dakikalar sürebilir. 30 sn'lik global timeout bu istekleri
+// İSTEMCİDE iptal ediyordu: kullanıcı hata görüyor, sunucu ise işi
+// tamamlamaya devam ediyor — kullanıcı tekrar denediğinde iş yükü ikiye
+// katlanıyordu. Bu yüzden bu uçlara daha uzun süre tanınır.
+const UZUN_ISLEM_TIMEOUT_MS = 180000
+const UZUN_ISLEM_YOL_DESENI = /(^|\/)(exports?|raporlar?|rapor|belge|pdf|excel|backups)(\/|$)/
+
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: VARSAYILAN_TIMEOUT_MS,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
@@ -38,6 +52,12 @@ apiClient.interceptors.request.use((config) => {
     config.headers['Accept-Language'] = dil
   } catch {
     /* yoksay */
+  }
+  // Uzun süren uçlar için süre uzatılır. Çağıran kendi timeout'unu verirse
+  // (null ya da varsayılandan farklı) dokunulmaz.
+  const uzunSureli = typeof config.url === 'string' && UZUN_ISLEM_YOL_DESENI.test(config.url)
+  if (uzunSureli && (config.timeout == null || config.timeout === VARSAYILAN_TIMEOUT_MS)) {
+    config.timeout = UZUN_ISLEM_TIMEOUT_MS
   }
   return config
 })
@@ -102,9 +122,40 @@ const hataYayinlanabilir = (anahtar) => {
   return true
 }
 
+// Sunucu mesaj uretemeyen hatalarda gosterilecek yerellestirilmis metinler.
+// Eskiden bu durumda hicbir bildirim cikmiyordu: kullanici "Kaydet"e tiklayip
+// ekranda hicbir sey olmadigini goruyordu.
+const SUNUCUSUZ_HATA_ANAHTARI = {
+  baglantiHatasi: 'common.baglantiHatasi',
+  zamanAsimi: 'common.zamanAsimiHatasi',
+  sunucuHatasi: 'common.sunucuHatasi'
+}
+
+/**
+ * Tek noktadan hata bildirimi.
+ * @param {number} status HTTP durumu (yoksa 0)
+ * @param {string} url istek adresi (tekrar bastirmada ayirt etmek icin)
+ * @param {string|null} sunucuMesaji backend'den gelen is metni (varsa onceliklidir)
+ * @param {string|null} anahtar sunucu mesaji yoksa kullanilacak i18n anahtari
+ */
+const hataYayinla = (status, url, sunucuMesaji, anahtar) => {
+  const ayirtEdici = sunucuMesaji || anahtar || ''
+  const dedupeAnahtari = `${status}:${url || ''}:${ayirtEdici}`
+  if (!hataYayinlanabilir(dedupeAnahtari)) return
+  const detail = sunucuMesaji ? { status, message: sunucuMesaji } : { status, anahtar }
+  window.dispatchEvent(new CustomEvent('api-error', { detail }))
+}
+
+const zamanAsimiMi = (error) => error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT'
+
 apiClient.interceptors.response.use(
   (response) => {
     handleNProgress(false)
+    // Basarili bir istek sunucunun erisilebilir oldugunun kanitidir.
+    if (networkStatus.sunucuyaUlasilamiyor) {
+      networkStatus.sunucuyaUlasilamiyor = false
+      if (networkStatus.online) networkStatus.showBanner = false
+    }
     // Başarılı bir istek geldiğinde koruma bayrağını sıfırla; aksi halde ilk 401/403
     // sonrası (SPA yeniden yüklenmeden tekrar giriş yapılsa bile) sonraki oturum
     // kaybında yönlendirme bir daha çalışmaz ve kullanıcı sessizce takılı kalır.
@@ -114,7 +165,16 @@ apiClient.interceptors.response.use(
   async (error) => {
     handleNProgress(false)
     if (!error.response) {
-      networkStatus.showBanner = true
+      // Sunucuya hic ulasilamadi: DNS, baglanti reddi, CORS veya zaman asimi.
+      // Zaman asiminda sunucu cok yavas olabilir; bu yuzden cevrimdisi banner'i
+      // gosterilmez, yalnizca bilgilendirilir.
+      const zamanAsimi = zamanAsimiMi(error)
+      if (!zamanAsimi) {
+        networkStatus.showBanner = true
+        networkStatus.sunucuyaUlasilamiyor = true
+      }
+      hataYayinla(0, error.config?.url, null,
+        zamanAsimi ? SUNUCUSUZ_HATA_ANAHTARI.zamanAsimi : SUNUCUSUZ_HATA_ANAHTARI.baglantiHatasi)
       return Promise.reject(error)
     }
     let { status, data } = error.response
@@ -130,14 +190,16 @@ apiClient.interceptors.response.use(
     }
 
     // Global Toast Trigger.
-    // Yalnizca sunucu bir mesaj dondurdugunde tetiklenir; aksi halde mesaji
-    // view'lerin kendi (yerellestirilmis) catch bloklari gosterir. Boylece ayni
-    // hata hem global hem view toast'i olarak iki kez gorunmez.
+    // Oncelik sirasi: sunucunun is metni > durum koduna karsilik gelen sabit
+    // mesaj. Eski davranista yalnizca sunucu mesaji varsa bildirim cikiyordu;
+    // Traefik/nginx'in 502/503/504 HTML govdesi veya bos govdeli 500'de ekranda
+    // hicbir sey gorunmuyordu.
     if (status >= 400 && status !== 401) {
       const errorMsg = data?.message || data?.error
-      const anahtar = `${status}:${error.config?.url || ''}:${errorMsg || ''}`
-      if (errorMsg && hataYayinlanabilir(anahtar)) {
-        window.dispatchEvent(new CustomEvent('api-error', { detail: { status, message: errorMsg } }))
+      if (errorMsg) {
+        hataYayinla(status, error.config?.url, errorMsg, null)
+      } else if (status >= 500) {
+        hataYayinla(status, error.config?.url, null, SUNUCUSUZ_HATA_ANAHTARI.sunucuHatasi)
       }
     }
 

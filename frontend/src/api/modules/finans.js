@@ -1,4 +1,5 @@
 import { apiClient } from '../client.js'
+import { idempotencyAnahtari } from '../idempotency.js'
 
 export const bankaAPI = {
   getAll(params = { size: 500 }) {
@@ -164,9 +165,14 @@ export const tahsilatAPI = {
   gecmis(params) {
     return apiClient.get('/tahsilat/gecmis', { params })
   },
-  gir(data) {
+  gir(data, idempotencyKey) {
     // data: { cariId, tutar, odemeYontemi, taksitKurum, taksitTutar, taksitId, posTerminaliId, komisyonTutar, valorTarihi, aciklama, hareketTarihi }
-    return apiClient.post('/tahsilat', data)
+    // Idempotency anahtarı: çift tıklama / ağ titremesi mükerrer tahsilat
+    // oluşturmasın. Çağıran anahtarı kendisi üretip TUTMALDIR; çağrı başına
+    // üretilen anahtar korumayı işe yaramaz hale getirir.
+    return apiClient.post('/tahsilat', data, {
+      headers: { 'X-Idempotency-Key': idempotencyKey || idempotencyAnahtari() }
+    })
   }
 }
 
