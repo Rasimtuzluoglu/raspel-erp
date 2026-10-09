@@ -875,6 +875,8 @@ const ayarDialogAc = async () => {
 }
 
 const ayarKaydet = async () => {
+  // Cift gonderim engeli: ayni ayar iki kez kaydedilmesin.
+  if (kaydediliyor.value) return
   kaydediliyor.value = true
   try {
     const govde = {
@@ -1010,6 +1012,8 @@ const dialogAc = (data) => {
 }
 
 const kaydet = async () => {
+  // Cift gonderim engeli: ayni bordro kaydi iki kez olusmasin.
+  if (kaydediliyor.value) return
   kaydediliyor.value = true
   try {
     const payload = {

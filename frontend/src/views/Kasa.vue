@@ -596,6 +596,8 @@ const editKasa = (kasa) => {
 }
 
 const saveKasa = async () => {
+  // Cift gonderim engeli: ayni kasa kaydi iki kez olusmasin.
+  if (saving.value) return
   if (!kasaForm.value.ad.trim()) {
     toastBildirim.uyari(t('kasa.kasaAdiGiriniz'))
     return
@@ -647,6 +649,8 @@ const openHareketDialog = (tur) => {
 }
 
 const saveHareket = async () => {
+  // Cift gonderim engeli: ayni kasa hareketi iki kez yazilmasin.
+  if (saving.value) return
   hareketHatalar.value = { tutar: '' }
   if (!hareketForm.value.tutar || hareketForm.value.tutar <= 0) {
     hareketHatalar.value.tutar = t('kasa.gecerliTutar')

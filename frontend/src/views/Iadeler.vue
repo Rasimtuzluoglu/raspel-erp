@@ -425,6 +425,8 @@ const dialogAc = (data) => {
 }
 
 const kaydet = async () => {
+  // Cift gonderim engeli: ayni iade kaydi iki kez olusmasin.
+  if (kaydediliyor.value) return
   kaydediliyor.value = true
   try {
     const payload = {

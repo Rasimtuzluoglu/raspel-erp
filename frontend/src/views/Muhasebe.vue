@@ -873,6 +873,8 @@ const hesapCogalt = (data) => {
 }
 
 const hesapKaydet = async () => {
+  // Cift gonderim engeli: ayni hesap kodu iki kez yazilmasin.
+  if (kaydediliyor.value) return
   const hatali = { kod: !hesapForm.value.kod?.trim(), ad: !hesapForm.value.ad?.trim() }
   hesapFormHatali.value = hatali
   if (hatali.kod || hatali.ad) {

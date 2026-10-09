@@ -1341,6 +1341,10 @@ const closeDialog = () => {
 }
 
 const saveFatura = async (krediOnayli = false) => {
+  // Cift gonderim engeli: buton :loading bagli olsa da Enter ile form
+  // gonderimi veya hizli cift tiklama ayni ucu iki kez cagirabiliyor.
+  // Ayni fatura iki kez olusurdu (stok/cari hareketi iki kez duserdi).
+  if (saving.value) return
   if (!form.value.tur) {
     toastBildirim.uyari(t('faturalar.faturaTuruSeciniz'))
     return

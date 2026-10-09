@@ -301,6 +301,8 @@ const barkodOkundu = (kod) => {
 }
 
 const kaydet = async () => {
+  // Cift gonderim engeli: ayni irsaliye iki kez olusmasin.
+  if (kaydediliyor.value) return
   kaydediliyor.value = true
   try {
     await irsaliyeAPI.create({

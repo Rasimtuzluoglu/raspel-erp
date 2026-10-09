@@ -314,6 +314,8 @@ const dialogAc = () => {
 }
 
 const kaydet = async () => {
+  // Cift gonderim engeli: ayni siparis iki kez olusmasin.
+  if (kaydediliyor.value) return
   kaydediliyor.value = true
   try {
     await siparisAPI.create({ ...form.value, tarih: getLocalDateString(form.value.tarih) })

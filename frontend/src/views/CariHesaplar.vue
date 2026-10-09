@@ -1618,6 +1618,8 @@ const adreslerAc = async (c) => {
 }
 
 const adresEkleKaydet = async () => {
+  // Cift gonderim engeli: ayni adres iki kez eklenmesin.
+  if (adresKaydediliyor.value) return
   if (!adresForm.value.adres || !adresForm.value.adres.trim()) {
     toastBildirim.uyari(t('cariHesaplar.adresZorunlu'))
     return
@@ -1653,6 +1655,8 @@ const acilisAc = (c) => {
 }
 
 const acilisKaydet = async () => {
+  // Cift gonderim engeli: ayni acilis hareketi iki kez yazilmasin.
+  if (acilisKaydediliyor.value) return
   if (!acilisForm.value.tutar) {
     toastBildirim.uyari(t('cariHesaplar.acilisTutarZorunlu'))
     return

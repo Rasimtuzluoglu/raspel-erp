@@ -249,6 +249,8 @@ const dialogAc = (data) => {
 }
 
 const kaydet = async () => {
+  // Cift gonderim engeli: ayni masraf iki kez kaydedilmesin.
+  if (kaydediliyor.value) return
   if (form.value.kasaId && form.value.bankaId) {
     toastBildirim.uyari(t('masraflar.tekHesap'))
     return

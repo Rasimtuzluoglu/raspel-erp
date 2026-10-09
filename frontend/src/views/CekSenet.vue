@@ -381,6 +381,8 @@ const dialogAc = (kayit = null) => {
 }
 
 const kaydet = async () => {
+  // Cift gonderim engeli: ayni cek/senet iki kez kaydedilmesin.
+  if (kaydediliyor.value) return
   kaydediliyor.value = true
   try {
     const payload = {

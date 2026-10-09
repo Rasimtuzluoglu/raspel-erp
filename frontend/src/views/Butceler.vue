@@ -347,6 +347,8 @@ const dialogAc = (data) => {
 }
 
 const kaydet = async () => {
+  // Cift gonderim engeli: ayni butce kalemi iki kez yazilmasin.
+  if (kaydediliyor.value) return
   kaydediliyor.value = true
   try {
     if (duzenleme.value) {
