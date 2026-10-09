@@ -14,6 +14,7 @@ class ProdGuvenlikKontroluTest {
         ProdGuvenlikKontrolu kontrol = new ProdGuvenlikKontrolu(env);
         ReflectionTestUtils.setField(kontrol, "jwtSecret", "bu-cok-uzun-ve-guclu-bir-jwt-secret-degeri-1234567890");
         ReflectionTestUtils.setField(kontrol, "aiEncryptionKey", "guclu-ai-anahtari-1234");
+        ReflectionTestUtils.setField(kontrol, "vaultEncryptionKey", "guclu-vault-anahtari-1234");
         ReflectionTestUtils.setField(kontrol, "storageType", "local");
         ReflectionTestUtils.setField(kontrol, "minioAccessKey", "");
         ReflectionTestUtils.setField(kontrol, "minioSecretKey", "");
@@ -50,6 +51,15 @@ class ProdGuvenlikKontroluTest {
     void prodEksikAiAnahtariReddedilir() {
         ProdGuvenlikKontrolu kontrol = olustur(true);
         ReflectionTestUtils.setField(kontrol, "aiEncryptionKey", "");
+        assertThrows(IllegalStateException.class, kontrol::kontrol);
+    }
+
+    @Test
+    void prodEksikVaultAnahtariReddedilir() {
+        // Sifre kasasi anahtari kaybolursa kayitli sifreler kalici olarak
+        // cozulemez; prod'da baslangicta zorunludur.
+        ProdGuvenlikKontrolu kontrol = olustur(true);
+        ReflectionTestUtils.setField(kontrol, "vaultEncryptionKey", "");
         assertThrows(IllegalStateException.class, kontrol::kontrol);
     }
 

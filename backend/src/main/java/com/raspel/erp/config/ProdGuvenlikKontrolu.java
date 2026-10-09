@@ -27,6 +27,13 @@ public class ProdGuvenlikKontrolu {
     @Value("${ai.encryption.key:}")
     private String aiEncryptionKey;
 
+    /**
+     * Sifre kasasi sifreleme anahtari. AI anahtarindan AYRI tutulur: bir
+     * anahtarin sizmasi digerini etkilememelidir (anahtar ayrismasi).
+     */
+    @Value("${app.vault.encryption-key:}")
+    private String vaultEncryptionKey;
+
     @Value("${app.storage.type:local}")
     private String storageType;
 
@@ -87,6 +94,13 @@ public class ProdGuvenlikKontrolu {
         if (aiEncryptionKey == null || aiEncryptionKey.isBlank() || aiEncryptionKey.length() < 16) {
             throw new IllegalStateException(
                     "prod profilinde AI_ENCRYPTION_KEY zorunludur (en az 16 karakter). Varsayilan dev anahtari kullanilamaz.");
+        }
+        // Sifre kasasi anahtari kaybolursa kasaya yazilan sifreler KALICI
+        // olarak okunamaz. Bu yuzden prod'da baslangicta zorunlu tutulur.
+        if (vaultEncryptionKey == null || vaultEncryptionKey.isBlank() || vaultEncryptionKey.length() < 16) {
+            throw new IllegalStateException(
+                    "prod profilinde APP_VAULT_ENCRYPTION_KEY zorunludur (en az 16 karakter). "
+                            + "Sifre kasasi anahtari olmadan sifreler cozulemez.");
         }
         if ("minio".equalsIgnoreCase(storageType)) {
             if (minioAccessKey == null || minioAccessKey.isBlank() || minioSecretKey == null || minioSecretKey.isBlank()) {

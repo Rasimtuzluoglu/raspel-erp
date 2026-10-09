@@ -99,7 +99,12 @@ public class AuditAspect {
             + "|| execution(* com.raspel.erp.controller..*.*gonder(..)) "
             + "|| execution(* com.raspel.erp.controller..*.*Gonder(..)) "
             + "|| execution(* com.raspel.erp.controller..*.*Dosya(..)) "
-            + "|| execution(* com.raspel.erp.controller..*.*Test(..))")
+            + "|| execution(* com.raspel.erp.controller..*.*Test(..)) "
+            // Wave 4 (sifre kasasi): arsivleme fiziksel silme DEGIL, ama
+            // kaydin gorunurluk/kullanim durumunu degistirir. "kim arsivledi,
+            // kim geri aldi" sorusunun cevabi denetim izinde bulunmalidir.
+            + "|| execution(* com.raspel.erp.controller..*.*arsivle(..)) "
+            + "|| execution(* com.raspel.erp.controller..*.*Arsivle(..))")
     public void kritikPointcut() {}
 
     @AfterReturning("kritikPointcut()")
@@ -118,6 +123,10 @@ public class AuditAspect {
         if ("olustur".equals(ad) || ad.endsWith("Olustur")) return "OLUSTUR";
         if ("guncelle".equals(ad) || ad.endsWith("Guncelle")) return "GUNCELLE";
         if ("sil".equals(ad) || ad.endsWith("Sil")) return "SIL";
+        // Arsivleme (soft delete) gercek silme DEGILDIR; ayri etiketlenir ki
+        // denetim ekraninda "SIL" ile karismasin.
+        if ("arsivle".equals(ad) || ad.endsWith("Arsivle")) return "ARSIVLE";
+        if (ad.endsWith("ArsivleGeriAl") || ad.endsWith("arsivleGeriAl")) return "ARSIVLE_GERI_AL";
         return "ISLEM";
     }
 

@@ -272,4 +272,47 @@ class SecurityConfigTest {
         return new MockMultipartFile("file", "test.csv", "text/csv",
                 "ad;stokKodu\nTest Urun;TEST-1".getBytes(StandardCharsets.UTF_8));
     }
+
+    // --- Sifre kasasi (Wave 4) ---
+    //
+    // Sinif kurali hasAnyRole('ADMIN','USER','MUHASEBE'). SAHA ve DRIVER
+    // rollerinin sifre kasasina erisimi OLMAMALIDIR (sofor/saha personeli
+    // kurumsal sifirleri gormemeli). Bu testler rol kapisini dogrular;
+    // sifrenin kim tarafindan acilabilecegi ise servis katmaninda testlidir.
+    //
+    // NOT: "erisir" testleri 403/401 OLMAMASINI kontrol eder; sonuc
+    // (200/bos liste) degil, yetki kapisinin gecilmesi onemlidir.
+
+    @Test
+    void sifreKasasi_sahaForbidden() throws Exception {
+        mockMvc.perform(get("/api/sifre-kasa").with(user("test-saha").roles("SAHA")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void sifreKasasi_soforForbidden() throws Exception {
+        mockMvc.perform(get("/api/sifre-kasa").with(user("test-driver").roles("DRIVER")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void sifreKasasi_userErisir() throws Exception {
+        mockMvc.perform(get("/api/sifre-kasa").with(user("test-user").roles("USER")))
+                .andExpect(result -> assertNotEquals(401, result.getResponse().getStatus()))
+                .andExpect(result -> assertNotEquals(403, result.getResponse().getStatus()));
+    }
+
+    @Test
+    void sifreKasasi_muhasebeErisir() throws Exception {
+        mockMvc.perform(get("/api/sifre-kasa").with(user("test-muhasebe").roles("MUHASEBE")))
+                .andExpect(result -> assertNotEquals(401, result.getResponse().getStatus()))
+                .andExpect(result -> assertNotEquals(403, result.getResponse().getStatus()));
+    }
+
+    @Test
+    void sifreKasasi_adminErisir() throws Exception {
+        mockMvc.perform(get("/api/sifre-kasa").with(user("test-admin").roles("ADMIN")))
+                .andExpect(result -> assertNotEquals(401, result.getResponse().getStatus()))
+                .andExpect(result -> assertNotEquals(403, result.getResponse().getStatus()));
+    }
 }

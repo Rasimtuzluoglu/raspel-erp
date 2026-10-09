@@ -108,6 +108,15 @@ class AuditAspectPointcutTest {
         assertTrue(eslesiyor(fatura, "iptaliGeriAl"), "fatura iptal geri alma denetim altında olmalı");
     }
 
+    @Test
+    void sifreKasasiArsivlemeDenetimAltinda() {
+        // Wave 4: arsivleme (soft delete) ve geri alma denetim izi bırakmalı.
+        // "Kim arşivledi / kim geri aldı" sorusu cevaplanabilmeli.
+        Class<?> kasa = sinifBul("com.raspel.erp.controller.sistem.SifreKasaController");
+        assertTrue(eslesiyor(kasa, "arsivle"), "arsivleme denetim izi birakmamali");
+        assertTrue(eslesiyor(kasa, "arsivleGeriAl"), "arsivden geri alma denetim izi birakmamali");
+    }
+
     private static Class<?> sinifBul(String ad) {
         try {
             return Class.forName(ad);
