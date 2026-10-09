@@ -521,13 +521,28 @@ const kaydetAction = async () => {
   kaydediliyor.value = false
 }
 
-const sil = async (data) => {
+const sirketiSil = async (data) => {
   try {
     await sirketAPI.delete(data.id)
     sirketler.value = sirketler.value.filter((s) => s.id !== data.id)
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('sirketler.silmeHatasi'))
   }
+}
+
+// Sirket silmek tum tenant verisini etkileyebilir ve geri alinamaz.
+// Once onay diyalogu; API cagrisi ancak kullanicinin onayinda yapilir.
+const sil = (data) => {
+  confirm.require({
+    message: t('sirketler.silOnayMesaj', { ad: data.ad }),
+    // **kalin** isaretli mesaj, sirket adinin onayda gozden gecmesini saglar.
+    header: t('common.silmeOnayi'),
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.evetSil'), severity: 'danger', size: 'small' },
+    accept: () => sirketiSil(data),
+    reject: () => {}
+  })
 }
 </script>
 

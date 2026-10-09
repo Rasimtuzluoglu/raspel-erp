@@ -960,7 +960,7 @@ const tokenOlustur = async () => {
   }
 }
 
-const tokenSil = async (token) => {
+const tokeniSil = async (token) => {
   try {
     await apiTokenAPI.sil(token.id)
     tokenlar.value = tokenlar.value.filter((x) => x.id !== token.id)
@@ -968,6 +968,19 @@ const tokenSil = async (token) => {
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('hesapAyarlari.tokenSilinemedi'))
   }
+}
+
+// API tokeni geri alinamaz; yeniden olusturulmasi gerekir. Onay istenir.
+const tokenSil = (token) => {
+  confirm.require({
+    message: t('hesapAyarlari.tokenSilOnayMesaj', { ad: token.ad || token.aciklama || `#${token.id}` }),
+    header: t('common.silmeOnayi'),
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.evetSil'), severity: 'danger', size: 'small' },
+    accept: () => tokeniSil(token),
+    reject: () => {}
+  })
 }
 const aiKaydediliyor = ref(false)
 const aiTestEdiliyor = ref(false)
@@ -1052,7 +1065,7 @@ const aiBaglantiTestEt = async () => {
   }
 }
 
-const aiConfigSil = async () => {
+const aiYapilandirmasiniSil = async () => {
   aiKaydediliyor.value = true
   try {
     await aiConfigAPI.deleteConfig()
@@ -1065,6 +1078,19 @@ const aiConfigSil = async () => {
   } finally {
     aiKaydediliyor.value = false
   }
+}
+
+// AI API anahtari ve saglayici ayari silinir; yeniden girilmesi gerekir.
+const aiConfigSil = () => {
+  confirm.require({
+    message: t('hesapAyarlari.aiYapilandirmaSilOnayMesaj'),
+    header: t('common.silmeOnayi'),
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('common.evetSil'), severity: 'danger', size: 'small' },
+    accept: () => aiYapilandirmasiniSil(),
+    reject: () => {}
+  })
 }
 
 onMounted(async () => {
