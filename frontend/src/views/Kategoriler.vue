@@ -61,14 +61,17 @@
           </template>
         </Column>
       </DataTable>
-      <EmptyState
-        v-if="kategoriStore.kategoriler.length === 0"
-        :message="t('kategoriler.empty')"
-        :sub-message="t('kategoriler.emptyHint')"
-        icon="pi pi-tags"
-        :action-label="t('kategoriler.yeniKategori')"
-        action-icon="pi pi-plus"
-        @action="openDialog"
+      <!-- Ortak durum bileseni: store yukleniyorken "kategori yok"
+           mesaji gosterilmesin; once veri gelsin. -->
+      <ListeDurumu
+        :yukleniyor="kategoriStore.loading"
+        :hata="kategoriStore.error"
+        :bos="!kategoriStore.loading && !kategoriStore.error && kategoriStore.kategoriler.length === 0"
+        :bos-mesaj="t('kategoriler.empty')"
+        :bos-ipucu="t('kategoriler.emptyHint')"
+        :eylem-etiketi="t('kategoriler.yeniKategori')"
+        :yeniden-dene="kategorileriYukle"
+        @eylem="openDialog"
       />
     </div>
 
@@ -121,8 +124,8 @@ import { useI18n } from 'vue-i18n'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useKategoriStore } from '../stores/kategoriStore.js'
+import ListeDurumu from '../components/ListeDurumu.vue'
 import { useAuthStore } from '../stores/authStore.js'
-import EmptyState from '../components/EmptyState.vue'
 
 const { t } = useI18n()
 const toastBildirim = useToastBildirim()
@@ -141,8 +144,11 @@ const turSecenekleri = computed(() => [
   { label: t('kategoriler.gider'), value: 'GIDER' }
 ])
 
+// "Tekrar dene" butonu icin yeniden yukleme girisi.
+const kategorileriYukle = () => kategoriStore.getAllKategoriler()
+
 onMounted(() => {
-  kategoriStore.getAllKategoriler().catch(() => { /* hata global olarak bildirilir */ })
+  kategorileriYukle().catch(() => { /* hata global olarak bildirilir */ })
 })
 
 const openDialog = () => {

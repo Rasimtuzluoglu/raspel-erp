@@ -21,14 +21,25 @@
       <i class="pi pi-info-circle mr-2" />{{ t('iskontoKurallari.bilgi') }}
     </Message>
 
+    <!-- Ortak durum bileseni: iskelet / hata / bos liste. DataTable'i
+         gizlemeden ONCE basiliyor; boylece yukleme sirasinda
+         "kayit yok" gorunmez. -->
+    <ListeDurumu
+      v-if="yukleniyor || yuklemeHatasi"
+      :yukleniyor="yukleniyor"
+      :hata="yuklemeHatasi"
+      :bos="false"
+      :iskelet-satir="5"
+    />
+
     <DataTable
+      v-if="!yukleniyor && !yuklemeHatasi"
       :value="kurallar"
       striped-rows
       responsive-layout="scroll"
-      :loading="yukleniyor"
     >
       <template #empty>
-        <EmptyState />
+        <EmptyState :message="t('iskontoKurallari.empty')" />
       </template>
       <Column
         field="ad"
@@ -251,6 +262,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { iskontoKuraliAPI, stokAPI, cariHesapAPI } from '../api/index.js'
 import { unwrapList } from '../api/utils/unwrap.js'
+import ListeDurumu from '../components/ListeDurumu.vue'
 import { useI18n } from 'vue-i18n'
 import { getLocalDateString } from '../utils/format.js'
 
@@ -262,6 +274,9 @@ const kurallar = ref([])
 const stoklar = ref([])
 const cariler = ref([])
 const yukleniyor = ref(false)
+// Yukleme hatasi ayri tutulur: eskiden yalniz toast gosteriliyordu,
+// tablo "kayit yok" diye bom bos kaliyordu.
+const yuklemeHatasi = ref(null)
 const dialog = ref(false)
 const duzenleme = ref(false)
 const kaydediliyor = ref(false)
@@ -299,11 +314,13 @@ const aralikMetni = (k) => {
 
 const yukle = async () => {
   yukleniyor.value = true
+  yuklemeHatasi.value = null
   try {
     // Not: ilk 500 iskonto kurali gosterilir; ust sinir icin sunucu sayfalamasi gerekir.
     const r = await iskontoKuraliAPI.getAll({ size: 500 })
     kurallar.value = unwrapList(r)
-  } catch {
+  } catch (err) {
+    yuklemeHatasi.value = err?.response?.data?.message || err?.message || t('iskontoKurallari.hataYukleme')
     toastBildirim.hata(t('iskontoKurallari.hataYukleme'))
   } finally {
     yukleniyor.value = false

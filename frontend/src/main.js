@@ -133,6 +133,7 @@ app.use(ConfirmationService)
 app.use(i18n)
 
 app.component('AppDataTable', AppDataTable)
+  app.component('ListeDurumu', defineAsyncComponent(() => import('./components/ListeDurumu.vue')))
 app.component('PageHeader', PageHeader)
 app.component('EmptyState', EmptyState)
 app.component('SkeletonLoader', SkeletonLoader)

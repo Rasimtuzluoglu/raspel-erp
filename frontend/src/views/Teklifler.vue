@@ -579,6 +579,8 @@ const cariHesaplar = ref([])
 const stoklar = ref([])
 const sirket = ref(null)
 const yukleniyor = ref(false)
+// Yukleme hatasi ayri tutulur; eskiden yalniz toast gosteriliyordu.
+const yuklemeHatasi = ref(null)
 const kaydediliyor = ref(false)
 
 const formDialog = ref(false)
@@ -625,11 +627,13 @@ onMounted(async () => {
 
 const teklifleriGetir = async () => {
   yukleniyor.value = true
+  yuklemeHatasi.value = null
   try {
     // Not: ilk 500 teklif gosterilir (liste ekrani); daha fazlasi icin sunucu sayfalamasi gerekir.
     const res = await teklifAPI.getAll({ size: 500 })
     teklifler.value = unwrapList(res)
   } catch (err) {
+    yuklemeHatasi.value = err?.response?.data?.message || err?.message || t('teklifler.tekliflerYuklenemedi')
     toast.add({ severity: 'error', summary: t('teklifler.hata'), detail: t('teklifler.tekliflerYuklenemedi') + err.message, life: 3000 })
   } finally {
     yukleniyor.value = false

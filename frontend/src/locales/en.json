@@ -2281,6 +2281,7 @@
     "duzenle": "Edit Price"
   },
   "iskontoKurallari": {
+    "empty": "No discount rule has been defined yet.",
     "title": "Discount Rules",
     "yeniKural": "New Rule",
     "duzenle": "Edit Rule",

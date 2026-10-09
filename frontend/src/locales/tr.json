@@ -2281,6 +2281,7 @@
     "duzenle": "Fiyat Düzenle"
   },
   "iskontoKurallari": {
+    "empty": "Henüz iskonto kuralı tanımlanmamış.",
     "title": "İskonto Kuralları",
     "yeniKural": "Yeni Kural",
     "duzenle": "Kural Düzenle",
