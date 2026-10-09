@@ -470,6 +470,29 @@ Bilinçli ertelendi: `SirketService.konsolideOzet` 6×N (N küçük) · Dashboar
 
 Doğrulama: backend **1664/1664** (1 skip) · frontend **1534/1534** · lint/i18n temiz · build başarılı · Docker healthy.
 
+## Dalga 3 — Premium UX ve Veri Bütünlüğü (tamamlandı)
+
+**Önceliklendirme yöntemi:** Denetim maddeleri sayı odaklıydı ve çoğu abartıydı. Her fazda gerçek sayım yapıldı; 5 maddeden 3'ü kapandı.
+
+| Faz | Konu | Gerçek bulgu |
+|---|---|---|
+| 3.1 | Geri alınamaz işlem onayı | 45 silme çağrısının **42'sinde onay zaten vardı**; onaysız 3 gerçek riskti (şirket, API token, AI config) |
+| 3.2 | Çift gönderim engeli | "21 view" değil: 35 view'da bayrak var, 24 korumalı, **11 korumasız**. Asıl risk `Faturalar` (Enter ile iki kez kayıt) |
+| 3.3 | `ListeDurumu` bileşeni | 54 view'de bayrak var, yalnız 5'i iskelet basıyor → veri gelmeden "kayıt yok" |
+| 3.3a | Bileşene geçiş | `Kategoriler` store loading'i hiç kullanmıyordu; `IskontoKurallari` hata halinde "kayıt yok" gösteriyordu |
+| 3.4 | Ham tablo → ortak tablo | **Sayı tersiymiş**: ham `<table>` 7, `DataTable` 62 (zaten ortak). Kalan 7'nin hepsi gerekli (yazdırma/termal fış/AI/RBAC) |
+| 3.5 | Erişilebilirlik | Odak tuzağı PrimeVue 4'te var. Gerçek açık: **yalnız `v-tooltip` olan 3 ikon buton** ekran okuyucuya ad taşımıyordu |
+
+### Kapanan kurallar (regresyon kalıcı)
+- `ciftGonderimKurali.spec.js` — kritik view listesi kural gibi test ediliyor
+- `ikonErisilebilirlik.spec.js` — **hiçbir** ikon-only buton etiketsiz kalamaz
+- `listeDurumuKullanimi.spec.js` — durum önceliği (iskelet > hata > boş) kaynakta sabit
+
+### Bilinçli ertelendi
+`TeklifListesi` kendi durum yönetimiyle `ListeDurumu`'na geçecek · kalan ~20 view'in boş durum metni ayrı çalışma gerektiriyor · vitest config'inde `PrimeVueResolver` yok, bu yüzden PrimeVue bileşenlerinin DOM'u mount testinde doğrulanamıyor.
+
+Doğrulama: frontend **1578/1578** (108 dosya) · backend **1664/1664** · lint/i18n temiz · build başarılı.
+
 ## Planlı Epikler (v2.0)
 
 ### Epik 1 — Ürün Maliyet/ Kârlılık Analiz Sistemi (YARININ ODAĞI)
