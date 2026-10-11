@@ -361,6 +361,14 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    // Kitaplik (yer imleri + snippet). Sir icermez; kisisel + sirket kapsami.
+    // SAHA/DRIVER rol guard'lariyla disarida tutulur.
+    path: '/kitaplik',
+    name: 'Kitaplik',
+    component: () => import('../views/Kitaplik.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/veri-aktar',
     name: 'VeriImport',
     component: () => import('../views/VeriImport.vue'),
@@ -605,6 +613,7 @@ const ROTA_BASLIK_ANAHTARLARI = {
   '/kategoriler': 'nav.kategori',
   '/notlar': 'nav.notlar',
   '/sifre-kasasi': 'nav.sifreKasasi',
+  '/kitaplik': 'nav.kitaplik',
   '/veri-aktar': 'nav.veriAktar',
   '/kullanim-sartlari': 'nav.yasal',
   '/gizlilik-politikasi': 'nav.yasal',

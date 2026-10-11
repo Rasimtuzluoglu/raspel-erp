@@ -61,7 +61,8 @@ export {
   onayAyariAPI,
   adresDefteriAPI,
   onaySayilariAPI,
-  sifreKasaAPI
+  sifreKasaAPI,
+  kitaplikAPI
 } from './modules/sistem.js'
 export { dashboardAPI, raporAPI, yoneticiKokpitAPI } from './modules/rapor.js'
 

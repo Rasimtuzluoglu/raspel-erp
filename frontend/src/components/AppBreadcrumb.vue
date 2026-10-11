@@ -57,6 +57,7 @@ const labelKeyMap = {
   '/hareketler': 'nav.hareket',
   '/notlar': 'nav.notlar',
   '/sifre-kasasi': 'nav.sifreKasasi',
+  '/kitaplik': 'nav.kitaplik',
   '/satislar': 'nav.satis',
   '/satinalma': 'nav.satinalma',
   '/cek-senet': 'nav.ceksenet',

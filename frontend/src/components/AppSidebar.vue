@@ -489,6 +489,7 @@ const tumMenuler = [
   { path: '/kategoriler', labelKey: 'nav.kategori', icon: 'pi pi-tags', permission: 'STOK_READ', grupKey: 'nav.sistem', gelismis: true },
       { path: '/notlar', labelKey: 'nav.notlar', icon: 'pi pi-pen-to-square', grupKey: 'nav.sistem' },
       { path: '/sifre-kasasi', labelKey: 'nav.sifreKasasi', icon: 'pi pi-lock', grupKey: 'nav.sistem' },
+      { path: '/kitaplik', labelKey: 'nav.kitaplik', icon: 'pi pi-bookmark', grupKey: 'nav.sistem' },
   { path: '/veri-aktar', labelKey: 'nav.veriAktar', icon: 'pi pi-upload', permission: 'SISTEM_READ', grupKey: 'nav.sistem', gelismis: true },
   { path: '/yasal', labelKey: 'nav.yasal', icon: 'pi pi-file-check', grupKey: 'nav.sistem', gelismis: true },
   { path: '/hesap-ayarlari', labelKey: 'nav.hesapAyarlari', icon: 'pi pi-cog', grupKey: 'nav.sistem', gelismis: true },

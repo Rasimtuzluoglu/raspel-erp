@@ -519,6 +519,27 @@ Kırmızı doğrulama: servis 3 mutasyon → 14 kırmızı · rol kapısına SAH
 
 **Operasyon:** `APP_VAULT_ENCRYPTION_KEY` `.env`'e üretildi (gitignore'da). Bu anahtar kaybolursa kasaya kaydedilen şifreler kalıcı olarak çözülemez.
 
+## Dalga 5 — Hata Avı ve Kitaplık (tamamlandı)
+
+Kullanıcı geri bildirimi: bir "kayıt sorunu" ve iki yeni özellik (yer imleri, snippet).
+
+### 5.1 — PostgreSQL `lower(bytea)` hatası (kritik)
+**Belirti:** Adres Defteri / Siparişler / Bordro **arama** yolunda ve Şifre Kasası **Şirket sekmesinde** 500. Normal listeler çalışıyordu.
+**Kök neden:** `LOWER(CONCAT('%', :q, '%'))` kalıbı Postgres'te parametreyi `bytea` olarak çözüyordu (`function lower(bytea) does not exist`), q NULL olsa bile. **H2 bu kalıbı tolere ettiği için tüm testler yeşil kalmıştı.**
+**Çözüm:** Projenin kanıtlı idiomu — deseni `AramaTemizleyici.like(q)` ile üretip `LOWER(col) LIKE :q ESCAPE '\\'`. 4 repository (SifreKasa, AdresDefteri, Siparis, MaasBordro) düzeltildi.
+**Regresyon testi:** `PostgresEntegrasyonTest` (Testcontainers, gerçek PostgreSQL) — bu hata sınıfı için **tek doğru yer**.
+
+### 5.2 — "Uygulama açılmıyor" → bayat istemci önbelleği
+**Belirti:** Deploy sonrası boş/asılı ekran. Sert yenileme çözüyordu → kaynak bayat service worker/önbellek.
+**Çözüm:** (a) `kurtarma.js`'e **boot watchdog** — Vue mount olmazsa (`#app-loading` kalırsa) bir kez önbelleği temizleyip yeniler; (b) Workbox cache adları `__APP_VERSION__` ile sürümlendi; `activate` eski sürüm + legacy önbellekleri siler.
+
+### 5.3 — Kitaplık (yer imleri + snippet)
+Tek modül, iki sekme. Şifre kasasının kapsam/görünürlük/arşiv modelini yeniden kullanır; **sır içermediği için** şifreleme/no-store/açma-denetimi yoktur.
+Kapsam: KISISEL (sahibi) · GLOBAL+SAHIS (yalnız ADMIN) · GLOBAL+TUMU (herkes); GLOBAL yazımı yalnız ADMIN. Arama sorgusu en baştan güvenli idiomla yazıldı.
+
+Doğrulama: backend **1755/1755** · frontend **1625/1625** · lint/i18n temiz · build başarılı · V164+V165 canlıda · Docker healthy.
+Kırmızı doğrulama: `lower(bytea)` testi (eski sorguda kırmızı) · watchdog · SW sürümleme · Kitaplık görünürlük/yetki · çift gönderim guard'ı.
+
 ## Planlı Epikler (v2.0)
 
 ### Epik 1 — Ürün Maliyet/ Kârlılık Analiz Sistemi (YARININ ODAĞI)

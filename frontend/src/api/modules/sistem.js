@@ -495,3 +495,25 @@ export const sifreKasaAPI = {
   }
 }
 
+// Kitaplik: yer imleri + snippet'ler (tek modul, iki sekme). Sir icermez.
+export const kitaplikAPI = {
+  getAll(params) {
+    return apiClient.get('/kitaplik', { params })
+  },
+  getById(id) {
+    return apiClient.get(`/kitaplik/${id}`)
+  },
+  olustur(data) {
+    return apiClient.post('/kitaplik', data)
+  },
+  guncelle(id, data) {
+    return apiClient.put(`/kitaplik/${id}`, data)
+  },
+  arsivle(id) {
+    return apiClient.delete(`/kitaplik/${id}`)
+  },
+  geriAl(id) {
+    return apiClient.post(`/kitaplik/${id}/geri-al`)
+  }
+}
+
