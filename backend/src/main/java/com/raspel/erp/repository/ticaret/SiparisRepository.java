@@ -29,10 +29,12 @@ public interface SiparisRepository extends JpaRepository<Siparis, Long> {
 
     // Siparis takip: sunucu tarafli filtre + sayfalama. ONCEDEN sabit ilk 200
     // siparis cekiliyordu; daha eski kayitlar gorunmuyor ve filtre yoktu.
+    // LDESTEK: `:q` ham terim DEGIL, `AramaTemizleyici.like(q)` desenidir.
+    // `LOWER(CONCAT('%', :q, '%'))` PostgreSQL'de lower(bytea) hatasi veriyordu.
     @Query("SELECT s FROM Siparis s WHERE s.sirketId = :sirketId " +
            "AND (:durum IS NULL OR s.durum = :durum) " +
            "AND (:sofor IS NULL OR s.driverAd = :sofor) " +
-           "AND (:q IS NULL OR LOWER(s.siparisNo) LIKE LOWER(CONCAT('%', :q, '%'))) " +
+           "AND (:q IS NULL OR LOWER(s.siparisNo) LIKE :q ESCAPE '\\') " +
            "ORDER BY s.tarih DESC, s.id DESC")
     Page<Siparis> filtreliGetir(@Param("sirketId") Long sirketId,
                                 @Param("q") String q,

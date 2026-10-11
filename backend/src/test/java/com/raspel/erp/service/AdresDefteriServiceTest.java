@@ -51,7 +51,11 @@ class AdresDefteriServiceTest {
 
     @Test
     void filtrele_parametreleriKullanir() {
-        when(adresDefteriRepository.filtreli(eq(1L), eq("ali"), eq("Elektrikçi"), eq("acil"), any(Pageable.class)))
+        // Güncel sözleşme: q/etiket icin LIKE DESENI uretilir (`AramaTemizleyici.like`),
+        // tur ise tam eslesme oldugu icin trim'lenir. Eskiden ham terim geciliyordu ve
+        // sorgu `LOWER(CONCAT('%', :q, '%'))` yapiyordu; bu PostgreSQL'de
+        // "lower(bytea)" hatasi veriyordu.
+        when(adresDefteriRepository.filtreli(eq(1L), eq("%ali%"), eq("Elektrikçi"), eq("%acil%"), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(kayit(1L))));
         var sonuc = service.filtrele(1L, " ali ", "Elektrikçi", "acil", Pageable.unpaged());
         assertEquals(1, sonuc.getTotalElements());

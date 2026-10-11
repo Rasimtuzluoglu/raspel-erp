@@ -34,7 +34,14 @@ public class AdresDefteriService {
     @Transactional(readOnly = true)
     public Page<AdresDefteriDTO> filtrele(Long sirketId, String q, String tur, String etiket, Pageable pageable) {
         if (sirketId == null) return Page.empty(pageable);
-        return adresDefteriRepository.filtreli(sirketId, bosuNullYap(q), bosuNullYap(tur), bosuNullYap(etiket), pageable)
+        // q/etiket icin LIKE DESENI uretilir (kucuk harf + joker kacisi). Boylece
+        // sorguda `LOWER(CONCAT('%', :q, '%'))` gerekmez; o kalip PostgreSQL'de
+        // lower(bytea) hatasi veriyordu.
+        return adresDefteriRepository.filtreli(sirketId,
+                        com.raspel.erp.util.AramaTemizleyici.like(q),
+                        bosuNullYap(tur),
+                        com.raspel.erp.util.AramaTemizleyici.like(etiket),
+                        pageable)
                 .map(this::entityToDTO);
     }
 

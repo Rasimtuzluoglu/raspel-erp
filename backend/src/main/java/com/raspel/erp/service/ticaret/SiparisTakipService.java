@@ -37,7 +37,7 @@ public class SiparisTakipService {
     public org.springframework.data.domain.Page<SiparisTakipDTO> filtreliZincir(
             Long sirketId, String q, String durum, String sofor,
             org.springframework.data.domain.Pageable pageable) {
-        String qq = (q == null || q.isBlank()) ? null : q.trim();
+        String qq = com.raspel.erp.util.AramaTemizleyici.like(q);
         String dd = (durum == null || durum.isBlank()) ? null : durum.trim();
         String ss = (sofor == null || sofor.isBlank()) ? null : sofor.trim();
         org.springframework.data.domain.Page<Siparis> sayfa =

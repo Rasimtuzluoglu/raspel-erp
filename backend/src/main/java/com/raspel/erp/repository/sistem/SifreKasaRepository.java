@@ -24,9 +24,11 @@ public interface SifreKasaRepository extends JpaRepository<SifreKasa, Long> {
             + "AND (:kapsam IS NULL OR k.kapsam = :kapsam) "
             + "AND (:aktif IS NULL OR k.aktif = :aktif) "
             + "AND (:kategori IS NULL OR k.kategori = :kategori) "
-            + "AND (:q IS NULL OR LOWER(k.baslik) LIKE LOWER(CONCAT('%', :q, '%')) "
-            + "     OR LOWER(COALESCE(k.kullaniciAdi, '')) LIKE LOWER(CONCAT('%', :q, '%')) "
-            + "     OR LOWER(COALESCE(k.url, '')) LIKE LOWER(CONCAT('%', :q, '%'))) "
+            // `:q` ham terim DEGIL, `AramaTemizleyici.like(q)` desenidir.
+            // `LOWER(CONCAT('%', :q, '%'))` PostgreSQL'de lower(bytea) veriyordu.
+            + "AND (:q IS NULL OR LOWER(k.baslik) LIKE :q ESCAPE '\\' "
+            + "     OR LOWER(COALESCE(k.kullaniciAdi, '')) LIKE :q ESCAPE '\\' "
+            + "     OR LOWER(COALESCE(k.url, '')) LIKE :q ESCAPE '\\') "
             + "ORDER BY k.baslik ASC")
     List<SifreKasa> filtreli(@Param("sirketId") Long sirketId,
                             @Param("kapsam") String kapsam,

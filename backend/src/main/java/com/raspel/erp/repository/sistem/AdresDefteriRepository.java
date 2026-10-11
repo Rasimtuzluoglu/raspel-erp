@@ -15,14 +15,22 @@ public interface AdresDefteriRepository extends JpaRepository<AdresDefteri, Long
 
     Page<AdresDefteri> findBySirketIdOrderByAdAsc(Long sirketId, Pageable pageable);
 
+    // LDESTEK: arama parametreleri artik HAM terim DEGIL, `AramaTemizleyici.like(q)`
+    // ile uretilen kucuk-harfli/joker-kacisli `%terim%` DESENIDIR.
+    //
+    // ONCEKI HAL `LOWER(CONCAT('%', :q, '%'))` idi ve PostgreSQL'de
+    // "function lower(bytea) does not exist" hatasi veriyordu: parametre tipi
+    // cozulemeyip bytea'ya dusuyordu (q null olsa bile). H2 bunu tolere ettigi
+    // icin testlerde gorunmuyordu. FaturaRepository.ara ile ayni kanitli kaliba
+    // gecirildi: `LOWER(sutun) LIKE :q ESCAPE '\\'`.
     @Query("SELECT a FROM AdresDefteri a WHERE a.sirketId = :sirketId " +
            "AND (:tur IS NULL OR a.tur = :tur) " +
-           "AND (:etiket IS NULL OR LOWER(COALESCE(a.etiketler, '')) LIKE LOWER(CONCAT('%', :etiket, '%'))) " +
-           "AND (:q IS NULL OR LOWER(a.ad) LIKE LOWER(CONCAT('%', :q, '%')) " +
-           "     OR LOWER(COALESCE(a.telefon, '')) LIKE LOWER(CONCAT('%', :q, '%')) " +
-           "     OR LOWER(COALESCE(a.email, '')) LIKE LOWER(CONCAT('%', :q, '%')) " +
-           "     OR LOWER(COALESCE(a.adres, '')) LIKE LOWER(CONCAT('%', :q, '%')) " +
-           "     OR LOWER(COALESCE(a.etiketler, '')) LIKE LOWER(CONCAT('%', :q, '%'))) " +
+           "AND (:etiket IS NULL OR LOWER(COALESCE(a.etiketler, '')) LIKE :etiket ESCAPE '\\') " +
+           "AND (:q IS NULL OR LOWER(a.ad) LIKE :q ESCAPE '\\' " +
+           "     OR LOWER(COALESCE(a.telefon, '')) LIKE :q ESCAPE '\\' " +
+           "     OR LOWER(COALESCE(a.email, '')) LIKE :q ESCAPE '\\' " +
+           "     OR LOWER(COALESCE(a.adres, '')) LIKE :q ESCAPE '\\' " +
+           "     OR LOWER(COALESCE(a.etiketler, '')) LIKE :q ESCAPE '\\') " +
            "ORDER BY a.ad ASC")
     Page<AdresDefteri> filtreli(@Param("sirketId") Long sirketId,
                                 @Param("q") String q,

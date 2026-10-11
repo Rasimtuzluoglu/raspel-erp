@@ -59,7 +59,7 @@ public interface MaasBordroRepository extends JpaRepository<MaasBordro, Long> {
            "AND (:ay IS NULL OR b.ay = :ay) " +
            "AND (:durum IS NULL OR b.durum = :durum) " +
            "AND (:odemeDurumu IS NULL OR b.odemeDurumu = :odemeDurumu) " +
-           "AND (:q IS NULL OR LOWER(CONCAT(COALESCE(p.ad,''), ' ', COALESCE(p.soyad,''))) LIKE LOWER(CONCAT('%', :q, '%'))) " +
+           "AND (:q IS NULL OR LOWER(CONCAT(COALESCE(p.ad,''), ' ', COALESCE(p.soyad,''))) LIKE :q ESCAPE '\\') " +
            "ORDER BY b.yil DESC, b.ay DESC, p.ad")
     Page<MaasBordro> filtreliGetir(@Param("sirketId") Long sirketId,
                                    @Param("yil") Integer yil,
@@ -77,7 +77,7 @@ public interface MaasBordroRepository extends JpaRepository<MaasBordro, Long> {
            "AND (:ay IS NULL OR b.ay = :ay) " +
            "AND (:durum IS NULL OR b.durum = :durum) " +
            "AND (:odemeDurumu IS NULL OR b.odemeDurumu = :odemeDurumu) " +
-           "AND (:q IS NULL OR LOWER(CONCAT(COALESCE(p.ad,''), ' ', COALESCE(p.soyad,''))) LIKE LOWER(CONCAT('%', :q, '%')))")
+           "AND (:q IS NULL OR LOWER(CONCAT(COALESCE(p.ad,''), ' ', COALESCE(p.soyad,''))) LIKE :q ESCAPE '\\')")
     Object[] ozet(@Param("sirketId") Long sirketId,
                   @Param("yil") Integer yil,
                   @Param("ay") Integer ay,

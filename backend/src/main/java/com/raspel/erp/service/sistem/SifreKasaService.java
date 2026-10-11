@@ -8,6 +8,7 @@ import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.repository.sistem.SifreKasaRepository;
 import com.raspel.erp.util.AesGcmUtil;
+import com.raspel.erp.util.AramaTemizleyici;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -84,24 +85,36 @@ public class SifreKasaService {
         String temizKategori = bosTemizle(kategori) == null ? null
                 : kategoriDogrula(kategori);
         String temizArama = bosTemizle(q);
+        // Sorguya HAM terim degil, LIKE DESENI gider (kucuk harf + joker kacisi).
+        // `LOWER(CONCAT('%', :q, '%'))` PostgreSQL'de lower(bytea) veriyordu.
+        String aramaDeseni = AramaTemizleyici.like(q);
 
         List<SifreKasa> kayitlar;
         if (KAPSAM_KISISEL.equals(temizKapsam)) {
             // Kullanicinin KISISEL kayitlari. Diger kullanicilarin kisisel
-            // kasasi hicbir kosulda listelenmez.
-            kayitlar = sifreKasaRepository.kisiselKayitlar(sirketId, kullaniciId, aktif);
-        } else if (KAPSAM_GLOBAL.equals(temizKapsam)) {
-            kayitlar = sifreKasaRepository.filtreli(sirketId, KAPSAM_GLOBAL, aktif, temizKategori, temizArama);
-        } else {
-            // Kapsam verilmediyse: kullanicinin kisisel + sirketin global kayitlari.
+            // kasasi hicbir kosulda listelenmez. Bu sorgu arama yapmaz;
+            // kategori/arama bellekte uygulanir.
             kayitlar = new java.util.ArrayList<>(
                     sifreKasaRepository.kisiselKayitlar(sirketId, kullaniciId, aktif));
-            kayitlar.addAll(sifreKasaRepository.filtreli(sirketId, KAPSAM_GLOBAL, aktif, temizKategori, temizArama));
+            kayitlar = new java.util.ArrayList<>(kayitlar.stream()
+                    .filter(k -> temizKategori == null || temizKategori.equalsIgnoreCase(k.getKategori()))
+                    .filter(k -> temizArama == null || aramaEslesiyor(k, temizArama))
+                    .toList());
+        } else if (KAPSAM_GLOBAL.equals(temizKapsam)) {
+            // Global sorgu kategori + arama filtresini DB'de uygular.
+            kayitlar = sifreKasaRepository.filtreli(sirketId, KAPSAM_GLOBAL, aktif, temizKategori, aramaDeseni);
+        } else {
+            // Kapsam verilmediyse: kullanicinin kisisel (bellekte filtreli)
+            // + sirketin global (DB'de filtreli) kayitlari.
+            kayitlar = new java.util.ArrayList<>(sifreKasaRepository.kisiselKayitlar(sirketId, kullaniciId, aktif)
+                    .stream()
+                    .filter(k -> temizKategori == null || temizKategori.equalsIgnoreCase(k.getKategori()))
+                    .filter(k -> temizArama == null || aramaEslesiyor(k, temizArama))
+                    .toList());
+            kayitlar.addAll(sifreKasaRepository.filtreli(sirketId, KAPSAM_GLOBAL, aktif, temizKategori, aramaDeseni));
         }
 
         return kayitlar.stream()
-                .filter(k -> temizKategori == null || temizKategori.equalsIgnoreCase(k.getKategori()))
-                .filter(k -> temizArama == null || aramaEslesiyor(k, temizArama))
                 .map(k -> entityToDTO(k, false))
                 .toList();
     }

@@ -39,7 +39,7 @@ public class MaasBordroService {
     @Transactional(readOnly = true)
     public Page<MaasBordroDTO> tumunuGetir(Long sirketId, Integer yil, Integer ay, String durum,
                                            String odemeDurumu, String q, Pageable pageable) {
-        String qq = (q == null || q.isBlank()) ? null : q.trim();
+        String qq = com.raspel.erp.util.AramaTemizleyici.like(q);
         String dd = (durum == null || durum.isBlank()) ? null : durum.trim();
         String oo = (odemeDurumu == null || odemeDurumu.isBlank()) ? null : odemeDurumu.trim();
         return maasBordroRepository
@@ -51,7 +51,7 @@ public class MaasBordroService {
     @Transactional(readOnly = true)
     public java.util.Map<String, Object> ozet(Long sirketId, Integer yil, Integer ay, String durum,
                                                String odemeDurumu, String q) {
-        String qq = (q == null || q.isBlank()) ? null : q.trim();
+        String qq = com.raspel.erp.util.AramaTemizleyici.like(q);
         String dd = (durum == null || durum.isBlank()) ? null : durum.trim();
         String oo = (odemeDurumu == null || odemeDurumu.isBlank()) ? null : odemeDurumu.trim();
         Object[] r = maasBordroRepository.ozet(sirketId, yil, ay, dd, oo, qq);

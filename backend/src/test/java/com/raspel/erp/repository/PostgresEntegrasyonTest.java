@@ -12,6 +12,13 @@ import com.raspel.erp.repository.ticaret.FaturaKalemRepository;
 import com.raspel.erp.repository.ticaret.FaturaRepository;
 import com.raspel.erp.repository.ticaret.IadeKalemRepository;
 import com.raspel.erp.repository.ticaret.IadeRepository;
+import com.raspel.erp.repository.ticaret.SiparisRepository;
+import com.raspel.erp.repository.ik.MaasBordroRepository;
+import com.raspel.erp.repository.sistem.AdresDefteriRepository;
+import com.raspel.erp.repository.sistem.SifreKasaRepository;
+import com.raspel.erp.entity.sistem.AdresDefteri;
+import com.raspel.erp.entity.sistem.SifreKasa;
+import com.raspel.erp.util.AramaTemizleyici;
 import com.raspel.erp.repository.sistem.SirketRepository;
 import com.raspel.erp.entity.sistem.Sirket;
 import org.junit.jupiter.api.Test;
@@ -76,6 +83,14 @@ class PostgresEntegrasyonTest {
     private IadeKalemRepository iadeKalemRepository;
     @Autowired
     private SirketRepository sirketRepository;
+    @Autowired
+    private AdresDefteriRepository adresDefteriRepository;
+    @Autowired
+    private SiparisRepository siparisRepository;
+    @Autowired
+    private MaasBordroRepository maasBordroRepository;
+    @Autowired
+    private SifreKasaRepository sifreKasaRepository;
     @Autowired
     private JdbcTemplate jdbc;
 
@@ -284,5 +299,75 @@ class PostgresEntegrasyonTest {
         assertEquals(0, new BigDecimal("2").compareTo(iadeler.get(0).getMiktar()));
         // İade'nin cari bilgisi bağlantılı fatura üzerinden gelir (LEFT JOIN)
         assertEquals("Tedarikçi Test", iadeler.get(0).getCariHesapAd());
+    }
+
+    // ------------------------------------------------------------------
+    // LIKE arama regresyonu (Postgres'e OZGU)
+    //
+    // DENETIM BULGUSU: `(:q IS NULL OR LOWER(col) LIKE LOWER(CONCAT('%', :q, '%')))`
+    // kalibi PostgreSQL'de "function lower(bytea) does not exist" (SQLState 42883)
+    // veriyordu; parametrenin tipi cozulemeyip bytea'ya dusuyordu ve bu q NULL
+    // olsa bile olusuyordu. H2 bu kalibi tolere ettigi icin tum H2 testleri yesil
+    // kaliyordu. Duzeltme: `LOWER(col) LIKE :desen ESCAPE '\\'` + deseni
+    // `AramaTemizleyici.like(q)` ile uretmek.
+    //
+    // Bu testler GERCEK PostgreSQL uzerinde calisir; hata satir sayisindan
+    // bagimsiz (prepare asamasinda) olustugu icin veri eklemeye gerek yoktur.
+    // ------------------------------------------------------------------
+
+    @Test
+    void adresDefteri_filtreli_nullVeDoluAramaCalisir() {
+        Long sirket = sirketOlustur("Adres Arama Firma");
+        adresDefteriRepository.save(AdresDefteri.builder()
+                .sirketId(sirket).ad("Ali Veli Elektrik").build());
+
+        // null arama da (bytea hatasini tetikleyen yol) calismali
+        var bos = adresDefteriRepository.filtreli(sirket, null, null, null,
+                org.springframework.data.domain.PageRequest.of(0, 10));
+        assertEquals(1, bos.getTotalElements());
+
+        var dolu = adresDefteriRepository.filtreli(sirket, AramaTemizleyici.like("ali"), null, null,
+                org.springframework.data.domain.PageRequest.of(0, 10));
+        assertEquals(1, dolu.getTotalElements());
+    }
+
+    @Test
+    void siparis_filtreliGetir_nullVeDoluAramaCalisir() {
+        Long sirket = sirketOlustur("Siparis Arama Firma");
+        // Veri eklemeye gerek yok; hata prepare asamasinda olusur.
+        assertDoesNotThrow(() -> siparisRepository.filtreliGetir(sirket, null, null, null,
+                org.springframework.data.domain.PageRequest.of(0, 10)));
+        assertDoesNotThrow(() -> siparisRepository.filtreliGetir(sirket, AramaTemizleyici.like("abc"), null, null,
+                org.springframework.data.domain.PageRequest.of(0, 10)));
+    }
+
+    @Test
+    void maasBordro_filtreliVeOzet_nullVeDoluAramaCalisir() {
+        Long sirket = sirketOlustur("Bordro Arama Firma");
+        assertDoesNotThrow(() -> maasBordroRepository.filtreliGetir(sirket, null, null, null, null, null,
+                org.springframework.data.domain.PageRequest.of(0, 10)));
+        assertDoesNotThrow(() -> maasBordroRepository.filtreliGetir(sirket, null, null, null, null,
+                AramaTemizleyici.like("ayse"), org.springframework.data.domain.PageRequest.of(0, 10)));
+        assertDoesNotThrow(() -> maasBordroRepository.ozet(sirket, null, null, null, null, null));
+        assertDoesNotThrow(() -> maasBordroRepository.ozet(sirket, null, null, null, null,
+                AramaTemizleyici.like("ayse")));
+    }
+
+    @Test
+    void sifreKasa_filtreli_nullVeDoluAramaCalisir() {
+        Long sirket = sirketOlustur("Kasa Arama Firma");
+        sifreKasaRepository.save(SifreKasa.builder()
+                .sirketId(sirket).kapsam("GLOBAL").sifreGorunurlugu("SAHIS")
+                .baslik("Netsis Muhasebe").sifreCipher("x").aktif(true).build());
+
+        // Kasanin Sirket sekmesi bu sorguyu her zaman calistirir; eskiden 500 idi.
+        var bos = sifreKasaRepository.filtreli(sirket, "GLOBAL", true, null, null);
+        assertEquals(1, bos.size());
+
+        var dolu = sifreKasaRepository.filtreli(sirket, "GLOBAL", true, null, AramaTemizleyici.like("net"));
+        assertEquals(1, dolu.size());
+
+        var eslesmeyen = sifreKasaRepository.filtreli(sirket, "GLOBAL", true, null, AramaTemizleyici.like("zzz"));
+        assertEquals(0, eslesmeyen.size());
     }
 }
