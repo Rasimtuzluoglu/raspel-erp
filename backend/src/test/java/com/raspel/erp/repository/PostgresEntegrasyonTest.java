@@ -16,8 +16,10 @@ import com.raspel.erp.repository.ticaret.SiparisRepository;
 import com.raspel.erp.repository.ik.MaasBordroRepository;
 import com.raspel.erp.repository.sistem.AdresDefteriRepository;
 import com.raspel.erp.repository.sistem.SifreKasaRepository;
+import com.raspel.erp.repository.sistem.KitaplikRepository;
 import com.raspel.erp.entity.sistem.AdresDefteri;
 import com.raspel.erp.entity.sistem.SifreKasa;
+import com.raspel.erp.entity.sistem.Kitaplik;
 import com.raspel.erp.util.AramaTemizleyici;
 import com.raspel.erp.repository.sistem.SirketRepository;
 import com.raspel.erp.entity.sistem.Sirket;
@@ -91,6 +93,8 @@ class PostgresEntegrasyonTest {
     private MaasBordroRepository maasBordroRepository;
     @Autowired
     private SifreKasaRepository sifreKasaRepository;
+    @Autowired
+    private KitaplikRepository kitaplikRepository;
     @Autowired
     private JdbcTemplate jdbc;
 
@@ -369,5 +373,44 @@ class PostgresEntegrasyonTest {
 
         var eslesmeyen = sifreKasaRepository.filtreli(sirket, "GLOBAL", true, null, AramaTemizleyici.like("zzz"));
         assertEquals(0, eslesmeyen.size());
+    }
+
+    @Test
+    void kitaplik_gorunurlukVeAramaCalisir() {
+        Long sirket = sirketOlustur("Kitaplik Firma");
+        // KISISEL (sahip=10), GLOBAL+TUMU, GLOBAL+SAHIS
+        kitaplikRepository.save(Kitaplik.builder().sirketId(sirket).kullaniciId(10L)
+                .tur("YER_IMI").kapsam("KISISEL").gorunurluk("SAHIS")
+                .baslik("Netsis Panel").url("https://netsis.local").aktif(true).build());
+        kitaplikRepository.save(Kitaplik.builder().sirketId(sirket).kullaniciId(null)
+                .tur("SNIPPET").kapsam("GLOBAL").gorunurluk("TUMU")
+                .baslik("Ortak Snippet").icerik("echo merhaba").aktif(true).build());
+        kitaplikRepository.save(Kitaplik.builder().sirketId(sirket).kullaniciId(null)
+                .tur("SNIPPET").kapsam("GLOBAL").gorunurluk("SAHIS")
+                .baslik("Yonetici Notu").icerik("gizli").aktif(true).build());
+
+        // Normal kullanici: kendi KISISEL + GLOBAL+TUMU = 2 (GLOBAL+SAHIS gorunmez)
+        var kullanici = kitaplikRepository.gorunurKayitlar(sirket, 10L, false, null, true, null, null);
+        assertEquals(2, kullanici.size());
+        assertTrue(kullanici.stream().noneMatch(k -> "Yonetici Notu".equals(k.getBaslik())),
+                "GLOBAL+SAHIS normal kullaniciya gorunmemeli");
+
+        // ADMIN: GLOBAL+TUMU + GLOBAL+SAHIS = 2 (baskasinin KISISEL kaydini GORMEZ)
+        var admin = kitaplikRepository.gorunurKayitlar(sirket, 99L, true, null, true, null, null);
+        assertEquals(2, admin.size());
+        assertTrue(admin.stream().anyMatch(k -> "Yonetici Notu".equals(k.getBaslik())),
+                "ADMIN GLOBAL+SAHIS gormeli");
+        assertTrue(admin.stream().noneMatch(k -> "Netsis Panel".equals(k.getBaslik())),
+                "ADMIN baskasinin kisisel kaydini gormemeli");
+
+        // Arama (LIKE deseni) Postgres'te calisir
+        var arama = kitaplikRepository.gorunurKayitlar(sirket, 10L, false, null, true, null,
+                AramaTemizleyici.like("ortak"));
+        assertEquals(1, arama.size());
+        assertEquals("Ortak Snippet", arama.get(0).getBaslik());
+
+        // Tur filtresi: user10 icin SNIPPET -> GLOBAL+TUMU snippet = 1
+        var snippetler = kitaplikRepository.gorunurKayitlar(sirket, 10L, false, "SNIPPET", true, null, null);
+        assertEquals(1, snippetler.size());
     }
 }

@@ -315,4 +315,31 @@ class SecurityConfigTest {
                 .andExpect(result -> assertNotEquals(401, result.getResponse().getStatus()))
                 .andExpect(result -> assertNotEquals(403, result.getResponse().getStatus()));
     }
+
+    // --- Kitaplik (yer imi + snippet) ---
+    @Test
+    void kitaplik_sahaForbidden() throws Exception {
+        mockMvc.perform(get("/api/kitaplik").with(user("test-saha").roles("SAHA")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void kitaplik_soforForbidden() throws Exception {
+        mockMvc.perform(get("/api/kitaplik").with(user("test-driver").roles("DRIVER")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void kitaplik_userErisir() throws Exception {
+        mockMvc.perform(get("/api/kitaplik").with(user("test-user").roles("USER")))
+                .andExpect(result -> assertNotEquals(401, result.getResponse().getStatus()))
+                .andExpect(result -> assertNotEquals(403, result.getResponse().getStatus()));
+    }
+
+    @Test
+    void kitaplik_muhasebeErisir() throws Exception {
+        mockMvc.perform(get("/api/kitaplik").with(user("test-muhasebe").roles("MUHASEBE")))
+                .andExpect(result -> assertNotEquals(401, result.getResponse().getStatus()))
+                .andExpect(result -> assertNotEquals(403, result.getResponse().getStatus()));
+    }
 }
