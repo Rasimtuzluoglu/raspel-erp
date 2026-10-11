@@ -9,6 +9,19 @@ self.skipWaiting()
 clientsClaim()
 cleanupOutdatedCaches()
 
+// Uygulama surumu. Vite `define` ile derleme aninda gercek surume cevrilir;
+// cevrilmezse (test/ozel ortam) 'dev'e duser. Boylece SW hicbir zaman
+// ReferenceError vermez. Onbellek adlarini surumlemek icin kullanilir:
+// yeni surumde ESKI surumun onbellekleri activate'te silinir, boylece
+// "hayalet kabuk" (silinmis chunk'lara referans veren eski index.html)
+// imkansizlasir.
+// eslint-disable-next-line no-undef
+const SURUM = (typeof __APP_VERSION__ !== 'undefined' && __APP_VERSION__) ? __APP_VERSION__ : 'dev'
+
+const PAGES_CACHE = 'pages-' + SURUM
+const API_READ_CACHE = 'api-read-' + SURUM
+const STATIC_CACHE = 'static-assets-' + SURUM
+
 // Uygulamadan gelen kurtarma komutlari:
 // - SKIP_WAITING: bekleyen yeni SW'yi hemen devreye alir.
 // - CLEAR_CACHES: tum onbellekleri temizleyip taze icerik sunulmasini saglar.
@@ -31,7 +44,7 @@ self.addEventListener('message', (event) => {
 registerRoute(
   new NavigationRoute(
     new NetworkFirst({
-      cacheName: 'pages',
+      cacheName: PAGES_CACHE,
       networkTimeoutSeconds: 3,
       plugins: [
         new CacheableResponsePlugin({ statuses: [0, 200] }),
@@ -44,26 +57,34 @@ registerRoute(
 
 precacheAndRoute(self.__WB_MANIFEST)
 
-// KAPSAM DARALTILDI (onceki hali: tum onbellekleri sil).
+// KAPSAM: uygulamaya ait onbellekler SURUME baglidir.
 //
-// Sorun: aktivasyonda caches.keys().map(delete) her deploy'da `static-assets`
-// (100 girdi, 1 yil TTL, CacheFirst), `pages`, `api-read` ve `google-fonts`
-// onbelleklerini de siliyordu. Kullanici her surumden sonra butun asset'leri
-// yeniden indiriyor, yani PWA'nin sundugu "aninda acilma" her release'de
-// sifirlaniyordu.
+// Sorun: onceden onbellek adlari sabitti ('pages', 'static-assets', 'api-read').
+// Ayni adlar farkli surumlerde tekrar kullanildigi icin, NetworkFirst gezinme
+// rotasi agin yavas oldugu durumda (networkTimeoutSeconds 3) onbellekten ESKI
+// index.html'i servis edebiliyordu. Eski index yeni chunk hash'lerine degil,
+// deploy'da SILINMIS eski chunk'lara referans veriyordu -> bos ekran.
 //
-// Simdi yalnizca emekli surum onbellekleri (RAPASEL-ESKI- onekiyle isaretlenen)
-// silinir. Workbox'un precache onbellegi `cleanupOutdatedCaches()` tarafindan
-// yonetilir. Eski index.html endisesi zaten yonetim siralamasiyla cozulmus
-// durumda: SPA gezinme rotasi (NetworkFirst) precache rotasindan ONCE
-// kayitlidir, yani uygulama kabugu asla precache'ten servis edilmez.
+// Cozum: adlara surum eklenir ve activate'te FARKLI surumlu + surumsuz (legacy)
+// uygulama onbellekleri silinir. Boylece her surum temiz bir sayfa ile baslar.
+//
+// Not: Workbox'un precache onbellegi `cleanupOutdatedCaches()` tarafindan
+// yonetilir; `google-fonts` dis kaynakli ve kararli oldugu icin surumsuz kalir.
 const EMEKLI_ONEK_ONEKI = 'raspel-eski-'
+const UYGULAMA_CACHE_TABANLARI = ['pages', 'api-read', 'static-assets']
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((anahtarlar) => Promise.all(
       anahtarlar
-        .filter((k) => k.startsWith(EMEKLI_ONEK_ONEKI))
+        .filter((k) => {
+          if (k.startsWith(EMEKLI_ONEK_ONEKI)) return true // emekli isaretli
+          for (const taban of UYGULAMA_CACHE_TABANLARI) {
+            if (k === taban) return true // surumsuz legacy ad -> yeni adlara tasi
+            if (k.startsWith(taban + '-') && k !== taban + '-' + SURUM) return true // eski surum
+          }
+          return false
+        })
         .map((k) => caches.delete(k))
     )).catch(() => undefined)
   )
@@ -74,7 +95,7 @@ self.addEventListener('activate', (event) => {
 registerRoute(
   ({ url, request }) => request.method === 'GET' && url.pathname.startsWith('/api/'),
   new NetworkFirst({
-    cacheName: 'api-read',
+    cacheName: API_READ_CACHE,
     networkTimeoutSeconds: 4,
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),
@@ -92,7 +113,7 @@ self.addEventListener('fetch', (event) => {
   if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) return
   event.waitUntil(
     caches
-      .open('api-read')
+      .open(API_READ_CACHE)
       .then((cache) => cache.keys().then((keys) => Promise.all(keys.map((k) => cache.delete(k)))))
       .catch(() => undefined)
   )
@@ -101,7 +122,7 @@ self.addEventListener('fetch', (event) => {
 registerRoute(
   ({ request }) => ['image', 'font', 'style', 'script'].includes(request.destination),
   new CacheFirst({
-    cacheName: 'static-assets',
+    cacheName: STATIC_CACHE,
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 365 })

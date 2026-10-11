@@ -46,4 +46,27 @@
       window.__raspelKurtar()
     }
   })
+
+  // BOOT WATCHDOG: bazi durumlarda hata "script" olayi olarak GELMEZ
+  // (or. modul degerlendirilirken olusan bir runtime hatasi Vue mount'unu
+  // engeller). Bu durumda ekranda #app-loading asili kalir; yukaridaki
+  // dinleyiciler tetiklenmez ve kullanici elle sert yenileme yapmak zorunda
+  // kalir. Sayfa yuklendikten belirli bir sure sonra Vue HALA mount olmadiysa
+  // (yani #app-loading hala duruyorsa) bir kez toparlamayi tetikle.
+  var BEKLEME_MS = 8000
+  function mountKontrolEt() {
+    try {
+      // Vue mount olduysa #app-loading kaldirilir; duruyorsa uygulama acilmadi.
+      if (document.getElementById('app-loading')) {
+        window.__raspelKurtar()
+      }
+    } catch (e) { /* yoksay */ }
+  }
+  if (document.readyState === 'complete') {
+    setTimeout(mountKontrolEt, BEKLEME_MS)
+  } else {
+    window.addEventListener('load', function () {
+      setTimeout(mountKontrolEt, BEKLEME_MS)
+    })
+  }
 })()

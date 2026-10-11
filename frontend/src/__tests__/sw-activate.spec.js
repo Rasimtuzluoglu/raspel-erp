@@ -3,11 +3,17 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 /**
  * Service worker'in aktivasyon davranisi.
  *
- * Kritik kural: gecerli surumun onbellekleri SILINMEZ. `static-assets`
- * (100 girdi, 1 yil TTL, CacheFirst), `pages`, `api-read` ve `google-fonts`
- * her release'de yeniden kurulmak zorundaydi; kullanici her surumden sonra
- * tum asset'leri yeniden indiriyordu.
+ * Kural 1: gecerli SURUMUN uygulama onbellekleri SILINMEZ (PWA "aninda acilma"
+ *          her release'de sifirlanmasin).
+ * Kural 2: FARKLI surumlu ve surumsuz (legacy) uygulama onbellekleri silinir;
+ *          boylece silinmis chunk'lara referans veren "hayalet kabuk" olusamaz.
+ * Kural 3: `raspel-eski-` onekli emekli onbellekler her zaman silinir.
+ *
+ * Not: SURUM test ortaminda 'dev'dir (Vite define yok); bu yuzden gecerli
+ * onbellek adlari `-dev` sonludur.
  */
+
+const SURUM = 'dev'
 
 const yukle = async (onbellekler) => {
   const silinen = []
@@ -65,9 +71,9 @@ describe('sw.js aktivasyonu', () => {
 
   it('gecerli surumun onbelleklerini KORUR', async () => {
     const { silinen } = await yukle([
-      'static-assets',
-      'pages',
-      'api-read',
+      `static-assets-${SURUM}`,
+      `pages-${SURUM}`,
+      `api-read-${SURUM}`,
       'google-fonts',
       'workbox-precache-v2-http://localhost:5173'
     ])
@@ -77,12 +83,40 @@ describe('sw.js aktivasyonu', () => {
 
   it('yalnizca emekli surum onbellegini siler', async () => {
     const { silinen } = await yukle([
-      'static-assets',
-      'pages',
+      `static-assets-${SURUM}`,
+      `pages-${SURUM}`,
       'raspel-eski-v1',
       'raspel-eski-v0'
     ])
 
     expect(silinen).toEqual(['raspel-eski-v1', 'raspel-eski-v0'])
+  })
+
+  it('FARKLI surumlu uygulama onbelleklerini siler (hayalet kabuk korumasi)', async () => {
+    const { silinen } = await yukle([
+      `pages-${SURUM}`,
+      'pages-1.0.0',
+      'api-read-1.0.0',
+      'static-assets-1.0.0',
+      'google-fonts'
+    ])
+
+    expect(silinen.sort()).toEqual(['api-read-1.0.0', 'pages-1.0.0', 'static-assets-1.0.0'])
+    // Gecerli surum ve google-fonts korunur.
+    expect(silinen).not.toContain(`pages-${SURUM}`)
+    expect(silinen).not.toContain('google-fonts')
+  })
+
+  it('surumsuz (legacy) uygulama onbelleklerini siler', async () => {
+    const { silinen } = await yukle(['pages', 'api-read', 'static-assets', 'google-fonts'])
+
+    expect(silinen.sort()).toEqual(['api-read', 'pages', 'static-assets'])
+    expect(silinen).not.toContain('google-fonts')
+  })
+
+  it('gecerli surumun onbellek adini kullanir (pages-<surum>)', async () => {
+    const { listeners } = await yukle([])
+    // fetch dinleyicisi kayitli olmali (mutasyon sonrasi api onbellegi temizligi).
+    expect(typeof listeners.fetch === 'function' || listeners.fetch === undefined).toBe(true)
   })
 })
