@@ -40,12 +40,17 @@ Yoğun katalog | 5.000 üründe arama < 200 ms; kaydırma 60 fps |
   komutu eklendi (filtreli/ara/gruplama-dagilimi/en-cok-satanlar/satis-onerileri
   + legacy `stoklar` tek yerden).
 - `posYeniAkis` bayrağı `usePosTercih`'e eklendi (varsayılan kapalı).
-- **Bulgu (Faz C'ye taşındı):** ürün arama kutusu (AutoComplete) otomasyonda
-  yazarken ne `/api/stoklar/satis-onerileri` ne de `filtreli?q=` isteği
-  üretiyor; yerel `input` olayıyla bile tetiklenmiyor. "Arama kutusu işlevsiz
-  olabilir" — Faz C'de bu kutu yeniden yazılacak. Bu nedenle
-  `redteam-faz2-hizliSatis.cy.js` içindeki 2.5 ve 2.6 testleri **gerekçeli
-  olarak `it.skip`** edildi (silinmedi); Faz C'de yeni davranışa göre açılır.
+- **Arama kutusu hatası BULUNDU ve DÜZELTİLDİ:** `HizliSatis.vue` arama kutusu
+  `@input` ile bağlıydı; AutoComplete `input` olayı **yaymaz** (PrimeVue 4
+  `emits` listesinde yok), bu yüzden binding bir DOM fallthrough dinleyicisine
+  dönüşüp arama ref'ine **event nesnesi** yazıyordu. `usePosKatalog` computed'ı
+  `aramaMetni.value?.trim()` çağırınca `TypeError` atıyor, güncelleme çöküyor
+  (ErrorBoundary: "component update") ve **ne öneri ne ızgara araması**
+  çalışıyordu. Doğru olay `@update:model-value` ile değiştirildi (yalnızca
+  string metin aktarılır). Sonuç: `satis-onerileri?q=` ve `filtreli?q=`
+  istekleri artık çalışıyor; `redteam-faz2` 2.5/2.6 yeniden etkin.
+- Not (Faz D): ızgara araması artık her tuşta `filtreli?q=` atıyor; debounce +
+  prefetch Faz D'de eklenecek.
 
 ### Faz B — Ödeme overlay (`posOdemeOverlay`)
 Sayısal tuş takımı, hızlı nakit (₺50/100/200), otomatik para üstü, "kalan".

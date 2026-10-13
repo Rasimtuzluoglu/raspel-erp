@@ -134,16 +134,11 @@ describe('REDTEAM Faz2 - Hizli Satış POS', () => {
     cy.get('.product-grid .product-card').should('have.length.greaterThan', 50)
   })
 
-  // BILEREK ATLANDI (Faz A): 2.5 ve 2.6, arama kutusunun (AutoComplete +
-  // `@complete` -> /api/stoklar/satis-onerileri) yazarken istek uretmesini
-  // dogrular. Otomasyonda (gercek Chrome) kutuya yazmak NE oneri (satis-onerileri)
-  // NE de izgara aramasi (filtreli?q=) istegi uretiyor; yerel `input` olayi
-  // tetiklendiginde bile istek cikmiyor. Bu, "urun arama kutusu islevsiz
-  // olabilir" bulgusunu isaret ediyor ve Faz C'de ("Komut yuzeyi") bu kutu
-  // zaten yeniden yazilacak. O yuzden titiz bir sekilde atlanir — silinmez;
-  // Faz C'de yeni davranisa gore yeniden yazilip acilir.
-  // Takip: docs/POS-REDESIGN.md (Faz A notlari) + Faz C.
-  it.skip('2.5 arama tek gecikmeyle sonuc donmeli (cift 250ms debounce olmamali)', () => {
+  // COZULDU (Faz A takibi): arama kutusu `@input` yerine dogru olay olan
+  // `@update:model-value` ile baglandi. Once `@input` bir DOM fallthrough
+  // dinleyicisiydi ve arama ref'ine EVENT NESNESI yazip TypeError atiyordu
+  // (ErrorBoundary: "component update"); ne oneri ne izgara aramasi tetikleniyordu.
+  it('2.5 arama tek gecikmeyle sonuc donmeli (cift 250ms debounce olmamali)', () => {
     // REDTEAM: :delay="250" + koddaki 250ms setTimeout = ~500ms + RTT.
     // Artik :delay="0", tek gecikme 250ms.
     const t0 = Date.now()
@@ -157,7 +152,7 @@ describe('REDTEAM Faz2 - Hizli Satış POS', () => {
     cy.get('.p-autocomplete-overlay .urun-oneri').should('have.length.greaterThan', 0)
   })
 
-  it.skip('2.6 urun dropdown oku kaldirildi (ok ile panel acilip kapanmamali)', () => {
+  it('2.6 urun dropdown oku kaldirildi (ok ile panel acilip kapanmamali)', () => {
     // REDTEAM: `dropdown` + minLength=2 bilesimi oku islevsiz yapiyordu.
     // Artik ok yok; yazmaya baslayinca panel acilir ve KALIR.
     cy.get('.pos-arac-cubugu .arama-kutusu:not(.barkod-kutu) input').first().type('te', { delay: 10 })

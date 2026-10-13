@@ -158,7 +158,7 @@
               :force-selection="false"
               :panel-style="URUN_PANEL_STILI"
               :scroll-height="'320px'"
-              @input="katalogArama = $event.value ?? $event"
+              @update:model-value="katalogAramaGuncelle"
               @complete="urunOneriAra"
               @option-select="urunOneriSecildi"
             >
@@ -1736,6 +1736,18 @@ const urunOneri = ref(null)
 const urunOnerileri = ref([])
 let urunOneriZamanlayici = null
 let urunOneriSeq = 0
+
+// AutoComplete'in gercek model olayi `@update:model-value`'dur; `@input`
+// yayilmaz (PrimeVue 4 emits listesinde yok). Onceki `@input="katalogArama =
+// $event.value ?? $event"` bir DOM fallthrough dinleyicisiydi ve arama ref'ine
+// EVENT NESNESI yaziyordu; usePosKatalog computed'i `aramaMetni.value?.trim()`
+// cagirinca TypeError atip guncellemeyi cokertiyordu (ErrorBoundary:
+// "component update"). Sonuc: arama kutusu ne oneri ne izgara aramasi
+// tetikliyordu. Yalnizca yazilan METIN (string) aktarilir; secim (obje) veya
+// null geldiginde arama temizlenir.
+const katalogAramaGuncelle = (v) => {
+  katalogArama.value = typeof v === 'string' ? v : ''
+}
 
 const urunOneriAra = (event) => {
   const q = (event?.query || '').trim()
