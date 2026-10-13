@@ -48,7 +48,10 @@ describe('REDTEAM Faz5 — kalem eklerken sepet okunur kalmali', () => {
     // kilidini kaldirir, bu yuzden varsayilan 1280'de hata gorunmez.
     cy.viewport(1600, 900)
     cy.girisYap()
-    cy.intercept('GET', '**/api/stoklar*', { statusCode: 200, body: { content: urunler } }).as('stoklar')
+    cy.intercept('GET', '**/api/stoklar/filtreli*', { statusCode: 200, body: { content: urunler, totalElements: urunler.length, totalPages: 1 } }).as('stoklar')
+    cy.intercept('GET', '**/api/stoklar/ara*', { statusCode: 200, body: urunler })
+    cy.intercept('GET', '**/api/stoklar/gruplama-dagilimi*', { statusCode: 200, body: { kategoriler: [], markalar: [], stokGruplari: [] } })
+    cy.intercept('GET', '**/api/stoklar/en-cok-satanlar*', { statusCode: 200, body: [] })
     cy.intercept('POST', '/api/faturalar', {
       statusCode: 200,
       body: { id: 99, faturaNumarasi: 'FTR-TEST-0001' }

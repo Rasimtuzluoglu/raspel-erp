@@ -41,6 +41,44 @@ Cypress.Commands.add('apiMocklariKur', () => {
   }).as('dashboard')
 })
 
+/**
+ * POS (Hizli Satis) katalog mock'lari — TEK yerden.
+ *
+ * SURUKLENME ONARIMI: katalog sunucu-sayfali hâle geldiginde (`filtreli`),
+ * barkod taramasi da yerel `stokStore` bossa `/api/stoklar/ara`'ya duser.
+ * Spec'ler yalnizca `**\/api/stoklar*`'i mock'ladigi icin bu uclar catch-all'a
+ * (`[]`) gidiyor, urun "bulunamadi" olup "Yeni Urun Olustur" diyalogu aciliyor
+ * ve sonraki `cy.type` mask tarafindan engelleniyordu.
+ *
+ * Bu komut POS'un kullandigi TUM katalog uclarini tutarli mock'lar; kategori/
+ * marka/stok grubu dagilimi urunlerden turetilir (elle senkron tutma yok).
+ *
+ * @param {Array<object>} urunler POS'ta gorunecek urunler
+ */
+Cypress.Commands.add('posKatalogMockla', (urunler = []) => {
+  const sayfa = { content: urunler, totalElements: urunler.length, totalPages: 1 }
+  const degerler = (alan) => [
+    ...new Set(urunler.map((u) => u[alan]).filter(Boolean))
+  ].map((deger) => ({ deger, sayi: urunler.filter((u) => u[alan] === deger).length }))
+
+  cy.intercept('GET', '**/api/stoklar/filtreli*', { statusCode: 200, body: sayfa }).as('posFiltreli')
+  cy.intercept('GET', '**/api/stoklar/ara*', { statusCode: 200, body: urunler }).as('posAra')
+  cy.intercept('GET', '**/api/stoklar/gruplama-dagilimi*', {
+    statusCode: 200,
+    body: {
+      kategoriler: degerler('kategori'),
+      markalar: degerler('marka'),
+      stokGruplari: degerler('stokGrubu')
+    }
+  }).as('posDagilim')
+  cy.intercept('GET', '**/api/stoklar/en-cok-satanlar*', { statusCode: 200, body: [] }).as('posCokSatan')
+  cy.intercept('GET', '**/api/stoklar/satis-onerileri*', { statusCode: 200, body: urunler }).as('posOneri')
+  // Legacy global stok store (`stokStore.getAll`) icin: barkodTarandi yerel
+  // arama yapabilsin. `**\/api/stoklar*` glob'u '/' gecmedigi icin yukaridaki
+  // ozel uclari golgelemez.
+  cy.intercept('GET', '**/api/stoklar*', { statusCode: 200, body: sayfa }).as('posStoklar')
+})
+
 Cypress.Commands.add('girisYap', () => {
   cy.apiMocklariKur()
   cy.visit('/giris', {

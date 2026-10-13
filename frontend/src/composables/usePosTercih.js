@@ -40,7 +40,13 @@ const TERCILER = [
   ['buyukYazi', 'raspel_pos_buyuk_yazi', false, 'Buyuk yazi modu (uzak mesafe)'],
   ['onayIste', 'raspel_pos_onay_iste', false, 'Satis oncesi onay adimi'],
   ['otomatikYazdir', 'raspel_pos_otomatik_yazdir', true, 'Satis sonrasi fis otomatik yazdirilir'],
-  ['ipucuAcik', 'raspel_pos_ipucu_acik', false, 'Kisayol ipucu seridi']
+  ['ipucuAcik', 'raspel_pos_ipucu_acik', false, 'Kisayol ipucu seridi'],
+
+  // --- yeni POS akisi (kademeli sevk) ---
+  // Varsayilan KAPALI; her faz (odeme overlay, komut yuzeyi, sanal katalog,
+  // coklu sepet, cevrimdisi) bu bayragin arkasinda gelir. Kararli olunca
+  // burada varsayilan true yapilir ve eski akis bir surum daha korunur.
+  ['posYeniAkis', 'raspel_pos_yeni_akis', false, 'Yeni POS akisi (deneysel)']
 ]
 
 /** Fis ayarlari: sunucudan da gelebilen alanlar (cihazlar arasi ayni olsun). */

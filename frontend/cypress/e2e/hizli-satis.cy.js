@@ -50,7 +50,10 @@ describe('Hızlı Satış (POS)', () => {
 
   beforeEach(() => {
     cy.girisYap()
-    cy.intercept('GET', '**/api/stoklar*', { statusCode: 200, body: { content: [urun, stoksuzUrun, kodluUrun] } }).as('stoklar')
+    // POS katalog uclari (filtreli + ara + dagilim + en-cok-satanlar + legacy getAll)
+    // TEK yerden mock'lanir; aksi halde barkod taramasi "bulunamadi" diyip
+    // "Yeni Urun Olustur" diyalogu aciliyordu ve sonraki type() mask'e takiliyordu.
+    cy.posKatalogMockla([urun, stoksuzUrun, kodluUrun])
     cy.intercept('POST', '/api/faturalar', {
       statusCode: 200,
       body: { id: 99, faturaNumarasi: 'FTR-TEST-0001' }
@@ -253,15 +256,14 @@ describe('Hızlı Satış (POS)', () => {
   })
 
   // REDTEAM/Faz5: F9/F10 artik satisi TAMAMLAMAZ (kazara kayit engeli).
-  // Tamamlama acik bir eylemle yapilir; bu testte "Satisi Tamamla" butonu
-  // kullanilir ve musteri eksikligi uyarisi beklenir.
-  it('müşteri modu seçiliyken müşteri yoksa uyarı gösterir', () => {
+  // DAVRANIS DEGISIKLIGI: Musteri modu seciliyken musteri yoksa "Satisi Tamamla"
+  // butonu artik DISABLED; eskiden tiklanip "Musteri gerekli" uyarisi cikiyordu.
+  it('müşteri modu seçiliyken müşteri yoksa Satışı Tamamla devre dışıdır', () => {
     cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
-    // Varsayılan Perakende; uyarı senaryosu için Müşteri moduna geç.
+    // Varsayılan Perakende; müşteri-gerekli senaryosu için Müşteri moduna geç.
     cy.get('.musteri-modu').contains('Müşteri').click()
-    cy.get('.sticky-tamamla button').click()
-    cy.contains('Müşteri gerekli').should('exist')
+    cy.contains('.sticky-tamamla button', 'Satışı Tamamla').should('be.disabled')
     cy.get('@satisOlustur.all').should('have.length', 0)
   })
 
