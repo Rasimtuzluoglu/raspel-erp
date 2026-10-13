@@ -229,7 +229,12 @@
    eklenir; buradaki gap ortak olcek, C1 blogu tekrar tanimlamaz. */
 .pos-body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(340px, 30vw, 420px);
+  /* Sag (siparis) sutunu — KULLANICI GERI BILDIRIMI: "sag kisim biraz kucuk
+     kaldigi icin bazi yazilar okunmuyor". Onceki deger clamp(340px,30vw,420px)
+     idi; genis monitorlerde sag panel 420px'te takiliyor ve sepet/ozet
+     metinleri kirpilyordu. Temel deger bir miktar, genis monitor icin
+     ayrica @media (min-width:1600px) blogunda belirgin sekilde genisletilir. */
+  grid-template-columns: minmax(0, 1fr) clamp(360px, 32vw, 520px);
   gap: 14px;
   align-items: stretch;
 }
@@ -847,6 +852,15 @@
   /* Dar dizustu/tablet: sag sutun alta iner; sabit 400px yerine tam genislik. */
   .pos-body {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Genis monitor (>=1600px): sag siparis panelini belirgin genislet. 1920'de
+   ~614px, 2560'ta 640px olur; sepet urun adlari ve ozet degerleri kirpilmaz.
+   Sol urun izgarasi minmax(0,1fr) oldugu icin kalan alani otomatik alir. */
+@media (min-width: 1600px) {
+  .pos-body {
+    grid-template-columns: minmax(0, 1fr) clamp(480px, 32vw, 640px);
   }
 }
 @media (max-width: 1100px) {
