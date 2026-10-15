@@ -2,6 +2,7 @@ import { ref, computed, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { stokAPI } from '../api/index.js'
 import { unwrapList } from '../api/utils/unwrap.js'
+import { usePosKatalogCache } from './usePosKatalogCache.js'
 
 /**
  * POS urun katalogu — sunucu tarafi arama, sayfalama ve filtreleme.
@@ -46,6 +47,11 @@ export function usePosKatalog({ sayfaBoyutu = VARSAYILAN_SAYFA_BOYUTU, aramaGeci
   const yukleniyor = ref(false)
   const hata = ref(null)
   const ilkYukleme = ref(true)
+  /** Liste sunucudan degil, cevrimdisi onbellekten geldiyse true (bilgi). */
+  const onbellekten = ref(false)
+
+  /** Cevrimdisi katalog anlik goruntusu (Faz F). */
+  const katalogOnbellek = usePosKatalogCache()
 
   // --- filtreler ---
   const aramaMetni = ref('')
@@ -97,13 +103,25 @@ export function usePosKatalog({ sayfaBoyutu = VARSAYILAN_SAYFA_BOYUTU, aramaGeci
       sonSayfa.value = hedefSayfa + 1 >= Math.max(1, Math.ceil(toplamKayit / sayfaBoyutu))
       urunler.value = ekle ? [...urunler.value, ...gelen] : gelen
       sayfa.value = hedefSayfa
+      onbellekten.value = false
+      // Ilk sayfa basariyla geldi: sonraki cevrimdisi acilis icin sakla.
+      if (!ekle && hedefSayfa === 0) katalogOnbellek.kaydet(gelen)
       return hedefSayfa
     } catch (e) {
       if (benimSeq === istekSeq) {
         hata.value = e?.message || 'Katalog yüklenemedi'
-        // Basarisiz ilk denemede listeyi BOSALTMA: kullanici elindeki urunleri
-        // kaybetmemeli. Yeni bir filtreye gecildiginde liste degisecek zaten.
-        if (!ekle && ilkYukleme.value) urunler.value = []
+        // Basarisiz ilk denemede: once CEVRIMDISI ONBELLEGE dus (kasiyer son
+        // bildigi urunleri gormeye devam etsin); onbellek de yoksa bosalt.
+        if (!ekle && ilkYukleme.value) {
+          const onbellekli = katalogOnbellek.yukle()
+          if (onbellekli.length) {
+            urunler.value = onbellekli
+            toplam.value = onbellekli.length
+            onbellekten.value = true
+          } else {
+            urunler.value = []
+          }
+        }
       }
       return null
     } finally {
@@ -211,6 +229,7 @@ export function usePosKatalog({ sayfaBoyutu = VARSAYILAN_SAYFA_BOYUTU, aramaGeci
     yukleniyor,
     ilkYukleme,
     hata,
+    onbellekten,
     bosMu,
     dahaFazlaVar,
     sonucOzeti,

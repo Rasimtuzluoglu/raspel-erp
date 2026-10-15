@@ -409,3 +409,39 @@ describe('usePosKatalog — arama debounce (Faz D)', () => {
     expect(stokAPI.filtreli).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('usePosKatalog — cevrimdisi onbellek (Faz F)', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  it('basarili ilk yuklemede katalog onbellege yazilir', async () => {
+    stokAPI.filtreli.mockResolvedValue(sayfa([urun(1), urun(2)], 2))
+    const k = kur()
+    await k.katalogYukle()
+    const ham = JSON.parse(localStorage.getItem('raspel_pos_katalog_onbellek'))
+    expect(ham.urunler.map((u) => u.id)).toEqual([1, 2])
+    expect(k.onbellekten.value).toBe(false)
+  })
+
+  it('sunucu ulasilamazsa onbellekteki urunler gosterilir', async () => {
+    localStorage.setItem(
+      'raspel_pos_katalog_onbellek',
+      JSON.stringify({ tarih: Date.now(), urunler: [urun(7), urun(8)] })
+    )
+    stokAPI.filtreli.mockRejectedValue(new Error('ag yok'))
+    const k = kur()
+    await k.katalogYukle()
+    expect(k.urunler.value.map((u) => u.id)).toEqual([7, 8])
+    expect(k.onbellekten.value).toBe(true)
+    expect(k.hata.value).toBeTruthy()
+  })
+
+  it('onbellek de yoksa liste bos kalir', async () => {
+    stokAPI.filtreli.mockRejectedValue(new Error('ag yok'))
+    const k = kur()
+    await k.katalogYukle()
+    expect(k.urunler.value).toEqual([])
+    expect(k.onbellekten.value).toBe(false)
+  })
+})

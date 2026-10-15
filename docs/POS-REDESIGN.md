@@ -96,9 +96,15 @@ Not: `Ctrl+H` kısayolu EKLENMEDİ — `h` zaten ödeme yöntemi (HAVALE) kısay
 olduğu için çakışır; kısayol entegrasyonu ayrı bir pass gerektirir (buton+çip
 şimdilik yeterli).
 
-### Faz F — Çevrimdışı dayanıklılık
-IndexedDB katalog önbelleği (`idb-keyval`); imzalı/idempotent kuyruk senkronu
-(mevcut `raspel_offline_satis_kuyrugu` + Wave 0 idempotency).
+### Faz F — Çevrimdışı dayanıklılık  ▸ TAMAMLANDI (kapsam sınırlı)
+`usePosKatalogCache`: başarılı ilk katalog yüklemesinde ≤300 ürünlük anlık
+görüntü `localStorage`'a yazılır; sunucuya ulaşılamazsa ızgara boş kalmaz,
+son bilinen ürünler gösterilir (`onbellekten` bayrağı). Satış kuyruğu zaten
+mevcut (`offlineKuyruk` + idempotency).
+**Neden IndexedDB değil:** gerçek offline-first katalog için IndexedDB + yeni
+bağımlılık (idb-keyval) ve test için `fake-indexeddb` gerekir; bu, fazın
+test edilebilirliğini aşar. Sınırlı localStorage anlık görüntüsü aynı acil
+ihtiyacı yeni bağımlılık olmadan karşılar; tam IndexedDB çözümü ayrı pass.
 
 ### Faz G — Görsel sistem
 Kart modları (Vitrin/Yoğun); varsayılan büyük tipografi; motion +
