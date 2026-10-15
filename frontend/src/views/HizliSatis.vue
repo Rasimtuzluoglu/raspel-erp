@@ -1212,7 +1212,10 @@ const barkodTarandi = async (barkod, adet = 1) => {
   // Etiketlerde barkod alani bos urunlerde stok kodu kodlanir; arama her ikisini
   // ve seri numarasini kapsar.
   const eslesir = (s) => s.barkod === barkod || s.seriNo === barkod || s.stokKodu === barkod
-  let urun = stokStore.stoklar.find(eslesir)
+  // FAZ D: ONCE yuklu POS katalogunda ara (ekrandaki/elde olan urun icin sunucu
+  // turu YOK -> barkod aninda sepete duser). Bulunamazsa eski global store,
+  // en son sunucu aramasi.
+  let urun = katalogUrunleri.value.find(eslesir) || stokStore.stoklar.find(eslesir)
   if (urun) {
     sepeteEkle(urun, adet)
   } else {

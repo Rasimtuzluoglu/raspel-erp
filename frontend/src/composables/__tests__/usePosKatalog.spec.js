@@ -39,11 +39,12 @@ const sayfa = (icerik, totalElements, page = 0) => ({
 
 const urun = (id, ad = `Urun ${id}`) => ({ id, ad, satisFiyati: 10, miktar: 5, birim: 'adet' })
 
-const kur = () => {
+const kur = (opts = {}) => {
   let sonuc = null
   const Bilesen = defineComponent({
     setup() {
-      sonuc = usePosKatalog()
+      // Testlerde arama ANINDA olsun (debounce davranisi ayri testte).
+      sonuc = usePosKatalog({ aramaGecikmeMs: 0, ...opts })
       return () => h('div')
     }
   })
@@ -367,5 +368,44 @@ describe('usePosKatalog — sonuc ozeti', () => {
     expect(k.sonucOzeti.value).toBeNull()
     coz(sayfa([urun(1)], 1))
     await p
+  })
+})
+
+describe('usePosKatalog — arama debounce (Faz D)', () => {
+  it('hizli yazimda TEK istek gider (debounce)', async () => {
+    vi.useFakeTimers()
+    try {
+      stokAPI.filtreli.mockResolvedValue(sayfa([], 0))
+      const k = kur({ aramaGecikmeMs: 250 })
+      await nextTick()
+      stokAPI.filtreli.mockClear()
+
+      k.aramaMetni.value = 'v'
+      await nextTick()
+      k.aramaMetni.value = 'vi'
+      await nextTick()
+      k.aramaMetni.value = 'vid'
+      await nextTick()
+      // Debounce suresi dolmadan istek YOK.
+      expect(stokAPI.filtreli).not.toHaveBeenCalled()
+
+      vi.advanceTimersByTime(260)
+      await Promise.resolve()
+      // Uc keystroke -> tek istek.
+      expect(stokAPI.filtreli).toHaveBeenCalledTimes(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('aramaGecikmeMs=0 iken arama ANINDA yapilir (eski davranis)', async () => {
+    stokAPI.filtreli.mockResolvedValue(sayfa([], 0))
+    const k = kur({ aramaGecikmeMs: 0 })
+    await nextTick()
+    stokAPI.filtreli.mockClear()
+    k.aramaMetni.value = 'vida'
+    await nextTick()
+    await Promise.resolve()
+    expect(stokAPI.filtreli).toHaveBeenCalledTimes(1)
   })
 })

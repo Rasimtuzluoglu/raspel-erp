@@ -72,9 +72,19 @@ tetikler. Böylece kasiyer barkod/ürün/miktar/müşteri için tek kutuyu kulla
 Not: İki ayrı kutu (barkod + canlı öneri) tam olarak TEK kutuya indirilmedi;
 gramer barkod kutusunda destekleniyor. Tam birleştirme istenirse ayrı iş.
 
-### Faz D — Katalog hızı
-`useVirtualList` ile sanal ızgara; `useDebounceFn` arama; prefetch; barkodda
-optimistic satır. (`barkodTarandi` yerel araması POS kataloğunu da tarar.)
+### Faz D — Katalog hızı  ▸ TAMAMLANDI (kapsam sınırlı)
+- **Arama debounce:** `usePosKatalog({ aramaGecikmeMs })` (varsayılan 250ms);
+  dropdown/switch değişimleri anında, arama metni debounce. Önceden her tuş
+  vuruşu `filtreli?q=` atıyordu. `aramaGecikmeMs:0` ile eski davranış korunur.
+- **Barkod yerel-öncelikli:** `barkodTarandi` önce yüklü POS kataloğunda
+  (`katalogUrunleri`) arar; ekrandaki ürün için sunucu turu yok → barkod anında
+  sepete düşer. Bulunamazsa global store, en son sunucu araması.
+- **Bilinçli ertelendi:** (a) **sanal liste/windowing** — ürün ızgarası SARMALI
+  (wrapping) kart grididir; `useVirtualList` tek boyutlu/fixed-height varsayar,
+  satır-parçalama gerekir ve mevcut 46 POS Cypress testini riske atar; görsel QA
+  olmadan yapılmaması uygun. (b) **prefetch** — testler `filtreli` çağrı
+  sayılarını doğruluyor; prefetch ek çağrı üretip bu sözleşmeleri bozar. İkisi
+  de ayrı bir pass + görsel QA gerektirir.
 
 ### Faz E — Çoklu sepet / askıya al
 `PosSepetSekmeleri`; `Ctrl+H` park/aç; `usePosSepet` sepet koleksiyonu.

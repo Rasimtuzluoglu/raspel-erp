@@ -1,4 +1,5 @@
 import { ref, computed, watch } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
 import { stokAPI } from '../api/index.js'
 import { unwrapList } from '../api/utils/unwrap.js'
 
@@ -34,7 +35,7 @@ import { unwrapList } from '../api/utils/unwrap.js'
 /** Varsayilan sayfa boyutu: bir ekrana sigacak kadar, dokunmatik kartlar icin. */
 export const VARSAYILAN_SAYFA_BOYUTU = 60
 
-export function usePosKatalog({ sayfaBoyutu = VARSAYILAN_SAYFA_BOYUTU } = {}) {
+export function usePosKatalog({ sayfaBoyutu = VARSAYILAN_SAYFA_BOYUTU, aramaGecikmeMs = 250 } = {}) {
   /** Sayfalar biriktirilerek gosterilir ("daha fazla" butonu). */
   const urunler = ref([])
   const sayfa = ref(0)
@@ -180,9 +181,19 @@ export function usePosKatalog({ sayfaBoyutu = VARSAYILAN_SAYFA_BOYUTU } = {}) {
   // Filtreler degisince listeyi bastan al. `siralama` bilerek DISARIDA:
   // sunucu tarafi siralama desteklemiyor ve her tusa bastiginda ag yeniden
   // cikmasina yol acar; siralama ayni yuklenen sayfa uzerinde uygulanir.
-  watch([aramaMetni, kategori, marka, stokGrubu, sadeceStokta], () => {
+  //
+  // Arama METNI ayrica DEBOUNCE edilir: kasiyer urun adi yazarken her tus
+  // vurusunda `filtreli?q=` atmak gereksiz ag yuku ve yaris demekti. Dropdown/
+  // switch degisimleri ANINDA kalir (tek secim). `aramaGecikmeMs=0` ile
+  // (testler) davranis birebir eski haline doner.
+  watch([kategori, marka, stokGrubu, sadeceStokta], () => {
     filtreYenile()
   })
+  if (aramaGecikmeMs > 0) {
+    watch(aramaMetni, useDebounceFn(() => filtreYenile(), aramaGecikmeMs))
+  } else {
+    watch(aramaMetni, () => filtreYenile())
+  }
 
   /** Etkin filtreleri temizler. */
   const filtreTemizle = () => {
