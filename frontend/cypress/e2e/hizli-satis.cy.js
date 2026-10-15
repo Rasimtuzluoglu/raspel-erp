@@ -327,7 +327,7 @@ describe('Hızlı Satış (POS)', () => {
     // Tercihler tek menüde: büyük yazı, onay iste, otomatik yazdırma, kısayol ipucu
     cy.get('.pos-tercih-btn').click()
     cy.get('.tercih-panel').should('be.visible')
-    cy.get('.tercih-satir').should('have.length', 4)
+    cy.get('.tercih-satir').should('have.length', 5)
   })
 
   it('filtre seçenekleri ürün verisinden türetilir (tanım gerekmez)', () => {

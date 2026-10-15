@@ -64,6 +64,15 @@
               <span class="tercih-metin">{{ t('hizliSatis.kisayolIpucu') }}</span>
               <ToggleSwitch v-model="ipucuAcik" />
             </label>
+            <!-- Deneysel: yeni POS akisi (odeme overlay + coklu sepet).
+                 Bu anahtar kapatilinca ekran onceki davranisina doner. -->
+            <label class="tercih-satir tercih-satir-deneysel">
+              <span class="tercih-metin">
+                {{ t('hizliSatis.yeniAkis') }}
+                <small class="tercih-rozet">{{ t('hizliSatis.deneysel') }}</small>
+              </span>
+              <ToggleSwitch v-model="posYeniAkis" />
+            </label>
           </div>
         </Popover>
         <button
