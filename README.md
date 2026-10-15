@@ -169,7 +169,7 @@ raspel-erp/
 │       ├── views/           # 77 görünüm (lazy-loaded)
 │       ├── components/      # 83 paylaşılan bileşen
 │       ├── stores/          # 13 Pinia store
-│       ├── composables/     # 28 composable
+│       ├── composables/     # 29 composable
 │       └── locales/         # tr.json / en.json
 │
 ├── config/                  # Traefik · Prometheus · Grafana

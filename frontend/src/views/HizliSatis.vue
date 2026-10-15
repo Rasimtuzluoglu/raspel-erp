@@ -671,6 +671,31 @@
             />
 
             <div class="sticky-tamamla">
+              <!-- FAZ E: coklu sepet (park/askiya al) — yalnizca yeni akista. -->
+              <div
+                v-if="posYeniAkis"
+                class="sepet-park-satir"
+              >
+                <button
+                  type="button"
+                  class="park-btn"
+                  :disabled="sepet.length === 0 || parklarDolu"
+                  :title="t('hizliSatis.parkEt')"
+                  @click="sepetiParkEt"
+                >
+                  <i class="pi pi-bookmark" /> {{ t('hizliSatis.parkEt') }}
+                </button>
+                <button
+                  v-for="p in sepetParklari"
+                  :key="p.id"
+                  type="button"
+                  class="park-chip"
+                  :title="p.baslik"
+                  @click="sepetParkDevam(p.id)"
+                >
+                  <i class="pi pi-undo" /> {{ p.baslik || t('hizliSatis.parkBaslik') }}
+                </button>
+              </div>
               <div class="fis-modu-satir">
                 <span class="fis-modu-etiket"><i class="pi pi-print" /> {{ t('hizliSatis.fisModu') }}</span>
                 <SelectButton
@@ -998,6 +1023,7 @@ import { useKisayollar } from '../composables/useKisayollar.js'
 import { usePosTercih } from '../composables/usePosTercih.js'
 import { usePosKisayollar } from '../composables/usePosKisayollar.js'
 import { komutCoz, KOMUT_TIP } from '../composables/usePosKomut.js'
+import { usePosSepetParklari } from '../composables/usePosSepetParklari.js'
 import { usePosKatalog } from '../composables/usePosKatalog.js'
 import { usePosSepet } from '../composables/usePosSepet.js'
 import { usePosOdeme } from '../composables/usePosOdeme.js'
@@ -1129,6 +1155,50 @@ const {
 // Yeni akis: odeme sag panelde yigilmak yerine odakli bir katmanda (overlay)
 // acilir. Bayrak kapaliyken mevcut satir ici panel AYNEN kullanilir.
 const odemeOverlayAcik = ref(false)
+
+// FAZ E: coklu sepet (park/askiya al). Birden fazla sepet paralel tutulabilir;
+// kasiyer bir musteriye gecici ara verip digerine bakabilir. Yalnizca yeni
+// akista gosterilir (posYeniAkis).
+const {
+  parklar: sepetParklari,
+  parkEt: sepetiParkEtKaydet,
+  devamEt: sepetParkDevamAl,
+  doluMu: parklarDolu
+} = usePosSepetParklari({ maks: 5 })
+
+/** Park edilen sepet icin kisa baslik (musteri adi ya da "Perakende"). */
+const sepetParkBasligi = () =>
+  seciliMusteri.value?.ad || (anlikMusteri.value ? t('hizliSatis.perakende') : '')
+
+/** Aktif sepeti park edip sepeti/musteriyi temizler (yeni satisa hazir). */
+const sepetiParkEt = () => {
+  if (sepet.value.length === 0) {
+    toastBildirim.uyari(t('hizliSatis.parkBosSepet'))
+    return
+  }
+  const kayit = sepetiParkEtKaydet({
+    baslik: sepetParkBasligi(),
+    sepet: sepet.value,
+    musteri: seciliMusteri.value
+  })
+  if (!kayit) {
+    toastBildirim.uyari(t('hizliSatis.parkLimitiDoldu'))
+    return
+  }
+  sepetiTemizle()
+  musteriTemizle()
+  toastBildirim.basarili(t('hizliSatis.parkEdildi'))
+}
+
+/** Parklanan sepeti geri yukler. */
+const sepetParkDevam = (id) => {
+  const kayit = sepetParkDevamAl(id)
+  if (!kayit) return
+  sepet.value = kayit.sepet
+  seciliMusteri.value = kayit.musteri || null
+  musteriModu.value = kayit.musteri ? 'musteri' : 'perakende'
+  toastBildirim.basarili(t('hizliSatis.parkGeriAlindi'))
+}
 
 const ipucuToggle = () => tercihDegistir('ipucuAcik')
 

@@ -86,8 +86,15 @@ gramer barkod kutusunda destekleniyor. Tam birleştirme istenirse ayrı iş.
   sayılarını doğruluyor; prefetch ek çağrı üretip bu sözleşmeleri bozar. İkisi
   de ayrı bir pass + görsel QA gerektirir.
 
-### Faz E — Çoklu sepet / askıya al
-`PosSepetSekmeleri`; `Ctrl+H` park/aç; `usePosSepet` sepet koleksiyonu.
+### Faz E — Çoklu sepet / askıya al  ▸ TAMAMLANDI
+`usePosSepetParklari` (saf, test edilmiş): `parkEt` / `devamEt` / `sil` /
+`temizle`, en fazla 5 park. Park edilen sepet **derin kopyadır** (aktif sepet
+sonradan değişse de bozulmaz). `posYeniAkis` açıkken sticky alanda "Sepeti Park
+Et" + parklanan sepet çipleri görünür; park edince sepet+müşteri temizlenir,
+çipe tıklayınca sepet+müşteri geri yüklenir.
+Not: `Ctrl+H` kısayolu EKLENMEDİ — `h` zaten ödeme yöntemi (HAVALE) kısayolu
+olduğu için çakışır; kısayol entegrasyonu ayrı bir pass gerektirir (buton+çip
+şimdilik yeterli).
 
 ### Faz F — Çevrimdışı dayanıklılık
 IndexedDB katalog önbelleği (`idb-keyval`); imzalı/idempotent kuyruk senkronu

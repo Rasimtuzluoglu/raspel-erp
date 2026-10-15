@@ -75,7 +75,7 @@ raspel-erp/
 │   ├── stores/               # 13 Pinia stores (auth, banka, cari, fatura, stok, etc.)
 │   ├── views/                # 77 views (lazy-loaded)
 │   ├── components/            # 83 shared components
-│   ├── composables/           # 28 composables
+│   ├── composables/           # 29 composables
 │   ├── router/               # Vue Router with auth guards
 │   ├── locales/              # i18n (tr.json, en.json)
 │   └── assets/

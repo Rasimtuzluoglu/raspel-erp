@@ -310,6 +310,46 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* FAZ E: sepet parklari (coklu sepet / askiya al). */
+.sepet-park-satir {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.park-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.park-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.park-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--accent-border, var(--border));
+  border-radius: 8px;
+  background: var(--accent-soft, rgba(20, 184, 166, 0.12));
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .fis-modu-satir {
   display: flex;
   align-items: center;
