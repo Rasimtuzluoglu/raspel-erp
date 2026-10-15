@@ -350,6 +350,52 @@
   cursor: pointer;
 }
 
+/* FAZ G: urun karti modu butonu */
+.kart-modu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.kart-modu-btn.aktif {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft, rgba(20, 184, 166, 0.12));
+}
+
+/* Yogun kart modu: daha fazla urun, daha az gorsel alan. */
+.pos-kart-yogun .product-grid {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+.pos-kart-yogun .product-gorsel,
+.pos-kart-yogun .product-grup {
+  display: none;
+}
+.pos-kart-yogun .product-name {
+  font-size: 12.5px;
+}
+.pos-kart-yogun .product-price {
+  font-size: 13px;
+}
+
+/* Erisilebilirlik: hareket azaltma tercihinde animasyonlar kapatilir. */
+@media (prefers-reduced-motion: reduce) {
+  .pos-container *,
+  .pos-container *::before,
+  .pos-container *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
 .fis-modu-satir {
   display: flex;
   align-items: center;

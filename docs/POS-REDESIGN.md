@@ -106,9 +106,16 @@ bağımlılık (idb-keyval) ve test için `fake-indexeddb` gerekir; bu, fazın
 test edilebilirliğini aşar. Sınırlı localStorage anlık görüntüsü aynı acil
 ihtiyacı yeni bağımlılık olmadan karşılar; tam IndexedDB çözümü ayrı pass.
 
-### Faz G — Görsel sistem
-Kart modları (Vitrin/Yoğun); varsayılan büyük tipografi; motion +
-`prefers-reduced-motion`. PrimeVue+teal korunur.
+### Faz G — Görsel sistem  ▸ TAMAMLANDI (kapsam sınırlı)
+- **Kart modu:** `usePosTercih.kartModu` (`vitrin` | `yogun`, kalıcı); araç
+  çubuğunda geçiş butonu. Yoğun modda ürün görseli/grup gizlenir, ızgara daha
+  sık; vitrin (varsayılan) mevcut görünüm.
+- **Hareket azaltma:** `@media (prefers-reduced-motion: reduce)` ile POS
+  animasyon/geçişleri kapatılır (erişilebilirlik).
+- **Varsayılan büyük tipografi ertelendi:** "büyük yazı" tercihi zaten var;
+  varsayılanı büyütmek 46 POS Cypress testini ve kart yerleşimini görsel QA
+  olmadan riske atardı. Ayrı bir pass + görsel inceleme gerektirir.
+PrimeVue 4 + teal korunur.
 
 ### Faz H — Erişilebilirlik & rötuş
 Klavye/aria tutarlılığı, i18n, dokümantasyon, tam E2E.

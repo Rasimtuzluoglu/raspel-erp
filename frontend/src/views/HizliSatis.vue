@@ -1,7 +1,7 @@
 <template>
   <div
     class="pos-container"
-    :class="{ 'pos-buyuk': buyukYazi }"
+    :class="{ 'pos-buyuk': buyukYazi, 'pos-kart-yogun': kartModu === 'yogun' }"
   >
     <div class="pos-header">
       <div class="pos-marka">
@@ -199,6 +199,21 @@
               v-if="aktifFiltreSayisiPos > 0"
               class="filtre-rozet"
             >{{ aktifFiltreSayisiPos }}</span>
+          </button>
+          <!-- FAZ G: urun karti modu (vitrin <-> yogun). -->
+          <button
+            type="button"
+            class="kart-modu-btn"
+            :class="{ aktif: kartModu === 'yogun' }"
+            :title="t('hizliSatis.kartModu')"
+            :aria-label="t('hizliSatis.kartModu')"
+            :aria-pressed="kartModu === 'yogun'"
+            @click="kartModuDegistir"
+          >
+            <i
+              class="pi"
+              :class="kartModu === 'yogun' ? 'pi-list' : 'pi-th-large'"
+            />
           </button>
           <Popover ref="filtrePopover">
             <div class="filtre-panel">
@@ -1144,6 +1159,7 @@ const {
   fisAcik,
   detayAcik,
   posYeniAkis,
+  kartModu,
   fisFiyatli,
   fisAltNotu,
   fisGenislik,
@@ -1198,6 +1214,11 @@ const sepetParkDevam = (id) => {
   seciliMusteri.value = kayit.musteri || null
   musteriModu.value = kayit.musteri ? 'musteri' : 'perakende'
   toastBildirim.basarili(t('hizliSatis.parkGeriAlindi'))
+}
+
+/** FAZ G: urun karti modu (vitrin <-> yogun). Tercih olarak kalicidir. */
+const kartModuDegistir = () => {
+  kartModu.value = kartModu.value === 'yogun' ? 'vitrin' : 'yogun'
 }
 
 const ipucuToggle = () => tercihDegistir('ipucuAcik')

@@ -46,7 +46,11 @@ const TERCILER = [
   // Varsayilan KAPALI; her faz (odeme overlay, komut yuzeyi, sanal katalog,
   // coklu sepet, cevrimdisi) bu bayragin arkasinda gelir. Kararli olunca
   // burada varsayilan true yapilir ve eski akis bir surum daha korunur.
-  ['posYeniAkis', 'raspel_pos_yeni_akis', false, 'Yeni POS akisi (deneysel)']
+  ['posYeniAkis', 'raspel_pos_yeni_akis', false, 'Yeni POS akisi (deneysel)'],
+
+  // --- gorsel ---
+  // Urun karti modu: 'vitrin' (buyuk kart, varsayilan) | 'yogun' (kompakt liste).
+  ['kartModu', 'raspel_pos_kart_modu', 'vitrin', 'Urun karti modu (vitrin | yogun)']
 ]
 
 /** Fis ayarlari: sunucudan da gelebilen alanlar (cihazlar arasi ayni olsun). */

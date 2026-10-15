@@ -398,6 +398,15 @@ describe('Hızlı Satış (POS)', () => {
     cy.get('.musteri-modu').contains('Müşteri').should('have.attr', 'aria-pressed', 'true')
   })
 
+  // FAZ G: kart modu (vitrin <-> yogun).
+  it('kart modu butonu yogun/vitrin arasinda gecis yapar', () => {
+    cy.get('.pos-container').should('not.have.class', 'pos-kart-yogun')
+    cy.get('.kart-modu-btn').click()
+    cy.get('.pos-container').should('have.class', 'pos-kart-yogun')
+    cy.get('.kart-modu-btn').click()
+    cy.get('.pos-container').should('not.have.class', 'pos-kart-yogun')
+  })
+
   it('POS dar ekranlarda yatay taşma yapmaz', () => {
     cy.viewport(1280, 800)
     cy.visit('/hizli-satis')

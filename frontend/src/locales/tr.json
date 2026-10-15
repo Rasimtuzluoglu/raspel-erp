@@ -971,6 +971,7 @@
     "degisimBilgi": "Değişim iadesi #{id}: yeni satışı tamamlayın; tutarlar cari bakiyede mahsup edilir.",
     "kalan": "Kalan",
     "satisiTamamla": "Satışı Tamamla",
+    "kartModu": "Kart görünümü (liste/ızgara)",
     "parkEt": "Sepeti Park Et", "parkBaslik": "Sepet", "parkEdildi": "Sepet park edildi", "parkGeriAlindi": "Parktaki sepet geri alındı", "parkLimitiDoldu": "Park limiti doldu (en fazla 5 sepet)", "parkBosSepet": "Park edilecek sepet boş",
     "odemeAl": "Ödeme Al",
     "sonSatisiIptal": "Son Satışı İptal Et",
