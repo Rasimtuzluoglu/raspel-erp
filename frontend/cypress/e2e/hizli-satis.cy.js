@@ -380,6 +380,24 @@ describe('Hızlı Satış (POS)', () => {
     })
   })
 
+  // FAZ C: komut yuzeyi (usePosKomut) — tek kutudan barkod / miktar / musteri.
+  it('"N*barkod" komutu urunu N adet ekler', () => {
+    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('3*1234567890{enter}')
+    cy.get('.sepet-item').should('have.length', 1)
+    cy.get('.sepet-item .adet-girdi').should('have.value', '3')
+  })
+
+  it('"barkod*N" (sonek) komutu da adedi uygular', () => {
+    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890*4{enter}')
+    cy.get('.sepet-item').should('have.length', 1)
+    cy.get('.sepet-item .adet-girdi').should('have.value', '4')
+  })
+
+  it('"@ad" komutu musteri moduna gecirir', () => {
+    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('@Ali Veli{enter}')
+    cy.get('.musteri-modu').contains('Müşteri').should('have.attr', 'aria-pressed', 'true')
+  })
+
   it('POS dar ekranlarda yatay taşma yapmaz', () => {
     cy.viewport(1280, 800)
     cy.visit('/hizli-satis')

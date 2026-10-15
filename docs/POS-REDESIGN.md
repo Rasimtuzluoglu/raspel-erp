@@ -62,10 +62,15 @@ olunca overlay kapanır. Bayrak kapalıyken mevcut satır içi panel AYNEN çal�
 Ödeme durumu prop'ları `$attrs` ile overlay'e ve oradan panele aktarılır
 (kebab/camel her iki anahtar biçimi de desteklenir).
 
-### Faz C — Komut yüzeyi (`posKomutKutusu`)
-Barkod / ürün adı / müşteri (`@ad`) / miktar (`3*`, `x3`) / manuel fiyat tek
-kutuda. Saf çözümleyici `usePosKomut.js` (test edilebilir). **Arama kutusu
-bulgusu burada çözülür.**
+### Faz C — Komut yüzeyi (`posKomutKutusu`)  ▸ TAMAMLANDI
+`usePosKomut.js` (saf, tam test edilmiş çözümleyici): `@ad` → müşteri,
+`N*terim` / `terim*N` / `Nx terim` → miktar, aksi halde barkod/ürün arama;
+miktar 1..9999'a normalize edilir.
+Barkod kutusu (`globalBarkodEkle`) bu grameri destekler: `3*1234` ürünü 3 adet
+ekler (`barkodTarandi(terim, adet)`), `@Ali` müşteri moduna geçip aramayı
+tetikler. Böylece kasiyer barkod/ürün/miktar/müşteri için tek kutuyu kullanır.
+Not: İki ayrı kutu (barkod + canlı öneri) tam olarak TEK kutuya indirilmedi;
+gramer barkod kutusunda destekleniyor. Tam birleştirme istenirse ayrı iş.
 
 ### Faz D — Katalog hızı
 `useVirtualList` ile sanal ızgara; `useDebounceFn` arama; prefetch; barkodda

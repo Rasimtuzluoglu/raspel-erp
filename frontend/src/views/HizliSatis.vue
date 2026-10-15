@@ -997,6 +997,7 @@ import SelectButton from 'primevue/selectbutton'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { usePosTercih } from '../composables/usePosTercih.js'
 import { usePosKisayollar } from '../composables/usePosKisayollar.js'
+import { komutCoz, KOMUT_TIP } from '../composables/usePosKomut.js'
 import { usePosKatalog } from '../composables/usePosKatalog.js'
 import { usePosSepet } from '../composables/usePosSepet.js'
 import { usePosOdeme } from '../composables/usePosOdeme.js'
@@ -1175,15 +1176,28 @@ const hizliUrun = ref({ barkod: '', ad: '', fiyat: 0, miktar: 1 })
 const hizliUrunKaydediliyor = ref(false)
 
 const globalBarkodEkle = () => {
-  const barkod = globalBarkod.value.trim()
-  if (!barkod) return
-  barkodTarandi(barkod)
+  const ham = globalBarkod.value.trim()
+  if (!ham) return
+  // FAZ C: Tek kutudan komut destegi (usePosKomut). Ayri barkod/musteri kutulari
+  // arasinda odak ziplamasini azaltir.
+  //   "1234"    -> urun/barkod ara, 1 adet
+  //   "3*1234"  -> 1234 urununden 3 adet
+  //   "@ali"    -> musteri modu + musteri ara
+  const komut = komutCoz(ham)
+  if (komut.tip === KOMUT_TIP.MUSTERI) {
+    musteriModu.value = 'musteri'
+    musteriGiris.value = komut.metin
+    // Musteri panelinin arama akisini tetikle (onerileri doldurur).
+    musteriAra(komut.metin)
+  } else if (komut.tip === KOMUT_TIP.URUN) {
+    barkodTarandi(komut.metin, komut.miktar || 1)
+  }
   globalBarkod.value = ''
   // Odak tekrar bu inputa gelsin ki USB tarayıcı kesintisiz okusun
   barkodInputRef.value?.$el?.focus?.() || barkodInputRef.value?.focus?.()
 }
 
-const barkodTarandi = async (barkod) => {
+const barkodTarandi = async (barkod, adet = 1) => {
   if (!barkod) return
   // REDTEAM/Faz5: basarili ekleme toast'i KALDIRILDI. Hizli bir kasada 5-6
   // kalem eklenince 5-6 bildirim ust uste diziliyor ve `position="top-right"`
@@ -1200,14 +1214,14 @@ const barkodTarandi = async (barkod) => {
   const eslesir = (s) => s.barkod === barkod || s.seriNo === barkod || s.stokKodu === barkod
   let urun = stokStore.stoklar.find(eslesir)
   if (urun) {
-    sepeteEkle(urun)
+    sepeteEkle(urun, adet)
   } else {
     // Sunucuda ara (büyük envanterde tümü yüklenmemiş olabilir)
     try {
       const r = await stokAPI.ara(barkod)
       const bulunan = (r.data || []).find(eslesir)
       if (bulunan) {
-        sepeteEkle(bulunan)
+        sepeteEkle(bulunan, adet)
         return
       }
     } catch {
