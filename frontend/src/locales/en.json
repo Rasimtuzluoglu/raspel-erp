@@ -971,6 +971,7 @@
     "degisimBilgi": "Exchange return #{id}: complete the new sale; amounts are netted in the customer balance.",
     "kalan": "Remaining",
     "satisiTamamla": "Complete Sale",
+    "odemeAl": "Take Payment",
     "sonSatisiIptal": "Cancel Last Sale",
     "teslimat": "Delivery",
     "teslimEden": "Delivered By",

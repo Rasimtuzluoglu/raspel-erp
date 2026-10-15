@@ -1,6 +1,7 @@
 <template>
   <div class="pos-bolum">
     <button
+      v-if="!baslikGizle"
       type="button"
       class="pos-bolum-baslik katlanir-baslik"
       :aria-expanded="acik"
@@ -235,6 +236,8 @@ import { formatCurrency } from '../utils/format.js'
 
 const props = defineProps({
   acik: { type: Boolean, default: true },
+  /** Overlay icinde kullanildiginda katlanir basligi gizler (icerik daima acik). */
+  baslikGizle: { type: Boolean, default: false },
   odemeDurumu: { type: String, default: 'tam' },
   odemeTipleri: { type: Array, default: () => [] },
   odemeYontemi: { type: String, default: 'NAKIT' },

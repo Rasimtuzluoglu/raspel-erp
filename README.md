@@ -167,7 +167,7 @@ raspel-erp/
 ├── frontend/                # Vue 3 SPA + Vite + PrimeVue 4
 │   └── src/
 │       ├── views/           # 77 görünüm (lazy-loaded)
-│       ├── components/      # 82 paylaşılan bileşen
+│       ├── components/      # 83 paylaşılan bileşen
 │       ├── stores/          # 13 Pinia store
 │       ├── composables/     # 27 composable
 │       └── locales/         # tr.json / en.json

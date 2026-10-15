@@ -598,6 +598,7 @@
             />
 
             <PosOdemePaneli
+              v-if="!posYeniAkis"
               v-model:odeme-durumu="odemeDurumu"
               v-model:odeme-yontemi="odemeYontemi"
               v-model:odenen-tutar="odenenTutar"
@@ -624,6 +625,49 @@
               :odeme-durum-severity="odemeDurumSeverity"
               :hatalar="hatalar"
               @toggle="odemeAcikDegistir"
+            />
+
+            <!-- Yeni akis: odeme tek odakli katmanda. Sag panelde yalniz, tek
+                 bir birincil "Odeme Al" aksiyonu kalir. -->
+            <button
+              v-else
+              type="button"
+              class="yeni-odeme-btn"
+              @click="odemeOverlayAcik = true"
+            >
+              <i class="pi pi-wallet" />
+              <span>{{ t('hizliSatis.odemeAl') }}</span>
+              <strong>{{ formatCurrency(genelToplam) }}</strong>
+            </button>
+
+            <PosOdemeOverlay
+              v-if="posYeniAkis"
+              v-model:gorunur="odemeOverlayAcik"
+              v-model:odeme-durumu="odemeDurumu"
+              v-model:odeme-yontemi="odemeYontemi"
+              v-model:odenen-tutar="odenenTutar"
+              v-model:alinan-nakit="alinanNakit"
+              v-model:taksit-kurum="taksitKurum"
+              v-model:taksit-tutar="taksitTutar"
+              v-model:taksit-sayisi="taksitSayisi"
+              v-model:secili-kasa="seciliKasa"
+              v-model:secili-banka="seciliBanka"
+              v-model:secili-pos="seciliPos"
+              :odeme-tipleri="odemeTipleri"
+              :odeme-yontemleri="odemeYontemleri"
+              :para-ustu="paraUstu"
+              :hizli-nakit="hizliNakit"
+              :kasalar="kasalar"
+              :bankalar="bankalar"
+              :pos-terminalleri="posTerminalleri"
+              :secili-pos-bilgi="seciliPosBilgi"
+              :hesaplanan-komisyon="hesaplananKomisyon"
+              :genel-toplam="genelToplam"
+              :kalan-tutar="kalanTutar"
+              :odeme-durum-text="odemeDurumText"
+              :odeme-durum-severity="odemeDurumSeverity"
+              :hatalar="hatalar"
+              @tamamla="satisiTamamla"
             />
 
             <div class="sticky-tamamla">
@@ -943,6 +987,7 @@ import PosSatisOzetDialog from '../components/PosSatisOzetDialog.vue'
 import PosBugunkuSatislarDialog from '../components/PosBugunkuSatislarDialog.vue'
 import PosUrunKarti from '../components/PosUrunKarti.vue'
 import PosOdemePaneli from '../components/PosOdemePaneli.vue'
+import PosOdemeOverlay from '../components/PosOdemeOverlay.vue'
 import PosSepetPaneli from '../components/PosSepetPaneli.vue'
 import PosMusteriPaneli from '../components/PosMusteriPaneli.vue'
 import { useCariOnerileri, cariHesapCoz } from '../composables/useCariOnerileri.js'
@@ -1071,6 +1116,7 @@ const {
   teslimatAcik,
   fisAcik,
   detayAcik,
+  posYeniAkis,
   fisFiyatli,
   fisAltNotu,
   fisGenislik,
@@ -1078,6 +1124,10 @@ const {
   ipucuKapat,
   sunucuAyarlariniUygula
 } = usePosTercih({ t })
+
+// Yeni akis: odeme sag panelde yigilmak yerine odakli bir katmanda (overlay)
+// acilir. Bayrak kapaliyken mevcut satir ici panel AYNEN kullanilir.
+const odemeOverlayAcik = ref(false)
 
 const ipucuToggle = () => tercihDegistir('ipucuAcik')
 
@@ -2344,6 +2394,8 @@ const satisiTamamlaOnaysiz = async () => {
 
 // Başarılı satış sonrası ortak işlemler (normal ve kredi limiti onaylı akış).
 const satisBasarili = (yanit) => {
+  // Yeni akista odeme overlay'i basarili satistan sonra kapanir.
+  odemeOverlayAcik.value = false
   // Sonuc durumu + ozet (`usePosSatisGecmisi`) — tutarlar buradan verilir.
   satisSonucunuKaydet(yanit, {
     genelToplam: genelToplam.value,

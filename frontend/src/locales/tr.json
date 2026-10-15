@@ -971,6 +971,7 @@
     "degisimBilgi": "Değişim iadesi #{id}: yeni satışı tamamlayın; tutarlar cari bakiyede mahsup edilir.",
     "kalan": "Kalan",
     "satisiTamamla": "Satışı Tamamla",
+    "odemeAl": "Ödeme Al",
     "sonSatisiIptal": "Son Satışı İptal Et",
     "teslimat": "Teslimat",
     "teslimEden": "Teslim Eden",

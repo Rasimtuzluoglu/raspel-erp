@@ -52,9 +52,15 @@ Yoğun katalog | 5.000 üründe arama < 200 ms; kaydırma 60 fps |
 - Not (Faz D): ızgara araması artık her tuşta `filtreli?q=` atıyor; debounce +
   prefetch Faz D'de eklenecek.
 
-### Faz B — Ödeme overlay (`posOdemeOverlay`)
-Sayısal tuş takımı, hızlı nakit (₺50/100/200), otomatik para üstü, "kalan".
-`PosOdemePaneli` içeriği overlay'e taşınır; `F9/F10/Ctrl+S` davranışı korunur.
+### Faz B — Ödeme overlay (`posOdemeOverlay`)  ▸ TAMAMLANDI
+`PosOdemeOverlay.vue` (PrimeVue `Dialog`) eklendi: NAKIT'te sayısal tuş takımı
+(0-9/00/C/⌫ → `alinanNakit`), mevcut `PosOdemePaneli` (başlıksız, `baslikGizle`)
+yöntem/taksit/kasa/banka/POS/hızlı-nakit/para-üstü alanlarıyla içeride,
+footer'da "Satışı Tamamla". `posYeniAkis` açıkken sağ paneldeki katlanır ödeme
+bloğu yerine **tek birincil "Ödeme Al"** aksiyonu gösterilir; satış başarılı
+olunca overlay kapanır. Bayrak kapalıyken mevcut satır içi panel AYNEN çalışır.
+Ödeme durumu prop'ları `$attrs` ile overlay'e ve oradan panele aktarılır
+(kebab/camel her iki anahtar biçimi de desteklenir).
 
 ### Faz C — Komut yüzeyi (`posKomutKutusu`)
 Barkod / ürün adı / müşteri (`@ad`) / miktar (`3*`, `x3`) / manuel fiyat tek

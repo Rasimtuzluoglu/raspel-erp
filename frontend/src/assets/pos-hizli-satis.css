@@ -279,6 +279,37 @@
   font-weight: 800;
   color: var(--accent);
 }
+/* Yeni POS akisi: sag panelde yigilan odeme alanlari yerine TEK birincil
+   aksiyon. Toplam ve "Odeme Al" tek bakista gorunur; detay overlay'de. */
+.yeni-odeme-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 16px;
+  border: 1px solid var(--accent-border, var(--border));
+  border-radius: var(--pos-alan-radius, 12px);
+  background: var(--accent-soft, rgba(20, 184, 166, 0.12));
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--dur-fast, 0.15s) ease, transform var(--dur-fast, 0.15s) ease;
+}
+.yeni-odeme-btn:hover {
+  background: var(--accent-soft-strong, rgba(20, 184, 166, 0.2));
+}
+.yeni-odeme-btn:active {
+  transform: translateY(1px);
+}
+.yeni-odeme-btn strong {
+  margin-left: auto;
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
 .fis-modu-satir {
   display: flex;
   align-items: center;
