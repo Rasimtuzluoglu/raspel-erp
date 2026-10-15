@@ -696,6 +696,7 @@
                   class="park-btn"
                   :disabled="sepet.length === 0 || parklarDolu"
                   :title="t('hizliSatis.parkEt')"
+                  :aria-label="t('hizliSatis.parkEt')"
                   @click="sepetiParkEt"
                 >
                   <i class="pi pi-bookmark" /> {{ t('hizliSatis.parkEt') }}
@@ -706,6 +707,7 @@
                   type="button"
                   class="park-chip"
                   :title="p.baslik"
+                  :aria-label="p.baslik || t('hizliSatis.parkBaslik')"
                   @click="sepetParkDevam(p.id)"
                 >
                   <i class="pi pi-undo" /> {{ p.baslik || t('hizliSatis.parkBaslik') }}

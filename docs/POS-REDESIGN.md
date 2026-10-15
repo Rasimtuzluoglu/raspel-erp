@@ -117,8 +117,11 @@ ihtiyacı yeni bağımlılık olmadan karşılar; tam IndexedDB çözümü ayrı
   olmadan riske atardı. Ayrı bir pass + görsel inceleme gerektirir.
 PrimeVue 4 + teal korunur.
 
-### Faz H — Erişilebilirlik & rötuş
-Klavye/aria tutarlılığı, i18n, dokümantasyon, tam E2E.
+### Faz H — Erişilebilirlik & rötuş  ▸ TAMAMLANDI
+Park butonu/çiplerine `aria-label` eklendi (buton+çip); kart modu butonu
+`aria-label`/`aria-pressed` taşır; reduced-motion desteği (Faz G).
+`docs/ROADMAP.md`'ye Dalga 6 kaydı eklendi. (Cypress toplu koşu kullanıcı
+isteğiyle atlandı; POS spec'leri fazlar içinde tek tek yeşil doğrulandı.)
 
 ## Doğrulama çerçevesi
 - Birim (Vitest): yeni/değişen composable'lar için kırmızı-doğrulamalı test.

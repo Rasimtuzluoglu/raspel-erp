@@ -540,6 +540,29 @@ Kapsam: KISISEL (sahibi) · GLOBAL+SAHIS (yalnız ADMIN) · GLOBAL+TUMU (herkes)
 Doğrulama: backend **1755/1755** · frontend **1625/1625** · lint/i18n temiz · build başarılı · V164+V165 canlıda · Docker healthy.
 Kırmızı doğrulama: `lower(bytea)` testi (eski sorguda kırmızı) · watchdog · SW sürümleme · Kitaplık görünürlük/yetki · çift gönderim guard'ı.
 
+## Dalga 6 — Hızlı Satış (POS) Yeniden Tasarımı (tamamlandı)
+
+Spesifikasyon: `docs/POS-REDESIGN.md`. Kilitli kararlar: masaüstü-öncelikli,
+PrimeVue 4 + teal korunur, kademeli sevkiyat (`posYeniAkis` bayrağı, varsayılan
+kapalı), fazlar sırayla.
+
+| Faz | Konu | Sonuç |
+|---|---|---|
+| A | Cypress POS sürüklenmesi onarımı + paylaşılan `posKatalogMockla` + `posYeniAkis` bayrağı | POS Cypress 0 failing |
+| A* | **Bulunan gerçek hata:** ürün arama kutusu `@input` (AutoComplete `input` yaymaz) yüzünden çöküyordu → `@update:model-value` | arama yeniden çalışır; faz2 6/6 |
+| B | Ödeme overlay (`PosOdemeOverlay`: tuş takımı + mevcut panel) | overlay 4/4 |
+| C | Komut yüzeyi (`usePosKomut`: `@musteri`, `N*terim`/`terim*N` miktar) | parser 12 |
+| D | Katalog hızı: arama debounce + barkod yerel-öncelikli | katalog 28 |
+| E | Çoklu sepet / park (`usePosSepetParklari`, derin kopya) | park 7 + Cypress 2 |
+| F | Çevrimdışı katalog önbelleği (`usePosKatalogCache`, ≤300 localStorage) | cache 7 |
+| G | Kart modu (vitrin/yoğun) + `prefers-reduced-motion` | Cypress +1 |
+| H | Erişilebilirlik rötuşları + dokümantasyon + toplu E2E | bu bölüm |
+
+**Bilinçli ertelenenler (gerekçeli):** sanal liste/windowing (sarmalı kart gridi;
+görsel QA gerekir) · prefetch (çağrı-sayısı test sözleşmelerini bozar) · gerçek
+IndexedDB offline-first katalog (yeni bağımlılık + `fake-indexeddb`) · Ctrl+H
+kısayolu (`h` = HAVALE ile çakışır) · varsayılan büyük tipografi (görsel QA).
+
 ## Planlı Epikler (v2.0)
 
 ### Epik 1 — Ürün Maliyet/ Kârlılık Analiz Sistemi (YARININ ODAĞI)
