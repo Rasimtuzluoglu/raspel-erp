@@ -1104,16 +1104,16 @@ onUnmounted(() => {
 .sohbet-sayfasi {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 140px);
-  max-height: calc(100dvh - 140px);
+  height: calc(100dvh / var(--uyg-olcek) - 140px);
+  max-height: calc(100dvh / var(--uyg-olcek) - 140px);
   min-height: 0;
   padding: 0;
   max-width: 100%;
 }
 @media (max-width: 900px) {
   .sohbet-sayfasi {
-    height: calc(100dvh - 200px);
-    max-height: calc(100dvh - 200px);
+    height: calc(100dvh / var(--uyg-olcek) - 200px);
+    max-height: calc(100dvh / var(--uyg-olcek) - 200px);
   }
 }
 .sohbet-baslik {

@@ -852,8 +852,8 @@ const tumAdimlariSifirla = () => {
   --giris-tint-40: rgba(16, 185, 129, 0.40);
   --giris-tint-50: rgba(16, 185, 129, 0.50);
   --giris-tint-55: rgba(16, 185, 129, 0.55);
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: calc(100vh / var(--uyg-olcek));
+  min-height: calc(100dvh / var(--uyg-olcek));
   position: relative;
   display: flex;
   align-items: center;
@@ -1101,7 +1101,7 @@ const tumAdimlariSifirla = () => {
   width: 100%;
   max-width: min(1180px, 100%);
   min-width: 0;
-  max-height: calc(100dvh - 40px);
+  max-height: calc(100dvh / var(--uyg-olcek) - 40px);
   background: rgba(15, 23, 42, 0.82);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 28px;
@@ -1158,7 +1158,7 @@ const tumAdimlariSifirla = () => {
   align-items: safe center;
   justify-content: center;
   overflow-y: auto;
-  max-height: calc(100dvh - 40px);
+  max-height: calc(100dvh / var(--uyg-olcek) - 40px);
   scrollbar-width: thin;
 }
 .giris-kutu {

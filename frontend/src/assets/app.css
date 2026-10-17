@@ -5,6 +5,12 @@
   border-color: var(--border, #e5e7eb);
 }
 :root {
+  /* Uygulama genel olcegi. `zoom` tarayici zoom'u gibi TUM icerigi kucultur
+     ancak vh/dvh birimlerini etkilemez; bu yuzden vh/dvh tabanli yukseklikler
+     `calc(... / var(--uyg-olcek))` ile telafi edilir (bkz. html/.app-container
+     /sidebar/.pos-container). Degistirirken telafi kullanan yerleri de koruyun. */
+  --uyg-olcek: 0.9;
+
   /* Yuzeyler / metin (tazelenmis koyu zemin: derin slate + hafif mavi ton) */
   --bg-primary: #0a0e14;
   --bg-secondary: #111827;
@@ -294,6 +300,13 @@
 
 html {
   max-width: 100%;
+  /* KULLANICI GERI BILDIRIMI: "uygulama genel olarak kucultulmeli, %90 ideal".
+     `zoom` tarayici zoom'u gibi TUM icerigi (px + rem) esit oranda kucultur.
+     NOT: zoom vh/dvh birimlerini ETKILEMEZ; vh/dvh kullanan yukseklikler
+     `--uyg-olcek` ile bolunerek telafi edilir. Alt bosluk kalirsa buradaki
+     arka plan govdeyle ayni renkte olur (beyaz bant olusmaz). */
+  zoom: var(--uyg-olcek);
+  background: var(--bg-primary);
 }
 
 body {
@@ -361,8 +374,8 @@ img {
 
 .app-container {
   display: flex;
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: calc(100vh / var(--uyg-olcek));
+  min-height: calc(100dvh / var(--uyg-olcek));
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
@@ -373,8 +386,8 @@ img {
   top: 0;
   left: 0;
   width: var(--sidebar-w);
-  height: 100vh;
-  height: 100dvh;
+  height: calc(100vh / var(--uyg-olcek));
+  height: calc(100dvh / var(--uyg-olcek));
   background: rgba(18, 24, 33, 0.98);
   border-right: 1px solid var(--border);
   display: flex;
@@ -927,7 +940,7 @@ img {
 .p-dialog {
   border-radius: 16px !important;
   overflow: hidden;
-  max-height: calc(100vh - 48px);
+  max-height: calc(100vh / var(--uyg-olcek) - 48px);
   display: flex;
   flex-direction: column;
 }
@@ -1675,8 +1688,8 @@ img {
     right: 0;
     bottom: 0;
     width: 100%;
-    height: 100vh;
-    height: 100dvh;
+    height: calc(100vh / var(--uyg-olcek));
+    height: calc(100dvh / var(--uyg-olcek));
     flex-direction: column;
     flex-wrap: nowrap;
     align-items: stretch;

@@ -392,7 +392,7 @@ const temizle = async () => {
   top: auto;
   z-index: 99999;
   width: min(340px, calc(100vw - 24px));
-  max-height: min(420px, calc(100vh - 90px));
+  max-height: min(420px, calc(100vh / var(--uyg-olcek) - 90px));
   overflow-y: auto;
   background: var(--bg-card);
   border: 1px solid var(--border);
