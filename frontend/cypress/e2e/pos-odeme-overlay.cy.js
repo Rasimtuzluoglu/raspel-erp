@@ -43,7 +43,7 @@ describe('POS odeme overlay (posYeniAkis)', () => {
   })
 
   it('overlay den satis tamamlanir ve overlay kapanir', () => {
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
     // Perakende (musteri gerekmez) varsayilan.
     cy.get('.yeni-odeme-btn').click()

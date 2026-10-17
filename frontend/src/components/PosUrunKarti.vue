@@ -25,27 +25,19 @@
         loading="lazy"
         decoding="async"
       >
-      <i
-        v-else
-        class="pi pi-box"
-      />
       <span
-        v-if="sepetteAdet > 0"
-        class="sepette-rozet"
-      >{{ sepetteAdet }}</span>
+        v-else
+        class="product-bas-harf"
+      >{{ (urun.ad || '?').charAt(0).toLocaleUpperCase('tr-TR') }}</span>
     </div>
     <div class="product-icerik">
-      <span class="product-kod">{{ urun.barkod || urun.stokKodu || '-' }}</span>
       <span class="product-name">{{ urun.ad }}</span>
-      <span
-        v-if="urun.stokGrubu"
-        class="product-grup"
-      >{{ urun.stokGrubu }}</span>
+      <span class="product-kod">{{ urun.barkod || urun.stokKodu || '-' }}</span>
       <div
         class="product-stok-satir"
         :class="stokRenkSinifi(urun)"
       >
-        <i class="pi pi-warehouse" />
+        <i class="pi pi-circle-fill" />
         <span>{{ stokEtiketi(urun) }}</span>
       </div>
       <div class="product-fiyat-satir">
@@ -60,6 +52,10 @@
         <i class="pi pi-user" /> {{ formatCurrency(cariFiyat) }}
       </span>
     </div>
+    <span
+      v-if="sepetteAdet > 0"
+      class="sepette-rozet"
+    >{{ sepetteAdet }}</span>
   </div>
 </template>
 
@@ -107,13 +103,12 @@ const stokRenkSinifi = (u) => (stokYokMu(u) ? 'yok' : (kritikStokMu(u) ? 'kritik
 <style scoped>
 .pos-buyuk .product-kod {
   font-size: 14px;
-  min-width: 100px;
 }
 .pos-buyuk .product-name {
   font-size: 17px;
 }
 .pos-buyuk .product-price {
-  font-size: 18px;
+  font-size: 19px;
 }
 .pos-buyuk .product-cari-fiyat {
   font-size: 15px;
@@ -122,26 +117,26 @@ const stokRenkSinifi = (u) => (stokYokMu(u) ? 'yok' : (kritikStokMu(u) ? 'kritik
   font-size: 14px;
 }
 .pos-buyuk .product-card {
-  padding: 14px 14px;
+  padding: 14px;
 }
 .product-card {
   position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 0;
+  border-radius: 12px;
   cursor: pointer;
   transition: transform var(--dur-fast, 0.15s) var(--ease-standard, ease),
     box-shadow var(--dur-fast, 0.15s) var(--ease-standard, ease),
     border-color var(--dur-fast, 0.15s) var(--ease-standard, ease);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
 }
 .product-card:hover {
   border-color: var(--accent-border);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
-  transform: translateY(-3px);
+  box-shadow: var(--elev-1, 0 2px 10px rgba(0, 0, 0, 0.25));
+  transform: translateY(-2px);
 }
 .product-card:focus-visible {
   outline: 2px solid var(--accent);
@@ -160,11 +155,15 @@ const stokRenkSinifi = (u) => (stokYokMu(u) ? 'yok' : (kritikStokMu(u) ? 'kritik
 }
 .product-gorsel {
   position: relative;
-  height: 96px;
-  background: var(--bg-muted, rgba(148, 163, 184, 0.08));
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: var(--accent-soft, rgba(20, 184, 166, 0.12));
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 .product-gorsel img {
   width: 100%;
@@ -172,22 +171,23 @@ const stokRenkSinifi = (u) => (stokYokMu(u) ? 'yok' : (kritikStokMu(u) ? 'kritik
   object-fit: cover;
   display: block;
 }
-.product-gorsel > i {
-  font-size: 30px;
-  color: var(--text-muted);
-  opacity: 0.5;
+.product-bas-harf {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
 }
 .sepette-rozet {
   position: absolute;
   top: 8px;
   right: 8px;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
   border-radius: 999px;
   background: var(--accent);
   color: var(--accent-contrast, #04211d);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   display: inline-flex;
   align-items: center;
@@ -197,21 +197,13 @@ const stokRenkSinifi = (u) => (stokYokMu(u) ? 'yok' : (kritikStokMu(u) ? 'kritik
 .product-icerik {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px 12px;
-  flex: 1;
-}
-.product-kod {
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--text-muted);
-  font-family: monospace;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  gap: 5px;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-self: stretch;
 }
 .product-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.3;
@@ -219,17 +211,25 @@ const stokRenkSinifi = (u) => (stokYokMu(u) ? 'yok' : (kritikStokMu(u) ? 'kritik
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 34px;
+}
+.product-kod {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .product-stok-satir {
   display: flex;
   align-items: center;
   gap: 6px;
   min-height: 18px;
-  font-size: 11px;
+  font-size: 12px;
 }
 .product-stok-satir i {
-  font-size: 11px;
+  font-size: 8px;
 }
 .product-stok-satir.normal {
   color: var(--success);
@@ -243,18 +243,6 @@ const stokRenkSinifi = (u) => (stokYokMu(u) ? 'yok' : (kritikStokMu(u) ? 'kritik
   color: var(--danger);
   font-weight: 700;
 }
-.product-grup {
-  font-size: 10.5px;
-  color: var(--accent);
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-border);
-  border-radius: 999px;
-  padding: 1px 8px;
-  max-width: 60%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .product-fiyat-satir {
   display: flex;
   align-items: baseline;
@@ -264,20 +252,20 @@ const stokRenkSinifi = (u) => (stokYokMu(u) ? 'yok' : (kritikStokMu(u) ? 'kritik
 }
 .product-price {
   display: inline-block;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 800;
   color: var(--accent);
   white-space: nowrap;
 }
 .kdv-not {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-muted);
 }
 .product-cari-fiyat {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--success);
   background: var(--success-soft);

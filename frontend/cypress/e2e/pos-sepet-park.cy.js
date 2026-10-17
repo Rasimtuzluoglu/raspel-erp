@@ -19,7 +19,7 @@ describe('POS coklu sepet (park)', () => {
 
   it('sepeti park eder, yeni sepet acar, parktan geri alir', () => {
     // 2 adetlik sepet park et
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('2*1234567890{enter}')
+    cy.get('input.komut-kutu-girdi').type('2*1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
     cy.get('.sepet-item .adet-girdi').should('have.value', '2')
 
@@ -29,7 +29,7 @@ describe('POS coklu sepet (park)', () => {
     cy.get('.park-chip').should('have.length', 1)
 
     // Yeni sepet: 1 adet
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
     cy.get('.sepet-item .adet-girdi').should('have.value', '1')
 
     // Parktaki sepeti geri al -> 2 adetlik sepet geri gelir

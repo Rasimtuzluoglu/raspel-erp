@@ -104,19 +104,19 @@ describe('REDTEAM Faz2 - Hizli Satış POS', () => {
   })
 
   it('2.2 arama kutusunda ikon ile yazi ust uste binmemeli (padding-left uygulanmis)', () => {
-    // REDTEAM: .arama-kutusu .p-inputtext kurali :deep OLMADAN yazildigi icin
+    // REDTEAM: `.arama-kutusu .p-inputtext` kurali :deep OLMADAN yazildigi icin
     // AutoComplete'in ic input'una UYGULANMIYORDU -> app.css'in global
     // padding'i (14px) kaliyordu ve ikon 14px'ten baslayan yazinin ustune
-    // biniyordu.
-    cy.get('.pos-arac-cubugu .arama-kutusu:not(.barkod-kutu)').first().then(($kutu) => {
-      const input = $kutu.find('input').first()
-      expect(input.length, 'urun arama inputu bulunmali').to.be.greaterThan(0)
+    // biniyordu. Artik tek komut kutusu (`.komut-kutu-girdi`) dogrudan ikon
+    // icin yer birakir.
+    cy.get('.komut-kutu-girdi').first().then(($input) => {
+      expect($input.length, 'komut inputu bulunmali').to.be.greaterThan(0)
       // jQuery `.css()` HESAPLANMIS degeri dondurur.
-      const pad = parseFloat(Cypress.$(input).css('padding-left'))
-      const h = parseFloat(Cypress.$(input).css('height'))
+      const pad = parseFloat(Cypress.$($input).css('padding-left'))
+      const h = parseFloat(Cypress.$($input).css('height'))
       // Ikon: left 0.9rem (14.4px) + ~15px genislik -> ~30px rezervasyon
       expect(pad, `padding-left ${pad}px ikon icin yer birakmali`).to.be.greaterThan(30)
-      // Barkod kutusu ile ayni yukseklikte olmali (42px)
+      // 42px yukseklik
       expect(h, 'yukseklik 42px uygulanmali').to.be.closeTo(42, 2)
     })
   })
@@ -140,25 +140,25 @@ describe('REDTEAM Faz2 - Hizli Satış POS', () => {
   // (ErrorBoundary: "component update"); ne oneri ne izgara aramasi tetikleniyordu.
   it('2.5 arama tek gecikmeyle sonuc donmeli (cift 250ms debounce olmamali)', () => {
     // REDTEAM: :delay="250" + koddaki 250ms setTimeout = ~500ms + RTT.
-    // Artik :delay="0", tek gecikme 250ms.
+    // Artik tek komut kutusu tek 250ms debounce ile oneri ister.
     const t0 = Date.now()
-    cy.get('.pos-arac-cubugu .arama-kutusu:not(.barkod-kutu) input').first().type('test', { delay: 10 })
+    cy.get('.komut-kutu-girdi').first().type('test', { delay: 10 })
     cy.wait('@oneri', { timeout: 2000 })
     const sure = Date.now() - t0
     expect(sure, `arama ${sure}ms surdu; 500ms uzerinde olmamali`).to.be.lessThan(1500)
 
-    // Oneri paneli acilmali
-    cy.get('.p-autocomplete-overlay', { timeout: 4000 }).should('be.visible')
-    cy.get('.p-autocomplete-overlay .urun-oneri').should('have.length.greaterThan', 0)
+    // Oneri listesi acilmali
+    cy.get('.komut-oneriler', { timeout: 4000 }).should('be.visible')
+    cy.get('.komut-oneriler li').should('have.length.greaterThan', 0)
   })
 
-  it('2.6 urun dropdown oku kaldirildi (ok ile panel acilip kapanmamali)', () => {
-    // REDTEAM: `dropdown` + minLength=2 bilesimi oku islevsiz yapiyordu.
-    // Artik ok yok; yazmaya baslayinca panel acilir ve KALIR.
-    cy.get('.pos-arac-cubugu .arama-kutusu:not(.barkod-kutu) input').first().type('te', { delay: 10 })
-    cy.get('.p-autocomplete-overlay', { timeout: 4000 }).should('be.visible')
+  it('2.6 urun oneri listesi yazinca acilir ve KALIR (kendi kendine kapanmamali)', () => {
+    // REDTEAM: eski AutoComplete ok'u + minLength bilesimi paneli acilip
+    // kapaniyordu. Artik `komutOnerileriAcik` yalniz blur'da kapanir.
+    cy.get('.komut-kutu-girdi').first().type('te', { delay: 10 })
+    cy.get('.komut-oneriler', { timeout: 4000 }).should('be.visible')
     cy.wait(600)
-    // 600ms sonra hala acik olmali (once 1 tick sonra kapaniyordu)
-    cy.get('.p-autocomplete-overlay').should('be.visible')
+    // 600ms sonra hala acik olmali
+    cy.get('.komut-oneriler').should('be.visible')
   })
 })

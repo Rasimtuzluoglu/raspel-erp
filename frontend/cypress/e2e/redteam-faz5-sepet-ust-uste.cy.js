@@ -39,7 +39,7 @@ describe('REDTEAM Faz5 — kalem eklerken sepet okunur kalmali', () => {
 
   const barkodEkle = (n) => {
     for (let i = 0; i < n; i++) {
-      cy.get('input[placeholder="Barkod okutun (Enter)"]').type(`100000000${i}{enter}`)
+      cy.get('input.komut-kutu-girdi').type(`100000000${i}{enter}`)
     }
   }
 
@@ -158,7 +158,7 @@ describe('REDTEAM Faz5 — kalem eklerken sepet okunur kalmali', () => {
   it('stok yok uyarisi HALEN gosterilir (bildirimleri tamamen kaldirmadik)', () => {
     // Yanlis yere gidilmemis olmak icin: hata bildirimleri korunmali.
     // Barkod bulunamadi -> uyari + "Hizli Urun" dialogu
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('YOKBARKOD999{enter}')
+    cy.get('input.komut-kutu-girdi').type('YOKBARKOD999{enter}')
     cy.get('.p-toast-message', { timeout: 4000 }).should('exist')
   })
 })

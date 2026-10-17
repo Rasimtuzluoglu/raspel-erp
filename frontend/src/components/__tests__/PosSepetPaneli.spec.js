@@ -231,10 +231,12 @@ describe('PosSepetPaneli — surukle-birak', () => {
 })
 
 describe('PosSepetPaneli — ozet', () => {
-  it('genel toplami gosterir', () => {
-    const w = kur({ sepet: [urun({ miktar: 3, fiyat: 25 })], genelToplam: 75 })
-    expect(w.find('.genel-toplam-deger').exists()).toBe(true)
-    expect(w.text()).toContain('75')
+  it('genel toplami TEKRAR gostermez (toplam yalniz alt blokta)', () => {
+    // Toplam tekillestirildi: sepet ozeti indirim + detay gosterir; genel
+    // toplam HizliSatis'teki sticky alt blokta (her zaman gorunur) kalir.
+    const w = kur({ sepet: [urun({ miktar: 3, fiyat: 25 })] })
+    expect(w.find('.genel-toplam-deger').exists()).toBe(false)
+    expect(w.find('.ozet-genel').exists()).toBe(false)
   })
 
   it('detay acma dugmesi detay-toggle yayar', async () => {

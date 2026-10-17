@@ -42,11 +42,10 @@ const TERCILER = [
   ['otomatikYazdir', 'raspel_pos_otomatik_yazdir', true, 'Satis sonrasi fis otomatik yazdirilir'],
   ['ipucuAcik', 'raspel_pos_ipucu_acik', false, 'Kisayol ipucu seridi'],
 
-  // --- yeni POS akisi (kademeli sevk) ---
-  // Varsayilan KAPALI; her faz (odeme overlay, komut yuzeyi, sanal katalog,
-  // coklu sepet, cevrimdisi) bu bayragin arkasinda gelir. Kararli olunca
-  // burada varsayilan true yapilir ve eski akis bir surum daha korunur.
-  ['posYeniAkis', 'raspel_pos_yeni_akis', false, 'Yeni POS akisi (deneysel)'],
+  // --- yeni POS akisi ---
+  // Faz A-H tamamlandi ve kararli; yeni akis artik VARSAYILAN. Eski akis
+  // (satir ici odeme paneli) bir sonraki surumde tamamen kaldirilacak.
+  ['posYeniAkis', 'raspel_pos_yeni_akis', true, 'Yeni POS akisi'],
 
   // --- gorsel ---
   // Urun karti modu: 'vitrin' (buyuk kart, varsayilan) | 'yogun' (kompakt liste).

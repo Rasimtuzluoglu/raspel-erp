@@ -84,7 +84,9 @@
         v-if="sepet && sepet.length === 0"
         class="sepet-bos"
       >
-        {{ t('hizliSatis.sepeteUrunEkle') }}
+        <i class="pi pi-shopping-cart" />
+        <p>{{ t('hizliSatis.sepeteUrunEkle') }}</p>
+        <small>{{ t('hizliSatis.sepeteUrunEkleIpucu') }}</small>
       </div>
       <div
         v-for="(item, idx) in sepet"
@@ -271,10 +273,6 @@
           />
         </div>
       </div>
-      <div class="ozet-satir ozet-genel">
-        <span>{{ t('hizliSatis.genelToplam') }}</span>
-        <span class="genel-toplam-deger">{{ formatCurrency(genelToplam) }}</span>
-      </div>
     </div>
   </div>
 </template>
@@ -305,7 +303,6 @@ const props = defineProps({
   detayAcik: { type: Boolean, default: false },
   toplamFt3: { type: Number, default: 0 },
   toplam: { type: Number, default: 0 },
-  genelToplam: { type: Number, default: 0 },
   musteriAdi: { type: String, default: '' },
   indirimTipi: { type: String, default: 'tutar' },
   indirimDegeri: { type: Number, default: 0 },

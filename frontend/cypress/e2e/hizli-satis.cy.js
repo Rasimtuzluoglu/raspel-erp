@@ -84,7 +84,8 @@ describe('Hızlı Satış (POS)', () => {
     // Bölüm varsayılanları: müşteri, sepet ve ödeme AÇIK gelir (kasiyer her şeyi görür).
     cy.contains('.pos-bolum-baslik', 'Müşteri').should('have.attr', 'aria-expanded', 'true')
     cy.get('.sepet-baslik .katlanir-ikon-btn').should('have.attr', 'aria-expanded', 'true')
-    cy.contains('.pos-bolum-baslik', 'Ödeme').should('have.attr', 'aria-expanded', 'true')
+    // Yeni akis: odeme paneli yerine tek "Odeme Al" aksiyonu var.
+    cy.get('.yeni-odeme-btn').should('be.visible').and('contain', 'Ödeme Al')
   })
 
   it('kısayol ipucu şeridi düğme ile açılıp kapatılabilir', () => {
@@ -105,7 +106,7 @@ describe('Hızlı Satış (POS)', () => {
     // Barkod alani otomatik odakli oldugu icin once odagi birakmak gerekir;
     // yoksa `?` metin alanina yazilir. `.blur()` odakli eleman ister; garanti
     // icin once `.focus()`.
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').focus().blur()
+    cy.get('input.komut-kutu-girdi').focus().blur()
     cy.get('.pos-ipucu').should('not.exist')
     cy.get('body').type('?')
     cy.get('.pos-ipucu').should('be.visible')
@@ -120,7 +121,7 @@ describe('Hızlı Satış (POS)', () => {
   it('↓ ile ürün ızgarasına girilir ve ok tuşları kartı gezer', () => {
     // Urun katalogu asenkron yuklenir; islem oncesi kartlarin gelmesini bekle.
     cy.get('.product-card').should('have.length.at.least', 1)
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').focus().type('{downarrow}')
+    cy.get('input.komut-kutu-girdi').focus().type('{downarrow}')
     // Odakli kart isaretlenmeli
     cy.get('.product-grid .izgara-odakli').should('have.length', 1)
     cy.get('.product-grid .izgara-odakli .product-name').then(($ad) => {
@@ -134,7 +135,7 @@ describe('Hızlı Satış (POS)', () => {
 
   it('ızgarada Enter ürünü sepete ekler', () => {
     cy.get('.product-card').should('have.length.at.least', 1)
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').focus().type('{downarrow}')
+    cy.get('input.komut-kutu-girdi').focus().type('{downarrow}')
     cy.get('.product-grid .izgara-odakli .product-name').then(($ad) => {
       const ad = $ad.text()
       tusGonder('Enter')
@@ -146,7 +147,7 @@ describe('Hızlı Satış (POS)', () => {
   // Faz4: hizli adet. Once 20 adet almak icin karti 20 kez tiklamak gerekiyordu.
   it('ızgarada rakam + Enter miktarlı ekleme yapar', () => {
     cy.get('.product-card').should('have.length.at.least', 1)
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').focus().type('{downarrow}')
+    cy.get('input.komut-kutu-girdi').focus().type('{downarrow}')
     // Izgara STOKTA OLAN ilk karta odaklanir (stoksuz kart Enter'de sadece
     // uyari uretirdi; kasiyer olu secimle karsilasmasin diye).
     cy.get('.product-grid .izgara-odakli').should('not.have.class', 'stok-yok')
@@ -175,7 +176,7 @@ describe('Hızlı Satış (POS)', () => {
 
   // Faz4: geri al artik klavyeye bagli. Once yalnizca fare ile basilabiliyordu.
   it('G ile son satır işlemi geri alınır', () => {
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
     // Delete aktif satir uzerinde calisir; satiri sec (tutara tiklamak satiri
     // aktive eder, urun adi dugmesine denk gelmez).
@@ -190,7 +191,7 @@ describe('Hızlı Satış (POS)', () => {
   })
 
   it('D ile aktif satır çoğaltılır ve G ile çoğaltma geri alınır', () => {
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
     cy.get('.sepet-item').first().find('.sepet-tutar').click()
     cy.get('.sepet-item.aktif-satir').should('exist')
@@ -205,7 +206,7 @@ describe('Hızlı Satış (POS)', () => {
   // satisi tamamliyordu; yazdirma yalnizca Ctrl+P ile mumkundu.
   it('F8 fiş yazdırma kısayolu çalışır (yanlış F9 etiketi düzeltildi)', () => {
     cy.get('.pos-container').should('exist')
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
     // `window.open` ve `print` zaten `beforeEach`'te stub'lanir; burada tekrar
     // sarmak "already wrapped" hatasi verir.
@@ -226,7 +227,7 @@ describe('Hızlı Satış (POS)', () => {
   // Faz4: ödeme yöntemi T (taksit) kısayolu eklendi; N/K/H vardı, T yoktu.
   it('T taksit ödeme yöntemini seçer', () => {
     cy.get('.pos-container').should('exist')
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
     tusGonder('t')
     cy.get('.odeme-yontem-btn.active').should('contain', 'Taksit')
@@ -235,7 +236,7 @@ describe('Hızlı Satış (POS)', () => {
   })
 
   it('F2 sepeti temizler', () => {
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
     tusGonder('F2')
     cy.get('.sepet-item').should('have.length', 0)
@@ -243,7 +244,7 @@ describe('Hızlı Satış (POS)', () => {
   })
 
   it('barkod ile ürün ekleyip perakende satışı tamamlar', () => {
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
 
     // Müşteri yerine Perakende moduna geç
@@ -259,7 +260,7 @@ describe('Hızlı Satış (POS)', () => {
   // DAVRANIS DEGISIKLIGI: Musteri modu seciliyken musteri yoksa "Satisi Tamamla"
   // butonu artik DISABLED; eskiden tiklanip "Musteri gerekli" uyarisi cikiyordu.
   it('müşteri modu seçiliyken müşteri yoksa Satışı Tamamla devre dışıdır', () => {
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
     // Varsayılan Perakende; müşteri-gerekli senaryosu için Müşteri moduna geç.
     cy.get('.musteri-modu').contains('Müşteri').click()
@@ -268,7 +269,7 @@ describe('Hızlı Satış (POS)', () => {
   })
 
   it('F9 yalnızca ödeme durumunu değiştirir, satışı tamamlamaz', () => {
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
     tusGonder('F9')
     // Ödeme "Tam" seçilir ama satış OLUŞMAZ.
@@ -299,14 +300,14 @@ describe('Hızlı Satış (POS)', () => {
 
   it('barkodsuz üründe stok kodu ile tarama ürünü bulur', () => {
     // Etiketlerde barkod yerine stok kodu kodlanır; arama stok kodunu da kapsar.
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('MDF-18{enter}')
+    cy.get('input.komut-kutu-girdi').type('MDF-18{enter}')
     cy.get('.sepet-item').should('have.length', 1)
     cy.contains('.sepet-item', 'Kodlu Ürün').should('exist')
   })
 
   it('fiş modu (fiyatlı/fiyatsız) satış için geçici değiştirilebilir', () => {
     // Fiş modu, sipariş özeti sağ kolonda görünürken erişilebilir olmalı.
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
     cy.get('.fis-modu-satir').should('exist')
     cy.contains('.fis-modu-satir button', 'Fiyatlı').should('have.attr', 'aria-pressed', 'true')
@@ -327,7 +328,7 @@ describe('Hızlı Satış (POS)', () => {
     // Tercihler tek menüde: büyük yazı, onay iste, otomatik yazdırma, kısayol ipucu
     cy.get('.pos-tercih-btn').click()
     cy.get('.tercih-panel').should('be.visible')
-    cy.get('.tercih-satir').should('have.length', 5)
+    cy.get('.tercih-satir').should('have.length', 4)
   })
 
   it('filtre seçenekleri ürün verisinden türetilir (tanım gerekmez)', () => {
@@ -344,7 +345,7 @@ describe('Hızlı Satış (POS)', () => {
   })
 
   it('şoför seçilmeden satış tamamlanır ve teslimat kaydı açılmaz', () => {
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
     cy.get('.musteri-modu').contains('Perakende').click()
     cy.contains('Satışı Tamamla').click()
@@ -353,7 +354,7 @@ describe('Hızlı Satış (POS)', () => {
   })
 
   it('şoför seçilince teslimat adresi zorunludur', () => {
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
     cy.get('.musteri-modu').contains('Perakende').click()
     cy.contains('.pos-bolum-baslik', 'Teslimat').click()
     cy.get('#hizli-teslim-sofor').click()
@@ -364,7 +365,7 @@ describe('Hızlı Satış (POS)', () => {
   })
 
   it('şoför ve adres ile satışta teslimat kaydı açılır', () => {
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890{enter}')
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
     cy.get('.musteri-modu').contains('Perakende').click()
     cy.contains('.pos-bolum-baslik', 'Teslimat').click()
     cy.get('#hizli-teslim-sofor').click()
@@ -382,19 +383,19 @@ describe('Hızlı Satış (POS)', () => {
 
   // FAZ C: komut yuzeyi (usePosKomut) — tek kutudan barkod / miktar / musteri.
   it('"N*barkod" komutu urunu N adet ekler', () => {
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('3*1234567890{enter}')
+    cy.get('input.komut-kutu-girdi').type('3*1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
     cy.get('.sepet-item .adet-girdi').should('have.value', '3')
   })
 
   it('"barkod*N" (sonek) komutu da adedi uygular', () => {
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('1234567890*4{enter}')
+    cy.get('input.komut-kutu-girdi').type('1234567890*4{enter}')
     cy.get('.sepet-item').should('have.length', 1)
     cy.get('.sepet-item .adet-girdi').should('have.value', '4')
   })
 
   it('"@ad" komutu musteri moduna gecirir', () => {
-    cy.get('input[placeholder="Barkod okutun (Enter)"]').type('@Ali Veli{enter}')
+    cy.get('input.komut-kutu-girdi').type('@Ali Veli{enter}')
     cy.get('.musteri-modu').contains('Müşteri').should('have.attr', 'aria-pressed', 'true')
   })
 

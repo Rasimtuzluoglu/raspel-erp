@@ -170,7 +170,7 @@
   border: 1px dashed var(--border);
   border-radius: 10px;
   background: var(--bg-secondary);
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-secondary);
 }
 .pos-ipucu span {
@@ -264,7 +264,7 @@
   padding: 10px 0 6px;
   margin-top: 4px;
   background: var(--bg-card);
-  border-top: 2px solid var(--border);
+  border-top: 1px solid var(--border);
 }
 .sticky-tutar {
   display: flex;
@@ -372,17 +372,16 @@
 
 /* Yogun kart modu: daha fazla urun, daha az gorsel alan. */
 .pos-kart-yogun .product-grid {
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
 }
-.pos-kart-yogun .product-gorsel,
-.pos-kart-yogun .product-grup {
+.pos-kart-yogun .product-gorsel {
   display: none;
 }
 .pos-kart-yogun .product-name {
-  font-size: 12.5px;
+  font-size: 13px;
 }
 .pos-kart-yogun .product-price {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 /* Erisilebilirlik: hareket azaltma tercihinde animasyonlar kapatilir. */
@@ -438,54 +437,71 @@
 }
 
 .pos-arac-cubugu {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.4fr) auto;
-  gap: 8px;
+  display: flex;
   align-items: stretch;
+  gap: 8px;
   margin-bottom: 12px;
 }
-.pos-arac-cubugu .arama-kutusu {
-  display: block;
+
+/* TEK komut kutusu (barkod + urun arama + @musteri + N* miktar).
+   Iki ayri kutunun (barkod + AutoComplete) yerine gecen birlesik girdi;
+   sagindaki filtre dugmesiyle ayni satirda durur, kalan genisligi kaplar. */
+.komut-kutu {
   position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
 }
-/* REDTEAM/Faz2 (canli E2E ile tespit): `:deep()` EKLENIYORDU.
-   Scoped CSS derlemesi son selector'a `[data-v-hash]` ekler:
-     .pos-arac-cubugu .arama-kutusu .p-inputtext[data-v-hash]
-   PrimeVue bilesenlerinin scope-id davranisi:
-     - <InputText> koku <input> -> scope-id ALIR  -> kural UYGULANIR
-     - <AutoComplete> koku <span class="p-autocomplete">, icindeki
-       <input class="p-inputtext"> ICE ICE oldugu icin scope-id ALMAZ
-       -> kural UYGULANMAZ
-   Sonuc: urun arama kutusunda global `app.css` padding'i (14px) kaliyordu,
-   `pi-search` ikonu ise `left: 0.9rem` (14.4px) + ~15px genislikle 14px'ten
-   baslayan yazinin USTUNE biniyordu. `height: 42px` de kayboluyordu; ayni
-   CSS'teki barkod kutusu (dogrudan InputText) 42px iken arama kutusu ~38px
-   kaliyor, hizasizlik gorunuyordu.
-
-   CANLI KANIT (Cypress redteam-faz2 2.2): padding-left 14px geliyordu
-   (beklenen > 30px).
-
-   Duzeltme: `:deep()` ile scope-id zorunlulugu kaldirilir. */
-.pos-arac-cubugu .arama-kutusu :deep(.p-inputtext) {
-  width: 100%;
-  height: 42px;
-  padding-left: 2.75rem !important;
-}
-.pos-arac-cubugu .barkod-kutu :deep(.p-inputtext) {
-  padding-right: 2.75rem !important;
-}
-.pos-arac-cubugu .arama-kutusu > i {
+.komut-kutu-ikon {
   position: absolute;
   left: 0.9rem;
   top: 50%;
   transform: translateY(-50%);
-  margin: 0;
   font-size: 15px;
   color: var(--text-muted);
   z-index: 1;
+  pointer-events: none;
 }
-/* Barkod alanı içindeki kamera düğmesi (ayrı buton kalabalığını önler) */
-.alan-ikon-sag {
+.komut-kutu-girdi {
+  width: 100%;
+  height: 42px;
+  padding-left: 2.75rem;
+  padding-right: 5.5rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-primary, var(--bg-card));
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+  transition: border-color var(--dur-fast, 0.15s) ease, box-shadow var(--dur-fast, 0.15s) ease;
+}
+.komut-kutu-girdi:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft, rgba(20, 184, 166, 0.16));
+}
+.komut-kutu-temizle {
+  position: absolute;
+  right: 2.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.komut-kutu-temizle:hover {
+  color: var(--text-primary);
+  background: var(--bg-muted, rgba(148, 163, 184, 0.12));
+}
+.komut-kutu-kamera {
   position: absolute;
   right: 0.4rem;
   top: 50%;
@@ -500,11 +516,60 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all var(--dur-fast, 0.15s) var(--ease-standard, ease);
+  transition: all var(--dur-fast, 0.15s) ease;
 }
-.alan-ikon-sag:hover {
+.komut-kutu-kamera:hover {
   background: var(--accent-soft-strong);
   color: var(--accent);
+}
+.komut-oneriler {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--elev-2, 0 8px 24px rgba(0, 0, 0, 0.35));
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 30;
+}
+.komut-oneriler li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.komut-oneriler li:hover {
+  background: var(--accent-soft, rgba(20, 184, 166, 0.12));
+}
+.komut-oneri-ad {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.komut-oneriler small {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.komut-oneri-fiyat {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 /* Filtreler popover düğmesi */
 .filtre-btn {
@@ -558,7 +623,7 @@
 }
 .filtre-alan label {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -623,24 +688,6 @@
   font-size: 13px;
   color: var(--text-secondary);
 }
-.tercih-satir-deneysel {
-  margin-top: 6px;
-  padding-top: 10px;
-  border-top: 1px dashed var(--border);
-}
-.tercih-rozet {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 1px 6px;
-  border-radius: 8px;
-  background: var(--accent-soft, rgba(20, 184, 166, 0.12));
-  color: var(--accent);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  vertical-align: middle;
-}
 .katlanir-ikon-btn {
   border: none;
   background: transparent;
@@ -656,38 +703,12 @@
   color: var(--accent);
   background: var(--accent-soft);
 }
-.pos-arac-cubugu .arac-dropdown {
-  height: 42px;
-  width: 100%;
-}
-.pos-arac-cubugu .arac-dropdown :deep(.p-select),
-.pos-arac-cubugu .arac-dropdown :deep(.p-dropdown) {
-  width: 100%;
-  height: 42px;
-}
-.pos-arac-cubugu .arac-dropdown :deep(.p-select-label),
-.pos-arac-cubugu .arac-dropdown :deep(.p-dropdown-label) {
-  line-height: 42px;
-  padding-top: 0;
-  padding-bottom: 0;
-}
-.pos-arac-cubugu .p-button {
-  height: 42px;
-}
-
 @media (max-width: 900px) {
   .pos-arac-cubugu {
-    grid-template-columns: 1fr 1fr;
-  }
-  .filtre-btn {
-    grid-column: 1 / -1;
-    justify-content: center;
+    flex-wrap: wrap;
   }
 }
 @media (max-width: 520px) {
-  .pos-arac-cubugu {
-    grid-template-columns: 1fr;
-  }
   .filtre-btn-metin {
     display: none;
   }
@@ -722,14 +743,14 @@
   gap: 8px;
 }
 .siralama-etiket {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 .siralama-dropdown {
   min-width: 130px;
 }
 .urun-sayaci {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--accent);
   background: var(--accent-soft);
@@ -750,8 +771,8 @@
   background: var(--bg-card);
   color: var(--text-secondary);
   border-radius: 999px;
-  padding: 4px 12px;
-  font-size: 12px;
+  padding: 5px 13px;
+  font-size: 12.5px;
   cursor: pointer;
   transition: all var(--dur-fast, 0.15s) var(--ease-standard, ease);
 }
@@ -767,10 +788,10 @@
 }
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 12px;
-  max-height: calc(100vh - 230px);
-  max-height: calc(100dvh - 230px);
+  max-height: calc(100vh / var(--uyg-olcek) - 230px);
+  max-height: calc(100dvh / var(--uyg-olcek) - 230px);
   overflow-y: auto;
   padding: 2px 2px 10px;
 }
@@ -840,11 +861,29 @@
 .cok-satanlar-section {
   margin-top: 8px;
 }
+.cok-satanlar-baslik {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.cok-satanlar-baslik i {
+  color: var(--accent);
+  font-size: 12px;
+}
 .cok-satanlar-grid {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
-  margin-bottom: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 10px;
+  scrollbar-width: thin;
 }
 .cok-satan-chip {
   display: flex;
@@ -852,6 +891,8 @@
   align-items: flex-start;
   gap: 2px;
   padding: 8px 12px;
+  flex: 0 0 auto;
+  max-width: 200px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -875,6 +916,10 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .cok-satan-fiyat {
   font-size: 12px;
@@ -1000,7 +1045,7 @@
 }
 @media (max-width: 1100px) {
   .product-grid {
-    grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr));
   }
 }
 
@@ -1013,11 +1058,12 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  padding: 10px 16px;
-  background: var(--bg-header, var(--bg-card));
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  backdrop-filter: blur(10px);
+  padding: 2px 2px 12px;
+  margin-bottom: 12px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  backdrop-filter: none;
 }
 .breadcrumb {
   display: inline-flex;
@@ -1071,10 +1117,6 @@
 :deep(.siparis-kart .p-card-content) {
   padding: 0;
 }
-.sticky-tamamla {
-  border-radius: 12px;
-  box-shadow: var(--elev-2, 0 8px 24px rgba(0, 0, 0, 0.35));
-}
 .empty-products {
   color: var(--text-muted);
 }
@@ -1103,7 +1145,8 @@
   line-height: 1.15;
 }
 .pos-marka-metin strong {
-  font-size: 15px;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--text-primary);
 }
 .pos-marka-metin small {
@@ -1111,13 +1154,6 @@
   color: var(--text-muted);
 }
 
-/* Komut cubugu */
-.barkod-kutu :deep(.p-inputtext) {
-  font-weight: 600;
-}
-.arama-kutusu :deep(.p-inputtext) {
-  width: 100%;
-}
 .filtre-btn {
   display: inline-flex;
   align-items: center;
@@ -1194,7 +1230,11 @@
 .pos-container {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 52px);
+  /* 84px = .main-content ust dolgu (14) + global breadcrumb (~44) + alt dolgu (24).
+     Eski 52px bu ikisini hesaba katmadigi icin icerik tasip sayfa altinda
+     dikey scroll olusuyordu ("1920'ye sigmiyor"). `100dvh / --uyg-olcek`
+     telafisi: zoom vh/dvh birimlerini kucultmedigi icin bolunur (app.css). */
+  height: calc(100dvh / var(--uyg-olcek) - 84px);
   min-height: 520px;
   overflow: hidden;
 }
@@ -1337,14 +1377,100 @@
    yalnizca yuklenen sayfadan turetiyordu ve yanlis gosteriyordu. */
 .kategori-cip-adet {
   margin-left: 5px;
-  padding: 1px 5px;
+  padding: 1px 6px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--text-primary) 10%, transparent);
-  font-size: 10px;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
   opacity: 0.75;
 }
 .kategori-cip.aktif .kategori-cip-adet {
   background: color-mix(in srgb, #fff 25%, transparent);
   opacity: 1;
+}
+
+/* ======================= TABLET/CEP: SEPET CEKMECESI =======================
+   Genis ekranda sag panel her zaman gorunur. <=1280px'te sag panel tek
+   sutuna duser ve asagi kayar; sepeti kaybetmemek icin sag panel bir
+   cekmece (drawer) olarak acilir. Acma dugmesi (FAB) toplami ve adedi
+   gosterir; kapatma perdeye (backdrop) tiklayinca olur. */
+.sepet-fab,
+.sepet-drawer-perde {
+  display: none;
+}
+@media (max-width: 1280px) {
+  .sepet-fab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 45;
+    padding: 12px 16px;
+    border: 1px solid var(--accent-border);
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--accent-contrast, #04211d);
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: var(--elev-2, 0 8px 24px rgba(0, 0, 0, 0.35));
+    cursor: pointer;
+  }
+  .sepet-fab i {
+    font-size: 16px;
+  }
+  .sepet-fab-adet {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--accent-contrast, #04211d);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 800;
+  }
+  .sepet-fab-tutar {
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+  }
+  .sepet-drawer-perde {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    background: rgba(0, 0, 0, 0.45);
+  }
+  .pos-right {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(420px, 92vw);
+    z-index: 40;
+    padding: 12px;
+    background: var(--bg-primary);
+    border-left: 1px solid var(--border);
+    box-shadow: var(--elev-3, 0 16px 40px rgba(0, 0, 0, 0.45));
+    transform: translateX(100%);
+    transition: transform var(--dur-base, 0.2s) var(--ease-standard, ease);
+  }
+  .pos-right.acik {
+    transform: translateX(0);
+  }
+  .pos-right .siparis-kart {
+    height: 100%;
+  }
+  .pos-right .siparis-kart :deep(.p-card-body) {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .pos-right .siparis-kart :deep(.p-card-content) {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+  }
 }

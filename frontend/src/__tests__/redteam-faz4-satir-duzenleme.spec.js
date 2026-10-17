@@ -122,8 +122,13 @@ describe('Faz4.2 - aktif satir senkronu (fare <-> klavye)', () => {
 
   it('tum satir olaylari sarmalayiciya baglidir (stoplu tiklama dahil)', () => {
     const sablon = yorumsuz(sablonBlogu(posKod))
+    // NOT: `@x="satirAktifYap(fn)"` YANLISTIR — Vue bu ifadeyi `$event =>
+    // satirAktifYap(fn)` olarak derler; sarmalayici OLUSTURULUR ama olay
+    // argumaniyla (idx) CAGIRILMAZ, yani eylem hic calismaz ("arti/eksi
+    // calismiyor" hatasi). Dogru bicim: sarmalayiciyi olay argumaniyla cagiran
+    // bir ok fonksiyonu.
     for (const olay of ['sil', 'cogalt', 'miktar-azalt', 'miktar-artir', 'urun-degistir-ac', 'adedi-sifirla']) {
-      expect(sablon, `@${olay} sarmalayici kullanmali`).toContain(`@${olay}="satirAktifYap(`)
+      expect(sablon, `@${olay} sarmalayiciyi CAGIRMALI`).toContain(`@${olay}="(i) => satirAktifYap(`)
     }
     // Obje yayan olay da aktif satiri hizalamali
     expect(sablon).toContain('@miktar-degistir="({ idx, miktar }) => { aktifSatir = idx;')

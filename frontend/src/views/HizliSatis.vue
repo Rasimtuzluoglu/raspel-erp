@@ -64,15 +64,6 @@
               <span class="tercih-metin">{{ t('hizliSatis.kisayolIpucu') }}</span>
               <ToggleSwitch v-model="ipucuAcik" />
             </label>
-            <!-- Deneysel: yeni POS akisi (odeme overlay + coklu sepet).
-                 Bu anahtar kapatilinca ekran onceki davranisina doner. -->
-            <label class="tercih-satir tercih-satir-deneysel">
-              <span class="tercih-metin">
-                {{ t('hizliSatis.yeniAkis') }}
-                <small class="tercih-rozet">{{ t('hizliSatis.deneysel') }}</small>
-              </span>
-              <ToggleSwitch v-model="posYeniAkis" />
-            </label>
           </div>
         </Popover>
         <button
@@ -125,75 +116,63 @@
         <div class="pos-arac-cubugu">
           <!-- REDTEAM/Faz3.3: `p-input-icon-left` PrimeVue 4'te kaldirildi; Faz 2'de
            ayrica `:deep()` eksikligi duzeltildi. Simdi dogrustru API. -->
-          <IconField class="arama-kutusu barkod-kutu">
-            <InputIcon class="pi pi-barcode" />
-            <InputText
+          <!-- TEK komut kutusu: barkod + urun arama + @musteri + N* miktar.
+               Yazarken canli oneri listesi; Enter'da komutCoz uygulanir. -->
+          <div class="komut-kutu">
+            <i
+              class="pi komut-kutu-ikon"
+              :class="komutIkonu"
+            />
+            <input
               ref="barkodInputRef"
               v-model="globalBarkod"
-              :placeholder="t('hizliSatis.barkodPlaceholder')"
-              class="w-full"
+              type="text"
+              class="komut-kutu-girdi"
+              :placeholder="t('hizliSatis.komutPlaceholder')"
+              autocomplete="off"
               autofocus
+              @input="komutAraGecikmeli"
               @keyup.enter="globalBarkodEkle"
-            />
+              @keydown.esc="komutOnerileriAcik = false"
+              @focus="komutOnerileriAcik = true"
+              @blur="komutBlur"
+            >
+            <button
+              v-if="globalBarkod"
+              type="button"
+              class="komut-kutu-temizle"
+              :aria-label="t('common.close')"
+              @mousedown.prevent="globalBarkod = ''"
+            >
+              <i class="pi pi-times" />
+            </button>
             <button
               type="button"
-              class="alan-ikon-sag"
+              class="komut-kutu-kamera"
               :title="t('hizliSatis.barkodKamera')"
               :aria-label="t('hizliSatis.barkodKamera')"
               @click="scannerAcik = true"
             >
               <i class="pi pi-camera" />
             </button>
-          </IconField>
-          <!-- REDTEAM/Faz3.3: `p-input-icon-left` -> IconField/InputIcon. -->
-          <IconField class="arama-kutusu">
-            <InputIcon class="pi pi-search" />
-            <!-- Sunucu taraflı yazarken arama (typeahead). Önceden bu kutu kart
-                 ızgarasını yalnızca YÜKLÜ 50 üründe filtreliyordu; katalog
-                 büyüdükçe ürünler hiç bulunamıyordu.
-                 REDTEAM/Faz3: bu kutu AYNI ARAMA YUZEYININ bir parcasi;
-                 yazilan metin `katalogArama`ya gider ve kart izgarasi sunucu
-                 tarafi aramayla yenilenir. Öneri listesi ayrica tam barkod/
-                 stok kodu eslesmesi icin sunucudan gelir. -->
-            <AutoComplete
-              ref="urunAraAutoRef"
-              v-model="urunOneri"
-              :suggestions="urunOnerileri"
-              option-label="ad"
-              :placeholder="t('hizliSatis.aramaPlaceholder')"
-              class="w-full"
-              :min-length="2"
-              :delay="0"
-              :force-selection="false"
-              :panel-style="URUN_PANEL_STILI"
-              :scroll-height="'320px'"
-              @update:model-value="katalogAramaGuncelle"
-              @complete="urunOneriAra"
-              @option-select="urunOneriSecildi"
+            <ul
+              v-if="komutOnerileriAcik && komutOnerileri.length"
+              class="komut-oneriler"
             >
-              <!--
-                REDTEAM/Faz2.2: `dropdown` (ok dugmesi) KALDIRILDI.
-                `dropdown` + `min-length="2"` birlikte kullanildiginda ok
-                ISLEVSIZDI: ok'a tiklaninca PrimeVue `onDropdownClick`
-                `search(event, '', 'dropdown')` cagirir ve `@complete`
-                `query: ''` ile tetiklenir. `urunOneriAra` `q.length < 2`
-                oldugu icin listeyi BOSALTIR; `suggestions` watcher'i
-                `searching=true` iken bos listeyi gorup `!visibleOptions
-                .length && hide()` calistirir. Sonuc: panel acilir, 1 tick
-                sonra kendini kapatir.
-                `minLength=2` ile ok zaten anlamsiz (bos sorguda ne
-                gosterilecek?); kullanicinin yazmaya baslamasi zaten
-                yeterli sinyal.
-              -->
-              <template #option="slotProps">
-                <div class="urun-oneri">
-                  <span class="urun-oneri-ad">{{ slotProps.option.ad }}</span>
-                  <span class="urun-oneri-kod">{{ slotProps.option.stokKodu || slotProps.option.barkod || '' }}</span>
-                  <span class="urun-oneri-fiyat">{{ formatCurrency(satisFiyati(slotProps.option)) }}</span>
-                </div>
-              </template>
-            </AutoComplete>
-          </IconField>
+              <li
+                v-for="o in komutOnerileri"
+                :key="o.id"
+                @mousedown.prevent="komutSec(o)"
+              >
+                <span class="komut-oneri-ad">{{ o.ad }}</span>
+                <small v-if="o.stokKodu || o.barkod">{{ o.stokKodu || o.barkod }}</small>
+                <span
+                  v-if="o.satisFiyati != null"
+                  class="komut-oneri-fiyat"
+                >{{ formatCurrency(satisFiyati(o)) }}</span>
+              </li>
+            </ul>
+          </div>
           <button
             type="button"
             class="filtre-btn"
@@ -208,21 +187,6 @@
               v-if="aktifFiltreSayisiPos > 0"
               class="filtre-rozet"
             >{{ aktifFiltreSayisiPos }}</span>
-          </button>
-          <!-- FAZ G: urun karti modu (vitrin <-> yogun). -->
-          <button
-            type="button"
-            class="kart-modu-btn"
-            :class="{ aktif: kartModu === 'yogun' }"
-            :title="t('hizliSatis.kartModu')"
-            :aria-label="t('hizliSatis.kartModu')"
-            :aria-pressed="kartModu === 'yogun'"
-            @click="kartModuDegistir"
-          >
-            <i
-              class="pi"
-              :class="kartModu === 'yogun' ? 'pi-list' : 'pi-th-large'"
-            />
           </button>
           <Popover ref="filtrePopover">
             <div class="filtre-panel">
@@ -326,8 +290,8 @@
           v-if="cokSatanlar.length > 0"
           class="cok-satanlar-section"
         >
-          <div class="product-header">
-            <h3><i class="pi pi-star-fill" /> {{ t('hizliSatis.cokSatanlar') }}</h3>
+          <div class="cok-satanlar-baslik">
+            <i class="pi pi-star-fill" /> {{ t('hizliSatis.cokSatanlar') }}
           </div>
           <div class="cok-satanlar-grid">
             <button
@@ -367,6 +331,20 @@
               }}</span>
             </h3>
             <div class="product-header-sag">
+              <button
+                type="button"
+                class="kart-modu-btn"
+                :class="{ aktif: kartModu === 'yogun' }"
+                :title="t('hizliSatis.kartModu')"
+                :aria-label="t('hizliSatis.kartModu')"
+                :aria-pressed="kartModu === 'yogun'"
+                @click="kartModuDegistir"
+              >
+                <i
+                  class="pi"
+                  :class="kartModu === 'yogun' ? 'pi-list' : 'pi-th-large'"
+                />
+              </button>
               <span class="siralama-etiket">{{ t('hizliSatis.sirala') }}</span>
               <Dropdown
                 v-model="siralama"
@@ -547,7 +525,10 @@
         </div>
       </div>
 
-      <div class="pos-right">
+      <div
+        class="pos-right"
+        :class="{ acik: sepetDrawerAcik }"
+      >
         <Card class="siparis-kart">
           <template #content>
             <PosMusteriPaneli
@@ -593,7 +574,6 @@
               :detay-acik="detayAcik"
               :toplam-ft3="toplamFt3"
               :toplam="toplam"
-              :genel-toplam="genelToplam"
               :musteri-adi="seciliMusteri?.ad || ''"
               :indirim-tipleri="indirimTipleri"
               @toggle="sepetAcikDegistir"
@@ -602,15 +582,15 @@
               @temizle="sepetiGeriAlinabilirTemizle()"
               @geri-al="sepetGeriAl"
               @satir-geri-al="geriAlSatirYap"
-              @urun-degistir-ac="satirAktifYap(urunDegistirAc)"
+              @urun-degistir-ac="(i) => satirAktifYap(urunDegistirAc)(i)"
               @urun-degistir-ara="urunDegistirAra"
               @urun-degistir-sec="urunDegistirSec"
               @urun-degistir-vazgec="urunDegistirKapat"
-              @sil="satirAktifYap(sepetSil)"
-              @cogalt="satirAktifYap(satiriCogalt)"
-              @adedi-sifirla="satirAktifYap(adediSifirla)"
-              @miktar-azalt="satirAktifYap(miktarAzalt)"
-              @miktar-artir="satirAktifYap((i) => miktarDegistir(i, 1, 'adim'))"
+              @sil="(i) => satirAktifYap(sepetSil)(i)"
+              @cogalt="(i) => satirAktifYap(satiriCogalt)(i)"
+              @adedi-sifirla="(i) => satirAktifYap(adediSifirla)(i)"
+              @miktar-azalt="(i) => satirAktifYap(miktarAzalt)(i)"
+              @miktar-artir="(i) => satirAktifYap((x) => miktarDegistir(x, 1, 'adim'))(i)"
               @miktar-degistir="({ idx, miktar }) => { aktifSatir = idx; miktarDegistir(idx, miktar) }"
               @satir-sec="(i) => (aktifSatir = i)"
               @surukleme-basla="suruklemeBasla"
@@ -621,51 +601,7 @@
               @detay-toggle="detayAclicDegistir"
             />
 
-            <PosOdemePaneli
-              v-if="!posYeniAkis"
-              v-model:odeme-durumu="odemeDurumu"
-              v-model:odeme-yontemi="odemeYontemi"
-              v-model:odenen-tutar="odenenTutar"
-              v-model:alinan-nakit="alinanNakit"
-              v-model:taksit-kurum="taksitKurum"
-              v-model:taksit-tutar="taksitTutar"
-              v-model:taksit-sayisi="taksitSayisi"
-              v-model:secili-kasa="seciliKasa"
-              v-model:secili-banka="seciliBanka"
-              v-model:secili-pos="seciliPos"
-              :acik="odemeAcik"
-              :odeme-tipleri="odemeTipleri"
-              :odeme-yontemleri="odemeYontemleri"
-              :para-ustu="paraUstu"
-              :hizli-nakit="hizliNakit"
-              :kasalar="kasalar"
-              :bankalar="bankalar"
-              :pos-terminalleri="posTerminalleri"
-              :secili-pos-bilgi="seciliPosBilgi"
-              :hesaplanan-komisyon="hesaplananKomisyon"
-              :genel-toplam="genelToplam"
-              :kalan-tutar="kalanTutar"
-              :odeme-durum-text="odemeDurumText"
-              :odeme-durum-severity="odemeDurumSeverity"
-              :hatalar="hatalar"
-              @toggle="odemeAcikDegistir"
-            />
-
-            <!-- Yeni akis: odeme tek odakli katmanda. Sag panelde yalniz, tek
-                 bir birincil "Odeme Al" aksiyonu kalir. -->
-            <button
-              v-else
-              type="button"
-              class="yeni-odeme-btn"
-              @click="odemeOverlayAcik = true"
-            >
-              <i class="pi pi-wallet" />
-              <span>{{ t('hizliSatis.odemeAl') }}</span>
-              <strong>{{ formatCurrency(genelToplam) }}</strong>
-            </button>
-
             <PosOdemeOverlay
-              v-if="posYeniAkis"
               v-model:gorunur="odemeOverlayAcik"
               v-model:odeme-durumu="odemeDurumu"
               v-model:odeme-yontemi="odemeYontemi"
@@ -695,11 +631,8 @@
             />
 
             <div class="sticky-tamamla">
-              <!-- FAZ E: coklu sepet (park/askiya al) — yalnizca yeni akista. -->
-              <div
-                v-if="posYeniAkis"
-                class="sepet-park-satir"
-              >
+              <!-- FAZ E: coklu sepet (park/askiya al). -->
+              <div class="sepet-park-satir">
                 <button
                   type="button"
                   class="park-btn"
@@ -737,6 +670,16 @@
                 <span>{{ t('hizliSatis.genelToplam') }}</span>
                 <strong>{{ formatCurrency(genelToplam) }}</strong>
               </div>
+              <!-- Odeme tek odakli katmanda (PosOdemeOverlay). Alt bloktaki tek
+                   birincil "Odeme Al" aksiyonu. -->
+              <button
+                type="button"
+                class="yeni-odeme-btn"
+                @click="odemeOverlayAcik = true"
+              >
+                <i class="pi pi-wallet" />
+                <span>{{ t('hizliSatis.odemeAl') }}</span>
+              </button>
               <Button
                 :label="t('hizliSatis.satisiTamamla')"
                 icon="pi pi-check"
@@ -799,7 +742,7 @@
                   :fis-no="fisNo"
                   :musteri-adi="musteriAdi"
                   :sepet="sepet"
-                  :fis-fiyatli="fisFiyatli"
+                  :fis-fiyatli="fisFiyatliGecici"
                   :toplam="toplam"
                   :indirim-degeri="indirimDegeri"
                   :indirim-tipi="indirimTipi"
@@ -816,6 +759,26 @@
         </Card>
       </div>
     </div>
+
+    <button
+      v-show="!sepetDrawerAcik"
+      type="button"
+      class="sepet-fab"
+      :aria-label="t('hizliSatis.siparisOzeti', { n: sepet.length })"
+      @click="sepetDrawerAcik = true"
+    >
+      <i class="pi pi-shopping-cart" />
+      <span
+        v-if="sepet.length"
+        class="sepet-fab-adet"
+      >{{ sepet.length }}</span>
+      <strong class="sepet-fab-tutar">{{ formatCurrency(genelToplam) }}</strong>
+    </button>
+    <div
+      v-if="sepetDrawerAcik"
+      class="sepet-drawer-perde"
+      @click="sepetDrawerAcik = false"
+    />
   </div>
 
 
@@ -1023,21 +986,10 @@ import { useMarka } from '../composables/useMarka.js'
 import { useI18n } from 'vue-i18n'
 import BarcodeScannerModal from '../components/BarcodeScannerModal.vue'
 
-// REDTEAM/Faz2.2: Oneri panelinin stilini SABIT referansla ver.
-// previously `:panel-style="{ minWidth: '380px' }"` (template literal) her
-// render'da YENI bir obje olusturuyordu. PrimeVue `alignOverlay` overlay'i
-// acilista input genisligine yazar, sonraki parent re-render'inda (yani
-// kullanicinin ilk harfi tikladiginda) Vue `patchStyle` deger farkini
-// gozemedigi icin 380px'e geri yaziyordu -> panel acilir, kullanici ilk
-// harfi yazinca 380px'e "snap" olup zipliyordu.
-// Sabit referans ayni isi her render'da tekrarliyor; bkz. FaturaKalemleri.vue
-// (PANEL_STILI deseni).
-const URUN_PANEL_STILI = Object.freeze({ minWidth: '380px' })
 import PosFisOnizleme from '../components/PosFisOnizleme.vue'
 import PosSatisOzetDialog from '../components/PosSatisOzetDialog.vue'
 import PosBugunkuSatislarDialog from '../components/PosBugunkuSatislarDialog.vue'
 import PosUrunKarti from '../components/PosUrunKarti.vue'
-import PosOdemePaneli from '../components/PosOdemePaneli.vue'
 import PosOdemeOverlay from '../components/PosOdemeOverlay.vue'
 import PosSepetPaneli from '../components/PosSepetPaneli.vue'
 import PosMusteriPaneli from '../components/PosMusteriPaneli.vue'
@@ -1165,11 +1117,9 @@ const {
   otomatikYazdir,
   musteriAcik,
   sepetAcik,
-  odemeAcik,
   teslimatAcik,
   fisAcik,
   detayAcik,
-  posYeniAkis,
   kartModu,
   fisFiyatli,
   fisAltNotu,
@@ -1179,13 +1129,14 @@ const {
   sunucuAyarlariniUygula
 } = usePosTercih({ t })
 
-// Yeni akis: odeme sag panelde yigilmak yerine odakli bir katmanda (overlay)
-// acilir. Bayrak kapaliyken mevcut satir ici panel AYNEN kullanilir.
+// Odeme sag panelde yigilmak yerine odakli bir katmanda (overlay) acilir.
 const odemeOverlayAcik = ref(false)
 
+// Tablet/telefon: sepet sagda yer kaplamak yerine cekmece (drawer) olarak acilir.
+const sepetDrawerAcik = ref(false)
+
 // FAZ E: coklu sepet (park/askiya al). Birden fazla sepet paralel tutulabilir;
-// kasiyer bir musteriye gecici ara verip digerine bakabilir. Yalnizca yeni
-// akista gosterilir (posYeniAkis).
+// kasiyer bir musteriye gecici ara verip digerine bakabilir.
 const {
   parklar: sepetParklari,
   parkEt: sepetiParkEtKaydet,
@@ -1242,7 +1193,6 @@ const fisDetayRef = ref(null)
 // Panel basliklarindaki katlanir oklar. Once her biri `setItem` cagrisiyordu;
 // artik `usePosTercih` icindeki `watch` kaliciligi otomatik yapiyor.
 const sepetAcikDegistir = () => tercihDegistir('sepetAcik')
-const odemeAcikDegistir = () => tercihDegistir('odemeAcik')
 const detayAclicDegistir = () => tercihDegistir('detayAcik')
 
 const onayDialog = ref(false)
@@ -1269,7 +1219,6 @@ const scannerAcik = ref(false)
 const filtrePopover = ref(null)
 const tercihPopover = ref(null)
 const barkodInputRef = ref(null)
-const urunAraAutoRef = ref(null)
 const musteriPaneliRef = ref(null)
 const sepetListeRef = ref(null)
 // `ipucuAcik` yukarida `usePosTercih` icinden geldi.
@@ -1297,6 +1246,48 @@ const globalBarkodEkle = () => {
   globalBarkod.value = ''
   // Odak tekrar bu inputa gelsin ki USB tarayıcı kesintisiz okusun
   barkodInputRef.value?.$el?.focus?.() || barkodInputRef.value?.focus?.()
+}
+
+// --- Tek komut kutusu (barkod + urun arama + @musteri + N* miktar) ---
+// Eski iki ayri kutu (barkod + AutoComplete) tek kutuda birlesti. Ikon, icerige
+// gore degisir; yazarken canli oneri listesi acilir; Enter `komutCoz` uygular.
+const komutOnerileriAcik = ref(false)
+const komutIkonu = computed(() => {
+  const t = globalBarkod.value.trim()
+  if (t.startsWith('@')) return 'pi-user'
+  if (/^\d/.test(t)) return 'pi-barcode'
+  return 'pi-search'
+})
+const komutOnerileri = computed(() => {
+  const t = globalBarkod.value.trim()
+  return t.startsWith('@') ? musteriOnerileri.value : urunOnerileri.value
+})
+const komutAraGecikmeli = () => {
+  const q = globalBarkod.value.trim()
+  komutOnerileriAcik.value = true
+  if (q.startsWith('@')) {
+    musteriAra(q.slice(1))
+    urunOnerileri.value = []
+  } else {
+    urunOneriAra({ query: q })
+    katalogAramaGuncelle(q)
+  }
+}
+const komutBlur = () => {
+  setTimeout(() => {
+    komutOnerileriAcik.value = false
+  }, 150)
+}
+const komutSec = (o) => {
+  komutOnerileriAcik.value = false
+  if (globalBarkod.value.trim().startsWith('@')) {
+    musteriSec({ value: o })
+  } else if (stokYokMu(o)) {
+    toastBildirim.uyari(t('hizliSatis.stokYokUyari', { ad: o.ad }))
+  } else {
+    sepeteEkle(o)
+  }
+  globalBarkod.value = ''
 }
 
 const barkodTarandi = async (barkod, adet = 1) => {
@@ -1901,7 +1892,6 @@ watch(gorunenUrunler, (list) => {
 // ---------------------------------------------------------------------------
 // Önceki davranış: ara kutusu YÜKLENMİŞ 50 ürünü client-side filtreliyordu.
 // Katalog 50'yi aşınca ürünler hiç bulunamıyordu. Artık sunucu sorgulanıyor.
-const urunOneri = ref(null)
 const urunOnerileri = ref([])
 let urunOneriZamanlayici = null
 let urunOneriSeq = 0
@@ -1944,23 +1934,10 @@ const urunOneriAra = (event) => {
   }, 250)
 }
 
-const urunOneriSecildi = (event) => {
-  const u = event?.value
-  urunOneri.value = null
-  urunOnerileri.value = []
-  if (!u) return
-  if (stokYokMu(u)) {
-    toastBildirim.uyari(t('hizliSatis.stokYokUyari', { ad: u.ad }))
-    return
-  }
-  sepeteEkle(u)
-  // Ardışık ürün eklemede odak alanda kalsın.
-  nextTick(() => odaklaUrunArama())
-}
-
+// Odak, tek komut kutusuna gider (F3 / kısayol). Eski `urunAraAutoRef`
+// AutoComplete'i hedefliyordu; artik tek barkod/komut inputu var.
 const odaklaUrunArama = () => {
-  const el = urunAraAutoRef.value?.$el || urunAraAutoRef.value
-  el?.querySelector?.('input')?.focus?.()
+  barkodInputRef.value?.$el?.focus?.() || barkodInputRef.value?.focus?.()
 }
 
 // ---------------------------------------------------------------------------

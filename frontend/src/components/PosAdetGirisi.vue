@@ -8,8 +8,8 @@
       class="adet-btn"
       :disabled="azaltilamaz"
       :aria-label="t('hizliSatis.miktarAzalt')"
-      :title="t('hizliSatis.miktarAzalt')"
-      @click="$emit('azalt')"
+      :title="azaltilamaz ? t('hizliSatis.adetEnAz', { n: min }) : t('hizliSatis.miktarAzalt')"
+      @click.stop="azalt"
     >
       −
     </button>
@@ -38,8 +38,8 @@
       class="adet-btn"
       :disabled="artirilamaz"
       :aria-label="t('hizliSatis.miktarArtir')"
-      :title="t('hizliSatis.miktarArtir')"
-      @click="$emit('artir')"
+      :title="artirilamaz ? t('hizliSatis.adetStokTavan') : t('hizliSatis.miktarArtir')"
+      @click.stop="artir"
     >
       +
     </button>
@@ -165,15 +165,16 @@ defineExpose({ sec })
   gap: 2px;
 }
 .adet-btn {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg-muted);
+  border-radius: 8px;
+  background: var(--bg-secondary);
   color: var(--text-primary);
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1;
   cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 .adet-btn:hover:not(:disabled) {
   background: var(--accent);
@@ -181,18 +182,18 @@ defineExpose({ sec })
   border-color: var(--accent);
 }
 .adet-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 .adet-girdi {
-  width: 56px;
-  height: 28px;
+  width: 64px;
+  height: 36px;
   padding: 0 4px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--bg-card, #fff);
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 14px;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }

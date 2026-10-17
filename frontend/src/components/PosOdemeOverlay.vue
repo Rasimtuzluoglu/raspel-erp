@@ -2,12 +2,24 @@
   <Dialog
     :visible="gorunur"
     modal
-    :header="t('hizliSatis.odeme')"
     class="pos-odeme-overlay"
     :style="{ width: '640px', maxWidth: '96vw' }"
     :dismissable-mask="false"
     @update:visible="$emit('update:gorunur', $event)"
   >
+    <template #header>
+      <div class="odeme-baslik">
+        <div class="odeme-baslik-metin">
+          <i class="pi pi-wallet" />
+          <span>{{ t('hizliSatis.odeme') }}</span>
+        </div>
+        <div class="odeme-baslik-tutar">
+          <span>{{ t('hizliSatis.genelToplam') }}</span>
+          <strong>{{ formatCurrency(genelToplam) }}</strong>
+        </div>
+      </div>
+    </template>
+
     <div class="odeme-overlay-icerik">
       <!-- NAKIT: hizli tutar girisi icin tuş takimi. Diger yontemlerde
            gereksiz oldugu icin gizlenir; mevcut panel zaten tum alanlari sunar. -->
@@ -61,19 +73,30 @@
     </div>
 
     <template #footer>
-      <Button
-        :label="t('common.cancel')"
-        icon="pi pi-times"
-        severity="secondary"
-        text
-        @click="$emit('update:gorunur', false)"
-      />
-      <Button
-        :label="t('hizliSatis.satisiTamamla')"
-        icon="pi pi-check"
-        severity="success"
-        @click="$emit('tamamla')"
-      />
+      <div class="odeme-footer">
+        <div
+          v-if="kalanTutar > 0"
+          class="odeme-footer-kalan"
+        >
+          <span>{{ t('hizliSatis.kalan') }}:</span>
+          <strong>{{ formatCurrency(kalanTutar) }}</strong>
+        </div>
+        <div class="odeme-footer-btnler">
+          <Button
+            :label="t('common.cancel')"
+            severity="secondary"
+            text
+            @click="$emit('update:gorunur', false)"
+          />
+          <Button
+            :label="t('hizliSatis.satisiTamamla')"
+            icon="pi pi-check"
+            severity="success"
+            class="odeme-tamamla-btn"
+            @click="$emit('tamamla')"
+          />
+        </div>
+      </div>
     </template>
   </Dialog>
 </template>
@@ -115,6 +138,8 @@ const attr = (ad) => {
 const alinanNakit = computed(() => sayi(attr('alinanNakit')))
 const odemeYontemi = computed(() => attr('odemeYontemi'))
 const odemeDurumu = computed(() => attr('odemeDurumu'))
+const genelToplam = computed(() => sayi(attr('genelToplam')))
+const kalanTutar = computed(() => sayi(attr('kalanTutar')))
 const nakitAktif = computed(
   () => odemeDurumu.value !== 'yok' && odemeYontemi.value === 'NAKIT'
 )
@@ -147,6 +172,42 @@ const geriAl = () => {
   flex-direction: column;
   gap: 16px;
 }
+.odeme-baslik {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+.odeme-baslik-metin {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+.odeme-baslik-metin i {
+  color: var(--accent);
+  font-size: 16px;
+}
+.odeme-baslik-tutar {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.odeme-baslik-tutar span {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.odeme-baslik-tutar strong {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
 .odeme-keypad {
   border: 1px solid var(--border, #e2e8f0);
   border-radius: var(--pos-alan-radius, 12px);
@@ -174,15 +235,15 @@ const geriAl = () => {
 .keypad-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 10px;
 }
 .keypad-tus {
-  min-height: 48px;
+  min-height: 52px;
   border: 1px solid var(--border, #e2e8f0);
   border-radius: 10px;
   background: var(--bg-card, #fff);
   color: var(--text-primary);
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 700;
   cursor: pointer;
   font-variant-numeric: tabular-nums;
@@ -206,5 +267,33 @@ const geriAl = () => {
 .odeme-detay {
   border-top: 1px solid var(--border, #e2e8f0);
   padding-top: 12px;
+}
+.odeme-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+.odeme-footer-kalan {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.odeme-footer-kalan strong {
+  color: var(--danger, #ef4444);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.odeme-footer-btnler {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.odeme-tamamla-btn {
+  min-width: 160px;
 }
 </style>
