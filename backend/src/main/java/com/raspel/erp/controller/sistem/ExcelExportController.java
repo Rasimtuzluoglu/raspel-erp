@@ -52,6 +52,7 @@ public class ExcelExportController {
     private final AuditLogService auditLogService;
     private final MuhasebeService muhasebeService;
     private final com.raspel.erp.service.sistem.RaporService raporService;
+    private final com.raspel.erp.service.ticaret.SiparisTakipService siparisTakipService;
 
     @GetMapping("/kdv-beyanname")
     @Operation(summary = "KDV beyannamesini Excel dışa aktar",
@@ -294,6 +295,35 @@ public class ExcelExportController {
         net.put("Tur", "NET"); net.put("Kod", ""); net.put("Hesap", "Net Kâr/Zarar"); net.put("Tutar", kz.getNetKar());
         rows.add(net);
         return excel("KarZarar", new String[]{"Tur", "Kod", "Hesap", "Tutar"}, rows);
+    }
+
+    @GetMapping("/siparis-takip")
+    @Operation(summary = "Sipariş takip zincirini Excel dışa aktar", description = "Filtrelenen sipariş üretim→sevk→teslimat zincirini Excel olarak dışa aktarır")
+    public ResponseEntity<byte[]> siparisTakip(
+            HttpServletRequest request,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) String sofor) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        var list = siparisTakipService.filtreliZincir(sirketId, q, durum, sofor, false, false, MAX_EXPORT_PAGE).getContent();
+        List<Map<String, Object>> rows = list.stream().map(s -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("Sipariş No", s.getSiparisNo());
+            m.put("Cari", s.getCariAd());
+            m.put("Sipariş Durum", s.getSiparisDurum());
+            m.put("Şoför", s.getDriverAd());
+            m.put("Üretim Durum", s.getUretimDurum());
+            m.put("Üretim Adet", s.getUretimSayisi());
+            m.put("Sevk Durum", s.getSevkDurum());
+            m.put("Sevk Adet", s.getSevkSayisi());
+            m.put("Teslimat Durum", s.getTeslimatDurum());
+            m.put("Beklenen Teslim", s.getBeklenenTeslimTarihi());
+            m.put("Gecikti", s.isTeslimatGecikti() ? "Evet" : "Hayır");
+            return m;
+        }).toList();
+        return excel("SiparisTakip", new String[]{"Sipariş No", "Cari", "Sipariş Durum", "Şoför",
+                "Üretim Durum", "Üretim Adet", "Sevk Durum", "Sevk Adet", "Teslimat Durum",
+                "Beklenen Teslim", "Gecikti"}, rows);
     }
 
     private ResponseEntity<byte[]> excel(String name, String[] cols, List<Map<String, Object>> rows) {

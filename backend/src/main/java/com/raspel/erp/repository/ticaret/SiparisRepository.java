@@ -30,16 +30,24 @@ public interface SiparisRepository extends JpaRepository<Siparis, Long> {
     // Siparis takip: sunucu tarafli filtre + sayfalama. ONCEDEN sabit ilk 200
     // siparis cekiliyordu; daha eski kayitlar gorunmuyor ve filtre yoktu.
     // LDESTEK: `:q` ham terim DEGIL, `AramaTemizleyici.like(q)` desenidir.
-    // `LOWER(CONCAT('%', :q, '%'))` PostgreSQL'de lower(bytea) hatasi veriyordu.
+    // `geciken`: beklenen teslim tarihi gecmis siparisler.
+    // `uretimde`: tamamlanmamis uretim emri bulunan siparisler.
     @Query("SELECT s FROM Siparis s WHERE s.sirketId = :sirketId " +
            "AND (:durum IS NULL OR s.durum = :durum) " +
            "AND (:sofor IS NULL OR s.driverAd = :sofor) " +
            "AND (:q IS NULL OR LOWER(s.siparisNo) LIKE :q ESCAPE '\\') " +
-           "ORDER BY s.tarih DESC, s.id DESC")
+           "AND (:geciken = false OR EXISTS (SELECT t.id FROM Teslimat t WHERE t.siparisId = s.id " +
+           "  AND t.beklenenTeslimTarihi IS NOT NULL AND t.beklenenTeslimTarihi < :bugun " +
+           "  AND t.durum NOT IN ('TESLIM_EDILDI', 'IPTAL'))) " +
+           "AND (:uretimde = false OR EXISTS (SELECT e.id FROM UretimEmri e WHERE e.siparisId = s.id " +
+           "  AND e.durum <> 'TAMAMLANDI'))")
     Page<Siparis> filtreliGetir(@Param("sirketId") Long sirketId,
                                 @Param("q") String q,
                                 @Param("durum") String durum,
                                 @Param("sofor") String sofor,
+                                @Param("geciken") Boolean geciken,
+                                @Param("uretimde") Boolean uretimde,
+                                @Param("bugun") LocalDate bugun,
                                 Pageable pageable);
 
     @Query("SELECT DISTINCT s.driverAd FROM Siparis s WHERE s.sirketId = :sirketId " +
@@ -47,4 +55,7 @@ public interface SiparisRepository extends JpaRepository<Siparis, Long> {
     List<String> findDistinctDriverAd(@Param("sirketId") Long sirketId);
 
     long countByCariHesapId(Long cariHesapId);
+
+    /** KPI özeti: şirketin toplam sipariş sayısı. */
+    long countBySirketId(Long sirketId);
 }

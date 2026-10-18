@@ -35,13 +35,14 @@ public class SiparisTakipService {
 
     @Transactional(readOnly = true)
     public org.springframework.data.domain.Page<SiparisTakipDTO> filtreliZincir(
-            Long sirketId, String q, String durum, String sofor,
+            Long sirketId, String q, String durum, String sofor, Boolean geciken, Boolean uretimde,
             org.springframework.data.domain.Pageable pageable) {
         String qq = com.raspel.erp.util.AramaTemizleyici.like(q);
         String dd = (durum == null || durum.isBlank()) ? null : durum.trim();
         String ss = (sofor == null || sofor.isBlank()) ? null : sofor.trim();
-        org.springframework.data.domain.Page<Siparis> sayfa =
-                siparisRepository.filtreliGetir(sirketId, qq, dd, ss, pageable);
+        org.springframework.data.domain.Page<Siparis> sayfa = siparisRepository.filtreliGetir(
+                sirketId, qq, dd, ss, Boolean.TRUE.equals(geciken), Boolean.TRUE.equals(uretimde),
+                java.time.LocalDate.now(), pageable);
         List<SiparisTakipDTO> icerik = zenginlestir(sirketId, sayfa.getContent());
         return new org.springframework.data.domain.PageImpl<>(icerik, pageable, sayfa.getTotalElements());
     }
@@ -49,6 +50,25 @@ public class SiparisTakipService {
     @Transactional(readOnly = true)
     public List<String> soforler(Long sirketId) {
         return siparisRepository.findDistinctDriverAd(sirketId);
+    }
+
+    /**
+     * Sipariş Takibi KPI özeti: durum bazlı sipariş sayıları + geciken teslimat.
+     */
+    @Transactional(readOnly = true)
+    public com.raspel.erp.dto.ticaret.SiparisTakipOzetDTO ozet(Long sirketId) {
+        if (sirketId == null) {
+            return com.raspel.erp.dto.ticaret.SiparisTakipOzetDTO.builder().build();
+        }
+        return com.raspel.erp.dto.ticaret.SiparisTakipOzetDTO.builder()
+                .toplam(siparisRepository.countBySirketId(sirketId))
+                .bekleyen(siparisRepository.countBySirketIdAndDurumNotIn(sirketId, List.of("TESLIM_EDILDI", "IPTAL")))
+                .uretimde(uretimEmriRepository.countDistinctSiparisAktif(sirketId, "TAMAMLANDI"))
+                .sevkte(siparisRepository.countBySirketIdAndDurum(sirketId, "YOLDA"))
+                .teslimEdildi(siparisRepository.countBySirketIdAndDurum(sirketId, "TESLIM_EDILDI"))
+                .iptal(siparisRepository.countBySirketIdAndDurum(sirketId, "IPTAL"))
+                .geciken(teslimatRepository.countGecikenDistinctSiparis(sirketId, java.time.LocalDate.now()))
+                .build();
     }
 
     private List<SiparisTakipDTO> zenginlestir(Long sirketId, List<Siparis> siparisler) {

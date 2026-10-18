@@ -28,4 +28,13 @@ public interface TeslimatRepository extends JpaRepository<Teslimat, Long> {
     /** Fatura listelerinde "teslimati var" bayragi icin tek sorguda fatura id'leri. */
     @Query("SELECT t.faturaId FROM Teslimat t WHERE t.faturaId IN :faturaIdler")
     List<Long> findFaturaIdByFaturaIdIn(@Param("faturaIdler") java.util.Collection<Long> faturaIdler);
+
+    /**
+     * KPI özeti: beklenen teslim tarihi geçmiş, teslim edilmemiş/iptal edilmemiş
+     * sipariş sayısı (distinct).
+     */
+    @Query("SELECT COUNT(DISTINCT t.siparisId) FROM Teslimat t WHERE t.sirketId = :sirketId " +
+           "AND t.beklenenTeslimTarihi IS NOT NULL AND t.beklenenTeslimTarihi < :tarih " +
+           "AND t.durum NOT IN ('TESLIM_EDILDI', 'IPTAL')")
+    long countGecikenDistinctSiparis(@Param("sirketId") Long sirketId, @Param("tarih") LocalDate tarih);
 }

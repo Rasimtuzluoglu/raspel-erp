@@ -6,6 +6,13 @@
     >
       <template #actions>
         <Button
+          :label="t('siparisTakip.excel')"
+          icon="pi pi-file-excel"
+          class="p-button-outlined"
+          :loading="excelYukleniyor"
+          @click="excelIndir"
+        />
+        <Button
           icon="pi pi-refresh"
           :aria-label="t('common.refresh')"
           class="p-button-text p-button-sm"
@@ -13,6 +20,52 @@
         />
       </template>
     </PageHeader>
+
+    <!-- KPI ozeti -->
+    <div class="kpi-grid">
+      <KpiKart
+        :baslik="t('siparisTakip.kpiToplam')"
+        :deger="ozet.toplam"
+        ikon="pi pi-shopping-cart"
+        :para-birimi="false"
+        renk="#3b82f6"
+      />
+      <KpiKart
+        :baslik="t('siparisTakip.kpiBekleyen')"
+        :deger="ozet.bekleyen"
+        ikon="pi pi-clock"
+        :para-birimi="false"
+        renk="#f59e0b"
+      />
+      <KpiKart
+        :baslik="t('siparisTakip.kpiUretimde')"
+        :deger="ozet.uretimde"
+        ikon="pi pi-cog"
+        :para-birimi="false"
+        renk="#8b5cf6"
+      />
+      <KpiKart
+        :baslik="t('siparisTakip.kpiSevkte')"
+        :deger="ozet.sevkte"
+        ikon="pi pi-truck"
+        :para-birimi="false"
+        renk="#0ea5e9"
+      />
+      <KpiKart
+        :baslik="t('siparisTakip.kpiTeslim')"
+        :deger="ozet.teslimEdildi"
+        ikon="pi pi-check-circle"
+        :para-birimi="false"
+        renk="#10b981"
+      />
+      <KpiKart
+        :baslik="t('siparisTakip.kpiGeciken')"
+        :deger="ozet.geciken"
+        ikon="pi pi-exclamation-triangle"
+        :para-birimi="false"
+        renk="#ef4444"
+      />
+    </div>
 
     <!-- Filtre çubuğu: sipariş no, durum, şoför -->
     <div class="takip-filtre">
@@ -32,7 +85,7 @@
         :placeholder="t('siparisTakip.durumFiltre')"
         show-clear
         class="filtre-select"
-        @change="filtreDegisti"
+        @change="filtreCipSenkron"
       />
       <Dropdown
         v-model="filtreSofor"
@@ -45,6 +98,14 @@
         class="filtre-select"
         @change="filtreDegisti"
       />
+      <Dropdown
+        v-model="sirala"
+        :options="siralamaSecenekleri"
+        option-label="ad"
+        option-value="deger"
+        class="filtre-select"
+        @change="filtreDegisti"
+      />
       <Button
         :label="t('denetim.temizle')"
         icon="pi pi-filter-slash"
@@ -53,23 +114,37 @@
       />
     </div>
 
+    <!-- Hizli filtre cipleri -->
+    <div class="takip-cipler">
+      <button
+        v-for="c in hizliCiplar"
+        :key="c.deger"
+        type="button"
+        class="takip-cip"
+        :class="{ aktif: hizliFiltre === c.deger }"
+        @click="hizliFiltreUygula(c.deger)"
+      >
+        <i :class="c.ikon" /> {{ c.ad }}
+      </button>
+    </div>
+
     <div
       v-if="yukleniyor"
       class="bos"
     >
       {{ t('common.loading') }}
     </div>
-    <div
+    <EmptyState
       v-else-if="!satirlar.length"
-      class="bos"
-    >
-      {{ filtreVar ? t('siparisTakip.filtreBos') : t('siparisTakip.bos') }}
-    </div>
+      icon="pi pi-shopping-cart"
+      :message="filtreVar ? t('siparisTakip.filtreBos') : t('siparisTakip.bos')"
+    />
 
     <div
       v-for="s in satirlar"
       :key="s.siparisId"
-      class="takip-kart"
+      class="takip-kart tiklanabilir"
+      @click="satirAc(s)"
     >
       <div class="kart-ust">
         <strong>{{ s.siparisNo }}</strong>
@@ -88,7 +163,7 @@
           icon="pi pi-cog"
           class="p-button-sm p-button-outlined uretim-buton"
           :loading="emirOlusturuluyor === s.siparisId"
-          @click="uretimEmriSor(s)"
+          @click.stop="uretimEmriSor(s)"
         />
       </div>
 
@@ -98,7 +173,7 @@
           class="adim"
           :class="{ tamam: siparisTamam(s) }"
         >
-          <i class="pi pi-file" />
+          <i :class="siparisTamam(s) ? 'pi pi-check' : 'pi pi-file'" />
           <span>{{ t('siparisTakip.siparis') }}</span>
           <Tag
             :value="durumEtiket(s.siparisDurum)"
@@ -114,7 +189,7 @@
           class="adim"
           :class="{ tamam: uretimTamam(s) }"
         >
-          <i class="pi pi-cog" />
+          <i :class="uretimTamam(s) ? 'pi pi-check' : 'pi pi-cog'" />
           <span>{{ t('siparisTakip.uretim') }}</span>
           <Tag
             v-if="s.uretimDurum"
@@ -140,7 +215,7 @@
           class="adim"
           :class="{ tamam: sevkTamam(s) }"
         >
-          <i class="pi pi-truck" />
+          <i :class="sevkTamam(s) ? 'pi pi-check' : 'pi pi-truck'" />
           <span>{{ t('siparisTakip.sevk') }}</span>
           <Tag
             v-if="s.sevkDurum"
@@ -166,7 +241,7 @@
           class="adim"
           :class="{ tamam: s.teslimatDurum === 'TESLIM_EDILDI' }"
         >
-          <i class="pi pi-map-marker" />
+          <i :class="s.teslimatDurum === 'TESLIM_EDILDI' ? 'pi pi-check' : 'pi pi-map-marker'" />
           <span>{{ t('siparisTakip.teslimat') }}</span>
           <Tag
             v-if="s.teslimatDurum"
@@ -199,38 +274,103 @@
       :rows-per-page-options="[10, 25, 50]"
       @page="sayfaDegisti"
     />
+
+    <SiparisTakipDetayDrawer
+      v-model:visible="detayDrawer"
+      :satir="seciliSatir"
+      @uretim-emri="uretimEmriSor"
+      @git="detayaGit"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { siparisTakipAPI, uretimAPI } from '../api/index.js'
+import { useRouter } from 'vue-router'
+import { siparisTakipAPI, uretimAPI, excelAPI } from '../api/index.js'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
+import KpiKart from '../components/KpiKart.vue'
+import EmptyState from '../components/EmptyState.vue'
+import SiparisTakipDetayDrawer from '../components/SiparisTakipDetayDrawer.vue'
 import { useI18n } from 'vue-i18n'
 import { formatTarih } from '../utils/format.js'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
+const router = useRouter()
 const { t } = useI18n()
 
 const satirlar = ref([])
 const toplam = ref(0)
 const sayfa = ref(0)
-const sayfaBoyutu = ref(25)
+const SAYFA_BOYUTU_ANAHTAR = 'raspel_siparis_takip_sayfa_boyutu'
+const sayfaBoyutu = ref(Number(localStorage.getItem(SAYFA_BOYUTU_ANAHTAR)) || 25)
 const yukleniyor = ref(false)
+const excelYukleniyor = ref(false)
 const emirOlusturuluyor = ref(null)
+const detayDrawer = ref(false)
+const seciliSatir = ref(null)
+
+const satirAc = (s) => {
+  seciliSatir.value = s
+  detayDrawer.value = true
+}
+const detayaGit = (name) => {
+  detayDrawer.value = false
+  router.push({ name })
+}
 
 const filtreQ = ref('')
 const filtreDurum = ref(null)
 const filtreSofor = ref(null)
+const hizliFiltre = ref('TUMU')
+const sirala = ref('tarih,desc')
 let aramaZaman = null
 
 const soforListesi = ref([])
 
+// KPI ozeti.
+const ozet = ref({ toplam: 0, bekleyen: 0, uretimde: 0, sevkte: 0, teslimEdildi: 0, geciken: 0, iptal: 0 })
+const ozetYukle = async () => {
+  try {
+    const r = await siparisTakipAPI.ozet()
+    ozet.value = { ...ozet.value, ...(r.data || {}) }
+  } catch {
+    /* ozet alinamazsa KPI sifirda kalir */
+  }
+}
+
+const siralamaSecenekleri = computed(() => [
+  { ad: t('siparisTakip.siralaTarih'), deger: 'tarih,desc' },
+  { ad: t('siparisTakip.siralaNo'), deger: 'siparisNo,asc' }
+])
+
+// Hizli filtre cipleri (sunucu tarafi).
+const hizliCiplar = computed(() => [
+  { deger: 'TUMU', ad: t('siparisTakip.cipTumu'), ikon: 'pi pi-list' },
+  { deger: 'GECIKEN', ad: t('siparisTakip.cipGeciken'), ikon: 'pi pi-exclamation-triangle' },
+  { deger: 'URETIM', ad: t('siparisTakip.cipUretimde'), ikon: 'pi pi-cog' },
+  { deger: 'SEVK', ad: t('siparisTakip.cipSevkte'), ikon: 'pi pi-truck' },
+  { deger: 'TESLIM', ad: t('siparisTakip.cipTeslim'), ikon: 'pi pi-check-circle' }
+])
+
+const hizliFiltreUygula = (deger) => {
+  hizliFiltre.value = deger
+  filtreDurum.value = null
+  sayfa.value = 0
+  yukle()
+}
+
+// Durum dropdown'i elle degisirse cip "Tumu"ya doner.
+const filtreCipSenkron = () => {
+  hizliFiltre.value = filtreDurum.value ? 'DURUM' : 'TUMU'
+  filtreDegisti()
+}
+
 // Sipariş seviyesindeki durumlar (filtre için).
-const SIPARIS_DURUMLARI = ['TEKLIF', 'SIPARIS', 'BEKLIYOR', 'HAZIRLANIYOR', 'YOLDA', 'TESLIM_EDILDI', 'FATURA_KESILDI', 'IPTAL']
+const SIPARIS_DURUMLARI = ['TASLAK', 'TEKLIF', 'SIPARIS', 'BEKLIYOR', 'HAZIRLANIYOR', 'YOLDA', 'TESLIM_EDILDI', 'FATURA_KESILDI', 'IPTAL']
 const durumSecenekleri = computed(() => SIPARIS_DURUMLARI.map((d) => ({ ad: durumEtiket(d), deger: d })))
 const soforSecenekleri = computed(() => soforListesi.value.map((s) => ({ ad: s, deger: s })))
 
@@ -283,20 +423,56 @@ const uretimEmriOlustur = async (s) => {
   }
 }
 
+// Liste ve Excel'in paylastigi filtre parametreleri.
+const filtreParams = () => {
+  const params = {}
+  if (filtreQ.value?.trim()) params.q = filtreQ.value.trim()
+  if (filtreDurum.value) params.durum = filtreDurum.value
+  if (filtreSofor.value) params.sofor = filtreSofor.value
+  if (hizliFiltre.value === 'GECIKEN') params.geciken = true
+  if (hizliFiltre.value === 'URETIM') params.uretimde = true
+  if (hizliFiltre.value === 'SEVK') params.durum = 'YOLDA'
+  if (hizliFiltre.value === 'TESLIM') params.durum = 'TESLIM_EDILDI'
+  return params
+}
+
 const yukle = async () => {
   yukleniyor.value = true
   try {
-    const params = { page: sayfa.value, size: sayfaBoyutu.value }
-    if (filtreQ.value?.trim()) params.q = filtreQ.value.trim()
-    if (filtreDurum.value) params.durum = filtreDurum.value
-    if (filtreSofor.value) params.sofor = filtreSofor.value
-    const r = await siparisTakipAPI.zincir(params)
+    const r = await siparisTakipAPI.zincir({
+      page: sayfa.value,
+      size: sayfaBoyutu.value,
+      sort: sirala.value,
+      ...filtreParams()
+    })
     satirlar.value = r.data?.content || unwrapList(r)
     toplam.value = r.data?.totalElements ?? satirlar.value.length
   } catch {
     toastBildirim.hata(t('siparisTakip.hataYukleme'))
   }
   yukleniyor.value = false
+}
+
+const excelIndir = async () => {
+  excelYukleniyor.value = true
+  try {
+    const res = await excelAPI.siparisTakip(filtreParams())
+    const url = window.URL.createObjectURL(
+      new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    )
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `siparis-takip-${new Date().toISOString().slice(0, 10)}.xlsx`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+    toastBildirim.basarili(t('siparisTakip.excelIndirildi'))
+  } catch {
+    toastBildirim.hata(t('siparisTakip.excelHata'))
+  } finally {
+    excelYukleniyor.value = false
+  }
 }
 
 const soforleriYukle = async () => {
@@ -320,6 +496,8 @@ const filtreTemizle = () => {
   filtreQ.value = ''
   filtreDurum.value = null
   filtreSofor.value = null
+  hizliFiltre.value = 'TUMU'
+  sirala.value = 'tarih,desc'
   sayfa.value = 0
   yukle()
 }
@@ -327,12 +505,14 @@ const filtreTemizle = () => {
 const sayfaDegisti = (e) => {
   sayfa.value = e.page
   sayfaBoyutu.value = e.rows
+  localStorage.setItem(SAYFA_BOYUTU_ANAHTAR, String(e.rows))
   yukle()
 }
 
 onMounted(() => {
   soforleriYukle()
   yukle()
+  ozetYukle()
 })
 </script>
 
@@ -418,5 +598,69 @@ onMounted(() => {
 }
 .ok {
   color: var(--text-muted);
+}
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+  gap: 12px;
+}
+.takip-cipler {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.takip-cip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.takip-cip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.takip-cip.aktif {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.tiklanabilir {
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.tiklanabilir:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+.adim.aktif {
+  opacity: 1;
+  border-color: var(--accent);
+}
+
+/* Mobil: filtreler ve kart aksiyonlari tam genislik. */
+@media (max-width: 640px) {
+  .takip-filtre .filtre-arama,
+  .takip-filtre .filtre-select {
+    min-width: 100%;
+  }
+  .uretim-buton {
+    margin-left: 0;
+    width: 100%;
+  }
+  .adimlar {
+    gap: 6px;
+  }
+  .adim {
+    font-size: 12px;
+    padding: 5px 8px;
+  }
 }
 </style>

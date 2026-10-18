@@ -65,6 +65,8 @@ class ExcelExportControllerTest {
     private MuhasebeService muhasebeService;
     @MockBean
     private com.raspel.erp.service.sistem.RaporService raporService;
+    @MockBean
+    private com.raspel.erp.service.ticaret.SiparisTakipService siparisTakipService;
 
     @Test
     void cariHesaplar_excelDoner() throws Exception {
@@ -105,5 +107,16 @@ class ExcelExportControllerTest {
         org.junit.jupiter.api.Assertions.assertFalse(sonuc.contains("\n"));
         org.junit.jupiter.api.Assertions.assertFalse(sonuc.contains(";"));
         org.junit.jupiter.api.Assertions.assertFalse(sonuc.contains("/"));
+    }
+
+    @Test
+    void siparisTakip_excelDoner() throws Exception {
+        when(siparisTakipService.filtreliZincir(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new PageImpl<>(List.of(com.raspel.erp.dto.ticaret.SiparisTakipDTO.builder()
+                        .siparisId(1L).siparisNo("SP-1").siparisDurum("YOLDA").build())));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/siparis-takip").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk());
     }
 }

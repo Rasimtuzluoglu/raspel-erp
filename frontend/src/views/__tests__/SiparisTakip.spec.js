@@ -33,7 +33,12 @@ vi.mock('../../api/index.js', () => ({
         }
       })
     ),
-    soforler: vi.fn(() => Promise.resolve({ data: [] }))
+    soforler: vi.fn(() => Promise.resolve({ data: [] })),
+    ozet: vi.fn(() =>
+      Promise.resolve({
+        data: { toplam: 1, bekleyen: 1, uretimde: 0, sevkte: 0, teslimEdildi: 0, geciken: 0, iptal: 0 }
+      })
+    )
   },
   uretimAPI: {
     siparistenEmir: vi.fn(() => Promise.resolve({ data: [{ id: 1 }, { id: 2 }] }))
@@ -52,7 +57,10 @@ const stubs = {
   Tag: true,
   IconField: { template: '<div><slot /></div>' },
   InputIcon: true,
-  InputText: true
+  InputText: true,
+  KpiKart: true,
+  EmptyState: true,
+  Drawer: true
 }
 
 describe('SiparisTakip.vue', () => {
@@ -75,7 +83,7 @@ describe('SiparisTakip.vue', () => {
   it('zincir uç noktasını sayfalama parametreleriyle çağırır', async () => {
     kur()
     await flushPromises()
-    expect(siparisTakipAPI.zincir).toHaveBeenCalledWith({ page: 0, size: 25 })
+    expect(siparisTakipAPI.zincir).toHaveBeenCalledWith({ page: 0, size: 25, sort: 'tarih,desc' })
     expect(siparisTakipAPI.soforler).toHaveBeenCalled()
   })
 

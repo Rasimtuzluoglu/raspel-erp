@@ -63,6 +63,9 @@ export const excelAPI = {
   stoklar() {
     return apiClient.get('/exports/stoklar', { responseType: 'blob' })
   },
+  siparisTakip(params) {
+    return apiClient.get('/exports/siparis-takip', { params, responseType: 'blob' })
+  },
   personel() {
     return apiClient.get('/exports/personel', { responseType: 'blob' })
   },

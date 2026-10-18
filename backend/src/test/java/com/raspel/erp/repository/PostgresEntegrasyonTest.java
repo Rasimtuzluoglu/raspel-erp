@@ -339,10 +339,10 @@ class PostgresEntegrasyonTest {
     void siparis_filtreliGetir_nullVeDoluAramaCalisir() {
         Long sirket = sirketOlustur("Siparis Arama Firma");
         // Veri eklemeye gerek yok; hata prepare asamasinda olusur.
-        assertDoesNotThrow(() -> siparisRepository.filtreliGetir(sirket, null, null, null,
-                org.springframework.data.domain.PageRequest.of(0, 10)));
-        assertDoesNotThrow(() -> siparisRepository.filtreliGetir(sirket, AramaTemizleyici.like("abc"), null, null,
-                org.springframework.data.domain.PageRequest.of(0, 10)));
+        assertDoesNotThrow(() -> siparisRepository.filtreliGetir(sirket, null, null, null, false, false,
+                java.time.LocalDate.now(), org.springframework.data.domain.PageRequest.of(0, 10)));
+        assertDoesNotThrow(() -> siparisRepository.filtreliGetir(sirket, AramaTemizleyici.like("abc"), null, null, false, false,
+                java.time.LocalDate.now(), org.springframework.data.domain.PageRequest.of(0, 10)));
     }
 
     @Test

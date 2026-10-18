@@ -38,7 +38,7 @@ class SiparisTakipServiceTest {
     @Test
     void zincir_siparisinUretimSevkTeslimatDurumunuDoldurur() {
         Siparis s = Siparis.builder().id(1L).siparisNo("SP-1").durum("ONAYLANDI").cariHesapId(7L).tarih(LocalDate.now()).build();
-        when(siparisRepository.filtreliGetir(eq(1L), isNull(), isNull(), isNull(), any(PageRequest.class)))
+        when(siparisRepository.filtreliGetir(eq(1L), isNull(), isNull(), isNull(), anyBoolean(), anyBoolean(), any(LocalDate.class), any(PageRequest.class)))
                 .thenReturn(new PageImpl<>(List.of(s)));
 
         when(uretimEmriRepository.findBySirketIdAndSiparisIdIn(eq(1L), any()))
@@ -50,7 +50,7 @@ class SiparisTakipServiceTest {
         when(cariHesapRepository.findAllById(any())).thenReturn(List.of(
                 com.raspel.erp.entity.finans.CariHesap.builder().id(7L).ad("A Ltd").build()));
 
-        var sayfa = takipService.filtreliZincir(1L, null, null, null, PageRequest.of(0, 25));
+        var sayfa = takipService.filtreliZincir(1L, null, null, null, null, null, PageRequest.of(0, 25));
         List<SiparisTakipDTO> sonuc = sayfa.getContent();
 
         assertEquals(1, sonuc.size());
@@ -63,9 +63,37 @@ class SiparisTakipServiceTest {
 
     @Test
     void zincir_bosSiparisListesindeBosDoner() {
-        when(siparisRepository.filtreliGetir(eq(1L), isNull(), isNull(), isNull(), any(PageRequest.class)))
+        when(siparisRepository.filtreliGetir(eq(1L), isNull(), isNull(), isNull(), anyBoolean(), anyBoolean(), any(LocalDate.class), any(PageRequest.class)))
                 .thenReturn(new PageImpl<>(List.of()));
 
-        assertTrue(takipService.filtreliZincir(1L, null, null, null, PageRequest.of(0, 25)).getContent().isEmpty());
+        assertTrue(takipService.filtreliZincir(1L, null, null, null, null, null, PageRequest.of(0, 25)).getContent().isEmpty());
+    }
+
+    @Test
+    void ozet_sayimlariDondurur() {
+        when(siparisRepository.countBySirketId(1L)).thenReturn(10L);
+        when(siparisRepository.countBySirketIdAndDurumNotIn(eq(1L), any())).thenReturn(6L);
+        when(uretimEmriRepository.countDistinctSiparisAktif(1L, "TAMAMLANDI")).thenReturn(3L);
+        when(siparisRepository.countBySirketIdAndDurum(1L, "YOLDA")).thenReturn(2L);
+        when(siparisRepository.countBySirketIdAndDurum(1L, "TESLIM_EDILDI")).thenReturn(3L);
+        when(siparisRepository.countBySirketIdAndDurum(1L, "IPTAL")).thenReturn(1L);
+        when(teslimatRepository.countGecikenDistinctSiparis(eq(1L), any(LocalDate.class))).thenReturn(2L);
+
+        var ozet = takipService.ozet(1L);
+
+        assertEquals(10, ozet.getToplam());
+        assertEquals(6, ozet.getBekleyen());
+        assertEquals(3, ozet.getUretimde());
+        assertEquals(2, ozet.getSevkte());
+        assertEquals(3, ozet.getTeslimEdildi());
+        assertEquals(1, ozet.getIptal());
+        assertEquals(2, ozet.getGeciken());
+    }
+
+    @Test
+    void ozet_sirketYoksaSifirDoner() {
+        var ozet = takipService.ozet(null);
+        assertEquals(0, ozet.getToplam());
+        verifyNoInteractions(siparisRepository);
     }
 }

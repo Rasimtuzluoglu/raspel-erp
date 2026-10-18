@@ -32,9 +32,11 @@ public class SiparisTakipController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String durum,
             @RequestParam(required = false) String sofor,
-            @PageableDefault(size = 25) Pageable pageable) {
+            @RequestParam(required = false) Boolean geciken,
+            @RequestParam(required = false) Boolean uretimde,
+            @PageableDefault(size = 25, sort = {"tarih"}, direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(takipService.filtreliZincir(sirketId, q, durum, sofor, pageable));
+        return ResponseEntity.ok(takipService.filtreliZincir(sirketId, q, durum, sofor, geciken, uretimde, pageable));
     }
 
     @GetMapping("/soforler")
@@ -42,5 +44,12 @@ public class SiparisTakipController {
     public ResponseEntity<List<String>> soforler(HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(takipService.soforler(sirketId));
+    }
+
+    @GetMapping("/ozet")
+    @Operation(summary = "Sipariş takip özeti", description = "Durum bazlı sipariş sayıları + geciken teslimat (KPI).")
+    public ResponseEntity<com.raspel.erp.dto.ticaret.SiparisTakipOzetDTO> ozet(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(takipService.ozet(sirketId));
     }
 }

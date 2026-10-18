@@ -27,4 +27,9 @@ public interface UretimEmriRepository extends JpaRepository<UretimEmri, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT e FROM UretimEmri e WHERE e.id = :id")
     Optional<UretimEmri> findByIdForUpdate(@Param("id") Long id);
+
+    /** KPI özeti: aktif (tamamlanmamış) üretim emri bulunan sipariş sayısı. */
+    @Query("SELECT COUNT(DISTINCT e.siparisId) FROM UretimEmri e " +
+           "WHERE e.sirketId = :sirketId AND e.siparisId IS NOT NULL AND e.durum <> :durum")
+    long countDistinctSiparisAktif(@Param("sirketId") Long sirketId, @Param("durum") String durum);
 }

@@ -226,6 +226,9 @@ export const siparisTakipAPI = {
   zincir(params) {
     return apiClient.get('/siparis-takip', { params })
   },
+  ozet() {
+    return apiClient.get('/siparis-takip/ozet')
+  },
   soforler() {
     return apiClient.get('/siparis-takip/soforler')
   }
