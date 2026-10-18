@@ -1555,7 +1555,7 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useAuthStore } from '../stores/authStore.js'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { excelAPI, hareketAPI, notAPI, faturaAPI, stokAPI, cariHesapAPI, uploadAPI, kullaniciAPI, raporAPI } from '../api/index.js'
 import { resimDogrula } from '../utils/dosyaDogrula.js'
 import { resimSikistir } from '../utils/resimSikistir.js'
@@ -1586,6 +1586,7 @@ const cariHesapStore = useCariHesapStore()
 const authStore = useAuthStore()
 const isAdmin = computed(() => authStore?.kullanici?.role === 'ADMIN')
 const router = useRouter()
+const route = useRoute()
 const { kopyala } = usePanoyaKopyala()
 const { t } = useI18n()
 
@@ -2079,6 +2080,9 @@ const fotoSec = async (e) => {
 const { temizle: formTemizle } = useFormKorumasi(form)
 
 onMounted(async () => {
+  // 360° görünümlerden çapraz gezinme: arama terimini uygula.
+  const q = route?.query?.q
+  if (typeof q === 'string' && q.trim()) aramaMetni.value = q.trim()
   await loadCariHesaplar()
   cariOzetYukle()
 })

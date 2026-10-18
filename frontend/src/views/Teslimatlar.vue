@@ -479,7 +479,7 @@
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { teslimatAPI, excelAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useAuthStore } from '../stores/authStore.js'
@@ -491,6 +491,7 @@ import EmptyState from '../components/EmptyState.vue'
 
 const toastBildirim = useToastBildirim()
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const { t } = useI18n()
 
@@ -850,6 +851,9 @@ const excelIndir = async () => {
 }
 
 onMounted(() => {
+  // 360° görünümlerden çapraz gezinme: şoför aramasını uygula.
+  const sofor = route?.query?.sofor
+  if (typeof sofor === 'string' && sofor.trim()) surucuArama.value = sofor.trim()
   suruculeriYukle()
   ozetYukle()
 })

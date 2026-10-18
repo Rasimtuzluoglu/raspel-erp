@@ -71,6 +71,8 @@ class ExcelExportControllerTest {
     private com.raspel.erp.service.ticaret.TeslimatService teslimatService;
     @MockBean
     private com.raspel.erp.service.envanter.UretimService uretimService;
+    @MockBean
+    private com.raspel.erp.service.sistem.Gorunum360Service gorunum360Service;
 
     @Test
     void cariHesaplar_excelDoner() throws Exception {
@@ -154,6 +156,46 @@ class ExcelExportControllerTest {
         when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
 
         mockMvc.perform(get("/api/exports/uretim-receteler").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void gorunum360StokKar_excelDoner() throws Exception {
+        when(gorunum360Service.stokKar360(any(), any(), any()))
+                .thenReturn(com.raspel.erp.dto.sistem.Gorunum360DTO.StokKar.builder()
+                        .urunler(List.of(com.raspel.erp.dto.sistem.Gorunum360DTO.Satir.builder()
+                                .ad("Masa").stokKodu("M-1").build()))
+                        .build());
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/gorunum360-stok-kar").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(new byte[]{1, 2, 3}));
+    }
+
+    @Test
+    void gorunum360Calisan_excelDoner() throws Exception {
+        when(gorunum360Service.calisanPerformans360(any()))
+                .thenReturn(com.raspel.erp.dto.sistem.Gorunum360DTO.CalisanPerformans.builder()
+                        .calisanlar(List.of(com.raspel.erp.dto.sistem.Gorunum360DTO.Calisan.builder()
+                                .id(1L).ad("Ali").rol("DRIVER").toplamTeslimat(5).build()))
+                        .build());
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/gorunum360-calisan").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void gorunum360Segment_excelDoner() throws Exception {
+        when(gorunum360Service.musteriSegmentasyon(any()))
+                .thenReturn(com.raspel.erp.dto.sistem.Gorunum360DTO.MusteriSegment.builder()
+                        .musteriler(List.of(com.raspel.erp.dto.sistem.Gorunum360DTO.MusteriSegmentSatir.builder()
+                                .cariId(1L).ad("Müşteri A").segment("VIP").build()))
+                        .build());
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/gorunum360-segment").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk());
     }
 }

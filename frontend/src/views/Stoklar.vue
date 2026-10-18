@@ -1034,6 +1034,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -1063,6 +1064,7 @@ const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { t } = useI18n()
 const stokStore = useStokStore()
+const route = useRoute()
 
 useKisayollar({
   yeni: () => openDialog(),
@@ -1406,6 +1408,9 @@ onMounted(async () => {
       && window.matchMedia('(max-width: 768px)').matches) {
     gosterim.value = 'kart'
   }
+  // 360° görünümlerden çapraz gezinme: arama terimini uygula.
+  const q = route?.query?.q
+  if (typeof q === 'string' && q.trim()) filtreArama.value = q.trim()
   // Bir yukleme hatasi digerini engellemesin (store'lar hata firlatir).
   await Promise.allSettled([
     stoklariYukle(),

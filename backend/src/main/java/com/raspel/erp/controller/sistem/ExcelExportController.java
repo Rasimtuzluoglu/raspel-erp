@@ -55,6 +55,7 @@ public class ExcelExportController {
     private final com.raspel.erp.service.ticaret.SiparisTakipService siparisTakipService;
     private final com.raspel.erp.service.ticaret.TeslimatService teslimatService;
     private final com.raspel.erp.service.envanter.UretimService uretimService;
+    private final com.raspel.erp.service.sistem.Gorunum360Service gorunum360Service;
 
     @GetMapping("/kdv-beyanname")
     @Operation(summary = "KDV beyannamesini Excel dışa aktar",
@@ -404,6 +405,72 @@ public class ExcelExportController {
         }).toList();
         return excel("UretimReceteler", new String[]{"ID", "Reçete", "Mamul", "Kalem Sayısı",
                 "Fire Oranı", "Revizyon", "Aktif"}, rows);
+    }
+
+    @GetMapping("/gorunum360-stok-kar")
+    @Operation(summary = "360 Stok Kâr görünümünü Excel dışa aktar",
+            description = "Ürün bazında ciro, maliyet, brüt kâr ve marj tablosunu Excel (.xlsx) olarak dışa aktarır.")
+    public ResponseEntity<byte[]> gorunum360StokKar(
+            HttpServletRequest request,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        var veri = gorunum360Service.stokKar360(sirketId, baslangic, bitis);
+        List<Map<String, Object>> rows = veri.getUrunler().stream().map(u -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("Ürün", u.getAd());
+            m.put("Stok Kodu", u.getStokKodu());
+            m.put("Satış Adet", u.getSatisAdet());
+            m.put("Ciro", u.getCiro());
+            m.put("Maliyet", u.getMaliyet());
+            m.put("Brüt Kâr", u.getBrutKar());
+            m.put("Marj %", u.getMarj());
+            m.put("Stok", u.getStokMiktar());
+            return m;
+        }).toList();
+        return excel("Gorunum360-StokKar", new String[]{"Ürün", "Stok Kodu", "Satış Adet", "Ciro",
+                "Maliyet", "Brüt Kâr", "Marj %", "Stok"}, rows);
+    }
+
+    @GetMapping("/gorunum360-calisan")
+    @Operation(summary = "360 Çalışan performansını Excel dışa aktar",
+            description = "Şoför bazında toplam/tamamlanan/bekleyen teslimat ve teslim tutarını Excel (.xlsx) olarak dışa aktarır.")
+    public ResponseEntity<byte[]> gorunum360Calisan(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        var veri = gorunum360Service.calisanPerformans360(sirketId);
+        List<Map<String, Object>> rows = veri.getCalisanlar().stream().map(c -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("Çalışan", c.getAd());
+            m.put("Rol", c.getRol());
+            m.put("Toplam Teslimat", c.getToplamTeslimat());
+            m.put("Tamamlanan", c.getTamamlananTeslimat());
+            m.put("Bekleyen", c.getBekleyenTeslimat());
+            m.put("Teslim Tutarı", c.getTeslimTutari());
+            return m;
+        }).toList();
+        return excel("Gorunum360-Calisan", new String[]{"Çalışan", "Rol", "Toplam Teslimat",
+                "Tamamlanan", "Bekleyen", "Teslim Tutarı"}, rows);
+    }
+
+    @GetMapping("/gorunum360-segment")
+    @Operation(summary = "360 Müşteri segmentasyonunu Excel dışa aktar",
+            description = "Müşteri segmentlerini (gerekçe, ciro, kalan, fatura adet) Excel (.xlsx) olarak dışa aktarır.")
+    public ResponseEntity<byte[]> gorunum360Segment(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        var veri = gorunum360Service.musteriSegmentasyon(sirketId);
+        List<Map<String, Object>> rows = veri.getMusteriler().stream().map(m -> {
+            Map<String, Object> r = new LinkedHashMap<>();
+            r.put("Müşteri", m.getAd());
+            r.put("Segment", m.getSegment());
+            r.put("Gerekçe", m.getGerekce());
+            r.put("Ciro", m.getCiro());
+            r.put("Kalan", m.getKalanTutar());
+            r.put("Fatura Adet", m.getFaturaAdet());
+            r.put("Son Fatura (gün)", m.getSonFaturaGunOnce());
+            return r;
+        }).toList();
+        return excel("Gorunum360-Segment", new String[]{"Müşteri", "Segment", "Gerekçe", "Ciro",
+                "Kalan", "Fatura Adet", "Son Fatura (gün)"}, rows);
     }
 
     private ResponseEntity<byte[]> excel(String name, String[] cols, List<Map<String, Object>> rows) {

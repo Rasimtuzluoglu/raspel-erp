@@ -98,6 +98,15 @@ export const excelAPI = {
   },
   uretimReceteler() {
     return apiClient.get('/exports/uretim-receteler', { responseType: 'blob' })
+  },
+  gorunum360StokKar(params) {
+    return apiClient.get('/exports/gorunum360-stok-kar', { params, responseType: 'blob' })
+  },
+  gorunum360Calisan() {
+    return apiClient.get('/exports/gorunum360-calisan', { responseType: 'blob' })
+  },
+  gorunum360Segment() {
+    return apiClient.get('/exports/gorunum360-segment', { responseType: 'blob' })
   }
 }
 
