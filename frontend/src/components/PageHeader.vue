@@ -64,9 +64,15 @@ const headerDesc = computed(() => props.description || props.subtitle || null)
   display: flex;
   align-items: center;
   gap: 10px;
+  line-height: 1.2;
 }
 .page-header-icon {
   font-size: 24px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   color: var(--primary-color, var(--accent));
 }
 .page-header-heading {

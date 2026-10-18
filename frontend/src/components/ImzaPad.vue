@@ -14,6 +14,7 @@
       ref="canvas"
       class="imza-canvas"
       :class="{ cizili: cizili }"
+      :aria-label="etiket"
       @mousedown="baslat"
       @mousemove="ciz"
       @mouseup="bitir"
@@ -146,7 +147,9 @@ defineExpose({ hazirla, temizle, bosMu, toBlob })
   height: 160px;
   border: 2px dashed var(--border);
   border-radius: 10px;
-  background: var(--bg-primary);
+  /* Imza alani her temada beyaz kalir; sabit koyu murekkep boylece koyu
+     temada da gorunur (onceden var(--bg-primary) idi, imza kayboluyordu). */
+  background: #ffffff;
   touch-action: none;
   cursor: crosshair;
 }

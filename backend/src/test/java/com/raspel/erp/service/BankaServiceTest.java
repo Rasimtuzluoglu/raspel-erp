@@ -121,4 +121,57 @@ class BankaServiceTest {
         when(bankaRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> bankaService.bankaSil(99L));
     }
+
+    @Test
+    void ozet_returnsCounts() {
+        when(bankaRepository.countBySirketId(1L)).thenReturn(3L);
+        when(bankaRepository.sumBakiyeBySirketId(1L)).thenReturn(BigDecimal.valueOf(1500));
+        when(bankaRepository.sumPozitifBakiyeBySirketId(1L)).thenReturn(BigDecimal.valueOf(2000));
+        when(bankaHareketiRepository.countBySirketIdAndEslestirildiFalse(1L)).thenReturn(2L);
+
+        var ozet = bankaService.ozet(1L);
+
+        assertEquals(3, ozet.getToplamBanka());
+        assertEquals(0, ozet.getToplamBakiye().compareTo(BigDecimal.valueOf(1500)));
+        assertEquals(0, ozet.getPozitifBakiye().compareTo(BigDecimal.valueOf(2000)));
+        assertEquals(2, ozet.getEslesmemisHareket());
+    }
+
+    @Test
+    void ozet_sirketYoksaSifirDoner() {
+        var ozet = bankaService.ozet(null);
+        assertEquals(0, ozet.getToplamBanka());
+        assertEquals(0, ozet.getToplamBakiye().compareTo(BigDecimal.ZERO));
+        verifyNoInteractions(bankaRepository);
+    }
+
+    @Test
+    void bankaOlustur_ibanMukerrerIseHataVerir() {
+        when(bankaRepository.existsBySirketIdAndIbanIgnoreCase(eq(1L), anyString())).thenReturn(true);
+        BankaDTO dto = BankaDTO.builder().ad("Yeni").iban("TR12 3456 7890").build();
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> bankaService.bankaOlustur(dto, 1L));
+        verify(bankaRepository, never()).save(any(Banka.class));
+    }
+
+    @Test
+    void bankaOlustur_hesapNoMukerrerIseHataVerir() {
+        when(bankaRepository.existsBySirketIdAndHesapNoIgnoreCase(eq(1L), anyString())).thenReturn(true);
+        BankaDTO dto = BankaDTO.builder().ad("Yeni").hesapNo("12345").build();
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> bankaService.bankaOlustur(dto, 1L));
+        verify(bankaRepository, never()).save(any(Banka.class));
+    }
+
+    @Test
+    void bankaGuncelle_ibanMukerrerIseHataVerir() {
+        Banka existing = createBanka(1L);
+        existing.setSirketId(1L);
+        when(bankaRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(bankaRepository.existsBySirketIdAndIbanIgnoreCaseAndIdNot(eq(1L), anyString(), eq(1L))).thenReturn(true);
+        BankaDTO dto = BankaDTO.builder().iban("TR99").build();
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> bankaService.bankaGuncelle(1L, dto));
+        verify(bankaRepository, never()).save(any(Banka.class));
+    }
 }

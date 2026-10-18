@@ -1,10 +1,15 @@
 <template>
   <Dialog
     v-model:visible="visible"
-    :header="t('stoklar.barkodEtiket')"
     :modal="true"
-    style="width: 340px"
+    :style="{ width: '340px', maxWidth: '96vw' }"
   >
+    <template #header>
+      <div class="dialog-baslik">
+        <i class="pi pi-barcode" />
+        <span>{{ t('stoklar.barkodEtiket') }}</span>
+      </div>
+    </template>
     <div class="etiket-tip-secim">
       <button
         type="button"
@@ -268,6 +273,16 @@ const etiketPdfIndir = async () => {
 </script>
 
 <style scoped>
+.dialog-baslik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+}
+.dialog-baslik i {
+  color: var(--accent);
+}
 .etiket-tip-secim {
   display: flex;
   gap: 6px;

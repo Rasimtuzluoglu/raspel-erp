@@ -1,15 +1,17 @@
 <template>
   <div class="stokseri-container">
-    <div class="sayfa-baslik">
-      <h1 class="page-title">
-        {{ t('stokSeriler.title') }}
-      </h1>
-      <Button
-        :label="t('stokSeriler.yeniSeriLot')"
-        icon="pi pi-plus"
-        @click="dialogAc()"
-      />
-    </div>
+    <PageHeader
+      :title="t('stokSeriler.title')"
+      icon="pi pi-tags"
+    >
+      <template #actions>
+        <Button
+          :label="t('stokSeriler.yeniSeriLot')"
+          icon="pi pi-plus"
+          @click="dialogAc()"
+        />
+      </template>
+    </PageHeader>
 
     <div
       v-if="sonKullanma.length"
@@ -97,10 +99,15 @@
 
     <Dialog
       v-model:visible="dialog"
-      :header="dialogHeader"
       modal
-      :style="{ width: '520px' }"
+      :style="{ width: '520px', maxWidth: '96vw' }"
     >
+      <template #header>
+        <div class="dialog-baslik">
+          <i class="pi pi-tags" />
+          <span>{{ dialogHeader }}</span>
+        </div>
+      </template>
       <div class="form-grid">
         <div class="field">
           <label>{{ t('stokSeriler.urunZorunlu') }}</label>
@@ -281,6 +288,16 @@ const sil = (data) => {
 </script>
 
 <style scoped>
+.dialog-baslik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+}
+.dialog-baslik i {
+  color: var(--accent);
+}
 .stokseri-container {
   padding: 0;
 }

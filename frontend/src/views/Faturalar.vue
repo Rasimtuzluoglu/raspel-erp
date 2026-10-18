@@ -1,40 +1,17 @@
 <template>
   <div class="faturalar-container">
-    <h1 class="page-title">
-      {{ t('faturalar.title') }}
-    </h1>
-
-    <IlkZiyaretIpuclari
-      anahtar="faturalar"
-      :baslik="t('faturalar.ipucuBaslik')"
-      :metin="t('faturalar.ipucuMetin')"
-    />
-
-    <Toolbar class="toolbar">
-      <template #start>
+    <PageHeader
+      :title="t('faturalar.title')"
+      icon="pi pi-file-invoice"
+    >
+      <template #actions>
         <Button
           :label="t('faturalar.yeniFatura')"
           icon="pi pi-plus"
           class="p-button-success"
           @click="openCreateDialog"
         />
-        <!-- REDTEAM/Faz3.3: `p-input-icon-left` PrimeVue 4'te kaldirildi; ikon
-             yerlestirme kurali uygulanmiyordu. -->
-        <IconField class="arama-kutu">
-          <InputIcon class="pi pi-search" />
-          <InputText
-            v-model="arama"
-            :placeholder="t('faturalar.aramaPlaceholder')"
-            class="arama-input"
-            @input="aramaDebounce"
-          />
-        </IconField>
-      </template>
-      <template #end>
-        <TarihHizliSecim
-          v-model="tarihAraligi"
-          style="margin-right: 8px"
-        />
+        <TarihHizliSecim v-model="tarihAraligi" />
         <Button
           label="Excel"
           icon="pi pi-file-excel"
@@ -42,10 +19,56 @@
           @click="excelIndir"
         />
       </template>
-    </Toolbar>
+    </PageHeader>
+
+    <IlkZiyaretIpuclari
+      anahtar="faturalar"
+      :baslik="t('faturalar.ipucuBaslik')"
+      :metin="t('faturalar.ipucuMetin')"
+    />
+
+    <div
+      v-if="!loading"
+      class="fatura-kpi"
+    >
+      <KpiKart
+        :baslik="t('faturalar.kpiAdet')"
+        :deger="faturaOzet.adet ?? 0"
+        :para-birimi="false"
+        ikon="pi pi-file"
+        renk="#14b8a6"
+      />
+      <KpiKart
+        :baslik="t('faturalar.kpiCiro')"
+        :deger="faturaOzet.ciro ?? 0"
+        ikon="pi pi-chart-line"
+        renk="#22c55e"
+      />
+      <KpiKart
+        :baslik="t('faturalar.kpiTahsilEdilen')"
+        :deger="faturaOzet.tahsilEdilen ?? 0"
+        ikon="pi pi-wallet"
+        renk="#3b82f6"
+      />
+      <KpiKart
+        :baslik="t('faturalar.kpiKalan')"
+        :deger="faturaOzet.kalan ?? 0"
+        ikon="pi pi-exclamation-circle"
+        renk="#ef4444"
+      />
+    </div>
 
     <!-- Liste filtreleri: tur segmenti + durum cipleri + gelismis popover -->
     <div class="filtre-cubugu">
+      <IconField class="arama-kutu">
+        <InputIcon class="pi pi-search" />
+        <InputText
+          v-model="arama"
+          :placeholder="t('faturalar.aramaPlaceholder')"
+          class="arama-input"
+          @input="aramaDebounce"
+        />
+      </IconField>
       <SelectButton
         v-model="turFiltre"
         :options="turFiltreSecenekleri"
@@ -221,18 +244,20 @@
         <Column
           field="durum"
           :header="t('common.status')"
-          style="width: 110px"
+          style="width: 150px"
         >
           <template #body="s">
-            <span :class="['durum-badge', (s.data.durum || '').toLowerCase()]">
-              {{ durumLabel(s.data.durum) }}
-            </span>
-            <Tag
-              v-if="gecikmisGun(s.data) > 0"
-              class="gecikme-rozet"
-              :value="t('faturalar.gunGecikti', { n: gecikmisGun(s.data) })"
-              severity="danger"
-            />
+            <div class="durum-hucre">
+              <span :class="['durum-badge', (s.data.durum || '').toLowerCase()]">
+                {{ durumLabel(s.data.durum) }}
+              </span>
+              <Tag
+                v-if="gecikmisGun(s.data) > 0"
+                class="gecikme-rozet"
+                :value="t('faturalar.gunGecikti', { n: gecikmisGun(s.data) })"
+                severity="danger"
+              />
+            </div>
           </template>
         </Column>
         <Column
@@ -321,6 +346,8 @@
               <SatirEylemleri
                 :gorunur="{ duzenle: false, cogalt: false, sil: false }"
                 :items="faturaEylemleri(s.data)"
+                :baslik="`${s.data.faturaNumarasi} · ${s.data.cariHesapAd || ''}`"
+                sabit-konum
               />
             </div>
           </template>
@@ -349,6 +376,54 @@
       </AppDataTable>
     </div>
 
+    <!-- Kucuk ekran: tablo yerine kart listesi (CSS ile <768px gosterilir) -->
+    <div
+      v-if="!loading"
+      class="fatura-kart-liste"
+    >
+      <div
+        v-for="f in (faturaStore.faturalar || [])"
+        :key="f.id"
+        class="fatura-kart"
+      >
+        <div class="fatura-kart-ust">
+          <div class="fatura-kart-baslik">
+            <strong>{{ f.faturaNumarasi }}</strong>
+            <span :class="['badge', f.tur === 'SATIS' ? 'satis' : 'alis']">
+              {{ f.tur === 'SATIS' ? t('faturalar.satis') : t('faturalar.alis') }}
+            </span>
+          </div>
+          <span class="fatura-kart-tutar">{{ formatPara(f.genelToplam, f.paraBirimi) }}</span>
+        </div>
+        <div class="fatura-kart-alt">
+          <span><i class="pi pi-user" /> {{ f.cariHesapAd || '-' }}</span>
+          <span><i class="pi pi-calendar" /> {{ formatDate(f.tarih) }}</span>
+        </div>
+        <div class="fatura-kart-rozetler">
+          <span :class="['odeme-badge', (f.odemeDurumu || '').toLowerCase()]">{{ odemeDurumEtiket(f.odemeDurumu) }}</span>
+          <span :class="['durum-badge', (f.durum || '').toLowerCase()]">{{ durumLabel(f.durum) }}</span>
+          <span
+            v-if="f.kalanTutar && f.kalanTutar > 0"
+            class="kalan-tutar"
+          >{{ formatPara(f.kalanTutar, f.paraBirimi) }}</span>
+        </div>
+        <div class="fatura-kart-islemler">
+          <Button
+            icon="pi pi-eye"
+            class="p-button-rounded p-button-sm p-button-info"
+            :title="t('faturalar.goruntule')"
+            @click="viewFatura(f.id)"
+          />
+          <SatirEylemleri
+            :gorunur="{ duzenle: false, cogalt: false, sil: false }"
+            :items="faturaEylemleri(f)"
+            :baslik="`${f.faturaNumarasi} · ${f.cariHesapAd || ''}`"
+            sabit-konum
+          />
+        </div>
+      </div>
+    </div>
+
     <AppDialog
       v-model:visible="showDialog"
       :header="dialogBaslik"
@@ -356,6 +431,10 @@
       content-max-height="min(84vh, 900px)"
       :close-on-escape="false"
     >
+      <div class="fatura-form-baslik">
+        <i class="pi pi-file-invoice" />
+        <span>{{ t('faturalar.bolumFaturaBilgileri') }}</span>
+      </div>
       <div class="form-grid">
         <div class="form-group">
           <label>{{ form.tur === 'ALIS' ? t('faturalar.tedarikci') : t('faturalar.musteri') }} <span class="required">*</span></label>
@@ -559,6 +638,10 @@
         </template>
       </div>
 
+      <div class="fatura-form-baslik">
+        <i class="pi pi-plus-circle" />
+        <span>{{ t('faturalar.bolumUrunEkle') }}</span>
+      </div>
       <div class="urun-ekleme">
         <div
           class="form-row"
@@ -634,9 +717,10 @@
         @gizle="cariSonUrunlerGizle = true"
       />
 
-      <h3 style="margin: 20px 0 10px">
-        {{ t('faturalar.faturaKalemleri') }}
-      </h3>
+      <div class="fatura-form-baslik">
+        <i class="pi pi-list" />
+        <span>{{ t('faturalar.faturaKalemleri') }}</span>
+      </div>
       <FaturaKalemleri
         :kalemler="form.kalemler"
         :ara-toplam="araToplam"
@@ -785,6 +869,19 @@ const tarihParametreleri = () => {
   return params
 }
 
+// KPI ozeti: gerceklesmis (KESILDI) faturalar; tur + tarih araligina gore.
+const faturaOzet = ref({})
+const ozetYukle = async () => {
+  try {
+    const p = { ...tarihParametreleri() }
+    if (turFiltre.value) p.tur = turFiltre.value
+    const r = await faturaAPI.ozet(p)
+    faturaOzet.value = r.data || {}
+  } catch {
+    faturaOzet.value = {}
+  }
+}
+
 const loadFaturalar = async (yeniSayfa = sayfa.value, yeniBoyut = sayfaBoyutu.value) => {
   loading.value = true
   try {
@@ -854,6 +951,7 @@ const filtreTemizle = () => {
 watch([turFiltre, durumFiltre, odemeFiltre, vadesiGecenFiltre, teslimatiOlanFiltre], () => {
   sayfa.value = 0
   loadFaturalar(0, sayfaBoyutu.value)
+  ozetYukle()
 })
 
 const form = ref({
@@ -890,6 +988,7 @@ const dialogBaslik = computed(() => (editingId.value ? t('faturalar.dialogDuzenl
 watch(tarihAraligi, () => {
   sayfa.value = 0
   loadFaturalar(0, sayfaBoyutu.value)
+  ozetYukle()
 })
 
 const { temizle: taslakTemizle } = useTaslakKayit('fatura', form, {
@@ -910,6 +1009,7 @@ onMounted(async () => {
   try {
     await Promise.all([
       loadFaturalar(0, sayfaBoyutu.value),
+      ozetYukle(),
       // Cari secici sunucu aramali; 50 kayitlik onbellek gerekmiyor.
       stokStore.getAll({ size: 1000 }),
       personelListesiniYukle(),
@@ -1501,47 +1601,82 @@ const yazdirmaBaslik = (f) => {
 
 const soforDialogRef = ref(null)
 
-const faturaEylemleri = (f) => {  const items = [
-    { etiket: t('faturalar.yazdirTasarla'), ikon: 'pi pi-print', islem: () => tasarlaVeYazdir(f.id) },
-    { etiket: t('faturalar.pdfIndir'), ikon: 'pi pi-download', islem: () => pdfIndir(f) },
-    { etiket: t('faturalar.onizle'), ikon: 'pi pi-eye', islem: () => onizle(f) },
-    { etiket: t('faturalar.whatsapp'), ikon: 'pi pi-whatsapp', islem: () => whatsappGonder(f) },
-    { etiket: t('faturalar.gorselGonder'), ikon: 'pi pi-image', islem: () => faturaGorselGonder(f) },
+const faturaEylemleri = (f) => {
+  const gruplar = []
+
+  gruplar.push({
+    grup: t('faturalar.grupYazdirma'),
+    items: [
+      { etiket: t('faturalar.yazdirTasarla'), ikon: 'pi pi-print', islem: () => tasarlaVeYazdir(f.id) },
+      { etiket: t('faturalar.pdfIndir'), ikon: 'pi pi-download', islem: () => pdfIndir(f) },
+      { etiket: t('faturalar.onizle'), ikon: 'pi pi-eye', islem: () => onizle(f) }
+    ]
+  })
+
+  gruplar.push({
+    grup: t('faturalar.grupGonderim'),
+    items: [
+      { etiket: t('faturalar.whatsapp'), ikon: 'pi pi-whatsapp', islem: () => whatsappGonder(f) },
+      { etiket: t('faturalar.gorselGonder'), ikon: 'pi pi-image', islem: () => faturaGorselGonder(f) }
+    ]
+  })
+
+  const kayit = [
     { etiket: t('common.duplicate'), ikon: 'pi pi-copy', islem: () => cogalt(f) },
     { etiket: t('faturaGecmis.title'), ikon: 'pi pi-history', islem: () => gecmisAc(f) }
   ]
   if (f.durum === 'TASLAK' || f.durum === 'KESILDI') {
-    items.push({
+    kayit.push({
       etiket: f.durum === 'KESILDI' ? t('faturalar.revize') : t('common.edit'),
       ikon: 'pi pi-pencil',
       islem: () => editFatura(f)
     })
   }
   if (f.durum === 'TASLAK') {
-    items.push({ etiket: t('faturalar.kes'), ikon: 'pi pi-check', islem: () => confirmKes(f.id) })
+    kayit.push({ etiket: t('faturalar.kes'), ikon: 'pi pi-check', sinif: 'eylem-pozitif', islem: () => confirmKes(f.id) })
   }
   if (f.durum !== 'IPTAL') {
-    items.push({ etiket: t('common.cancel'), ikon: 'pi pi-ban', sinif: 'eylem-sil', islem: () => confirmIptal(f.id) })
+    kayit.push({ etiket: t('common.cancel'), ikon: 'pi pi-ban', sinif: 'eylem-sil', islem: () => confirmIptal(f.id) })
   }
-  // Sofor atama: teslimati olmayan satis faturasi icin (Teslimatlar'a yansir).
+  if (f.durum === 'IPTAL' && authStore.isAdmin) {
+    kayit.push({ etiket: t('faturalar.iptaliGeriAl'), ikon: 'pi pi-undo', islem: () => confirmIptaliGeriAl(f.id) })
+  }
+  gruplar.push({ grup: t('faturalar.grupKayit'), items: kayit })
+
+  const lojistik = []
   if (f.tur === 'SATIS' && f.durum !== 'IPTAL' && !f.teslimatVar) {
-    items.push({ etiket: t('faturalar.soforAta'), ikon: 'pi pi-truck', islem: () => soforDialogRef.value?.open(f) })
+    lojistik.push({ etiket: t('faturalar.soforAta'), ikon: 'pi pi-truck', islem: () => soforDialogRef.value?.open(f) })
   }
   if (f.teslimatVar) {
-    items.push({ etiket: t('faturalar.teslimatta'), ikon: 'pi pi-check-circle', islem: () => router.push({ name: 'Teslimatlar' }) })
-  }
-  // Tahsilat kisa yolu: kesilmis, kalani olan satis faturasi icin.
-  if (f.tur === 'SATIS' && f.durum === 'KESILDI' && Number(f.kalanTutar || 0) > 0) {
-    items.push({
-      etiket: t('faturalar.tahsilatAl'),
-      ikon: 'pi pi-money-bill',
-      islem: () => router.push({ name: 'Tahsilat', query: { cariId: f.cariHesapId } })
+    lojistik.push({
+      etiket: t('faturalar.teslimatta'),
+      ikon: 'pi pi-check-circle',
+      islem: () => router.push({ name: 'Teslimatlar' })
     })
   }
-  // Yanlışlıkla iptal edilen fatura yeniden kesilebilir (yalnızca ADMIN; stok/cari geri uygulanır).
-  if (f.durum === 'IPTAL' && authStore.isAdmin) {
-    items.push({ etiket: t('faturalar.iptaliGeriAl'), ikon: 'pi pi-undo', islem: () => confirmIptaliGeriAl(f.id) })
+  if (lojistik.length) gruplar.push({ grup: t('faturalar.grupLojistik'), items: lojistik })
+
+  if (f.tur === 'SATIS' && f.durum === 'KESILDI' && Number(f.kalanTutar || 0) > 0) {
+    gruplar.push({
+      grup: t('faturalar.grupFinans'),
+      items: [
+        {
+          etiket: t('faturalar.tahsilatAl'),
+          ikon: 'pi pi-money-bill',
+          sinif: 'eylem-pozitif',
+          islem: () => router.push({ name: 'Tahsilat', query: { cariId: f.cariHesapId } })
+        }
+      ]
+    })
   }
+
+  // Gruplari ayraclarla duzlestir.
+  const items = []
+  gruplar.forEach((g, i) => {
+    if (i > 0) items.push({ ayrac: true })
+    items.push({ grup: g.grup })
+    items.push(...g.items)
+  })
   return items
 }
 
@@ -1629,6 +1764,78 @@ import { formatTarih as formatDate } from '../utils/format.js'
 </script>
 
 <style scoped>
+.fatura-kpi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.fatura-kart-liste {
+  display: none;
+}
+.fatura-kart {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  margin-bottom: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.fatura-kart-ust {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.fatura-kart-baslik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.fatura-kart-baslik strong {
+  color: var(--text-primary);
+}
+.fatura-kart-tutar {
+  font-weight: 800;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.fatura-kart-alt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.fatura-kart-alt i {
+  color: var(--text-muted);
+  margin-right: 2px;
+}
+.fatura-kart-rozetler {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.fatura-kart-islemler {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+@media (max-width: 768px) {
+  .table-container {
+    display: none;
+  }
+  .fatura-kart-liste {
+    display: block;
+  }
+}
 .faturalar-container {
   padding: 0;
   max-width: 100%;
@@ -1669,10 +1876,33 @@ h1 {
   padding: 40px;
   color: var(--text-muted);
 }
+.fatura-form-baslik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  margin: 18px 0 10px;
+}
+.fatura-form-baslik i {
+  font-size: 14px;
+}
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 15px;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+}
+@media (max-width: 900px) {
+  .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .form-group {
   margin-bottom: 15px;
@@ -1728,10 +1958,13 @@ h1 {
   margin: 15px 0;
 }
 .badge {
+  display: inline-flex;
+  align-items: center;
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 700;
+  white-space: nowrap;
 }
 .badge.satis {
   background: var(--accent-soft-strong);
@@ -1741,11 +1974,20 @@ h1 {
   background: var(--danger-soft);
   color: var(--danger);
 }
+.durum-hucre {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
 .durum-badge {
+  display: inline-flex;
+  align-items: center;
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 700;
+  white-space: nowrap;
 }
 .durum-badge.taslak {
   background: var(--warning-soft);
@@ -1764,10 +2006,13 @@ h1 {
   color: var(--text-muted);
 }
 .odeme-badge {
+  display: inline-flex;
+  align-items: center;
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 700;
+  white-space: nowrap;
 }
 .odeme-badge.odendi {
   background: var(--success-soft);
@@ -1916,6 +2161,7 @@ h1 {
   cursor: pointer;
 }
 .gecikme-rozet {
-  margin-left: 6px;
+  margin-left: 0;
+  white-space: nowrap;
 }
 </style>

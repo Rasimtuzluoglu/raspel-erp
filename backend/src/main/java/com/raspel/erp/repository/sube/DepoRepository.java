@@ -12,4 +12,10 @@ public interface DepoRepository extends JpaRepository<Depo, Long> {
     Page<Depo> findBySirketIdOrderByAdAsc(Long sirketId, Pageable pageable);
     List<Depo> findBySirketIdAndAktifTrue(Long sirketId);
     boolean existsBySirketIdAndAdIgnoreCase(Long sirketId, String ad);
+
+    /** KPI özeti: şirketin toplam depo sayısı. */
+    long countBySirketId(Long sirketId);
+
+    /** KPI özeti: şirketin aktif depo sayısı. */
+    long countBySirketIdAndAktifTrue(Long sirketId);
 }

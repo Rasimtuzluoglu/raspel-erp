@@ -38,6 +38,13 @@ public class DepoController {
         return ResponseEntity.ok(depoService.tumunuGetir(sirketId, pageable));
     }
 
+    @GetMapping("/ozet")
+    @Operation(summary = "Depo özeti", description = "Depolar ekranı KPI özetini (depo/stok/talep sayıları) döndürür")
+    public ResponseEntity<com.raspel.erp.dto.sube.DepoOzetDTO> ozet(HttpServletRequest req) {
+        Long sirketId = (Long) req.getAttribute("sirketId");
+        return ResponseEntity.ok(depoService.ozet(sirketId));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "ID'ye göre depo getir", description = "Depo ID'sine göre detayları getirir")
     public ResponseEntity<DepoDTO> getir(@PathVariable Long id) {

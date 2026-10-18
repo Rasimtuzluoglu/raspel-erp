@@ -4,11 +4,16 @@
     :modal="true"
     :closable="true"
     :maximizable="true"
-    :header="$t('faturaTasarim.title')"
     class="fatura-tasarim-dialog"
     :style="{ width: '96vw', maxWidth: '1400px', height: '92vh' }"
     @update:visible="$emit('update:visible', $event)"
   >
+    <template #header>
+      <div class="tasarim-baslik">
+        <i class="pi pi-palette" />
+        <span>{{ $t('faturaTasarim.title') }}</span>
+      </div>
+    </template>
     <div class="tasarim-container">
       <!-- SOL PANEL: Tasarım & Görünüm Ayarları -->
       <div class="tasarim-sidebar no-print">
@@ -925,6 +930,16 @@ const yazdir = async () => {
 </script>
 
 <style scoped>
+.tasarim-baslik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+}
+.tasarim-baslik i {
+  color: var(--accent);
+}
 .tasarim-container {
   display: flex;
   height: calc(92vh - 90px);

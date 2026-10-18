@@ -55,7 +55,7 @@ export function usePosOdeme({ t, toplam }) {
   const odemeYontemleri = computed(() => [
     { label: t('hizliSatis.nakit'), value: 'NAKIT', icon: 'pi pi-money-bill' },
     { label: t('hizliSatis.kart'), value: 'KART', icon: 'pi pi-credit-card' },
-    { label: t('hizliSatis.havale'), value: 'HAVALE', icon: 'pi pi-send' },
+    { label: t('hizliSatis.havale'), value: 'HAVALE', icon: 'pi pi-building-columns' },
     { label: t('hizliSatis.taksit'), value: 'TAKSIT', icon: 'pi pi-calendar' }
   ])
 

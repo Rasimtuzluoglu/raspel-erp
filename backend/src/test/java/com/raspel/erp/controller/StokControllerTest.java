@@ -2,6 +2,7 @@ package com.raspel.erp.controller;
 
 import com.raspel.erp.dto.envanter.StokDTO;
 import com.raspel.erp.dto.envanter.StokHareketDTO;
+import com.raspel.erp.dto.envanter.StokOzetDTO;
 import com.raspel.erp.exception.ResourceNotFoundException;
 import com.raspel.erp.service.envanter.StokService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -65,6 +66,20 @@ class StokControllerTest {
         mockMvc.perform(get("/api/stoklar").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].ad").value("Kalem"));
+    }
+
+    @Test
+    void shouldGetOzet() throws Exception {
+        when(stokService.ozet(1L)).thenReturn(StokOzetDTO.builder()
+                .toplamUrun(12).kritikSayi(4)
+                .toplamDeger(BigDecimal.valueOf(5000)).kategoriSayisi(3)
+                .build());
+
+        mockMvc.perform(get("/api/stoklar/ozet").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.toplamUrun").value(12))
+                .andExpect(jsonPath("$.kritikSayi").value(4))
+                .andExpect(jsonPath("$.kategoriSayisi").value(3));
     }
 
     @Test

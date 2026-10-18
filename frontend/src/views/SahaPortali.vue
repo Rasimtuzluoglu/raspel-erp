@@ -7,13 +7,27 @@
           <div class="user-avatar">
             <i class="pi pi-user" />
           </div>
-          <div>
+          <div class="user-text">
             <h2 class="user-name">
               {{ authStore?.kullanici?.displayName || authStore?.kullanici?.username || t('sahaPortali.sahaPersoneli') }}
             </h2>
-            <span class="user-badge">
-              <i class="pi pi-compass" /> {{ t('sahaPortali.portalBaslik') }}
-            </span>
+            <div class="user-meta">
+              <span class="user-badge">
+                <i class="pi pi-compass" /> {{ t('sahaPortali.portalBaslik') }}
+              </span>
+              <span
+                class="durum-cip"
+                :class="cevrimici ? 'cevrimici' : 'cevrimdisi'"
+                :title="cevrimici ? t('sahaPortali.cevrimici') : t('sahaPortali.cevrimdisi')"
+              >
+                <i :class="cevrimici ? 'pi pi-wifi' : 'pi pi-ban'" />
+                {{ cevrimici ? t('sahaPortali.cevrimici') : t('sahaPortali.cevrimdisi') }}
+                <span
+                  v-if="sahaKuyruk.length > 0"
+                  class="durum-kuyruk"
+                >{{ sahaKuyruk.length }}</span>
+              </span>
+            </div>
           </div>
         </div>
         <div class="header-actions">
@@ -44,10 +58,14 @@
     </div>
 
     <!-- PrimeVue TabView Sekmeleri -->
-    <TabView>
+    <TabView
+      v-model:active-index="aktifSekme"
+      scrollable
+      class="saha-sekmeler"
+    >
       <TabPanel>
         <template #header>
-          <span class="flex items-center gap-1.5">
+          <span class="sekme-baslik">
             <i class="pi pi-shopping-bag" />
             {{ t('sahaPortali.siparisTeslimat') }}
             <span
@@ -67,21 +85,21 @@
 
       <TabPanel>
         <template #header>
-          <span class="flex items-center gap-1.5">
+          <span class="sekme-baslik">
             <i class="pi pi-map-marker" />
             {{ t('sahaPortali.ziyaretKaydi') }}
           </span>
         </template>
 
-        <div class="fade-in-section">
-          <div class="form-container-card">
-            <div class="form-header">
-              <h3><i class="pi pi-map-marker text-red-500 mr-2" />{{ t('sahaPortali.ziyaretBaslik') }}</h3>
+        <div class="saha-fade">
+          <div class="saha-form-kart">
+            <div class="saha-form-baslik">
+              <h3><i class="pi pi-map-marker saha-baslik-ikon" />{{ t('sahaPortali.ziyaretBaslik') }}</h3>
               <p>{{ t('sahaPortali.ziyaretAciklama') }}</p>
             </div>
 
-            <div class="form-body">
-              <div class="form-field">
+            <div class="saha-form-govde">
+              <div class="saha-alan">
                 <label>{{ t('sahaPortali.ziyaretMusteriZorunlu') }}</label>
                 <Dropdown
                   v-model="ziyaretForm.cariHesapId"
@@ -93,7 +111,7 @@
                   class="w-full"
                 />
               </div>
-              <div class="form-field">
+              <div class="saha-alan">
                 <label>{{ t('sahaPortali.ziyaretAmaci') }}</label>
                 <Dropdown
                   v-model="ziyaretForm.amac"
@@ -101,7 +119,7 @@
                   class="w-full"
                 />
               </div>
-              <div class="form-field">
+              <div class="saha-alan">
                 <label>{{ t('sahaPortali.gorusmeNotlariZorunlu') }}</label>
                 <Textarea
                   v-model="ziyaretForm.notlar"
@@ -110,10 +128,10 @@
                   class="w-full"
                 />
               </div>
-              <div class="gps-location-row flex items-center justify-between p-3 bg-secondary dark:bg-gray-800 rounded-lg mb-3">
-                <div class="flex items-center gap-2">
-                  <i class="pi pi-map-marker text-red-500 text-lg" />
-                  <span class="text-sm text-secondary dark:text-gray-200">
+              <div class="gps-location-row">
+                <div class="gps-bilgi">
+                  <i class="pi pi-map-marker saha-ikon-kirmizi gps-ikon" />
+                  <span class="gps-metin">
                     {{ ziyaretKonum || t('sahaPortali.konumAlinmadi') }}
                   </span>
                 </div>
@@ -125,7 +143,7 @@
                   @click="gpsKonumAl"
                 />
               </div>
-              <div class="form-field">
+              <div class="saha-alan">
                 <label>{{ t('sahaPortali.ziyaretFotografiOpsiyonel') }}</label>
                 <label class="foto-sec-etiket">
                   <i class="pi pi-camera" /> {{ ziyaretFoto ? ziyaretFoto.name : t('sahaPortali.fotografSec') }}
@@ -151,15 +169,19 @@
 
       <TabPanel>
         <template #header>
-          <span class="flex items-center gap-1.5">
+          <span class="sekme-baslik">
             <i class="pi pi-wallet" />
             {{ t('sahaPortali.masrafAvans') }}
+            <span
+              v-if="bekleyenMasrafSayisi > 0"
+              class="tab-badge"
+            >{{ bekleyenMasrafSayisi }}</span>
           </span>
         </template>
 
-        <div class="fade-in-section">
-          <div class="section-title-row">
-            <h3><i class="pi pi-receipt text-primary mr-2" />{{ t('sahaPortali.masrafAvansTaleplerim') }}</h3>
+        <div class="saha-fade">
+          <div class="saha-baslik-satir">
+            <h3><i class="pi pi-receipt saha-baslik-ikon" />{{ t('sahaPortali.masrafAvansTaleplerim') }}</h3>
             <Button
               :label="t('sahaPortali.yeniMasrafAvans')"
               icon="pi pi-plus"
@@ -178,7 +200,7 @@
               class="expense-card"
             >
               <div class="expense-left">
-                <div class="flex items-center gap-2 mb-1">
+                <div class="expense-ustsatir">
                   <span class="expense-type-badge">{{ m.tur === 'AVANS' ? t('sahaPortali.avansTalebi') : m.kategori }}</span>
                   <Tag
                     :value="m.durum"
@@ -197,27 +219,29 @@
             </div>
           </div>
 
-          <div
+          <EmptyState
             v-else
-            class="empty-box"
-          >
-            <i class="pi pi-wallet empty-icon" />
-            <p>{{ t('sahaPortali.masrafBos') }}</p>
-          </div>
+            icon="pi pi-wallet"
+            :message="t('sahaPortali.masrafBos')"
+          />
         </div>
       </TabPanel>
 
       <TabPanel>
         <template #header>
-          <span class="flex items-center gap-1.5">
+          <span class="sekme-baslik">
             <i class="pi pi-calendar" />
             {{ t('sahaPortali.izinTalebi') }}
+            <span
+              v-if="bekleyenIzinSayisi > 0"
+              class="tab-badge"
+            >{{ bekleyenIzinSayisi }}</span>
           </span>
         </template>
 
-        <div class="fade-in-section">
-          <div class="section-title-row">
-            <h3><i class="pi pi-calendar-plus text-primary mr-2" />{{ t('sahaPortali.izinTaleplerim') }}</h3>
+        <div class="saha-fade">
+          <div class="saha-baslik-satir">
+            <h3><i class="pi pi-calendar-plus saha-baslik-ikon" />{{ t('sahaPortali.izinTaleplerim') }}</h3>
             <Button
               :label="t('sahaPortali.yeniIzinTalebi')"
               icon="pi pi-plus"
@@ -236,8 +260,8 @@
               class="expense-card"
             >
               <div class="expense-left">
-                <div class="flex items-center gap-2 mb-1">
-                  <strong class="text-base text-primary dark:text-gray-100">{{ i.izinTuru }}</strong>
+                <div class="expense-ustsatir">
+                  <strong class="izin-tur">{{ i.izinTuru }}</strong>
                   <Tag
                     :value="i.durum"
                     :severity="talepDurumSeverity(i.durum)"
@@ -245,9 +269,9 @@
                   />
                 </div>
                 <p class="expense-desc">
-                  <i class="pi pi-calendar mr-1" />
+                  <i class="pi pi-calendar izin-takvim-ikon" />
                   {{ formatTarih(i.baslangic) }} → {{ formatTarih(i.bitis) }}
-                  <span class="font-bold text-primary ml-1">({{ i.gunSayisi }} {{ t('sahaPortali.gun') }})</span>
+                  <span class="izin-gun">({{ i.gunSayisi }} {{ t('sahaPortali.gun') }})</span>
                 </p>
                 <small
                   v-if="i.aciklama"
@@ -257,31 +281,29 @@
             </div>
           </div>
 
-          <div
+          <EmptyState
             v-else
-            class="empty-box"
-          >
-            <i class="pi pi-calendar empty-icon" />
-            <p>{{ t('sahaPortali.izinBos') }}</p>
-          </div>
+            icon="pi pi-calendar"
+            :message="t('sahaPortali.izinBos')"
+          />
         </div>
       </TabPanel>
 
       <TabPanel>
         <template #header>
-          <span class="flex items-center gap-1.5">
+          <span class="sekme-baslik">
             <i class="pi pi-money-bill" />
             {{ t('sahaPortali.tahsilat') }}
           </span>
         </template>
-        <div class="fade-in-section">
-          <div class="form-container-card">
-            <div class="form-header">
-              <h3><i class="pi pi-money-bill text-primary mr-2" />{{ t('sahaPortali.tahsilatBaslik') }}</h3>
+        <div class="saha-fade">
+          <div class="saha-form-kart">
+            <div class="saha-form-baslik">
+              <h3><i class="pi pi-money-bill saha-baslik-ikon" />{{ t('sahaPortali.tahsilatBaslik') }}</h3>
               <p>{{ t('sahaPortali.tahsilatAciklama') }}</p>
             </div>
-            <div class="form-body">
-              <div class="form-field">
+            <div class="saha-form-govde">
+              <div class="saha-alan">
                 <label>{{ t('sahaPortali.musteriZorunlu') }}</label>
                 <Dropdown
                   v-model="tahsilatForm.cariHesapId"
@@ -293,8 +315,8 @@
                   class="w-full"
                 />
               </div>
-              <div class="form-row-2">
-                <div class="form-field">
+              <div class="saha-satir-2">
+                <div class="saha-alan">
                   <label>{{ t('sahaPortali.tutarZorunlu') }}</label>
                   <input
                     v-model.number="tahsilatForm.tutar"
@@ -305,7 +327,7 @@
                     placeholder="0.00"
                   >
                 </div>
-                <div class="form-field">
+                <div class="saha-alan">
                   <label>{{ t('sahaPortali.odemeYontemi') }}</label>
                   <Dropdown
                     v-model="tahsilatForm.odemeYontemi"
@@ -316,7 +338,8 @@
                   />
                 </div>
               </div>
-              <div class="form-field">
+              <small class="tahsilat-ipucu"><i class="pi pi-arrow-down-left" /> {{ t('tahsilat.etkiAzalir') }}</small>
+              <div class="saha-alan">
                 <label>{{ tahsilatForm.odemeYontemi === 'NAKIT' ? t('sahaPortali.kasa') : t('sahaPortali.banka') }}</label>
                 <Dropdown
                   v-if="tahsilatForm.odemeYontemi === 'NAKIT'"
@@ -341,7 +364,7 @@
                   class="w-full"
                 />
               </div>
-              <div class="form-field">
+              <div class="saha-alan">
                 <label>{{ t('common.description') }}</label>
                 <Textarea
                   v-model="tahsilatForm.aciklama"
@@ -349,11 +372,16 @@
                   class="w-full"
                 />
               </div>
+              <small
+                v-if="!cevrimici"
+                class="tahsilat-offline"
+              ><i class="pi pi-ban" /> {{ t('sahaPortali.cevrimdisiTahsilatOlmaz') }}</small>
               <Button
                 :label="t('sahaPortali.tahsilatiKaydet')"
                 icon="pi pi-check"
                 class="p-button-success w-full font-bold"
                 :loading="tahsilatGonderiliyor"
+                :disabled="!cevrimici"
                 @click="tahsilatKaydet"
               />
             </div>
@@ -363,39 +391,57 @@
 
       <TabPanel>
         <template #header>
-          <span class="flex items-center gap-1.5">
+          <span class="sekme-baslik">
             <i class="pi pi-check-square" />
             {{ t('sahaPortali.gorevNot') }}
+            <span
+              v-if="gorevSayisi > 0"
+              class="tab-badge"
+            >{{ gorevSayisi }}</span>
           </span>
         </template>
-        <GorevNotPaneli @not-kaydedildi="notlariYukle" />
+        <GorevNotPaneli
+          @not-kaydedildi="notlariYukle"
+          @gorev-sayisi="gorevSayisi = $event"
+        />
       </TabPanel>
 
       <TabPanel>
         <template #header>
-          <span class="flex items-center gap-1.5">
+          <span class="sekme-baslik">
             <i class="pi pi-chart-bar" />
             {{ t('sahaPortali.performans') }}
           </span>
         </template>
-        <div class="fade-in-section">
+        <div class="saha-fade">
           <div class="performans-grid">
-            <div class="kpi-kart">
-              <span class="kpi-deger">{{ bekleyenSiparisSayisi }}</span>
-              <span class="kpi-etiket">{{ t('sahaPortali.bekleyenSiparis') }}</span>
-            </div>
-            <div class="kpi-kart">
-              <span class="kpi-deger">{{ teslimEdilenSiparisSayisi }}</span>
-              <span class="kpi-etiket">{{ t('sahaPortali.teslimEdilenSiparis') }}</span>
-            </div>
-            <div class="kpi-kart">
-              <span class="kpi-deger">{{ ziyaretSayisi }}</span>
-              <span class="kpi-etiket">{{ t('sahaPortali.ziyaretSayisi') }}</span>
-            </div>
-            <div class="kpi-kart">
-              <span class="kpi-deger">{{ formatPara(tahsilatToplam) }}</span>
-              <span class="kpi-etiket">{{ t('sahaPortali.tahsilatToplam') }}</span>
-            </div>
+            <KpiKart
+              :baslik="t('sahaPortali.bekleyenSiparis')"
+              :deger="bekleyenSiparisSayisi"
+              icon="pi pi-shopping-bag"
+              :para-birimi="false"
+              renk="#f59e0b"
+            />
+            <KpiKart
+              :baslik="t('sahaPortali.teslimEdilenSiparis')"
+              :deger="teslimEdilenSiparisSayisi"
+              icon="pi pi-check-circle"
+              :para-birimi="false"
+              renk="#10b981"
+            />
+            <KpiKart
+              :baslik="t('sahaPortali.ziyaretSayisi')"
+              :deger="ziyaretSayisi"
+              icon="pi pi-map-marker"
+              :para-birimi="false"
+              renk="#3b82f6"
+            />
+            <KpiKart
+              :baslik="t('sahaPortali.tahsilatToplam')"
+              :deger="tahsilatToplam"
+              icon="pi pi-money-bill"
+              renk="#14b8a6"
+            />
           </div>
         </div>
       </TabPanel>
@@ -408,8 +454,8 @@
       :header="t('sahaPortali.sahadaHizliSiparis')"
       :style="{ width: '90%', maxWidth: '520px' }"
     >
-      <div class="modal-form-content">
-        <div class="form-field">
+      <div class="saha-modal-icerik">
+        <div class="saha-alan">
           <label>{{ t('sahaPortali.musteriZorunlu') }}</label>
           <Dropdown
             v-model="yeniSiparisForm.cariHesapId"
@@ -421,7 +467,7 @@
             class="w-full"
           />
         </div>
-        <div class="form-field">
+        <div class="saha-alan">
           <label>{{ t('sahaPortali.barkodIleBul') }}</label>
           <div class="p-inputgroup">
             <span class="p-inputgroup-addon"><i class="pi pi-qrcode" /></span>
@@ -438,7 +484,7 @@
             />
           </div>
         </div>
-        <div class="form-field">
+        <div class="saha-alan">
           <label>{{ t('sahaPortali.urunStokZorunlu') }}</label>
           <Dropdown
             v-model="yeniSiparisForm.stokId"
@@ -459,8 +505,8 @@
             {{ t('sahaPortali.stokMiktar') }}: {{ seciliStokBilgi.miktar ?? '-' }}
           </small>
         </div>
-        <div class="form-row-2">
-          <div class="form-field">
+        <div class="saha-satir-2">
+          <div class="saha-alan">
             <label>{{ t('sahaPortali.miktar') }}</label>
             <input
               v-model.number="yeniSiparisForm.miktar"
@@ -469,7 +515,7 @@
               class="p-inputtext w-full"
             >
           </div>
-          <div class="form-field">
+          <div class="saha-alan">
             <label>{{ t('sahaPortali.birimFiyat') }}</label>
             <input
               v-model.number="yeniSiparisForm.birimFiyat"
@@ -511,7 +557,7 @@
             {{ t('sahaPortali.sepetToplam') }}: {{ formatPara(sepetToplam) }}
           </div>
         </div>
-        <div class="form-field">
+        <div class="saha-alan">
           <label>{{ t('sahaPortali.teslimatAdresi') }}</label>
           <InputText
             v-model="yeniSiparisForm.adres"
@@ -543,8 +589,8 @@
       :header="t('sahaPortali.teslimatImzasi')"
       :style="{ width: '90%', maxWidth: '460px' }"
     >
-      <div class="modal-form-content">
-        <div class="form-field">
+      <div class="saha-modal-icerik">
+        <div class="saha-alan">
           <label>{{ t('sahaPortali.teslimAlanZorunlu') }}</label>
           <InputText
             v-model="imzaForm.teslimAlan"
@@ -552,7 +598,7 @@
             class="w-full"
           />
         </div>
-        <div class="form-field">
+        <div class="saha-alan">
           <label>{{ t('sahaPortali.teslimatNotu') }}</label>
           <InputText
             v-model="imzaForm.notlar"
@@ -560,7 +606,7 @@
             class="w-full"
           />
         </div>
-        <div class="form-field">
+        <div class="saha-alan">
           <div class="flex justify-between items-center mb-1">
             <label>{{ t('sahaPortali.dijitalImza') }}</label>
           </div>
@@ -593,8 +639,8 @@
       :header="t('sahaPortali.yeniIzinTalebiAc')"
       :style="{ width: '90%', maxWidth: '420px' }"
     >
-      <div class="modal-form-content">
-        <div class="form-field">
+      <div class="saha-modal-icerik">
+        <div class="saha-alan">
           <label>{{ t('sahaPortali.izinTuru') }}</label>
           <Dropdown
             v-model="izinForm.izinTuru"
@@ -602,8 +648,8 @@
             class="w-full"
           />
         </div>
-        <div class="form-row-2">
-          <div class="form-field">
+        <div class="saha-satir-2">
+          <div class="saha-alan">
             <label>{{ t('sahaPortali.baslangic') }}</label>
             <InputText
               v-model="izinForm.baslangic"
@@ -611,7 +657,7 @@
               class="w-full"
             />
           </div>
-          <div class="form-field">
+          <div class="saha-alan">
             <label>{{ t('sahaPortali.bitis') }}</label>
             <InputText
               v-model="izinForm.bitis"
@@ -620,7 +666,7 @@
             />
           </div>
         </div>
-        <div class="form-field">
+        <div class="saha-alan">
           <label>{{ t('common.description') }}</label>
           <Textarea
             v-model="izinForm.aciklama"
@@ -653,7 +699,7 @@
       :header="t('sahaPortali.yeniMasrafAvansTalebi')"
       :style="{ width: '90%', maxWidth: '420px' }"
     >
-      <div class="modal-form-content">
+      <div class="saha-modal-icerik">
         <div class="tab-pill-group">
           <button
             type="button"
@@ -673,7 +719,7 @@
 
         <div
           v-if="masrafForm.tur === 'MASRAF'"
-          class="form-field"
+          class="saha-alan"
         >
           <label>{{ t('sahaPortali.harcamaKategorisi') }}</label>
           <Dropdown
@@ -683,7 +729,7 @@
           />
         </div>
 
-        <div class="form-field">
+        <div class="saha-alan">
           <label>{{ t('sahaPortali.tutarZorunlu') }}</label>
           <input
             v-model.number="masrafForm.tutar"
@@ -695,7 +741,7 @@
           >
         </div>
 
-        <div class="form-field">
+        <div class="saha-alan">
           <label>{{ t('sahaPortali.aciklamaZorunlu') }}</label>
           <InputText
             v-model="masrafForm.aciklama"
@@ -703,7 +749,7 @@
             class="w-full"
           />
         </div>
-        <div class="form-field">
+        <div class="saha-alan">
           <label>{{ t('sahaPortali.masrafFisiOpsiyonel') }}</label>
           <label class="foto-sec-etiket">
             <i class="pi pi-camera" /> {{ masrafFoto ? masrafFoto.name : t('sahaPortali.fotografSec') }}
@@ -738,7 +784,7 @@
       :header="t('sahaPortali.durumGuncelle')"
       :style="{ width: '90%', maxWidth: '400px' }"
     >
-      <div class="modal-form-content">
+      <div class="saha-modal-icerik">
         <div class="form-group">
           <label>{{ t('common.status') }}</label>
           <Dropdown
@@ -769,7 +815,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { siparisAPI, personelIzinAPI, personelMasrafTalepAPI, cariHesapAPI, stokAPI, notAPI, belgeAPI, teslimatAPI, tahsilatAPI, kasaAPI, bankaAPI } from '../api/index.js'
@@ -777,14 +823,30 @@ import { useToast } from 'primevue/usetoast'
 import SahaSiparislerPanel from '../components/SahaSiparislerPanel.vue'
 import ImzaPad from '../components/ImzaPad.vue'
 import GorevNotPaneli from '../components/GorevNotPaneli.vue'
+import EmptyState from '../components/EmptyState.vue'
+import KpiKart from '../components/KpiKart.vue'
 import { useI18n } from 'vue-i18n'
-import { formatTarih, getLocalDateString } from '../utils/format.js'
+import { formatTarih, getLocalDateString, formatPara } from '../utils/format.js'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
 const toast = useToast()
 
 const yukleniyor = ref(false)
+
+// Aktif sekme son kullanilan olarak hatirlanir (saha personeli tekrar acinca
+// kaldigi yerden devam eder). Gecersiz/bayat indeksler guvenli araliga cekilir.
+const AKTIF_SEKME_KEY = 'raspel_saha_aktif_sekme'
+const SEKME_SAYISI = 7
+const kayitliSekme = Number(localStorage.getItem(AKTIF_SEKME_KEY))
+const aktifSekme = ref(
+  Number.isInteger(kayitliSekme) && kayitliSekme >= 0 && kayitliSekme < SEKME_SAYISI ? kayitliSekme : 0
+)
+watch(aktifSekme, (i) => localStorage.setItem(AKTIF_SEKME_KEY, String(i)))
+
+// Baglanti durumu: banner'daki durum cipi ve kuyruk sayaci icin.
+const cevrimici = ref(typeof navigator === 'undefined' ? true : navigator.onLine)
+const baglantiGuncelle = () => { cevrimici.value = navigator.onLine }
 
 const siparisler = ref([])
 const izinler = ref([])
@@ -862,11 +924,6 @@ const teslimEdilenSiparisSayisi = computed(() =>
 )
 const ziyaretSayisi = computed(() => notlar.value.filter((n) => n?.kategori === 'SAHA_ZIYARET').length)
 
-// Format Helpers (Lokal ve Güvenli)
-const formatPara = (v) => {
-  if (v == null || isNaN(v)) return '0,00 ₺'
-  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v)
-}
 // Canvas
 const imzaPadRef = ref(null)
 
@@ -874,10 +931,14 @@ onMounted(async () => {
   await tumunuYukle()
   sahaKuyruguSenkronizeEt()
   window.addEventListener('online', sahaKuyruguSenkronizeEt)
+  window.addEventListener('online', baglantiGuncelle)
+  window.addEventListener('offline', baglantiGuncelle)
 })
 
 onUnmounted(() => {
   window.removeEventListener('online', sahaKuyruguSenkronizeEt)
+  window.removeEventListener('online', baglantiGuncelle)
+  window.removeEventListener('offline', baglantiGuncelle)
 })
 
 // ---- Saha çevrimdışı kuyruğu (ziyaret notları) ----
@@ -1005,6 +1066,11 @@ const notlariYukle = async () => {
 const bekleyenSiparisSayisi = computed(() =>
   siparisler.value.filter(s => s?.durum !== 'TESLIM_EDILDI' && s?.durum !== 'IPTAL').length
 )
+
+// Sekme rozetleri: bekleyen masraf/izin talepleri ve gorev sayisi.
+const bekleyenMasrafSayisi = computed(() => masraflar.value.filter((m) => m?.durum === 'BEKLEMEDE').length)
+const bekleyenIzinSayisi = computed(() => izinler.value.filter((i) => i?.durum === 'BEKLEMEDE').length)
+const gorevSayisi = ref(0)
 
 
 const talepDurumSeverity = (durum) => {
@@ -1411,10 +1477,21 @@ const hizliSiparisKaydet = async () => {
   backdrop-filter: blur(4px);
 }
 
+.user-text {
+  min-width: 0;
+}
+
 .user-name {
   font-size: 1.15rem;
   font-weight: 700;
-  margin: 0 0 0.15rem 0;
+  margin: 0 0 0.25rem 0;
+}
+
+.user-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .user-badge {
@@ -1423,6 +1500,35 @@ const hizliSiparisKaydet = async () => {
   display: flex;
   align-items: center;
   gap: 0.35rem;
+}
+
+/* Baglanti durumu cipi: cevrimici/cevrimdisi + bekleyen kuyruk sayaci. */
+.durum-cip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  line-height: 1.5;
+}
+.durum-cip.cevrimici {
+  background: rgba(16, 185, 129, 0.18);
+  color: #d1fae5;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+.durum-cip.cevrimdisi {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fee2e2;
+  border-color: rgba(239, 68, 68, 0.45);
+}
+.durum-kuyruk {
+  background: rgba(0, 0, 0, 0.28);
+  border-radius: 9999px;
+  padding: 0 6px;
+  font-size: 0.68rem;
 }
 
 .header-actions {
@@ -1440,83 +1546,22 @@ const hizliSiparisKaydet = async () => {
   border-radius: 9999px;
 }
 
-.section-title-row {
-  display: flex;
-  justify-content: space-between;
+.sekme-baslik {
+  display: inline-flex;
   align-items: center;
-  margin-bottom: 1rem;
+  gap: 6px;
 }
 
-.section-title-row h3 {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin: 0;
-  color: var(--text-primary);
-}
-
-.count-pill {
+.tahsilat-ipucu {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: -0.4rem;
   font-size: 0.75rem;
-  color: var(--text-secondary);
-  background: var(--bg-muted, rgba(0, 0, 0, 0.05));
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-weight: 600;
+  color: var(--success, #22c55e);
 }
-
-.form-container-card {
-  max-width: 600px;
-  margin: 0 auto;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 1rem;
-  padding: 1.5rem;
-}
-
-.form-header h3 {
-  font-size: 1.15rem;
-  font-weight: 700;
-  margin: 0 0 0.25rem 0;
-}
-
-.form-header p {
+.tahsilat-ipucu i {
   font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-bottom: 1.25rem;
-}
-
-.form-body {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.form-field label {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin-bottom: 0.35rem;
-  color: var(--text-secondary);
-}
-
-.form-row-2 {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-.empty-box {
-  text-align: center;
-  padding: 3.5rem 1rem;
-  background: var(--bg-card);
-  border: 1px dashed var(--border);
-  border-radius: 1rem;
-  color: var(--text-secondary);
-}
-
-.empty-icon {
-  font-size: 3rem;
-  margin-bottom: 0.75rem;
-  opacity: 0.4;
 }
 
 .expense-list {
@@ -1585,17 +1630,6 @@ const hizliSiparisKaydet = async () => {
   color: white;
 }
 
-.modal-form-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.875rem;
-  padding-top: 0.5rem;
-}
-
-.fade-in-section {
-  animation: fadeIn 0.25s ease-in-out;
-}
-
 .stok-raf-bilgi {
   display: block;
   margin-top: 4px;
@@ -1628,6 +1662,8 @@ const hizliSiparisKaydet = async () => {
   background: transparent;
   color: var(--danger, #ef4444);
   cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
 }
 .sepet-toplam {
   margin-top: 4px;
@@ -1641,6 +1677,7 @@ const hizliSiparisKaydet = async () => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-height: 40px;
   padding: 8px 12px;
   border-radius: 8px;
   border: 1px dashed var(--border);
@@ -1659,32 +1696,72 @@ const hizliSiparisKaydet = async () => {
   grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
   gap: 1rem;
 }
-.kpi-kart {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 1rem;
-  padding: 1.25rem;
+
+/* GPS konum kutusu: sabit renk siniflari yerine tema token'lari. */
+.gps-location-row {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-muted, rgba(0, 0, 0, 0.03));
 }
-.kpi-deger {
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: var(--primary-color, var(--accent));
+.gps-bilgi {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
-.kpi-etiket {
-  font-size: 0.8rem;
+.gps-ikon {
+  font-size: 1.1rem;
+}
+.gps-metin {
+  font-size: 0.85rem;
   color: var(--text-secondary);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Masraf/izin kart ust satiri. */
+.expense-ustsatir {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.izin-tur {
+  font-size: 1rem;
+  color: var(--primary-color, var(--accent));
+}
+.izin-takvim-ikon {
+  color: var(--primary-color, var(--accent));
+  margin-right: 4px;
+}
+.izin-gun {
+  font-weight: 700;
+  color: var(--primary-color, var(--accent));
+  margin-left: 4px;
+}
+
+/* Cevrimdisi tahsilat uyarisi. */
+.tahsilat-offline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger, #ef4444);
+  font-size: 0.78rem;
+  font-weight: 600;
 }
 
 /* Mobil: saha portalı sahada telefondan kullanılır. Header'ı dikey yığ,
-   formları tek kolona indir, 7 sekmeyi yatay kaydırmayla erişilebilir tut. */
+   7 sekmeyi yatay kaydırmayla erişilebilir tut. */
 @media (max-width: 640px) {
   .saha-header-content {
     flex-direction: column;
@@ -1696,17 +1773,18 @@ const hizliSiparisKaydet = async () => {
     justify-content: flex-start;
     flex-wrap: wrap;
   }
-  .form-row-2 {
-    grid-template-columns: 1fr;
-  }
   .performans-grid {
     grid-template-columns: 1fr;
   }
-  :deep(.p-tabview-nav) {
+  .saha-sekmeler :deep(.p-tabview-tablist) {
     overflow-x: auto;
     flex-wrap: nowrap;
+    scrollbar-width: none;
   }
-  :deep(.p-tabview-nav li) {
+  .saha-sekmeler :deep(.p-tabview-tablist::-webkit-scrollbar) {
+    display: none;
+  }
+  .saha-sekmeler :deep(.p-tabview-tablist-item) {
     flex-shrink: 0;
   }
 }

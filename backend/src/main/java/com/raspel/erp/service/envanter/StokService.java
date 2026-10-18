@@ -60,6 +60,32 @@ public class StokService {
     private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
     private final BarkodUretService barkodUretService;
 
+    // ---------- OZET (KPI) ----------
+
+    /**
+     * Stok liste ekrani ust ozeti: toplam urun, kritik adet, toplam stok
+     * degeri ve kategori sayisi. Tum degerler tek/az sayida sorguyle gelir.
+     */
+    @Transactional(readOnly = true)
+    public com.raspel.erp.dto.envanter.StokOzetDTO ozet(Long sirketId) {
+        if (sirketId == null) {
+            return com.raspel.erp.dto.envanter.StokOzetDTO.builder()
+                    .toplamUrun(0).kritikSayi(0)
+                    .toplamDeger(BigDecimal.ZERO).kategoriSayisi(0)
+                    .build();
+        }
+        long toplam = stokRepository.countBySirketId(sirketId);
+        long kritik = stokRepository.countKritikStokBySirketId(sirketId);
+        BigDecimal deger = stokRepository.toplamStokDegeriBySirketId(sirketId);
+        long kategori = stokRepository.kategoriDagilimi(sirketId).size();
+        return com.raspel.erp.dto.envanter.StokOzetDTO.builder()
+                .toplamUrun(toplam)
+                .kritikSayi(kritik)
+                .toplamDeger(deger != null ? deger : BigDecimal.ZERO)
+                .kategoriSayisi(kategori)
+                .build();
+    }
+
     // ---------- ÇOKLU FİYAT ----------
 
     @Transactional(readOnly = true)

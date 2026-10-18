@@ -23,4 +23,7 @@ public interface KasaRepository extends JpaRepository<Kasa, Long> {
 
     @Query("SELECT COALESCE(SUM(k.bakiye), 0) FROM Kasa k WHERE k.sirketId = :sirketId")
     java.math.BigDecimal sumBakiyeBySirketId(@Param("sirketId") Long sirketId);
+
+    /** KPI özeti: şirketin kasa sayısı. */
+    long countBySirketId(Long sirketId);
 }

@@ -5,6 +5,9 @@ export const bankaAPI = {
   getAll(params = { size: 500 }) {
     return apiClient.get('/bankalar', { params })
   },
+  ozet() {
+    return apiClient.get('/bankalar/ozet')
+  },
   getById(id) {
     return apiClient.get(`/bankalar/${id}`)
   },
@@ -47,6 +50,9 @@ export const bankaMutabakatAPI = {
 export const kasaAPI = {
   getAll(params = { size: 500 }) {
     return apiClient.get('/kasalar', { params })
+  },
+  ozet() {
+    return apiClient.get('/kasalar/ozet')
   },
   getById(id) {
     return apiClient.get(`/kasalar/${id}`)
@@ -216,6 +222,9 @@ export const posAPI = {
   },
   gunSonu() {
     return apiClient.post('/pos-terminalleri/gun-sonu')
+  },
+  gunSonuRapor() {
+    return apiClient.get('/pos-terminalleri/gun-sonu/rapor')
   },
   olustur(data) {
     return apiClient.post('/pos-terminalleri', data)

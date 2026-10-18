@@ -825,19 +825,22 @@
   gap: 8px;
 }
 .pos-container .odeme-yontem-btn {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   min-width: 0;
-  min-height: 44px;
-  padding: 9px 12px;
+  min-height: 78px;
+  padding: 12px 10px;
   border: 1px solid var(--border);
   border-radius: var(--pos-alan-radius);
-  background: var(--bg-primary);
+  background: var(--bg-card);
   color: var(--text-secondary);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
-  text-align: left;
+  text-align: center;
   cursor: pointer;
   transition:
     border-color var(--dur-fast, 0.15s) ease,
@@ -845,18 +848,47 @@
     color var(--dur-fast, 0.15s) ease,
     transform var(--dur-fast, 0.15s) ease;
 }
-.pos-container .odeme-yontem-btn i {
-  flex-shrink: 0;
-  font-size: 16px;
+.pos-container .odeme-yontem-ikon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--bg-muted);
+  transition:
+    background var(--dur-fast, 0.15s) ease,
+    color var(--dur-fast, 0.15s) ease;
+}
+.pos-container .odeme-yontem-btn .odeme-yontem-ikon i {
+  font-size: 17px;
   color: var(--text-muted);
   transition: color var(--dur-fast, 0.15s) ease;
 }
+.pos-container .odeme-yontem-ad {
+  line-height: 1.2;
+}
+.pos-container .odeme-yontem-btn .odeme-yontem-onay {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 10px;
+}
 .pos-container .odeme-yontem-btn:hover {
   border-color: var(--accent-border);
+  background: var(--accent-soft);
   color: var(--text-primary);
   transform: translateY(-1px);
 }
-.pos-container .odeme-yontem-btn:hover i {
+.pos-container .odeme-yontem-btn:hover .odeme-yontem-ikon i {
   color: var(--accent);
 }
 .pos-container .odeme-yontem-btn.active {
@@ -865,17 +897,20 @@
   color: var(--accent);
   font-weight: 700;
 }
-.pos-container .odeme-yontem-btn.active i {
-  color: var(--accent);
+.pos-container .odeme-yontem-btn.active .odeme-yontem-ikon {
+  background: var(--accent);
+}
+.pos-container .odeme-yontem-btn.active .odeme-yontem-ikon i {
+  color: var(--accent-contrast);
 }
 .pos-container .taksit-panel {
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 12px;
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  border: 1px solid var(--border);
   border-radius: var(--pos-alan-radius);
-  background: rgba(139, 92, 246, 0.08);
+  background: var(--bg-secondary);
 }
 .pos-container .para-ustu {
   display: flex;
@@ -894,31 +929,56 @@
   font-variant-numeric: tabular-nums;
 }
 .pos-container .hizli-nakit {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 6px;
 }
 .pos-container .hizli-nakit-btn {
-  flex: 1 1 auto;
-  min-width: 52px;
-  min-height: 38px;
+  min-width: 0;
+  min-height: 42px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 999px;
   background: var(--bg-card);
   color: var(--text-primary);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
-  transition: border-color var(--dur-fast, 0.15s) ease, color var(--dur-fast, 0.15s) ease;
+  transition:
+    border-color var(--dur-fast, 0.15s) ease,
+    background var(--dur-fast, 0.15s) ease,
+    color var(--dur-fast, 0.15s) ease,
+    transform var(--dur-fast, 0.15s) ease;
 }
 .pos-container .hizli-nakit-btn:hover {
   border-color: var(--accent-border);
-  color: var(--accent);
-}
-.pos-container .hizli-nakit-btn.tam {
-  border-color: var(--accent-border);
   background: var(--accent-soft);
   color: var(--accent);
+  transform: translateY(-1px);
+}
+.pos-container .hizli-nakit-btn.tam {
+  grid-column: span 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow: 0 2px 10px var(--accent-soft);
+}
+.pos-container .hizli-nakit-btn.tam:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+.pos-container .hizli-nakit-tam-etiket {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+.pos-container .hizli-nakit-tam-tutar {
+  font-weight: 800;
+  white-space: nowrap;
 }
 .pos-container .odeme-durum {
   margin-top: 2px;
@@ -992,8 +1052,12 @@
   font-size: 15px;
 }
 .pos-container.pos-buyuk .odeme-yontem-btn {
-  min-height: 52px;
+  min-height: 88px;
   font-size: 14px;
+}
+.pos-container.pos-buyuk .odeme-yontem-ikon {
+  width: 44px;
+  height: 44px;
 }
 .pos-container.pos-buyuk .odeme-yontem-btn i {
   font-size: 20px;
@@ -1042,6 +1106,7 @@
   }
   .pos-container .odeme-yontem-btn,
   .pos-container .katlanir-baslik,
+  .pos-container .odeme-yontem-ikon,
   .pos-container .odeme-yontem-btn i {
     transition: none;
   }

@@ -81,6 +81,27 @@ class StokServiceTest {
     }
 
     @Test
+    void ozet_returnsAggregates() {
+        when(stokRepository.countBySirketId(1L)).thenReturn(10L);
+        when(stokRepository.countKritikStokBySirketId(1L)).thenReturn(3L);
+        when(stokRepository.toplamStokDegeriBySirketId(1L)).thenReturn(BigDecimal.valueOf(12345));
+        when(stokRepository.kategoriDagilimi(1L)).thenReturn(List.<Object[]>of(
+                new Object[]{"A", 5L}, new Object[]{"B", 5L}));
+        var dto = stokService.ozet(1L);
+        assertEquals(10, dto.getToplamUrun());
+        assertEquals(3, dto.getKritikSayi());
+        assertEquals(2, dto.getKategoriSayisi());
+        assertEquals(0, BigDecimal.valueOf(12345).compareTo(dto.getToplamDeger()));
+    }
+
+    @Test
+    void ozet_nullSirket_returnsZeros() {
+        var dto = stokService.ozet(null);
+        assertEquals(0, dto.getToplamUrun());
+        assertEquals(0, BigDecimal.ZERO.compareTo(dto.getToplamDeger()));
+    }
+
+    @Test
     void getir_returnsStok() {
         when(stokRepository.findById(1L)).thenReturn(Optional.of(createStok(1L)));
         var result = stokService.getir(1L);

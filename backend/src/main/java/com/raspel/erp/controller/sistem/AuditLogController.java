@@ -35,11 +35,31 @@ public class AuditLogController {
             @RequestParam(required = false) Long kullaniciId,
             @RequestParam(required = false) String islem,
             @RequestParam(required = false) String entityAdi,
+            @RequestParam(required = false) Long entityId,
+            @RequestParam(required = false) Boolean riskli,
+            @RequestParam(required = false) String q,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangicTarih,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitisTarih,
             @PageableDefault(size = 50) Pageable pageable) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(auditLogService.filtreliGetirDTO(sirketId, kullaniciId, islem, entityAdi, baslangicTarih, bitisTarih, pageable));
+        return ResponseEntity.ok(auditLogService.filtreliGetirDTO(
+                sirketId, kullaniciId, islem, entityAdi, entityId, riskli, q, baslangicTarih, bitisTarih, pageable));
+    }
+
+    @GetMapping("/ozet")
+    @Operation(summary = "Denetim log özeti",
+            description = "Filtrelenen kayıtların işlem tipine göre sayımını (KPI) döndürür.")
+    public ResponseEntity<com.raspel.erp.dto.sistem.AuditLogOzetDTO> ozet(
+            HttpServletRequest request,
+            @RequestParam(required = false) Long kullaniciId,
+            @RequestParam(required = false) String entityAdi,
+            @RequestParam(required = false) Long entityId,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangicTarih,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitisTarih) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(auditLogService.ozet(
+                sirketId, kullaniciId, entityAdi, entityId, q, baslangicTarih, bitisTarih));
     }
 
     @GetMapping("/islem-tipleri")

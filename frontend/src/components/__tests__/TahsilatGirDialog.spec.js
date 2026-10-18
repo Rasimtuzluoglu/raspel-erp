@@ -68,6 +68,19 @@ describe('TahsilatGirDialog.vue', () => {
     expect(wrapper.find('.tahsilat-form').exists()).toBe(true)
   })
 
+  it('etki bandi cari borcunun azalacagini gosterir', async () => {
+    const TahsilatGirDialog = (await import('../../components/TahsilatGirDialog.vue')).default
+    const wrapper = mount(TahsilatGirDialog, {
+      props: { visible: false, cariler: [], cari },
+      global: { stubs, plugins: [createPinia(), ToastService, i18n] }
+    })
+    await wrapper.setProps({ visible: true })
+    await flushPromises()
+    const bant = wrapper.find('.etki-bandi')
+    expect(bant.exists()).toBe(true)
+    expect(bant.text()).toContain(i18n.global.t('tahsilat.etkiAzalir'))
+  })
+
   /**
    * Cift tiklama korumasi: buton :loading ile kapansa da JS seviyesinde de
    * ikinci cagri reddedilir. Yoksa cari bakiyesi ve kasa iki kez guncellenir.

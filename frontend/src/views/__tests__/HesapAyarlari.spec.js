@@ -5,6 +5,7 @@ import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
 import { useAuthStore } from '../../stores/authStore.js'
 import i18n from '../../i18n.js'
+import Card from 'primevue/card'
 
 vi.mock('axios', () => ({
   default: {
@@ -23,11 +24,12 @@ vi.mock('axios', () => ({
 }))
 
 const stubs = {
-  Card: true,
   Button: true,
   InputText: true,
   Dropdown: true,
   Tag: true,
+  ToggleSwitch: true,
+  Message: true,
   IlkZiyaretIpuclari: true
 }
 
@@ -56,24 +58,78 @@ describe('HesapAyarlari.vue', () => {
       global: { stubs, plugins: [pinia, ToastService, ConfirmationService, i18n] }
     })
     await flushPromises()
-    // Entegrasyonlar "Sistem" grubunda.
-    wrapper.vm.bolumGrubu = 'sistem'
+    // Entegrasyonlar 5. bolum (index 4).
+    wrapper.vm.aktifBolum = 4
     await wrapper.vm.$nextTick()
     expect(wrapper.find('.ai-ayar-kart').exists()).toBe(true)
   })
 
-  it('sekme grupları: kişisel 4 sekme; sistem 4 sekme', async () => {
+  it('sol dikey menu 8 bolum sunar; secim aktif sekmeyi degistirir', async () => {
     const HesapAyarlari = (await import('../HesapAyarlari.vue')).default
     const wrapper = mount(HesapAyarlari, {
       global: { stubs, plugins: [createPinia(), ToastService, ConfirmationService, i18n] }
     })
     await flushPromises()
-    // Varsayılan grup: Kişisel (Profil, Güvenlik, Görünüm, Bildirimler).
-    expect(wrapper.findAll('[role="tab"]').length).toBe(4)
+    const ogeler = wrapper.findAll('.ayarlar-nav-oge')
+    expect(ogeler.length).toBe(8)
 
-    wrapper.vm.bolumGrubu = 'sistem'
+    await ogeler[4].trigger('click')
     await wrapper.vm.$nextTick()
-    expect(wrapper.findAll('[role="tab"]').length).toBe(4)
-    expect(wrapper.findAll('[role="tab"]')[0].attributes('aria-selected')).toBe('true')
+    expect(wrapper.vm.aktifBolum).toBe(4)
+  })
+
+  it('bildirim tercihleri tek liste konteynerinde satirlar halinde gosterilir', async () => {
+    const HesapAyarlari = (await import('../HesapAyarlari.vue')).default
+    const wrapper = mount(HesapAyarlari, {
+      global: { stubs, components: { Card }, plugins: [createPinia(), ToastService, ConfirmationService, i18n] }
+    })
+    await flushPromises()
+    wrapper.vm.aktifBolum = 3
+    await flushPromises()
+    await wrapper.vm.$nextTick()
+    const liste = wrapper.find('.tercih-liste')
+    expect(liste.exists()).toBe(true)
+    expect(wrapper.findAll('.tercih-satir').length).toBe(10)
+  })
+
+  it('token listesi kart konteynerinde render edilir (admin)', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const auth = useAuthStore()
+    auth.kullanici = { id: 1, username: 'admin', role: 'ADMIN' }
+    const HesapAyarlari = (await import('../HesapAyarlari.vue')).default
+    const wrapper = mount(HesapAyarlari, {
+      global: { stubs, components: { Card }, plugins: [pinia, ToastService, ConfirmationService, i18n] }
+    })
+    await flushPromises()
+    wrapper.vm.aktifBolum = 4
+    wrapper.vm.tokenlar = [
+      { id: 1, ad: 'CI Token', olusturmaTarihi: '2026-01-01T10:00:00' },
+      { id: 2, ad: 'Bot', olusturmaTarihi: null }
+    ]
+    await flushPromises()
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('.token-liste').exists()).toBe(true)
+    expect(wrapper.findAll('.token-satir').length).toBe(2)
+    expect(wrapper.find('.token-bos').exists()).toBe(false)
+  })
+
+  it('token yoksa ikonlu bos durum gosterilir (admin)', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const auth = useAuthStore()
+    auth.kullanici = { id: 1, username: 'admin', role: 'ADMIN' }
+    const HesapAyarlari = (await import('../HesapAyarlari.vue')).default
+    const wrapper = mount(HesapAyarlari, {
+      global: { stubs, components: { Card }, plugins: [pinia, ToastService, ConfirmationService, i18n] }
+    })
+    await flushPromises()
+    wrapper.vm.aktifBolum = 4
+    wrapper.vm.tokenlar = []
+    wrapper.vm.yeniToken = ''
+    await flushPromises()
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('.token-liste').exists()).toBe(true)
+    expect(wrapper.find('.token-bos').exists()).toBe(true)
   })
 })

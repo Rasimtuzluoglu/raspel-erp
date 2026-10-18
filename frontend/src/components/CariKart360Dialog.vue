@@ -14,42 +14,80 @@
     </div>
 
     <div v-else-if="kart">
-      <div class="kart-ust">
-        <div class="kart-kimlik">
-          <h3>{{ kart.cariAd }}</h3>
-          <div class="kart-meta">
-            <span v-if="kart.telefon"><i class="pi pi-phone" /> {{ kart.telefon }}</span>
-            <span v-if="kart.email"><i class="pi pi-envelope" /> {{ kart.email }}</span>
-            <span v-if="kart.temsilciAd"><i class="pi pi-user" /> {{ kart.temsilciAd }}</span>
+      <div class="kart-kimlik-kart">
+        <div class="kart-kimlik-sol">
+          <img
+            v-if="avatarUrl"
+            :src="avatarUrl"
+            class="kart-avatar"
+            alt=""
+          >
+          <span
+            v-else
+            class="kart-avatar-yok"
+          ><i class="pi pi-user" /></span>
+          <div class="kart-kimlik-metin">
+            <div class="kart-ad-satir">
+              <h3>{{ kart.cariAd }}</h3>
+              <Tag
+                v-if="kart.tur"
+                :severity="turSeverity(kart.tur)"
+                :value="kart.tur"
+              />
+              <Tag
+                v-if="kart.aktif === false"
+                severity="secondary"
+                :value="t('common.passive')"
+              />
+            </div>
+            <div class="kart-meta">
+              <span v-if="kart.telefon"><i class="pi pi-phone" /> {{ kart.telefon }}</span>
+              <span v-if="kart.email"><i class="pi pi-envelope" /> {{ kart.email }}</span>
+              <span v-if="kart.temsilciAd"><i class="pi pi-user" /> {{ kart.temsilciAd }}</span>
+            </div>
           </div>
+        </div>
+        <div class="kart-islemler">
+          <Button
+            :label="t('cariHesaplar.ekstreYazdir')"
+            icon="pi pi-print"
+            class="p-button-sm p-button-outlined"
+            @click="emit('ekstre')"
+          />
+          <Button
+            :label="t('cariHesaplar.adresler')"
+            icon="pi pi-map-marker"
+            class="p-button-sm p-button-outlined"
+            @click="emit('adresler')"
+          />
         </div>
       </div>
 
-      <div class="kredi-kart">
-        <div class="kredi-satir">
-          <div class="kredi-alan">
-            <span>{{ t('cariKart.krediLimiti') }}</span>
-            <strong><span class="gizli-veri">{{ formatCurrency(kart.kredi?.krediLimiti) }}</span></strong>
-          </div>
-          <div class="kredi-alan">
-            <span>{{ t('cariKart.bakiye') }}</span>
-            <strong><span class="gizli-veri">{{ formatCurrency(kart.kredi?.bakiye) }}</span></strong>
-          </div>
-          <div class="kredi-alan">
-            <span>{{ t('cariKart.kullanilabilirKredi') }}</span>
-            <strong :class="{ 'limit-asimi': kart.kredi?.limitAsimi }">
-              <span class="gizli-veri">{{ formatCurrency(kart.kredi?.kullanilabilirKredi) }}</span>
-            </strong>
-          </div>
-          <div class="kredi-alan">
-            <span>{{ t('cariKart.riskOrani') }}</span>
-            <strong><span class="gizli-veri">{{ kart.kredi?.riskOrani != null ? kart.kredi.riskOrani + '%' : '-' }}</span></strong>
-          </div>
+      <div class="kart-kpi">
+        <div class="kpi-hucre">
+          <span>{{ t('cariKart.krediLimiti') }}</span>
+          <strong class="gizli-veri">{{ formatCurrency(kart.kredi?.krediLimiti) }}</strong>
+        </div>
+        <div class="kpi-hucre">
+          <span>{{ t('cariKart.bakiye') }}</span>
+          <strong class="gizli-veri">{{ formatCurrency(kart.kredi?.bakiye) }}</strong>
+        </div>
+        <div class="kpi-hucre">
+          <span>{{ t('cariKart.kullanilabilirKredi') }}</span>
+          <strong
+            class="gizli-veri"
+            :class="{ 'limit-asimi': kart.kredi?.limitAsimi }"
+          >{{ formatCurrency(kart.kredi?.kullanilabilirKredi) }}</strong>
+        </div>
+        <div class="kpi-hucre">
+          <span>{{ t('cariKart.riskOrani') }}</span>
+          <strong class="gizli-veri">{{ kart.kredi?.riskOrani != null ? kart.kredi.riskOrani + '%' : '-' }}</strong>
         </div>
         <Tag
           v-if="kart.kredi?.limitAsimi"
           severity="danger"
           :value="t('cariKart.limitAsimi')"
+          class="kart-limit-tag"
         />
       </div>
 
@@ -365,13 +403,22 @@ import { formatCurrency, formatTarih as formatDate, formatTarihSaat as formatDat
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
-  cariId: { type: Number, default: null }
+  cariId: { type: Number, default: null },
+  /** Liste satiri (avatar/tur icin); opsiyonel. */
+  cari: { type: Object, default: null }
 })
-const emit = defineEmits(['update:visible'])
+const emit = defineEmits(['update:visible', 'ekstre', 'adresler'])
 
 const { t } = useI18n()
 const kart = ref(null)
 const yukleniyor = ref(false)
+
+/** Liste satirindan avatar; kart API'sinde foto alani yok. */
+const avatarUrl = computed(() => props.cari?.fotoThumbUrl || props.cari?.fotoUrl || null)
+
+/** Cari turu -> Tag rengi (liste ekraniyla ayni kural). */
+const turSeverity = (tur) =>
+  tur === 'Musteri' ? 'info' : tur === 'Tedarikci' ? 'warn' : 'secondary'
 
 const hareketTuruEtiketi = (tur) =>
   ({ TAHSILAT: t('hareketler.tahsilat'), ODEME: t('hareketler.odeme'), BORC: t('hareketler.borclandirma') }[tur] || tur)
@@ -430,60 +477,108 @@ watch(
   color: var(--text-secondary, #94a3b8);
 }
 
-.kart-ust {
+.kart-kimlik-kart {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-secondary);
+  margin-bottom: 14px;
+}
+.kart-kimlik-sol {
+  display: flex;
   align-items: center;
-  margin-bottom: 16px;
+  gap: 12px;
+  min-width: 0;
 }
-
-.kart-kimlik h3 {
-  margin: 0 0 6px 0;
+.kart-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  flex: 0 0 auto;
 }
-
+.kart-avatar-yok {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px dashed var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 20px;
+  flex: 0 0 auto;
+}
+.kart-kimlik-metin {
+  min-width: 0;
+}
+.kart-ad-satir {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.kart-ad-satir h3 {
+  margin: 0;
+  font-size: 18px;
+}
 .kart-meta {
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
   font-size: 13px;
   color: var(--text-secondary, #94a3b8);
+  margin-top: 6px;
 }
-
-.kredi-kart {
-  padding: 14px 18px;
-  border-radius: 12px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
+.kart-islemler {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.kart-kpi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
   margin-bottom: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
 }
-
-.kredi-satir {
-  display: flex;
-  gap: 32px;
-  flex-wrap: wrap;
-}
-
-.kredi-alan {
+.kpi-hucre {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-primary);
 }
-
-.kredi-alan span {
-  font-size: 12px;
-  color: var(--text-secondary, #94a3b8);
+.kpi-hucre span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
-
-.kredi-alan strong {
-  font-size: 16px;
+.kpi-hucre strong {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
 }
-
+.kart-limit-tag {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
 .limit-asimi {
   color: #ef4444;
+}
+@media (max-width: 700px) {
+  .kart-kimlik-kart {
+    flex-direction: column;
+  }
 }
 </style>

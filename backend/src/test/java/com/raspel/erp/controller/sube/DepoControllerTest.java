@@ -70,4 +70,16 @@ class DepoControllerTest {
         mockMvc.perform(delete("/api/depolar/1"))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    void shouldGetOzet() throws Exception {
+        when(depoService.ozet(1L)).thenReturn(com.raspel.erp.dto.sube.DepoOzetDTO.builder()
+                .toplamDepo(5).aktifDepo(4).pasifDepo(1)
+                .stokKalemiSayisi(10).sifirStokluKalem(3).bekleyenTalep(2).build());
+        mockMvc.perform(get("/api/depolar/ozet").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.toplamDepo").value(5))
+                .andExpect(jsonPath("$.stokKalemiSayisi").value(10))
+                .andExpect(jsonPath("$.bekleyenTalep").value(2));
+    }
 }

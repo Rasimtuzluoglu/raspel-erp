@@ -73,9 +73,11 @@ describe('PosOdemePaneli — odeme durumu', () => {
     expect(w.emitted('update:odemeDurumu')).toEqual([['yarim']])
   })
 
-  it('odeme durumu etiketi gorunur', () => {
+  it('durum tagi panelde GOSTERILMEZ (SelectButton tek otorite)', () => {
+    // Panel polisaji: alt durum Tag'i kaldirildi; durum SelectButton
+    // (Tam/Yarim/Yok) uzerinden gosterilir, kalan overlay footerinda.
     const w = kur({ ...temel, odemeDurumText: 'Ödendi' })
-    expect(w.find('.tag').text()).toBe('Ödendi')
+    expect(w.find('.odeme-durum').exists()).toBe(false)
   })
 
   it('"odeme yok" secilince tutar/yontem alanlari gizlenir', () => {
@@ -110,6 +112,18 @@ describe('PosOdemePaneli — odenen tutar, nakit, para ustu', () => {
     expect(w.find('.hizli-nakit').exists()).toBe(false)
   })
 
+  it('nakit giris gizlenince alinan nakit alani ve hizli nakit gorunmez', () => {
+    const w = kur({ ...temel, odemeYontemi: 'NAKIT', nakitGirisGizle: true })
+    expect(w.find('.hizli-nakit').exists()).toBe(false)
+    // Yalnizca odenen tutar input'u kalir.
+    expect(w.findAll('input.inputnumber')).toHaveLength(1)
+  })
+
+  it('odenen giris gizlenince odenen tutar inputu gorunmez', () => {
+    const w = kur({ ...temel, odemeYontemi: 'KART', odenenGirisGizle: true })
+    expect(w.findAll('input.inputnumber')).toHaveLength(0)
+  })
+
   it('para ustu yalniz pozitifse gorunur', () => {
     const w = kur({ ...temel, odemeYontemi: 'NAKIT', paraUstu: 0 })
     expect(w.find('.para-ustu').exists()).toBe(false)
@@ -128,7 +142,7 @@ describe('PosOdemePaneli — odenen tutar, nakit, para ustu', () => {
       alinanNakit: 200,
       hizliNakit: [50, 100]
     })
-    const btn = w.findAll('.hizli-nakit-btn').find((b) => b.text() === '50')
+    const btn = w.findAll('.hizli-nakit-btn').find((b) => b.text() === '₺50')
     await btn.trigger('click')
     expect(w.emitted('update:alinanNakit')).toEqual([[250]])
   })
@@ -225,14 +239,14 @@ describe('PosOdemePaneli — kasa, banka ve POS hedefleri', () => {
 })
 
 describe('PosOdemePaneli — kalan tutar ve katlama', () => {
-  it('kalan tutar pozitifse gorunur', () => {
+  it('kalan tutar satiri panelde GOSTERILMEZ (kalan overlay footerinda tek)', () => {
     const w = kur({ ...temel, kalanTutar: 150 })
-    expect(w.find('.odeme-kalan').exists()).toBe(true)
+    expect(w.find('.odeme-kalan').exists()).toBe(false)
   })
 
-  it('kalan tutar sifirsa gizlenir', () => {
-    const w = kur({ ...temel, kalanTutar: 0 })
-    expect(w.find('.odeme-kalan').exists()).toBe(false)
+  it('durum tagi panelde GOSTERILMEZ (SelectButton tek otorite)', () => {
+    const w = kur({ ...temel, kalanTutar: 150 })
+    expect(w.find('.odeme-durum').exists()).toBe(false)
   })
 
   it('baslik toggle yayar', async () => {

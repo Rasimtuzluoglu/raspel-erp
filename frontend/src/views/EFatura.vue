@@ -1,17 +1,17 @@
 <template>
   <div class="efatura-container">
-    <div class="sayfa-baslik">
-      <h1 class="page-title">
-        {{ t('efatura.title') }}
-      </h1>
-      <div class="sag-butonlar">
+    <PageHeader
+      :title="t('efatura.title')"
+      icon="pi pi-file-export"
+    >
+      <template #actions>
         <Button
           :label="t('efatura.faturadanOlustur')"
           icon="pi pi-file-plus"
           @click="olusturDialogAc"
         />
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <IlkZiyaretIpuclari
       anahtar="efatura"

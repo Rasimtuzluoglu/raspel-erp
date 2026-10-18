@@ -2,12 +2,30 @@
   <Dialog
     :visible="visible"
     modal
-    :header="$t('cariHesaplar.borclandirma')"
+    :header="$t('cariHesaplar.borcEkle')"
     :style="{ width: '440px', maxWidth: 'calc(100vw - 24px)' }"
     :dismissable-mask="false"
     @update:visible="$emit('update:visible', $event)"
   >
     <div class="borclandirma-form">
+      <div
+        v-if="seciliCari"
+        class="etki-bandi etki-negatif"
+      >
+        <span class="etki-ikon"><i class="pi pi-arrow-up-right" /></span>
+        <div class="etki-icerik">
+          <strong>{{ $t('cariHesaplar.etkiArtar') }}</strong>
+          <div
+            v-if="bakiyeOnizleme"
+            class="etki-bakiye"
+          >
+            <span>{{ formatCurrency(mevcutBakiye) }}</span>
+            <i class="pi pi-arrow-right" />
+            <strong>{{ formatCurrency(sonrakiBakiye) }}</strong>
+          </div>
+        </div>
+      </div>
+
       <div class="form-panel">
         <div class="form-section-title">
           <i class="pi pi-user" /> {{ $t('cariHesaplar.cari') }}
@@ -93,6 +111,7 @@ import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { hareketAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
+import { formatCurrency } from '../utils/format.js'
 import FormField from './FormField.vue'
 
 const props = defineProps({
@@ -126,6 +145,21 @@ const form = ref({
 const kaydediliyor = ref(false)
 
 const gecerli = computed(() => !!(form.value.cariHesapId && form.value.tutar && form.value.tutar > 0))
+
+// Etki onizlemesi: borclandirma cari bakiyesini AZALTIR (borcu artirir).
+const seciliCari = computed(
+  () => efektifCariler.value.find((c) => c.id === form.value.cariHesapId) || null
+)
+const mevcutBakiye = computed(() => {
+  const b = seciliCari.value?.bakiye
+  return b == null || b === '' ? null : Number(b)
+})
+const sonrakiBakiye = computed(() =>
+  mevcutBakiye.value == null ? null : mevcutBakiye.value - Number(form.value.tutar || 0)
+)
+const bakiyeOnizleme = computed(
+  () => mevcutBakiye.value != null && Number(form.value.tutar || 0) > 0
+)
 
 const temizle = () => {
   form.value = {
@@ -172,6 +206,56 @@ const kaydet = async () => {
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+.etki-bandi {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+}
+.etki-bandi.etki-negatif {
+  border-color: var(--danger-border, rgba(239, 68, 68, 0.4));
+  background: var(--danger-soft, rgba(239, 68, 68, 0.12));
+}
+.etki-ikon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--danger-soft, rgba(239, 68, 68, 0.15));
+  color: var(--danger, #ef4444);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.etki-icerik {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.etki-icerik strong {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.etki-bakiye {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.etki-bakiye > i {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.etki-bakiye > strong {
+  color: var(--danger, #ef4444);
 }
 .form-panel {
   display: flex;

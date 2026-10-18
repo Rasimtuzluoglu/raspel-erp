@@ -43,7 +43,7 @@ class AuditLogControllerTest {
                         .id(1L).islem("GIRIS").entityAdi("Kullanici").entityId(1L)
                         .kullaniciAdi("Admin").tarih(LocalDateTime.now()).build()
         );
-        when(auditLogService.filtreliGetirDTO(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
+        when(auditLogService.filtreliGetirDTO(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/audit-log"))
@@ -59,12 +59,24 @@ class AuditLogControllerTest {
                 com.raspel.erp.dto.sistem.AuditLogDTO.builder()
                         .id(1L).islem("SIL").entityAdi("Cari").tarih(LocalDateTime.now()).build()
         );
-        when(auditLogService.filtreliGetirDTO(isNull(), isNull(), eq("SIL"), isNull(), isNull(), isNull(), any(Pageable.class)))
+        when(auditLogService.filtreliGetirDTO(isNull(), isNull(), eq("SIL"), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(list));
 
         mockMvc.perform(get("/api/audit-log").param("islem", "SIL"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].islem").value("SIL"));
+    }
+
+    @Test
+    void shouldGetOzet() throws Exception {
+        when(auditLogService.ozet(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull()))
+                .thenReturn(com.raspel.erp.dto.sistem.AuditLogOzetDTO.builder()
+                        .toplam(3).islemBazli(java.util.Map.of("SIL", 2L, "OLUSTUR", 1L)).build());
+
+        mockMvc.perform(get("/api/audit-log/ozet"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.toplam").value(3))
+                .andExpect(jsonPath("$.islemBazli.SIL").value(2));
     }
 
     @Test

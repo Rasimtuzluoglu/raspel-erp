@@ -227,10 +227,13 @@ public class ExcelExportController {
             @RequestParam(required = false) Long kullaniciId,
             @RequestParam(required = false) String islem,
             @RequestParam(required = false) String entityAdi,
+            @RequestParam(required = false) Long entityId,
+            @RequestParam(required = false) Boolean riskli,
+            @RequestParam(required = false) String q,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangicTarih,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitisTarih) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        var list = auditLogService.filtreliGetir(sirketId, kullaniciId, islem, entityAdi, baslangicTarih, bitisTarih, MAX_EXPORT_PAGE).getContent();
+        var list = auditLogService.filtreliGetir(sirketId, kullaniciId, islem, entityAdi, entityId, riskli, q, baslangicTarih, bitisTarih, MAX_EXPORT_PAGE).getContent();
         var rows = list.stream().map(l -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", l.getId()); m.put("Tarih", l.getTarih()); m.put("Kullanıcı ID", l.getKullaniciId());

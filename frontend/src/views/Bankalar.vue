@@ -1,27 +1,74 @@
 <template>
   <div class="bankalar-container">
-    <h1 class="page-title">
-      {{ t('bankalar.title') }}
-    </h1>
-
-    <Toolbar class="toolbar">
-      <template #start>
+    <PageHeader :title="t('bankalar.title')">
+      <template #actions>
         <Button
-          :label="t('bankalar.yeniBanka')"
-          icon="pi pi-plus"
-          class="p-button-success"
-          @click="openDialog"
+          :icon="bakiyeGorunur ? 'pi pi-eye-slash' : 'pi pi-eye'"
+          text
+          rounded
+          :title="bakiyeGorunur ? t('bankalar.bakiyeGizle') : t('bankalar.bakiyeGoster')"
+          :aria-label="bakiyeGorunur ? t('bankalar.bakiyeGizle') : t('bankalar.bakiyeGoster')"
+          @click="bakiyeGorunurlukDegistir"
         />
-      </template>
-      <template #end>
+        <Button
+          :icon="gosterim === 'tablo' ? 'pi pi-th-large' : 'pi pi-list'"
+          text
+          rounded
+          :title="gosterim === 'tablo' ? t('bankalar.kartGorunumu') : t('bankalar.tabloGorunumu')"
+          :aria-label="gosterim === 'tablo' ? t('bankalar.kartGorunumu') : t('bankalar.tabloGorunumu')"
+          @click="gosterimDegistir"
+        />
         <Button
           :label="t('bankalar.excel')"
           icon="pi pi-file-excel"
           class="p-button-sm p-button-outlined"
+          :loading="excelYukleniyor"
           @click="excelIndir"
         />
+        <Button
+          :label="t('bankalar.yeniBanka')"
+          icon="pi pi-plus"
+          @click="openDialog"
+        />
       </template>
-    </Toolbar>
+    </PageHeader>
+
+    <div class="kpi-grid">
+      <KpiKart
+        :baslik="t('bankalar.kpiToplamBanka')"
+        :deger="ozet.toplamBanka"
+        ikon="pi pi-building"
+        :para-birimi="false"
+        renk="#3b82f6"
+      />
+      <KpiKart
+        :baslik="t('bankalar.kpiToplamBakiye')"
+        :deger="ozet.toplamBakiye"
+        ikon="pi pi-wallet"
+        renk="#10b981"
+      >
+        <template #deger>
+          {{ bakiyeGorunur ? formatCurrency(ozet.toplamBakiye) : '••••' }}
+        </template>
+      </KpiKart>
+      <KpiKart
+        :baslik="t('bankalar.kpiPozitifBakiye')"
+        :deger="ozet.pozitifBakiye"
+        ikon="pi pi-arrow-up-right"
+        renk="#0ea5e9"
+      >
+        <template #deger>
+          {{ bakiyeGorunur ? formatCurrency(ozet.pozitifBakiye) : '••••' }}
+        </template>
+      </KpiKart>
+      <KpiKart
+        :baslik="t('bankalar.kpiEslesmemisHareket')"
+        :deger="ozet.eslesmemisHareket"
+        ikon="pi pi-exclamation-circle"
+        :para-birimi="false"
+        renk="#f59e0b"
+      />
+    </div>
 
     <div
       v-if="loading"
@@ -31,7 +78,7 @@
     </div>
 
     <div
-      v-if="!loading"
+      v-else-if="gosterim === 'tablo'"
       class="table-container"
     >
       <AppDataTable
@@ -43,11 +90,14 @@
         :rows-per-page-options="[10, 20, 50]"
         :current-page-report-template="'{first} - {last} ({totalRecords} ' + $t('common.recordsWord') + ')'"
         gorunum-anahtari="bankalar"
+        arama-aktif
+        :arama-placeholder="t('bankalar.aramaPlaceholder')"
       >
         <Column
           field="ad"
           :header="t('bankalar.colBankaAdi')"
           style="width: 200px"
+          sortable
         />
         <Column
           field="hesapNo"
@@ -64,13 +114,15 @@
           style="width: 230px"
         >
           <template #body="s">
-            <span
+            <button
               v-if="s.data.iban"
+              type="button"
               class="kopyalanabilir"
+              :aria-label="t('bankalar.ibanKopyalandi')"
               @click="kopyala(s.data.iban, t('bankalar.ibanKopyalandi'))"
             >
               {{ s.data.iban }} <i class="pi pi-copy kopyala-ikon" />
-            </span>
+            </button>
             <span v-else>-</span>
           </template>
         </Column>
@@ -78,36 +130,28 @@
           field="bakiye"
           :header="t('bankalar.colBakiye')"
           style="width: 130px"
+          sortable
         >
           <template #body="s">
             <span
+              v-if="bakiyeGorunur"
               class="gizli-veri"
               :class="s.data.bakiye >= 0 ? 'positive' : 'negative'"
             >{{ formatCurrency(s.data.bakiye) }}</span>
+            <span v-else>••••</span>
           </template>
         </Column>
         <Column
           :header="t('common.actions')"
-          style="width: 180px"
+          style="width: 70px"
         >
           <template #body="s">
-            <Button
-              icon="pi pi-list"
-              class="p-button-rounded p-button-help p-button-sm"
-              :title="t('bankalar.hareketler')"
-              @click="detayAc(s.data)"
-            />
-            <Button
-              icon="pi pi-pencil"
-              class="p-button-rounded p-button-info p-button-sm"
-              :title="t('common.edit')"
-              @click="editBanka(s.data)"
-            />
-            <Button
-              icon="pi pi-trash"
-              class="p-button-rounded p-button-danger p-button-sm"
-              :title="t('common.delete')"
-              @click="confirmDelete(s.data.id)"
+            <SatirEylemleri
+              :gorunur="{ duzenle: true, sil: authStore.isAdmin }"
+              :baslik="s.data.ad"
+              :items="bankaMenuItems(s.data)"
+              @duzenle="editBanka(s.data)"
+              @sil="confirmDelete(s.data.id)"
             />
           </template>
         </Column>
@@ -125,11 +169,68 @@
       </AppDataTable>
     </div>
 
+    <div
+      v-else
+      class="banka-kartlar"
+    >
+      <EmptyState
+        v-if="bankaStore.bankalar.length === 0"
+        :message="t('bankalar.empty')"
+        :sub-message="t('bankalar.emptyHint')"
+        icon="pi pi-building"
+        :action-label="t('bankalar.yeniBanka')"
+        action-icon="pi pi-plus"
+        @action="openDialog"
+      />
+      <div
+        v-for="b in bankaStore.bankalar"
+        :key="b.id"
+        class="banka-kart"
+      >
+        <div class="banka-kart-ust">
+          <strong>{{ b.ad }}</strong>
+          <SatirEylemleri
+            :gorunur="{ duzenle: true, sil: authStore.isAdmin }"
+            :baslik="b.ad"
+            :items="bankaMenuItems(b)"
+            @duzenle="editBanka(b)"
+            @sil="confirmDelete(b.id)"
+          />
+        </div>
+        <div class="banka-kart-satir">
+          <i class="pi pi-hashtag" /> {{ b.hesapNo || '-' }}
+        </div>
+        <button
+          v-if="b.iban"
+          type="button"
+          class="kopyalanabilir banka-kart-iban"
+          :aria-label="t('bankalar.ibanKopyalandi')"
+          @click="kopyala(b.iban, t('bankalar.ibanKopyalandi'))"
+        >
+          <i class="pi pi-copy kopyala-ikon" /> {{ b.iban }}
+        </button>
+        <div class="banka-kart-bakiye">
+          <span
+            v-if="bakiyeGorunur"
+            :class="b.bakiye >= 0 ? 'positive' : 'negative'"
+          >{{ formatCurrency(b.bakiye) }}</span>
+          <span v-else>••••</span>
+          <Button
+            :label="t('bankalar.hareketler')"
+            icon="pi pi-list"
+            size="small"
+            text
+            @click="detayAc(b)"
+          />
+        </div>
+      </div>
+    </div>
     <Dialog
       v-model:visible="showDialog"
       :header="editingId ? t('bankalar.duzenle') : t('bankalar.yeniBanka')"
       :modal="true"
       style="width: 500px"
+      :breakpoints="{ '575px': '92vw' }"
     >
       <div class="form-group">
         <label>{{ t('bankalar.bankaAdi') }}</label>
@@ -153,7 +254,12 @@
           v-model="form.iban"
           :placeholder="t('bankalar.ibanPlaceholder')"
           class="w-full"
+          :invalid="!ibanGecerli"
         />
+        <small
+          v-if="!ibanGecerli"
+          class="alan-hata"
+        >{{ t('bankalar.ibanGecersiz') }}</small>
       </div>
       <div
         v-if="!editingId"
@@ -179,16 +285,11 @@
           :label="editingId ? t('bankalar.guncelle') : t('common.save')"
           icon="pi pi-check"
           :loading="saving"
+          :disabled="!ibanGecerli"
           @click="saveBanka"
         />
       </template>
     </Dialog>
-
-    <Message
-      v-if="bankaStore.error"
-      severity="error"
-      :text="bankaStore.error"
-    />
 
     <!-- Banka detayı: bakiye kartı ve hareket (mutabakat) geçmişi -->
     <Drawer
@@ -203,9 +304,13 @@
       >
         <div class="detay-kutu">
           <span>{{ t('bankalar.colBakiye') }}</span>
-          <strong :class="detayBanka.bakiye >= 0 ? 'positive' : 'negative'">
+          <strong
+            v-if="bakiyeGorunur"
+            :class="detayBanka.bakiye >= 0 ? 'positive' : 'negative'"
+          >
             {{ formatCurrency(detayBanka.bakiye) }}
           </strong>
+          <strong v-else>••••</strong>
         </div>
         <div class="detay-kutu">
           <span>{{ t('bankalar.colHesapNo') }}</span>
@@ -235,14 +340,44 @@
         />
       </div>
 
+      <div class="detay-ozet">
+        <div class="detay-ozet-kutu">
+          <span>{{ t('bankalar.borcToplam') }}</span>
+          <strong class="negative">{{ formatCurrency(hareketBorcToplam) }}</strong>
+        </div>
+        <div class="detay-ozet-kutu">
+          <span>{{ t('bankalar.alacakToplam') }}</span>
+          <strong class="positive">{{ formatCurrency(hareketAlacakToplam) }}</strong>
+        </div>
+      </div>
+
+      <div class="detay-filtre">
+        <Select
+          v-model="hareketDurum"
+          :options="hareketDurumSecenekleri"
+          option-label="label"
+          option-value="value"
+          :placeholder="t('bankalar.tumu')"
+          show-clear
+          class="detay-filtre-alan"
+        />
+        <DatePicker
+          v-model="hareketTarih"
+          selection-mode="range"
+          date-format="dd.mm.yy"
+          :placeholder="t('bankalar.tarihAraligi')"
+          class="detay-filtre-alan"
+        />
+      </div>
+
       <DataTable
-        :value="hareketler"
+        :value="filtreliHareketler"
         :loading="hareketYukleniyor"
         striped-rows
         size="small"
         scrollable
         scroll-height="52vh"
-        :paginator="hareketler.length > 20"
+        :paginator="filtreliHareketler.length > 20"
         :rows="20"
       >
         <template #empty>
@@ -263,7 +398,7 @@
           style="width: 110px"
         >
           <template #body="s">
-            <span v-if="s.data.borc">{{ formatCurrency(s.data.borc) }}</span>
+            <span v-if="bakiyeGorunur && s.data.borc">{{ formatCurrency(s.data.borc) }}</span>
           </template>
         </Column>
         <Column
@@ -272,7 +407,7 @@
           style="width: 110px"
         >
           <template #body="s">
-            <span v-if="s.data.alacak">{{ formatCurrency(s.data.alacak) }}</span>
+            <span v-if="bakiyeGorunur && s.data.alacak">{{ formatCurrency(s.data.alacak) }}</span>
           </template>
         </Column>
         <Column
@@ -281,7 +416,11 @@
           style="width: 120px"
         >
           <template #body="s">
-            <span class="gizli-veri">{{ formatCurrency(s.data.bakiye) }}</span>
+            <span
+              v-if="bakiyeGorunur"
+              class="gizli-veri"
+            >{{ formatCurrency(s.data.bakiye) }}</span>
+            <span v-else>••••</span>
           </template>
         </Column>
         <Column
@@ -308,16 +447,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useBankaStore } from '../stores/bankaStore.js'
+import { useAuthStore } from '../stores/authStore.js'
 import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
-import { excelAPI, bankaMutabakatAPI } from '../api/index.js'
+import { excelAPI, bankaMutabakatAPI, bankaAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
-import { formatCurrency } from '../utils/format.js'
+import KpiKart from '../components/KpiKart.vue'
+import { formatCurrency, getLocalDateString } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
@@ -325,12 +466,41 @@ const { t } = useI18n()
 const confirm = useConfirm()
 const router = useRouter()
 const bankaStore = useBankaStore()
+const authStore = useAuthStore()
 const { kopyala } = usePanoyaKopyala()
+
+// Gorunum: tablo / kart (kucuk ekranda varsayilan kart).
+const GORUNUM_ANAHTAR = 'raspel_banka_gosterim'
+const gosterim = ref(localStorage.getItem(GORUNUM_ANAHTAR) || 'tablo')
+const gosterimDegistir = () => {
+  gosterim.value = gosterim.value === 'tablo' ? 'kart' : 'tablo'
+  localStorage.setItem(GORUNUM_ANAHTAR, gosterim.value)
+}
 
 const showDialog = ref(false)
 const loading = ref(false)
 const saving = ref(false)
 const editingId = ref(null)
+const excelYukleniyor = ref(false)
+
+// KPI ozeti (hesap/bakiye/eslesmemis hareket).
+const ozet = ref({ toplamBanka: 0, toplamBakiye: 0, pozitifBakiye: 0, eslesmemisHareket: 0 })
+const ozetYukle = async () => {
+  try {
+    const r = await bankaAPI.ozet()
+    ozet.value = { ...ozet.value, ...(r.data || {}) }
+  } catch {
+    /* ozet alinamazsa KPI sifirda kalir */
+  }
+}
+
+// Bakiye gizle/goster (memur ekrani icin); tercih hatirlanir.
+const BAKIYE_ANAHTAR = 'raspel_banka_bakiye_gorunur'
+const bakiyeGorunur = ref(localStorage.getItem(BAKIYE_ANAHTAR) !== '0')
+const bakiyeGorunurlukDegistir = () => {
+  bakiyeGorunur.value = !bakiyeGorunur.value
+  localStorage.setItem(BAKIYE_ANAHTAR, bakiyeGorunur.value ? '1' : '0')
+}
 
 // Banka detayı: hareket (mutabakat) geçmişi
 const detayDialog = ref(false)
@@ -338,9 +508,32 @@ const detayBanka = ref(null)
 const hareketler = ref([])
 const hareketYukleniyor = ref(false)
 
+// Drawer hareket filtreleri + özet.
+const hareketDurum = ref(null)
+const hareketTarih = ref(null)
+const hareketDurumSecenekleri = computed(() => [
+  { label: t('bankalar.eslesti'), value: 'ESLESTI' },
+  { label: t('bankalar.bekliyor'), value: 'BEKLIYOR' }
+])
+const filtreliHareketler = computed(() =>
+  hareketler.value.filter((h) => {
+    if (hareketDurum.value === 'ESLESTI' && !h.eslestirildi) return false
+    if (hareketDurum.value === 'BEKLIYOR' && h.eslestirildi) return false
+    if (Array.isArray(hareketTarih.value) && hareketTarih.value.length === 2 && hareketTarih.value[0]) {
+      const t = h.tarih || ''
+      if (t < getLocalDateString(hareketTarih.value[0]) || t > getLocalDateString(hareketTarih.value[1])) return false
+    }
+    return true
+  })
+)
+const hareketBorcToplam = computed(() => hareketler.value.reduce((a, h) => a + (Number(h.borc) || 0), 0))
+const hareketAlacakToplam = computed(() => hareketler.value.reduce((a, h) => a + (Number(h.alacak) || 0), 0))
+
 const detayAc = async (banka) => {
   detayBanka.value = banka
   detayDialog.value = true
+  hareketDurum.value = null
+  hareketTarih.value = null
   hareketYukleniyor.value = true
   hareketler.value = []
   try {
@@ -358,13 +551,33 @@ const mutabakataGit = () => {
   router.push({ name: 'BankaMutabakat' })
 }
 
+// Satir ⋮ menusu: hareketler (detay); duzenle/sil yerlesik gelir.
+const bankaMenuItems = (b) => [
+  { etiket: t('bankalar.hareketler'), ikon: 'pi pi-list', islem: () => detayAc(b) }
+]
+
 const form = ref({ ad: '', hesapNo: '', iban: '', bakiye: 0 })
 const { temizle: formTemizle } = useFormKorumasi(form)
 
+// TR IBAN: "TR" + 24 rakam (26 karakter). Bos birakilabilir.
+const IBAN_TR_RE = /^TR\d{24}$/
+const ibanNormalize = (v) => (v || '').replace(/\s+/g, '').toUpperCase()
+const ibanGecerli = computed(() => {
+  const s = ibanNormalize(form.value.iban)
+  return s === '' || IBAN_TR_RE.test(s)
+})
+
 onMounted(async () => {
+  // Kayitli tercih yoksa kucuk ekranda kart gorunumu varsayilan.
+  if (!localStorage.getItem(GORUNUM_ANAHTAR)
+      && typeof window.matchMedia === 'function'
+      && window.matchMedia('(max-width: 768px)').matches) {
+    gosterim.value = 'kart'
+  }
   loading.value = true
   try {
     await bankaStore.getAllBankalar()
+    ozetYukle()
   } catch {
     toastBildirim.hata(t('bankalar.hataYukleme'))
   } finally {
@@ -395,23 +608,29 @@ const saveBanka = async () => {
     toastBildirim.uyari(t('bankalar.adBosOlamaz'))
     return
   }
+  if (!ibanGecerli.value) {
+    toastBildirim.uyari(t('bankalar.ibanGecersiz'))
+    return
+  }
+  const iban = ibanNormalize(form.value.iban)
   saving.value = true
   try {
     if (editingId.value) {
       await bankaStore.updateBanka(editingId.value, {
         ad: form.value.ad,
         hesapNo: form.value.hesapNo,
-        iban: form.value.iban
+        iban
       })
       toastBildirim.basarili(t('bankalar.guncellendi'))
     } else {
-      await bankaStore.addBanka(form.value)
+      await bankaStore.addBanka({ ...form.value, iban })
       toastBildirim.basarili(t('bankalar.olusturuldu'))
     }
     formTemizle()
     closeDialog()
-  } catch {
-    toastBildirim.hata(t('bankalar.islemBasarisiz'))
+    ozetYukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('bankalar.islemBasarisiz'))
   } finally {
     saving.value = false
   }
@@ -428,14 +647,16 @@ const confirmDelete = (id) => {
       try {
         await bankaStore.deleteBanka(id)
         toastBildirim.basarili(t('bankalar.silindi'))
-      } catch {
-        toastBildirim.hata(t('bankalar.silmeBasarisiz'))
+        ozetYukle()
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || t('bankalar.silmeBasarisiz'))
       }
     }
   })
 }
 
 const excelIndir = async () => {
+  excelYukleniyor.value = true
   try {
     const res = await excelAPI.bankalar()
     const url = window.URL.createObjectURL(new Blob([res.data]))
@@ -446,8 +667,11 @@ const excelIndir = async () => {
     link.click()
     link.remove()
     window.URL.revokeObjectURL(url)
+    toastBildirim.basarili(t('bankalar.excelIndirildi'))
   } catch {
-    /* silent */
+    toastBildirim.hata(t('bankalar.excelHata'))
+  } finally {
+    excelYukleniyor.value = false
   }
 }
 
@@ -458,19 +682,11 @@ const excelIndir = async () => {
   padding: 0;
   max-width: 100%;
 }
-h1 {
-  color: var(--text-primary);
-  margin-bottom: 20px;
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-}
-.toolbar {
-  margin-bottom: 20px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px 18px;
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
+  gap: 12px;
+  margin-bottom: 1rem;
 }
 .table-container {
   background: var(--bg-card);
@@ -505,6 +721,11 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: inherit;
 }
 .detay-bilgi {
   display: grid;
@@ -551,5 +772,102 @@ h1 {
 }
 .w-full {
   width: 100% !important;
+}
+.banka-kartlar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  gap: 12px;
+}
+.banka-kart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+}
+.banka-kart-ust {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.banka-kart-ust strong {
+  font-size: 1rem;
+  color: var(--text-primary);
+  min-width: 0;
+}
+.banka-kart-satir {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+.banka-kart-iban {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+.banka-kart-bakiye {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-weight: 700;
+}
+.detay-ozet {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.detay-ozet-kutu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+}
+.detay-ozet-kutu span {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+.detay-ozet-kutu strong {
+  font-size: 1rem;
+}
+.detay-filtre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.detay-filtre-alan {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.alan-hata {
+  display: block;
+  margin-top: 6px;
+  color: var(--danger, #ef4444);
+  font-size: 0.75rem;
+}
+
+/* Mobil: detay ozeti ve filtreler tek kolona iner. */
+@media (max-width: 560px) {
+  .detay-ozet {
+    grid-template-columns: 1fr;
+  }
+  .detay-filtre-alan {
+    flex: 1 1 100%;
+  }
 }
 </style>

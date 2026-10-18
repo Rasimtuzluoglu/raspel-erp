@@ -1,24 +1,62 @@
 <template>
   <div class="pos-sayfasi">
-    <div class="pos-baslik">
-      <h1 class="page-title">
-        <i class="pi pi-credit-card" /> {{ t('posTerminalleri.title') }}
-      </h1>
-      <div class="pos-baslik-aksiyon">
+    <PageHeader
+      :title="t('posTerminalleri.title')"
+      icon="pi pi-credit-card"
+    >
+      <template #actions>
         <Button
+          v-if="yonetebilir"
+          :label="t('posTerminalleri.gunSonuRaporu')"
+          icon="pi pi-file"
+          class="p-button-outlined"
+          @click="raporDialog = true"
+        />
+        <Button
+          v-if="yonetebilir"
           :label="t('posTerminalleri.gunSonuIsle')"
           icon="pi pi-calendar"
-          class="p-button-sm p-button-outlined"
+          class="p-button-outlined"
           :loading="gunSonuYukleniyor"
           @click="gunSonuIsle"
         />
         <Button
+          v-if="yonetebilir"
           :label="t('posTerminalleri.yeniPos')"
           icon="pi pi-plus"
-          class="p-button-sm"
           @click="dialogAc(null)"
         />
-      </div>
+      </template>
+    </PageHeader>
+
+    <!-- KPI ozeti -->
+    <div class="kpi-grid">
+      <KpiKart
+        :baslik="t('posTerminalleri.kpiToplamPos')"
+        :deger="kpi.toplamPos"
+        ikon="pi pi-credit-card"
+        :para-birimi="false"
+        renk="#3b82f6"
+      />
+      <KpiKart
+        :baslik="t('posTerminalleri.kpiAktifPos')"
+        :deger="kpi.aktifPos"
+        ikon="pi pi-check-circle"
+        :para-birimi="false"
+        renk="#10b981"
+      />
+      <KpiKart
+        :baslik="t('posTerminalleri.kpiBugunCiro')"
+        :deger="kpi.bugunCiro"
+        ikon="pi pi-money-bill"
+        renk="#8b5cf6"
+      />
+      <KpiKart
+        :baslik="t('posTerminalleri.kpiBugunKomisyon')"
+        :deger="kpi.bugunKomisyon"
+        ikon="pi pi-percentage"
+        renk="#f59e0b"
+      />
     </div>
 
     <!-- POS Özeti -->
@@ -26,7 +64,9 @@
       <div
         v-for="o in ozetler"
         :key="o.posId"
-        class="pos-ozet-kart"
+        class="pos-ozet-kart poz-clickable"
+        :class="{ vurgulu: vurguluPosId === o.posId }"
+        @click="ozeteTikla(o)"
       >
         <div class="ozet-ust">
           <i class="pi pi-credit-card" />
@@ -43,53 +83,50 @@
           {{ t('posTerminalleri.komisyonBugun') }} {{ formatPara(o.bugunKomisyon) }} · {{ t('posTerminalleri.toplam') }} {{ formatPara(o.toplamKomisyon) }}
         </div>
       </div>
-      <div
+      <EmptyState
         v-if="!ozetler.length && !yukleniyor"
-        class="bos"
-      >
-        {{ t('posTerminalleri.empty') }}
-      </div>
+        icon="pi pi-chart-bar"
+        :message="t('posTerminalleri.ozetYok')"
+        class="full-width"
+      />
     </div>
 
     <!-- POS Listesi -->
     <div class="pos-listesi">
-      <div
+      <EmptyState
         v-if="!terminaller.length && !yukleniyor"
-        class="bos"
-      >
-        {{ t('posTerminalleri.empty') }}
-      </div>
+        icon="pi pi-credit-card"
+        :message="t('posTerminalleri.empty')"
+        :action-label="yonetebilir ? t('posTerminalleri.yeniPos') : ''"
+        action-icon="pi pi-plus"
+        class="full-width"
+        @action="dialogAc(null)"
+      />
       <div
         v-for="p in terminaller"
         :key="p.id"
+        :ref="(el) => (kartRefler[p.id] = el)"
         class="pos-kart"
+        :class="{ vurgulu: vurguluPosId === p.id }"
       >
         <div class="pos-kart-bilgi">
           <strong>{{ p.ad }}</strong>
-          <span class="pos-banka">{{ p.bankaAd || t('posTerminalleri.bankaAtanmamis') }}</span>
+          <span
+            v-if="p.bankaAd"
+            class="pos-banka"
+          >{{ p.bankaAd }}</span>
           <span class="pos-komisyon">{{ t('posTerminalleri.komisyon') }} %{{ p.komisyonOrani ?? 0 }}</span>
         </div>
         <Tag
           :value="p.aktif ? t('posTerminalleri.aktif') : t('posTerminalleri.pasif')"
           :severity="p.aktif ? 'success' : 'danger'"
         />
-        <Button
-          icon="pi pi-users"
-          class="p-button-rounded p-button-text p-button-sm"
-          :title="t('posTerminalleri.musteriDetayi')"
-          @click="musteriDetayAc(p)"
-        />
-        <Button
-          icon="pi pi-pencil"
-          :aria-label="$t('common.edit')"
-          class="p-button-rounded p-button-text p-button-sm"
-          @click="dialogAc(p)"
-        />
-        <Button
-          icon="pi pi-trash"
-          :aria-label="$t('common.delete')"
-          class="p-button-rounded p-button-text p-button-sm p-button-danger"
-          @click="sil(p)"
+        <SatirEylemleri
+          :gorunur="{ duzenle: yonetebilir, sil: silebilir }"
+          :baslik="p.ad"
+          :items="posMenuItems(p)"
+          @duzenle="dialogAc(p)"
+          @sil="sil(p)"
         />
       </div>
     </div>
@@ -99,6 +136,7 @@
       :header="duzenlenenId ? t('posTerminalleri.posDuzenle') : t('posTerminalleri.yeniPosTerminali')"
       :modal="true"
       :style="{ width: '440px' }"
+      :breakpoints="{ '575px': '92vw' }"
     >
       <div class="pos-form">
         <div class="field">
@@ -119,7 +157,12 @@
             filter
             :placeholder="t('posTerminalleri.bankaSecin')"
             class="w-full"
+            :invalid="!form.bankaId"
           />
+          <small
+            v-if="!bankalar.length"
+            class="alan-uyari"
+          >{{ t('posTerminalleri.onceBankaEkle') }}</small>
         </div>
         <div class="field">
           <label>{{ t('posTerminalleri.komisyonOrani') }}</label>
@@ -147,6 +190,7 @@
           :label="t('common.save')"
           icon="pi pi-check"
           :loading="kaydediliyor"
+          :disabled="!form.ad?.trim() || !form.bankaId"
           @click="kaydet"
         />
       </template>
@@ -156,16 +200,29 @@
       v-model:visible="musteriDialog"
       :header="t('posTerminalleri.musteriDetayi') + ' — ' + (seciliPos?.ad || '')"
       :modal="true"
-      :style="{ width: '440px' }"
+      :style="{ width: '480px' }"
+      :breakpoints="{ '575px': '92vw' }"
     >
-      <div
-        v-if="!musteriler.length"
-        class="bos"
-      >
-        {{ t('posTerminalleri.cekimYok') }}
+      <div class="musteri-arac">
+        <span class="arama-kutu">
+          <i class="pi pi-search" />
+          <InputText
+            v-model="musteriArama"
+            :placeholder="t('posTerminalleri.musteriAra')"
+            class="arama-input"
+          />
+        </span>
+        <span class="musteri-toplam">
+          {{ t('posTerminalleri.toplam') }} <strong>{{ formatPara(musteriToplam) }}</strong>
+        </span>
       </div>
+      <EmptyState
+        v-if="!filtreliMusteriler.length"
+        icon="pi pi-users"
+        :message="t('posTerminalleri.cekimYok')"
+      />
       <div
-        v-for="m in musteriler"
+        v-for="m in filtreliMusteriler"
         :key="m.cariId"
         class="musteri-satir"
       >
@@ -173,20 +230,31 @@
         <strong>{{ formatPara(m.toplamTutar) }}</strong>
       </div>
     </Dialog>
+
+    <PosGunSonuRaporDialog
+      v-model:visible="raporDialog"
+      :terminaller="terminaller"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { posAPI, bankaAPI } from '../api/index.js'
+import { useAuthStore } from '../stores/authStore.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
+import KpiKart from '../components/KpiKart.vue'
+import EmptyState from '../components/EmptyState.vue'
+import PosGunSonuRaporDialog from '../components/PosGunSonuRaporDialog.vue'
+import { formatPara } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { t } = useI18n()
+const authStore = useAuthStore()
 
 const terminaller = ref([])
 const ozetler = ref([])
@@ -199,10 +267,30 @@ const musteriler = ref([])
 const gunSonuYukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const yukleniyor = ref(false)
+const raporDialog = ref(false)
+const musteriArama = ref('')
+
+// Yetki kapilari (backend ile hizali).
+const yonetebilir = computed(() => authStore.isAdmin || authStore.kullanici?.role === 'MUHASEBE')
+const silebilir = computed(() => authStore.isAdmin)
+
+// KPI: /ozet verisinden client-side toplanir.
+const kpi = computed(() => ({
+  toplamPos: terminaller.value.length,
+  aktifPos: terminaller.value.filter((p) => p.aktif).length,
+  bugunCiro: ozetler.value.reduce((a, o) => a + (Number(o.bugunTutar) || 0), 0),
+  bugunKomisyon: ozetler.value.reduce((a, o) => a + (Number(o.bugunKomisyon) || 0), 0)
+}))
 
 const form = ref({ ad: '', bankaId: null, komisyonOrani: 0, aktif: true })
 
-const formatPara = (v) => new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(v || 0)
+// Müşteri detayı: arama + ciroya göre sıralama + toplam.
+const filtreliMusteriler = computed(() => {
+  const q = musteriArama.value.trim().toLowerCase()
+  const list = q ? musteriler.value.filter((m) => (m.cariAd || '').toLowerCase().includes(q)) : musteriler.value.slice()
+  return list.sort((a, b) => (Number(b.toplamTutar) || 0) - (Number(a.toplamTutar) || 0))
+})
+const musteriToplam = computed(() => musteriler.value.reduce((a, m) => a + (Number(m.toplamTutar) || 0), 0))
 
 const yukle = async () => {
   yukleniyor.value = true
@@ -233,9 +321,30 @@ const dialogAc = (p) => {
   dialog.value = true
 }
 
+// Kart ⋮ menusu: musteri detayi; duzenle/sil yerlesik gelir.
+const posMenuItems = (p) => [
+  { etiket: t('posTerminalleri.musteriDetayi'), ikon: 'pi pi-users', islem: () => musteriDetayAc(p) }
+]
+
+// Ozet kartindan ilgili POS kartina odaklan (vurgula + kaydir).
+const kartRefler = {}
+const vurguluPosId = ref(null)
+let vurguTimer = null
+const ozeteTikla = (o) => {
+  const el = kartRefler[o.posId]
+  if (el?.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  vurguluPosId.value = o.posId
+  clearTimeout(vurguTimer)
+  vurguTimer = setTimeout(() => (vurguluPosId.value = null), 1600)
+}
+
 const kaydet = async () => {
   if (!form.value.ad?.trim()) {
     toastBildirim.uyari(t('posTerminalleri.posAdiZorunluUyari'))
+    return
+  }
+  if (!form.value.bankaId) {
+    toastBildirim.uyari(t('posTerminalleri.bankaZorunluUyari'))
     return
   }
   kaydediliyor.value = true
@@ -279,6 +388,8 @@ const sil = (p) => {
 const musteriDetayAc = async (p) => {
   seciliPos.value = p
   musteriDialog.value = true
+  musteriArama.value = ''
+  musteriler.value = []
   try {
     const r = await posAPI.musteriler(p.id)
     musteriler.value = r.data || []
@@ -317,21 +428,13 @@ onMounted(() => {
   flex-direction: column;
   gap: 16px;
 }
-.pos-baslik {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
+  gap: 12px;
 }
-.pos-baslik-aksiyon {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-.pos-baslik h1 {
-  margin: 0;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
+.full-width {
+  grid-column: 1 / -1;
 }
 .pos-ozet-grid {
   display: grid;
@@ -421,12 +524,6 @@ onMounted(() => {
 .pos-form .w-full {
   width: 100%;
 }
-.bos {
-  grid-column: 1 / -1;
-  text-align: center;
-  color: var(--text-muted);
-  padding: 32px;
-}
 .musteri-satir {
   display: flex;
   justify-content: space-between;
@@ -437,5 +534,61 @@ onMounted(() => {
 }
 .musteri-satir:last-child {
   border-bottom: none;
+}
+.poz-clickable {
+  cursor: pointer;
+}
+.pos-ozet-kart.vurgulu,
+.pos-kart.vurgulu {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft-strong, rgba(20, 184, 166, 0.35));
+}
+.alan-uyari {
+  display: block;
+  margin-top: 6px;
+  color: var(--danger, #ef4444);
+  font-size: 0.75rem;
+}
+.musteri-arac {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.arama-kutu {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.arama-kutu > i {
+  position: absolute;
+  left: 10px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.arama-input {
+  width: 100%;
+  padding-left: 32px;
+}
+.musteri-toplam {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Mobil: POS kart bilgisi tam genişlik, dikey. */
+@media (max-width: 640px) {
+  .pos-kart {
+    flex-wrap: wrap;
+  }
+  .pos-kart-bilgi {
+    flex: 1 1 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
 }
 </style>

@@ -1,13 +1,10 @@
 <template>
   <div class="stoklar-container">
-    <PageHeader :title="t('stoklar.title')" />
-    <IlkZiyaretIpuclari
-      anahtar="stoklar"
-      :baslik="t('stoklar.ipucuBaslik')"
-      :metin="t('stoklar.ipucuMetin')"
-    />
-    <Toolbar class="toolbar">
-      <template #start>
+    <PageHeader
+      :title="t('stoklar.title')"
+      icon="pi pi-box"
+    >
+      <template #actions>
         <Button
           :label="t('stoklar.yeniUrun')"
           icon="pi pi-plus"
@@ -15,26 +12,59 @@
           @click="openDialog"
         />
         <Button
-          :label="t('stoklar.topluFiyatGuncelle')"
-          icon="pi pi-dollar"
-          class="p-button-help"
-          style="margin-left: 8px"
-          @click="batchFiyatDialog = true"
+          icon="pi pi-ellipsis-v"
+          class="p-button-outlined stok-islem-tetik"
+          :aria-label="t('common.actions')"
+          :title="t('common.actions')"
+          @click="islemMenu?.toggle($event)"
         />
-        <Button
-          :label="t('stoklar.degerleme')"
-          icon="pi pi-chart-line"
-          class="p-button-outlined"
-          style="margin-left: 8px"
-          @click="degerlemeAc"
+        <Menu
+          ref="islemMenu"
+          :model="islemMenusu"
+          popup
         />
-        <Button
-          :label="t('stoklar.siparisOnerisi')"
-          icon="pi pi-shopping-cart"
-          class="p-button-outlined"
-          style="margin-left: 8px"
-          @click="oneriAc"
-        />
+      </template>
+    </PageHeader>
+    <IlkZiyaretIpuclari
+      anahtar="stoklar"
+      :baslik="t('stoklar.ipucuBaslik')"
+      :metin="t('stoklar.ipucuMetin')"
+    />
+
+    <div
+      v-if="!stokStore.loading && !stokStore.error"
+      class="stok-kpi"
+    >
+      <KpiKart
+        :baslik="t('stoklar.toplamUrun')"
+        :deger="stokOzet.toplamUrun ?? stokStore.toplamKayit"
+        :para-birimi="false"
+        ikon="pi pi-box"
+        renk="#14b8a6"
+      />
+      <KpiKart
+        :baslik="t('stoklar.kritikStok')"
+        :deger="stokOzet.kritikSayi ?? 0"
+        :para-birimi="false"
+        ikon="pi pi-exclamation-triangle"
+        renk="#ef4444"
+      />
+      <KpiKart
+        :baslik="t('stoklar.stokDegeri')"
+        :deger="stokOzet.toplamDeger ?? 0"
+        ikon="pi pi-chart-line"
+        renk="#22c55e"
+      />
+      <KpiKart
+        :baslik="t('stoklar.kategoriSayisi')"
+        :deger="stokOzet.kategoriSayisi ?? 0"
+        :para-birimi="false"
+        ikon="pi pi-tags"
+        renk="#8b5cf6"
+      />
+    </div>
+    <Toolbar class="toolbar">
+      <template #start>
         <div
           v-if="seciliStoklar && seciliStoklar.length > 0"
           class="batch-actions"
@@ -81,13 +111,6 @@
             class="filtre-rozet"
           >{{ aktifFiltreSayisi }}</span>
         </Button>
-        <Button
-          label="Excel"
-          icon="pi pi-file-excel"
-          class="p-button-sm p-button-outlined"
-          style="margin-right: 8px"
-          @click="excelIndir"
-        />
         <div class="toolbar-end">
           <Button
             v-if="gosterim === 'tablo'"
@@ -206,16 +229,13 @@
          gelmeden "kayit yok" gorunmez ve yukleme sirasinda tablo
          yerlesimi ziplamaz. -->
     <ListeDurumu
-      v-if="gosterim === 'tablo' && (stokStore.loading || stokStore.error || !filtreAktifMi())"
+      v-if="gosterim === 'tablo' && (stokStore.loading || stokStore.error)"
       :yukleniyor="stokStore.loading"
       :hata="stokStore.error"
-      :bos="!stokStore.loading && !stokStore.error"
-      :bos-mesaj="t('stoklar.empty')"
-      :bos-ipucu="t('stoklar.emptyHint')"
       :yeniden-dene="stoklariYukle"
     />
 
-    <template v-if="!stokStore.loading && !stokStore.error && gosterim === 'tablo' && filtreAktifMi()">
+    <template v-if="!stokStore.loading && !stokStore.error && gosterim === 'tablo'">
       <AppDataTable
         v-model:selection="seciliStoklar"
         v-model:expanded-rows="expandedRows"
@@ -257,10 +277,10 @@
         </template>
         <template #empty>
           <EmptyState
-            :message="t('stoklar.empty')"
-            :sub-message="t('stoklar.emptyHint')"
+            :message="filtreAktifMi() ? t('stoklar.eslesenYok') : t('stoklar.empty')"
+            :sub-message="filtreAktifMi() ? '' : t('stoklar.emptyHint')"
             icon="pi pi-box"
-            :action-label="t('stoklar.emptyAction')"
+            :action-label="filtreAktifMi() ? '' : t('stoklar.emptyAction')"
             action-icon="pi pi-plus"
             @action="openDialog"
           />
@@ -545,21 +565,12 @@
       />
     </div>
 
-    <StokHareketBolum
-      v-if="seciliStok"
-      :stok="seciliStok"
-      :hareketler="stokHareketler"
-      @giris="openHareketDialog('GIRIS')"
-      @cikis="openHareketDialog('CIKIS')"
-      @kapat="seciliStok = null"
-      @sil="delHareket"
-    />
-
     <Dialog
       v-model:visible="showDialog"
       :header="editingId ? t('stoklar.urunDuzenle') : t('stoklar.yeniUrunDialog')"
       :modal="true"
-      style="width: 650px"
+      :style="{ width: '820px', maxWidth: '96vw' }"
+      class="stok-form-dialog"
     >
       <div class="form-section">
         <div class="form-section-title">
@@ -815,9 +826,6 @@
               class="w-full"
             />
           </div>
-          <div class="form-grup">
-            <label />
-          </div>
         </div>
       </div>
       <div class="form-section">
@@ -929,6 +937,7 @@
       v-model:depo-id="hareketForm.depoId"
       v-model:aciklama="hareketForm.aciklama"
       :baslik="hareketBaslik"
+      :tur="hareketTur"
       :depolar="depolar"
       :loading="saving"
       @kaydet="saveHareket"
@@ -950,6 +959,13 @@
       :stok="detailStok"
       :hareketler="hareketler"
       :hareketler-yukleniyor="hareketlerYukleniyor"
+      :depo-dagilim="detailStok ? (depoDagilim[detailStok.id] || []) : []"
+      :depolar="depolar"
+      @giris="openHareketDialog('GIRIS')"
+      @cikis="openHareketDialog('CIKIS')"
+      @hareket-sil="delHareket"
+      @transfer-tamam="transferSonrasiYenile"
+      @etiket="detailStok && barkodEtiket(detailStok)"
     />
 
     <BarkodEtiketDialog
@@ -959,10 +975,15 @@
 
     <Dialog
       v-model:visible="topluEtiketDialog"
-      :header="t('stoklar.topluEtiketBaslik')"
       :modal="true"
-      style="width: 420px"
+      :style="{ width: '420px', maxWidth: '96vw' }"
     >
+      <template #header>
+        <div class="dialog-baslik">
+          <i class="pi pi-tags" />
+          <span>{{ t('stoklar.topluEtiketBaslik') }}</span>
+        </div>
+      </template>
       <p style="font-size: 13px; color: var(--text-secondary); margin-top: 0">
         {{ t('stoklar.topluEtiketAciklama') }}
       </p>
@@ -1028,7 +1049,6 @@ import StokHareketDialog from '../components/StokHareketDialog.vue'
 import StokTopluFiyatDialog from '../components/StokTopluFiyatDialog.vue'
 import StokDetayDialog from '../components/StokDetayDialog.vue'
 import StokKart from '../components/StokKart.vue'
-import StokHareketBolum from '../components/StokHareketBolum.vue'
 import BarkodEtiketDialog from '../components/BarkodEtiketDialog.vue'
 import StokRaporDialoglari from '../components/StokRaporDialoglari.vue'
 import { useKisayollar } from '../composables/useKisayollar.js'
@@ -1060,11 +1080,23 @@ const filtreDepo = ref(null)
 const filtreMinFiyat = ref(null)
 const filtreMaxFiyat = ref(null)
 
+// Ust arac cubugu "Islemler" menusu + KPI ozeti.
+const islemMenu = ref(null)
+const stokOzet = ref({})
+
+const ozetYukle = async () => {
+  try {
+    const r = await stokAPI.ozet()
+    stokOzet.value = r.data || {}
+  } catch {
+    stokOzet.value = {}
+  }
+}
+
 const stokSayfa = ref(0)
 const stokSayfaBoyutu = ref(25)
 let stokAramaZaman = null
 
-const seciliStok = ref(null)
 const seciliStokId = ref(null)
 const seciliStoklar = ref([])
 const stokHareketler = ref([])
@@ -1369,9 +1401,15 @@ const {
 } = useCariOnerileri({ ekParams: { tur: 'Tedarikci' } })
 
 onMounted(async () => {
+  // Kucuk ekranda kart gorunumu varsayilan (PWA/mobil). matchMedia korumali.
+  if (typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      && window.matchMedia('(max-width: 768px)').matches) {
+    gosterim.value = 'kart'
+  }
   // Bir yukleme hatasi digerini engellemesin (store'lar hata firlatir).
   await Promise.allSettled([
     stoklariYukle(),
+    ozetYukle(),
     tedarikciOnerileriYukle(),
     depoAPI.getAll({ size: 500 }).then((r) => { depolar.value = unwrapList(r) }),
     depoDagilimYukle(),
@@ -1405,7 +1443,6 @@ const filtreTemizle = () => {
 }
 
 const stokSec = async (s) => {
-  seciliStok.value = s
   seciliStokId.value = s.id
   detailStok.value = s
   showDetailDialog.value = true
@@ -1548,7 +1585,7 @@ const saveStok = async () => {
     }
     formTemizle()
     showDialog.value = false
-    await stoklariYukle()
+    await Promise.allSettled([stoklariYukle(), ozetYukle()])
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('stoklar.islemBasarisiz'))
   } finally {
@@ -1596,13 +1633,14 @@ const confirmDel = (id) => {
       try {
         await stokStore.deleteStok(id)
         if (seciliStokId.value === id) {
-          seciliStok.value = null
+          detailStok.value = null
           seciliStokId.value = null
           stokHareketler.value = []
         }
         toastBildirim.basarili(t('stoklar.urunSilindi'))
         if (silinecek)
           silVeGeriAl({ veri: silinecek, metin: `${silinecek.ad} silindi`, geriYukle: (v) => stokStore.addStok(v) })
+        ozetYukle()
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || err?.message || t('stoklar.silmeBasarisiz'))
       }
@@ -1667,7 +1705,6 @@ const batchCsvExport = () => {
 // kategori/marka/depo/arama filtreleri ve paginator kayboluyordu.
 const hareketSonrasiYenile = async () => {
   const sr = await stokAPI.getById(seciliStokId.value)
-  seciliStok.value = sr.data
   detailStok.value = sr.data
   await stokHareketleriYukle(seciliStokId.value)
   await stoklariYukle()
@@ -1763,6 +1800,15 @@ const excelIndir = async () => {
   }
 }
 
+// Ikincil arac cubugu eylemleri tek "Islemler" menusunde toplanir.
+const islemMenusu = computed(() => [
+  { label: t('stoklar.topluFiyatGuncelle'), icon: 'pi pi-dollar', command: () => { batchFiyatDialog.value = true } },
+  { label: t('stoklar.degerleme'), icon: 'pi pi-chart-line', command: () => degerlemeAc() },
+  { label: t('stoklar.siparisOnerisi'), icon: 'pi pi-shopping-cart', command: () => oneriAc() },
+  { separator: true },
+  { label: 'Excel', icon: 'pi pi-file-excel', command: () => excelIndir() }
+])
+
 // Hareket listesi hem yan panelde (`StokHareketBolum`) hem detay dialogunda
 // (`StokDetayDialog`) gösteriliyor; ikisi de aynı veriyi okuyor.
 const stokHareketleriYukle = async (stokId) => {
@@ -1779,8 +1825,34 @@ const stokHareketleriYukle = async (stokId) => {
     hareketlerYukleniyor.value = false
   }
 }
+
+// Depolar arasi transfer sonrasi: hareketler + depo dagilimi + liste tazelenir.
+const transferSonrasiYenile = async () => {
+  if (detailStok.value) await stokHareketleriYukle(detailStok.value.id)
+  await Promise.allSettled([depoDagilimYukle(), stoklariYukle()])
+}
 </script>
 
 <style scoped>
 @import '../assets/stoklar.css';
+
+.stok-kpi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.stok-islem-tetik {
+  min-width: 44px;
+}
+.dialog-baslik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+}
+.dialog-baslik i {
+  color: var(--accent);
+}
 </style>

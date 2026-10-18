@@ -19,4 +19,7 @@ public interface BankaHareketiRepository extends JpaRepository<BankaHareketi, Lo
     long countByBankaId(Long bankaId);
     List<BankaHareketi> findByKaynakFaturaId(Long kaynakFaturaId);
     List<BankaHareketi> findByKaynakTipAndKaynakId(String kaynakTip, Long kaynakId);
+
+    /** KPI özeti: şirketin eşleşmemiş (mutabakat bekleyen) hareket sayısı. */
+    long countBySirketIdAndEslestirildiFalse(Long sirketId);
 }

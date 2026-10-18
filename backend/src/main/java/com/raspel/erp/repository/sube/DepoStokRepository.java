@@ -23,4 +23,15 @@ public interface DepoStokRepository extends JpaRepository<DepoStok, Long> {
 
     @Query("SELECT COALESCE(SUM(ds.miktar), 0) FROM DepoStok ds WHERE ds.stokId = :stokId")
     BigDecimal toplamStokMiktari(Long stokId);
+
+    /**
+     * KPI özeti: şirket depolarındaki toplam stok kalemi ve sıfır/negatif stoklu
+     * kalem sayısı. {@code DepoStok}'ta sirket_id yok; depo üzerinden kapsamlanır.
+     *
+     * @return tek satır: [toplamKalem (Long), sifirKalem (Long)]
+     */
+    @Query("SELECT COUNT(ds), " +
+           "COALESCE(SUM(CASE WHEN ds.miktar <= 0 THEN 1 ELSE 0 END), 0) " +
+           "FROM DepoStok ds WHERE ds.depoId IN (SELECT d.id FROM Depo d WHERE d.sirketId = :sirketId)")
+    Object[] ozet(@Param("sirketId") Long sirketId);
 }

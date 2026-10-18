@@ -110,6 +110,18 @@ class BankaControllerTest {
         mockMvc.perform(delete("/api/bankalar/999"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void shouldGetOzet() throws Exception {
+        when(bankaService.ozet(1L)).thenReturn(com.raspel.erp.dto.finans.BankaOzetDTO.builder()
+                .toplamBanka(3).toplamBakiye(BigDecimal.valueOf(1500))
+                .pozitifBakiye(BigDecimal.valueOf(2000)).eslesmemisHareket(2).build());
+
+        mockMvc.perform(get("/api/bankalar/ozet").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.toplamBanka").value(3))
+                .andExpect(jsonPath("$.eslesmemisHareket").value(2));
+    }
 }
 
 

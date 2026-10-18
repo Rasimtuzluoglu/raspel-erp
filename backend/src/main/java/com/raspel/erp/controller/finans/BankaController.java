@@ -34,6 +34,13 @@ public class BankaController {
         return ResponseEntity.ok(bankaService.tumBankalariGetir(sirketId, pageable));
     }
 
+    @GetMapping("/ozet")
+    @Operation(summary = "Banka özeti", description = "Bankalar ekranı KPI özetini (hesap/bakiye/eşleşmemiş hareket) döndürür")
+    public ResponseEntity<com.raspel.erp.dto.finans.BankaOzetDTO> ozet(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(bankaService.ozet(sirketId));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "ID'ye göre banka getir", description = "Banka ID'sine göre detayları getirir")
     public ResponseEntity<BankaDTO> bankaGetir(@PathVariable Long id) {

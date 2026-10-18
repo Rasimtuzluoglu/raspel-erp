@@ -32,7 +32,8 @@ const DataTableStub = {
 }
 
 const stubs = {
-  Dialog: { template: '<div class="dialog"><slot /></div>' },
+  Dialog: { template: '<div class="dialog"><slot name="header" /><slot /></div>' },
+  Button: { props: ['label'], emits: ['click'], template: '<button @click="$emit(\'click\')">{{ label }}</button>' },
   TabView: { template: '<div class="tabview"><slot /></div>' },
   TabPanel: { template: '<div class="tabpanel"><slot /></div>' },
   DatePicker: { template: '<div class="datepicker"><slot /></div>' },
@@ -191,5 +192,28 @@ describe('StokDetayDialog.vue', () => {
     tablo.vm.$emit('page', { page: 2, rows: 10 })
     await flushPromises()
     expect(stokAPI.islemGecmisiSayfali).toHaveBeenLastCalledWith(1, expect.objectContaining({ sayfa: 2, boyut: 10 }))
+  })
+
+  it('KPI seridi, depo dagilimi ve barkod/etiket aksiyonunu gosterir', async () => {
+    const StokDetayDialog = (await import('../StokDetayDialog.vue')).default
+    const wrapper = mount(StokDetayDialog, {
+      props: {
+        visible: false,
+        stok: { id: 1, ad: 'PVC Bant Beyaz', birim: 'Rulo', miktar: 10, minMiktar: 5, fiyat: 100, satisFiyati: 150 },
+        depoDagilim: [{ depoId: 1, depoAdi: 'Merkez', miktar: 10 }]
+      },
+      global: { stubs, plugins: [createPinia(), ToastService, i18n] }
+    })
+    await wrapper.setProps({ visible: true })
+    await flushPromises()
+
+    expect(wrapper.find('.detay-baslik').exists()).toBe(true)
+    expect(wrapper.findAll('.detay-kpi .kpi-hucre')).toHaveLength(4)
+    expect(wrapper.find('.depo-chip').text()).toContain('Merkez')
+
+    const btn = wrapper.findAll('button').find((b) => b.text().includes(i18n.global.t('stoklar.barkodEtiket')))
+    expect(btn).toBeTruthy()
+    await btn.trigger('click')
+    expect(wrapper.emitted('etiket')).toBeTruthy()
   })
 })

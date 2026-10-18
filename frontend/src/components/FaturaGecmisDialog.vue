@@ -2,10 +2,15 @@
   <Dialog
     :visible="visible"
     modal
-    :header="header"
-    :style="{ width: '720px' }"
+    :style="{ width: '720px', maxWidth: '96vw' }"
     @update:visible="$emit('update:visible', $event)"
   >
+    <template #header>
+      <div class="fg-dialog-baslik">
+        <i class="pi pi-history" />
+        <span>{{ header }}</span>
+      </div>
+    </template>
     <div
       v-if="yukleniyor"
       class="fg-bos"
@@ -173,6 +178,16 @@ const degisiklikler = (kayit) => {
 </script>
 
 <style scoped>
+.fg-dialog-baslik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+}
+.fg-dialog-baslik i {
+  color: var(--accent);
+}
 .fg-bos {
   text-align: center;
   padding: 2rem;

@@ -69,6 +69,7 @@ public void finansalSilmeLog(String entityAdi, Long entityId, String detay) {
     }
 
     public Page<AuditLog> filtreliGetir(Long sirketId, Long kullaniciId, String islem, String entityAdi,
+                                         Long entityId, Boolean riskli, String q,
                                          LocalDate baslangicTarih, LocalDate bitisTarih, Pageable pageable) {
         // Tenant baglami yoksa tum sirketlerin denetim kayitlari donmez (fail-closed).
         if (sirketId == null) {
@@ -77,14 +78,18 @@ public void finansalSilmeLog(String entityAdi, Long entityId, String detay) {
         }
         LocalDateTime baslangic = baslangicTarih != null ? baslangicTarih.atStartOfDay() : null;
         LocalDateTime bitis = bitisTarih != null ? bitisTarih.atTime(LocalTime.MAX) : null;
-        return auditLogRepository.filtreliGetir(sirketId, kullaniciId, islem, entityAdi, baslangic, bitis, pageable);
+        return auditLogRepository.filtreliGetir(sirketId, kullaniciId, islem, entityAdi, entityId,
+                Boolean.TRUE.equals(riskli), com.raspel.erp.util.AramaTemizleyici.like(q),
+                baslangic, bitis, pageable);
     }
 
     /** Denetim kayıtlarını kullanıcı adıyla zenginleştirerek DTO döndürür. */
     public Page<com.raspel.erp.dto.sistem.AuditLogDTO> filtreliGetirDTO(Long sirketId, Long kullaniciId, String islem,
-                                                                        String entityAdi, LocalDate baslangicTarih,
+                                                                        String entityAdi, Long entityId, Boolean riskli,
+                                                                        String q, LocalDate baslangicTarih,
                                                                         LocalDate bitisTarih, Pageable pageable) {
-        Page<AuditLog> sayfa = filtreliGetir(sirketId, kullaniciId, islem, entityAdi, baslangicTarih, bitisTarih, pageable);
+        Page<AuditLog> sayfa = filtreliGetir(sirketId, kullaniciId, islem, entityAdi, entityId, riskli, q,
+                baslangicTarih, bitisTarih, pageable);
         // Görünen adları tek sorguda çöz.
         java.util.Set<Long> idler = sayfa.getContent().stream()
                 .map(AuditLog::getKullaniciId).filter(java.util.Objects::nonNull)
@@ -101,6 +106,32 @@ public void finansalSilmeLog(String entityAdi, Long entityId, String detay) {
                 .sirketId(a.getSirketId()).islem(a.getIslem()).entityAdi(a.getEntityAdi())
                 .entityId(a.getEntityId()).aciklama(a.getAciklama()).detay(a.getDetay())
                 .ipAdresi(a.getIpAdresi()).tarih(a.getTarih()).build());
+    }
+
+    /**
+     * Filtreli KPI özeti: işlem tipine göre sayımlar ve toplam. {@code islem}
+     * filtresi dağılımı gösterebilmek için uygulanmaz.
+     */
+    public com.raspel.erp.dto.sistem.AuditLogOzetDTO ozet(Long sirketId, Long kullaniciId, String entityAdi,
+                                                          Long entityId, String q,
+                                                          LocalDate baslangicTarih, LocalDate bitisTarih) {
+        if (sirketId == null) {
+            return com.raspel.erp.dto.sistem.AuditLogOzetDTO.builder()
+                    .toplam(0).islemBazli(java.util.Map.of()).build();
+        }
+        LocalDateTime baslangic = baslangicTarih != null ? baslangicTarih.atStartOfDay() : null;
+        LocalDateTime bitis = bitisTarih != null ? bitisTarih.atTime(LocalTime.MAX) : null;
+        List<Object[]> satirlar = auditLogRepository.ozetIslem(sirketId, kullaniciId, entityAdi, entityId,
+                com.raspel.erp.util.AramaTemizleyici.like(q), baslangic, bitis);
+        java.util.Map<String, Long> islemBazli = new java.util.LinkedHashMap<>();
+        long toplam = 0;
+        for (Object[] s : satirlar) {
+            long adet = ((Number) s[1]).longValue();
+            islemBazli.put((String) s[0], adet);
+            toplam += adet;
+        }
+        return com.raspel.erp.dto.sistem.AuditLogOzetDTO.builder()
+                .toplam(toplam).islemBazli(islemBazli).build();
     }
 
     public List<String> islemTipleri(Long sirketId) {

@@ -1,11 +1,44 @@
 <template>
   <Dialog
     :visible="visible"
-    :header="stok?.ad || $t('stokDetay.urunDetayi')"
     :modal="true"
     class="stok-detay-dialog"
+    :style="{ width: '1020px', maxWidth: '96vw', height: 'min(780px, 90vh)' }"
     @update:visible="$emit('update:visible', $event)"
   >
+    <template #header>
+      <div class="detay-baslik">
+        <i class="pi pi-box" />
+        <span class="detay-baslik-ad">{{ stok?.ad || $t('stokDetay.urunDetayi') }}</span>
+        <div class="detay-aksiyonlar">
+          <Button
+            :label="$t('stoklar.stokGiris')"
+            icon="pi pi-plus-circle"
+            class="p-button-sm p-button-success"
+            @click="$emit('giris')"
+          />
+          <Button
+            :label="$t('stoklar.stokCikis')"
+            icon="pi pi-minus-circle"
+            class="p-button-sm p-button-danger"
+            @click="$emit('cikis')"
+          />
+          <Button
+            :label="$t('depolar.depolarArasiTransfer')"
+            icon="pi pi-sync"
+            class="p-button-sm p-button-outlined"
+            :disabled="!depolar.length"
+            @click="transferAc"
+          />
+          <Button
+            :label="$t('stoklar.barkodEtiket')"
+            icon="pi pi-barcode"
+            class="p-button-sm p-button-outlined"
+            @click="$emit('etiket')"
+          />
+        </div>
+      </div>
+    </template>
     <TabView>
       <TabPanel :header="t('stoklar.analiz.genel')">
         <div
@@ -89,61 +122,42 @@
             </div>
           </div>
         </div>
+        <div class="detay-kpi">
+          <div class="kpi-hucre">
+            <span>{{ $t('stoklar.analiz.miktar') }}</span>
+            <strong :class="kritikMi ? 'kritik' : 'normal'">{{ sayi(stok?.miktar) }} {{ birim }}</strong>
+          </div>
+          <div class="kpi-hucre">
+            <span>{{ $t('stoklar.stokDegeri') }}</span>
+            <strong class="gizli-veri">{{ formatCurrency(stokDegeri) }}</strong>
+          </div>
+          <div class="kpi-hucre">
+            <span>{{ $t('stoklar.karMarji') }}</span>
+            <strong :class="karMarji != null && karMarji < 0 ? 'kritik' : 'normal'">{{ karMarji == null ? '-' : '%' + karMarji }}</strong>
+          </div>
+          <div class="kpi-hucre">
+            <span>{{ $t('stoklar.minStok') }}</span>
+            <strong>{{ stok?.minMiktar ?? '-' }}</strong>
+          </div>
+        </div>
+
         <div class="form-section-title">
-          {{ $t('stokDetay.stokHareketleri') }}
+          {{ $t('stoklar.depoDagilimi') }}
         </div>
         <div
-          v-if="hareketlerYukleniyor"
-          class="loading"
+          v-if="depoDagilim.length"
+          class="depo-dagilim-liste"
         >
-          <p><i class="pi pi-spin pi-spinner" /> {{ $t('common.loading') }}</p>
+          <span
+            v-for="d in depoDagilim"
+            :key="d.depoId"
+            class="depo-chip"
+          >{{ d.depoAdi || '-' }}: {{ d.miktar }}</span>
         </div>
-        <EmptyState
-          v-else-if="hareketler.length === 0"
-          :message="$t('stokDetay.hareketBulunamadi')"
-          :sub-message="$t('stokDetay.hareketYok')"
-          icon="pi pi-list"
-        />
-        <AppDataTable
+        <span
           v-else
-          :value="hareketler"
-          size="small"
-          striped-rows
-          :paginator="hareketler.length > 10"
-          :rows="10"
-        >
-          <Column
-            :header="t('stoklar.analiz.toplamTutar')"
-            style="width: 130px"
-          >
-            <template #body="s">
-              <span class="gizli-veri">{{ formatCurrency(s.data.toplamTutar) }}</span>
-            </template>
-          </Column>
-          <Column
-            :header="$t('stokDetay.tur')"
-            style="width: 90px"
-          >
-            <template #body="s">
-              <span :class="['badge', s.data.tur === 'GIRIS' ? 'giris' : 'cikis']">
-                {{ s.data.tur === 'GIRIS' ? $t('stokDetay.giris') : $t('stokDetay.cikis') }}
-              </span>
-            </template>
-          </Column>
-          <Column
-            :header="$t('stoklar.analiz.miktar')"
-            style="width: 90px"
-          >
-            <template #body="s">
-              <span :class="s.data.tur === 'GIRIS' ? 'positive' : 'negative'">{{ s.data.miktar }}</span>
-            </template>
-          </Column>
-          <Column :header="$t('stokDetay.aciklama')">
-            <template #body="s">
-              {{ s.data.aciklama || '-' }}
-            </template>
-          </Column>
-        </AppDataTable>
+          class="text-muted"
+        >-</span>
 
         <div class="form-section-title">
           {{ $t('stoklar.fiyatlar') }}
@@ -173,6 +187,73 @@
           v-else
           class="text-muted"
         >{{ $t('stoklar.ozelFiyatYok') }}</span>
+      </TabPanel>
+      <TabPanel :header="t('stokDetay.stokHareketleri')">
+        <div
+          v-if="hareketlerYukleniyor"
+          class="loading"
+        >
+          <p><i class="pi pi-spin pi-spinner" /> {{ $t('common.loading') }}</p>
+        </div>
+        <EmptyState
+          v-else-if="hareketler.length === 0"
+          :message="$t('stokDetay.hareketBulunamadi')"
+          :sub-message="$t('stokDetay.hareketYok')"
+          icon="pi pi-list"
+        />
+        <AppDataTable
+          v-else
+          :value="hareketler"
+          size="small"
+          striped-rows
+          :paginator="hareketler.length > 10"
+          :rows="10"
+        >
+          <Column
+            :header="$t('stoklar.analiz.toplamTutar')"
+            style="width: 130px"
+          >
+            <template #body="s">
+              <span class="gizli-veri">{{ formatCurrency(s.data.toplamTutar) }}</span>
+            </template>
+          </Column>
+          <Column
+            :header="$t('stokDetay.tur')"
+            style="width: 90px"
+          >
+            <template #body="s">
+              <span :class="['badge', s.data.tur === 'GIRIS' ? 'giris' : 'cikis']">
+                {{ s.data.tur === 'GIRIS' ? $t('stokDetay.giris') : $t('stokDetay.cikis') }}
+              </span>
+            </template>
+          </Column>
+          <Column
+            :header="$t('stoklar.analiz.miktar')"
+            style="width: 90px"
+          >
+            <template #body="s">
+              <span :class="s.data.tur === 'GIRIS' ? 'positive' : 'negative'">{{ s.data.miktar }}</span>
+            </template>
+          </Column>
+          <Column :header="$t('stokDetay.aciklama')">
+            <template #body="s">
+              {{ s.data.aciklama || '-' }}
+            </template>
+          </Column>
+          <Column
+            header=""
+            style="width: 60px"
+          >
+            <template #body="s">
+              <Button
+                icon="pi pi-trash"
+                :aria-label="$t('common.delete')"
+                class="p-button-rounded p-button-danger p-button-sm"
+                @click="$emit('hareket-sil', s.data.id)"
+              />
+            </template>
+          </Column>
+        </AppDataTable>
       </TabPanel>
       <TabPanel :header="t('stoklar.analiz.urunAnalizi')">
         <div class="analiz-filtre">
@@ -459,13 +540,70 @@
       </TabPanel>
     </TabView>
   </Dialog>
+
+  <Dialog
+    v-model:visible="transferDialog"
+    :header="$t('depolar.depolarArasiTransfer')"
+    modal
+    :style="{ width: '520px', maxWidth: '96vw' }"
+  >
+    <p class="transfer-urun">
+      {{ stok?.ad }}
+    </p>
+    <div class="form-grid-2">
+      <div class="form-grup">
+        <label>{{ $t('depolar.kaynakDepo') }}</label>
+        <Dropdown
+          v-model="transferForm.kaynakDepoId"
+          :options="depolar"
+          option-label="ad"
+          option-value="id"
+          :placeholder="$t('depolar.kaynakDepo')"
+          class="w-full"
+        />
+      </div>
+      <div class="form-grup">
+        <label>{{ $t('depolar.hedefDepo') }}</label>
+        <Dropdown
+          v-model="transferForm.hedefDepoId"
+          :options="depolar"
+          option-label="ad"
+          option-value="id"
+          :placeholder="$t('depolar.hedefDepo')"
+          class="w-full"
+        />
+      </div>
+    </div>
+    <div class="form-grup">
+      <label>{{ $t('common.quantity') }}</label>
+      <InputNumber
+        v-model="transferForm.miktar"
+        :min="0"
+        class="w-full"
+      />
+    </div>
+    <template #footer>
+      <Button
+        :label="$t('common.cancel')"
+        class="p-button-text"
+        @click="transferDialog = false"
+      />
+      <Button
+        :label="$t('depolar.transferEt')"
+        icon="pi pi-send"
+        :loading="transferLoading"
+        @click="transferYap"
+      />
+    </template>
+  </Dialog>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { stokAPI } from '../api/index.js'
+import { stokAPI, depoAPI } from '../api/index.js'
 import { formatCurrency, formatTarih as formatDate } from '../utils/format.js'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -484,12 +622,48 @@ const props = defineProps({
   visible: { type: Boolean, default: false },
   stok: { type: Object, default: null },
   hareketler: { type: Array, default: () => [] },
-  hareketlerYukleniyor: { type: Boolean, default: false }
+  hareketlerYukleniyor: { type: Boolean, default: false },
+  /** Secili stok icin depo bazli miktar dagilimi (opsiyonel). */
+  depoDagilim: { type: Array, default: () => [] },
+  /** Transfer/kaynak-hedef depo listesi. */
+  depolar: { type: Array, default: () => [] }
 })
 
-defineEmits(['update:visible'])
+const emit = defineEmits(['update:visible', 'etiket', 'giris', 'cikis', 'hareket-sil', 'transfer-tamam'])
 
 const { t } = useI18n()
+const toastBildirim = useToastBildirim()
+
+// Depolar arasi transfer: kaynak/hedef + miktar.
+const transferDialog = ref(false)
+const transferLoading = ref(false)
+const transferForm = ref({ kaynakDepoId: null, hedefDepoId: null, miktar: 0 })
+
+const transferAc = () => {
+  transferForm.value = { kaynakDepoId: null, hedefDepoId: null, miktar: 0 }
+  transferDialog.value = true
+}
+
+const transferYap = async () => {
+  const f = transferForm.value
+  if (!props.stok?.id || !f.kaynakDepoId || !f.hedefDepoId || !f.miktar) return
+  transferLoading.value = true
+  try {
+    await depoAPI.transfer({
+      kaynakDepoId: f.kaynakDepoId,
+      hedefDepoId: f.hedefDepoId,
+      stokId: props.stok.id,
+      miktar: f.miktar
+    })
+    transferDialog.value = false
+    toastBildirim.basarili(t('depolar.transferTamamlandi'))
+    emit('transfer-tamam')
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('depolar.transferBasarisiz'))
+  } finally {
+    transferLoading.value = false
+  }
+}
 
 const analiz = ref(null)
 const ozelFiyatlar = ref([])
@@ -515,6 +689,12 @@ const karMarji = computed(() => {
   if (!alis || !satis) return null
   return Math.round(((satis - alis) / alis) * 1000) / 10
 })
+
+const birim = computed(() => props.stok?.birim || '')
+const stokDegeri = computed(() => Number(props.stok?.miktar || 0) * Number(props.stok?.fiyat || 0))
+const kritikMi = computed(
+  () => props.stok?.minMiktar != null && Number(props.stok?.miktar || 0) <= Number(props.stok.minMiktar)
+)
 
 const ozelFiyatlariYukle = async () => {
   if (!props.stok?.id) return
@@ -690,9 +870,108 @@ watch(
 </script>
 
 <style scoped>
-.stok-detay-dialog {
-  width: 980px;
-  max-width: 96vw;
+.stok-detay-dialog :deep(.p-dialog-content) {
+  overflow-y: auto;
+}
+.detay-baslik {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.detay-baslik > i {
+  color: var(--accent);
+  font-size: 16px;
+}
+.detay-baslik-ad {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+.detay-aksiyonlar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.form-grup {
+  margin-bottom: 16px;
+}
+.form-grup label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.transfer-urun {
+  margin: 0 0 14px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+@media (max-width: 640px) {
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+.detay-kpi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.kpi-hucre {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+}
+.kpi-hucre > span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.kpi-hucre > strong {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.kpi-hucre > strong.kritik {
+  color: #f87171;
+}
+.kpi-hucre > strong.normal {
+  color: #4ade80;
+}
+.depo-dagilim-liste {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.depo-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-muted, rgba(148, 163, 184, 0.08));
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 /* Genel sekmesi: ürün görseli + bilgi kartları */
 .detay-ust {

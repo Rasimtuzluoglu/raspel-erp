@@ -36,6 +36,36 @@ public class DepoService {
     private final StokRepository stokRepository;
     private final TenantChecker tenantChecker;
     private final com.raspel.erp.service.envanter.StokService stokService;
+    private final com.raspel.erp.repository.sube.DepoTransferRepository depoTransferRepository;
+
+    /**
+     * Depolar ekranı KPI özeti: depo sayıları, stok kalemi/sıfır stok ve
+     * bekleyen transfer talebi sayısı (şirket kapsamlı).
+     */
+    @Transactional(readOnly = true)
+    public com.raspel.erp.dto.sube.DepoOzetDTO ozet(Long sirketId) {
+        if (sirketId == null) {
+            return com.raspel.erp.dto.sube.DepoOzetDTO.builder().build();
+        }
+        long toplam = depoRepository.countBySirketId(sirketId);
+        long aktif = depoRepository.countBySirketIdAndAktifTrue(sirketId);
+        long bekleyen = depoTransferRepository.countBySirketIdAndDurum(sirketId, "BEKLIYOR");
+        long toplamKalem = 0;
+        long sifirKalem = 0;
+        Object[] stokOzet = depoStokRepository.ozet(sirketId);
+        if (stokOzet != null && stokOzet.length >= 2) {
+            if (stokOzet[0] != null) toplamKalem = ((Number) stokOzet[0]).longValue();
+            if (stokOzet[1] != null) sifirKalem = ((Number) stokOzet[1]).longValue();
+        }
+        return com.raspel.erp.dto.sube.DepoOzetDTO.builder()
+                .toplamDepo(toplam)
+                .aktifDepo(aktif)
+                .pasifDepo(toplam - aktif)
+                .stokKalemiSayisi(toplamKalem)
+                .sifirStokluKalem(sifirKalem)
+                .bekleyenTalep(bekleyen)
+                .build();
+    }
 
     @Transactional(readOnly = true)
     public Page<DepoDTO> tumunuGetir(Long sirketId, Pageable pageable) {

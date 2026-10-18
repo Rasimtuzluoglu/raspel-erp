@@ -335,4 +335,29 @@ class KasaServiceTest {
         when(kasaRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of());
         assertTrue(kasaService.gunSonu(1L, null, LocalDate.now()).isEmpty());
     }
+
+    @Test
+    void ozet_sayimlariDondurur() {
+        when(kasaRepository.countBySirketId(1L)).thenReturn(3L);
+        when(kasaRepository.sumBakiyeBySirketId(1L)).thenReturn(BigDecimal.valueOf(2500));
+        when(kasaHareketRepository.sumBySirketVeTurVeTarih(eq(1L), eq("GELIR"), any(LocalDate.class)))
+                .thenReturn(BigDecimal.valueOf(500));
+        when(kasaHareketRepository.sumBySirketVeTurVeTarih(eq(1L), eq("GIDER"), any(LocalDate.class)))
+                .thenReturn(BigDecimal.valueOf(200));
+
+        var ozet = kasaService.ozet(1L);
+
+        assertEquals(3, ozet.getToplamKasa());
+        assertEquals(0, ozet.getToplamBakiye().compareTo(BigDecimal.valueOf(2500)));
+        assertEquals(0, ozet.getBugunGelir().compareTo(BigDecimal.valueOf(500)));
+        assertEquals(0, ozet.getBugunGider().compareTo(BigDecimal.valueOf(200)));
+    }
+
+    @Test
+    void ozet_sirketYoksaSifirDoner() {
+        var ozet = kasaService.ozet(null);
+        assertEquals(0, ozet.getToplamKasa());
+        assertEquals(0, ozet.getToplamBakiye().compareTo(BigDecimal.ZERO));
+        verifyNoInteractions(kasaRepository);
+    }
 }

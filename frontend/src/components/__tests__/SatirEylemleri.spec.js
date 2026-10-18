@@ -56,12 +56,77 @@ describe('SatirEylemleri', () => {
     expect(wrapper.emitted('eylem')).toBeTruthy()
   })
 
+  it('aciklama verilince menude alt satir olarak gosterilir', async () => {
+    const wrapper = kur({
+      props: {
+        gorunur: { duzenle: false, cogalt: false, sil: false },
+        items: [
+          {
+            etiket: 'Tahsilat Al',
+            aciklama: 'Müşteriden para al · borcunu azaltır',
+            ikon: 'pi pi-money-bill',
+            islem: () => {}
+          }
+        ]
+      }
+    })
+    await wrapper.find('button').trigger('click')
+    const aciklama = wrapper.find('.eylem-aciklama')
+    expect(aciklama.exists()).toBe(true)
+    expect(aciklama.text()).toContain('borcunu azaltır')
+  })
+
+  it('items sinif degeri menu ogesine uygulanir (renk kodlama)', async () => {
+    const wrapper = kur({
+      props: {
+        gorunur: { duzenle: false, cogalt: false, sil: false },
+        items: [{ etiket: 'Tahsilat', ikon: 'pi pi-money-bill', sinif: 'eylem-pozitif', islem: () => {} }]
+      }
+    })
+    await wrapper.find('button').trigger('click')
+    const oge = wrapper.findAll('button').find((b) => b.text().includes('Tahsilat'))
+    expect(oge.classes()).toContain('eylem-pozitif')
+  })
+
+  it('baslik verilince menu ustunde gosterilir', async () => {
+    const wrapper = kur({
+      props: { baslik: 'ACME Ltd', gorunur: { duzenle: false, cogalt: false, sil: false } }
+    })
+    await wrapper.find('button').trigger('click')
+    expect(wrapper.find('.eylem-baslik').text()).toContain('ACME Ltd')
+  })
+
+  it('grup ve ayrac ogeleri render edilir', async () => {
+    const wrapper = kur({
+      props: {
+        gorunur: { duzenle: false, cogalt: false, sil: false },
+        items: [{ grup: 'Finans' }, { etiket: 'X', ikon: 'pi pi-x', islem: () => {} }, { ayrac: true }]
+      }
+    })
+    await wrapper.find('button').trigger('click')
+    expect(wrapper.find('.eylem-grup').text()).toContain('Finans')
+    expect(wrapper.find('.eylem-ayrac').exists()).toBe(true)
+  })
+
   it('Escape tusu menuyu kapatir', async () => {
     const wrapper = kur()
     await wrapper.find('button').trigger('click')
     expect(wrapper.find('.eylem-menu').exists()).toBe(true)
     await wrapper.find('.eylem-menu').trigger('keydown', { key: 'Escape' })
     expect(wrapper.find('.eylem-menu').exists()).toBe(false)
+  })
+
+  it('iki satir menuesu ayni anda acik kalmaz (ust uste binmez)', async () => {
+    const Host = {
+      components: { SatirEylemleri },
+      template: '<div><SatirEylemleri /><SatirEylemleri /></div>'
+    }
+    const w = mount(Host, { global: { plugins: [i18n], stubs: { teleport: true } } })
+    const ornekler = w.findAllComponents(SatirEylemleri)
+    await ornekler[0].find('button').trigger('click')
+    expect(w.findAll('.eylem-menu').length).toBe(1)
+    await ornekler[1].find('button').trigger('click')
+    expect(w.findAll('.eylem-menu').length).toBe(1)
   })
 
   it('menuyu sabit konumda ve ekran disina tasmadan konumlandirir', async () => {

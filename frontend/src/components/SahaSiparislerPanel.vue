@@ -1,8 +1,8 @@
 <template>
-  <div class="fade-in-section">
-    <div class="section-title-row">
-      <h3><i class="pi pi-truck text-primary mr-2" />{{ $t('sahaPortali.aktifSahaSiparisleri') }}</h3>
-      <span class="count-pill">{{ siparisler ? siparisler.length : 0 }} {{ $t('sahaPortali.siparisKisa') }}</span>
+  <div class="saha-fade">
+    <div class="saha-baslik-satir">
+      <h3><i class="pi pi-truck saha-baslik-ikon" />{{ $t('sahaPortali.aktifSahaSiparisleri') }}</h3>
+      <span class="saha-count-pill">{{ siparisler ? siparisler.length : 0 }} {{ $t('sahaPortali.siparisKisa') }}</span>
     </div>
 
     <div
@@ -31,7 +31,7 @@
           v-if="s.teslimatAdresi"
           class="address-box"
         >
-          <i class="pi pi-map-marker text-red-500" />
+          <i class="pi pi-map-marker saha-ikon-kirmizi" />
           <span>{{ s.teslimatAdresi }}</span>
         </div>
 
@@ -40,7 +40,7 @@
             <small>{{ $t('sahaPortali.tarih') }}</small>
             <strong>{{ formatTarih(s.tarih) }}</strong>
           </div>
-          <div class="price-col text-right">
+          <div class="price-col">
             <small>{{ $t('sahaPortali.tutar') }}</small>
             <span class="price-val">{{ formatCurrency(s.toplamTutar || s.genelToplam || 0) }}</span>
           </div>
@@ -94,9 +94,9 @@
 
     <div
       v-else
-      class="empty-box"
+      class="saha-bos"
     >
-      <i class="pi pi-inbox empty-icon" />
+      <i class="pi pi-inbox saha-bos-ikon" />
       <p>{{ $t('sahaPortali.bosSaha') }}</p>
     </div>
   </div>
@@ -129,36 +129,6 @@ const durumEtiket = (kod) => {
 </script>
 
 <style scoped>
-.fade-in-section {
-  animation: fadeIn 0.25s ease-in-out;
-}
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.section-title-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-.section-title-row h3 {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-}
-.count-pill {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  background: var(--bg-muted, rgba(0, 0, 0, 0.05));
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-weight: 600;
-}
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
@@ -183,7 +153,11 @@ const durumEtiket = (kod) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.5rem;
   margin-bottom: 0.65rem;
+}
+.saha-card :deep(.p-tag) {
+  white-space: nowrap;
 }
 .order-code {
   font-size: 0.8rem;
@@ -221,6 +195,9 @@ const durumEtiket = (kod) => {
   font-size: 0.7rem;
   color: var(--text-secondary);
 }
+.price-col {
+  text-align: right;
+}
 .price-val {
   font-size: 1.05rem;
   font-weight: 800;
@@ -228,11 +205,13 @@ const durumEtiket = (kod) => {
 }
 .card-bottom-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 0.65rem;
 }
 .call-btn, .map-btn, .whatsapp-btn {
   flex: 1;
+  min-height: 40px;
   text-align: center;
   padding: 0.5rem 0.75rem;
   font-size: 0.75rem;
@@ -272,23 +251,14 @@ const durumEtiket = (kod) => {
 }
 .delivery-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: auto;
   padding-top: 0.5rem;
   border-top: 1px dashed var(--border);
 }
-.empty-box {
-  text-align: center;
-  padding: 3.5rem 1rem;
-  background: var(--bg-card);
-  border: 1px dashed var(--border);
-  border-radius: 1rem;
-  color: var(--text-secondary);
-}
-.empty-icon {
-  font-size: 3rem;
-  margin-bottom: 0.75rem;
-  opacity: 0.4;
+.delivery-actions :deep(.p-button) {
+  min-height: 40px;
 }
 </style>
 

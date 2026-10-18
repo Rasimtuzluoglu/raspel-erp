@@ -1,19 +1,19 @@
 <template>
-  <div class="fade-in-section gorev-not-grid">
-    <div class="form-container-card">
-      <div class="form-header">
-        <h3><i class="pi pi-check-square text-primary mr-2" />{{ t('sahaPortali.gorevEkle') }}</h3>
+  <div class="saha-fade gorev-not-grid">
+    <div class="saha-form-kart">
+      <div class="saha-form-baslik">
+        <h3><i class="pi pi-check-square saha-baslik-ikon" />{{ t('sahaPortali.gorevEkle') }}</h3>
       </div>
-      <div class="form-body">
-        <div class="form-field">
+      <div class="saha-form-govde">
+        <div class="saha-alan">
           <label>{{ t('sahaPortali.gorevBasligi') }}</label>
           <InputText
             v-model="gorevForm.baslik"
             class="w-full"
           />
         </div>
-        <div class="form-row-2">
-          <div class="form-field">
+        <div class="saha-satir-2">
+          <div class="saha-alan">
             <label>{{ t('sahaPortali.bitisTarihi') }}</label>
             <input
               v-model="gorevForm.bitisTarihi"
@@ -21,7 +21,7 @@
               class="p-inputtext w-full"
             >
           </div>
-          <div class="form-field">
+          <div class="saha-alan">
             <label>{{ t('sahaPortali.oncelik') }}</label>
             <Dropdown
               v-model="gorevForm.oncelik"
@@ -32,7 +32,7 @@
             />
           </div>
         </div>
-        <div class="form-field">
+        <div class="saha-alan">
           <label>{{ t('common.description') }}</label>
           <Textarea
             v-model="gorevForm.aciklama"
@@ -50,19 +50,19 @@
       </div>
     </div>
 
-    <div class="form-container-card">
-      <div class="form-header">
-        <h3><i class="pi pi-pen-to-square text-primary mr-2" />{{ t('sahaPortali.hizliNot') }}</h3>
+    <div class="saha-form-kart">
+      <div class="saha-form-baslik">
+        <h3><i class="pi pi-pen-to-square saha-baslik-ikon" />{{ t('sahaPortali.hizliNot') }}</h3>
       </div>
-      <div class="form-body">
-        <div class="form-field">
+      <div class="saha-form-govde">
+        <div class="saha-alan">
           <label>{{ t('sahaPortali.notBasligi') }}</label>
           <InputText
             v-model="notForm.baslik"
             class="w-full"
           />
         </div>
-        <div class="form-field">
+        <div class="saha-alan">
           <label>{{ t('common.description') }}</label>
           <Textarea
             v-model="notForm.icerik"
@@ -80,9 +80,9 @@
       </div>
     </div>
 
-    <div class="form-container-card gorev-liste">
-      <div class="form-header">
-        <h3><i class="pi pi-list text-primary mr-2" />{{ t('sahaPortali.gorevlerim') }}</h3>
+    <div class="saha-form-kart gorev-liste">
+      <div class="saha-form-baslik">
+        <h3><i class="pi pi-list saha-baslik-ikon" />{{ t('sahaPortali.gorevlerim') }}</h3>
       </div>
       <div v-if="gorevler.length">
         <div
@@ -93,18 +93,18 @@
           <Checkbox
             :model-value="g.durum === 'TAMAMLANDI'"
             :binary="true"
+            :aria-label="g.baslik"
             @update:model-value="gorevTamamla(g)"
           />
           <span :class="{ tamam: g.durum === 'TAMAMLANDI' }">{{ g.baslik }}</span>
           <small v-if="g.bitisTarihi">{{ formatTarih(g.bitisTarihi) }}</small>
         </div>
       </div>
-      <div
+      <EmptyState
         v-else
-        class="empty-box"
-      >
-        <p>{{ t('sahaPortali.gorevYok') }}</p>
-      </div>
+        icon="pi pi-check-square"
+        :message="t('sahaPortali.gorevYok')"
+      />
     </div>
   </div>
 </template>
@@ -116,10 +116,11 @@ import { useToast } from 'primevue/usetoast'
 import { ajandaAPI, notAPI } from '../api/index.js'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { formatTarih } from '../utils/format.js'
+import EmptyState from './EmptyState.vue'
 
 const { t } = useI18n()
 const toast = useToast()
-const emit = defineEmits(['not-kaydedildi'])
+const emit = defineEmits(['not-kaydedildi', 'gorev-sayisi'])
 
 const gorevForm = ref({ baslik: '', bitisTarihi: '', oncelik: 'ORTA', aciklama: '' })
 const gorevler = ref([])
@@ -133,7 +134,11 @@ const notForm = ref({ baslik: '', icerik: '' })
 const notGonderiliyor = ref(false)
 
 const gorevleriYukle = async () => {
-  try { gorevler.value = unwrapList(await ajandaAPI.gorevler()) } catch { /* yoksay */ }
+  try {
+    gorevler.value = unwrapList(await ajandaAPI.gorevler())
+  } catch { /* yoksay */ }
+  // Ust bilesendeki sekme rozeti icin bekleyen gorev sayisini bildir.
+  emit('gorev-sayisi', gorevler.value.filter((g) => g?.durum !== 'TAMAMLANDI').length)
 }
 
 const gorevKaydet = async () => {
@@ -169,6 +174,7 @@ const gorevTamamla = async (g) => {
       await ajandaAPI.gorevTamamla(g.id)
       g.durum = 'TAMAMLANDI'
     }
+    emit('gorev-sayisi', gorevler.value.filter((x) => x?.durum !== 'TAMAMLANDI').length)
   } catch (err) {
     toast.add({ severity: 'error', summary: t('sahaPortali.hata'), detail: err?.response?.data?.message || err.message, life: 3000 })
   }
@@ -196,52 +202,6 @@ onMounted(() => gorevleriYukle())
 </script>
 
 <style scoped>
-.fade-in-section {
-  animation: fadeIn 0.25s ease-in-out;
-}
-.form-container-card {
-  max-width: 600px;
-  margin: 0 auto;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 1rem;
-  padding: 1.5rem;
-}
-.form-header h3 {
-  font-size: 1.15rem;
-  font-weight: 700;
-  margin: 0 0 0.25rem 0;
-}
-.form-header p {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-bottom: 1.25rem;
-}
-.form-body {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.form-field label {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin-bottom: 0.35rem;
-  color: var(--text-secondary);
-}
-.form-row-2 {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-.empty-box {
-  text-align: center;
-  padding: 3.5rem 1rem;
-  background: var(--bg-card);
-  border: 1px dashed var(--border);
-  border-radius: 1rem;
-  color: var(--text-secondary);
-}
 .gorev-not-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
@@ -252,6 +212,7 @@ onMounted(() => gorevleriYukle())
   display: flex;
   align-items: center;
   gap: 10px;
+  min-height: 44px;
   padding: 8px 4px;
   border-bottom: 1px solid var(--border);
   font-size: 0.85rem;
@@ -270,9 +231,5 @@ onMounted(() => gorevleriYukle())
 .gorev-liste .gorev-satir small {
   color: var(--text-muted);
   white-space: nowrap;
-}
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 </style>

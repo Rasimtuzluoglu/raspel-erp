@@ -9,12 +9,16 @@ import { join } from 'node:path'
 const SRC = join(process.cwd(), 'src')
 const saha = readFileSync(join(SRC, 'views/SahaPortali.vue'), 'utf8')
 const panel = readFileSync(join(SRC, 'components/SahaSiparislerPanel.vue'), 'utf8')
+const ortak = readFileSync(join(SRC, 'assets/saha-portali.css'), 'utf8')
 
 describe('Faz3E — Saha Portalı', () => {
   it('mobil için responsive kurallar ekli', () => {
     expect(saha).toMatch(/@media \(max-width: 640px\)/)
-    expect(saha).toMatch(/\.form-row-2\s*\{\s*grid-template-columns: 1fr/)
-    expect(saha).toMatch(/\.p-tabview-nav/)
+    // Ortak stil dosyasinda tek kolona inen form satiri.
+    expect(ortak).toMatch(/\.saha-satir-2\s*\{\s*grid-template-columns: 1fr/)
+    // PrimeVue v4 tablist sinifi: .p-tabview-tablist (eski .p-tabview-nav degil).
+    expect(saha).toMatch(/\.p-tabview-tablist/)
+    expect(saha).toMatch(/scrollable/)
   })
 
   it('çevrimdışı kuyruk bekleyen sayısı görünür + elle senkron', () => {

@@ -11,22 +11,37 @@
       :metin="t('hesapAyarlari.introText')"
     />
 
-    <div class="bolum-grup-secici">
-      <SelectButton
-        v-model="bolumGrubu"
-        :options="bolumGruplari"
-        option-label="ad"
-        option-value="deger"
-        :allow-empty="false"
-      />
-    </div>
-
     <div class="ayarlar-duzen">
+      <nav
+        class="ayarlar-nav"
+        :aria-label="t('hesapAyarlari.title')"
+      >
+        <template
+          v-for="g in navGruplari"
+          :key="g.baslik"
+        >
+          <div class="ayarlar-nav-grup">
+            {{ g.baslik }}
+          </div>
+          <button
+            v-for="b in g.bolumler"
+            :key="b.key"
+            type="button"
+            class="ayarlar-nav-oge"
+            :class="{ aktif: aktifBolum === b.index }"
+            @click="aktifBolum = b.index"
+          >
+            <i :class="b.ikon" />
+            <span>{{ b.label }}</span>
+          </button>
+        </template>
+      </nav>
+
       <TabView
         v-model:active-index="aktifBolum"
         class="ayar-icerik"
       >
-        <TabPanel v-if="kisiselMi(0)">
+        <TabPanel>
           <template #header>
             <span class="sekme-baslik"><i :class="bolumler[0].ikon" /> {{ bolumler[0].label }}</span>
           </template>
@@ -95,6 +110,8 @@
                         :placeholder="t('hesapAyarlari.avatarUrl')"
                       />
                     </div>
+                  </div>
+                  <div class="kart-aksiyon">
                     <Button
                       :label="t('hesapAyarlari.profiliKaydet')"
                       icon="pi pi-check"
@@ -125,7 +142,7 @@
           </div>
         </TabPanel>
 
-        <TabPanel v-if="kisiselMi(1)">
+        <TabPanel>
           <template #header>
             <span class="sekme-baslik"><i :class="bolumler[1].ikon" /> {{ bolumler[1].label }}</span>
           </template>
@@ -287,7 +304,7 @@
           </div>
         </TabPanel>
 
-        <TabPanel v-if="kisiselMi(2)">
+        <TabPanel>
           <template #header>
             <span class="sekme-baslik"><i :class="bolumler[2].ikon" /> {{ bolumler[2].label }}</span>
           </template>
@@ -376,7 +393,7 @@
           </div>
         </TabPanel>
 
-        <TabPanel v-if="kisiselMi(3)">
+        <TabPanel>
           <template #header>
             <span class="sekme-baslik"><i :class="bolumler[3].ikon" /> {{ bolumler[3].label }}</span>
           </template>
@@ -398,20 +415,22 @@
                 <p class="ai-aciklama">
                   {{ t('hesapAyarlari.bildirimAciklama') }}
                 </p>
-                <div
-                  v-for="tip in bildirimTipleri"
-                  :key="tip.value"
-                  class="tercih-satir"
-                >
-                  <span>{{ tip.label }}</span>
-                  <ToggleSwitch v-model="tip.secili" />
+                <div class="tercih-liste">
+                  <div
+                    v-for="tip in bildirimTipleri"
+                    :key="tip.value"
+                    class="tercih-satir"
+                  >
+                    <span>{{ tip.label }}</span>
+                    <ToggleSwitch v-model="tip.secili" />
+                  </div>
                 </div>
               </template>
             </Card>
           </div>
         </TabPanel>
 
-        <TabPanel v-if="kisiselMi(4)">
+        <TabPanel>
           <template #header>
             <span class="sekme-baslik"><i :class="bolumler[4].ikon" /> {{ bolumler[4].label }}</span>
           </template>
@@ -539,29 +558,32 @@
                     <span>{{ t('hesapAyarlari.yeniTokenUyari') }}</span>
                     <code class="token-deger">{{ yeniToken }}</code>
                   </div>
-                  <div
-                    v-if="tokenlar.length === 0 && !yeniToken"
-                    class="token-bos"
-                  >
-                    {{ t('hesapAyarlari.tokenYok') }}
-                  </div>
-                  <div
-                    v-for="token in tokenlar"
-                    :key="token.id"
-                    class="token-satir"
-                  >
-                    <div>
-                      <span class="token-ad">{{ token.ad }}</span>
-                      <span class="token-tarih">{{ token.olusturmaTarihi ? formatTarih(token.olusturmaTarihi) : '' }}</span>
+                  <div class="token-liste">
+                    <div
+                      v-if="tokenlar.length === 0 && !yeniToken"
+                      class="token-bos"
+                    >
+                      <i class="pi pi-key" />
+                      <span>{{ t('hesapAyarlari.tokenYok') }}</span>
                     </div>
-                    <Button
-                      icon="pi pi-trash"
-                      :aria-label="$t('common.delete')"
-                      rounded
-                      text
-                      severity="danger"
-                      @click="tokenSil(token)"
-                    />
+                    <div
+                      v-for="token in tokenlar"
+                      :key="token.id"
+                      class="token-satir"
+                    >
+                      <div class="token-bilgi">
+                        <span class="token-ad">{{ token.ad }}</span>
+                        <span class="token-tarih">{{ token.olusturmaTarihi ? formatTarih(token.olusturmaTarihi) : '' }}</span>
+                      </div>
+                      <Button
+                        icon="pi pi-trash"
+                        :aria-label="$t('common.delete')"
+                        rounded
+                        text
+                        severity="danger"
+                        @click="tokenSil(token)"
+                      />
+                    </div>
                   </div>
                 </template>
               </Card>
@@ -575,7 +597,7 @@
           </div>
         </TabPanel>
 
-        <TabPanel v-if="kisiselMi(5)">
+        <TabPanel>
           <template #header>
             <span class="sekme-baslik"><i :class="bolumler[5].ikon" /> {{ bolumler[5].label }}</span>
           </template>
@@ -610,7 +632,7 @@
           </div>
         </TabPanel>
 
-        <TabPanel v-if="kisiselMi(6)">
+        <TabPanel>
           <template #header>
             <span class="sekme-baslik"><i :class="bolumler[6].ikon" /> {{ bolumler[6].label }}</span>
           </template>
@@ -684,7 +706,7 @@
           </div>
         </TabPanel>
 
-        <TabPanel v-if="kisiselMi(7)">
+        <TabPanel>
           <template #header>
             <span class="sekme-baslik"><i :class="bolumler[7].ikon" /> {{ bolumler[7].label }}</span>
           </template>
@@ -746,7 +768,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
@@ -762,7 +784,6 @@ import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
 import PasswordChangeModal from '../components/PasswordChangeModal.vue'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
-import SelectButton from 'primevue/selectbutton'
 import { formatTarihKisa as formatTarih, formatTarihSaat } from '../utils/format.js'
 
 const { t } = useI18n()
@@ -780,15 +801,18 @@ const bolumler = computed(() => [
 ])
 const faturaTasarimModalAcik = ref(false)
 
-// Sekme gruplama: kisisel (0-3) / sistem (4-7). Duz 8 sekmeli serit yerine
-// "Kisisel" ve "Sistem" secimi ile sayfa daha az dagilmis gorunur.
-const bolumGrubu = ref('kisisel')
-const bolumGruplari = computed(() => [
-  { deger: 'kisisel', ad: t('hesapAyarlari.grupKisisel') },
-  { deger: 'sistem', ad: t('hesapAyarlari.grupSistem') }
+// Sol dikey gezinme: bolumler Kisisel (0-3) / Sistem (4-7) basliklariyla
+// gruplanir. Native TabView seridi CSS ile gizlenir; icerik ayni kalir.
+const navGruplari = computed(() => [
+  {
+    baslik: t('hesapAyarlari.grupKisisel'),
+    bolumler: bolumler.value.slice(0, 4).map((b, i) => ({ ...b, index: i }))
+  },
+  {
+    baslik: t('hesapAyarlari.grupSistem'),
+    bolumler: bolumler.value.slice(4, 8).map((b, i) => ({ ...b, index: i + 4 }))
+  }
 ])
-const kisiselMi = (i) => (bolumGrubu.value === 'kisisel') === (i <= 3)
-watch(bolumGrubu, () => { aktifBolum.value = 0 })
 
 // Sifre degistirme tek kaynaktan (PasswordChangeModal) yapilir.
 const sifreModalAcik = ref(false)
@@ -1270,18 +1294,121 @@ const kopyala = async (text) => {
   margin-bottom: 24px;
 }
 .ayarlar-duzen {
-  display: block;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.ayarlar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-card);
+  position: sticky;
+  top: 12px;
+}
+.ayarlar-nav-grup {
+  padding: 8px 10px 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.ayarlar-nav-oge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background var(--dur-fast, 0.15s) ease,
+    color var(--dur-fast, 0.15s) ease;
+}
+.ayarlar-nav-oge i {
+  font-size: 15px;
+  color: var(--text-muted);
+  transition: color var(--dur-fast, 0.15s) ease;
+}
+.ayarlar-nav-oge:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.ayarlar-nav-oge:hover i {
+  color: var(--accent);
+}
+.ayarlar-nav-oge.aktif {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+}
+.ayarlar-nav-oge.aktif i {
+  color: var(--accent);
+}
+@media (max-width: 900px) {
+  .ayarlar-duzen {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  .ayarlar-nav {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 6px;
+    padding: 8px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .ayarlar-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .ayarlar-nav-grup {
+    display: none;
+  }
+  .ayarlar-nav-oge {
+    width: auto;
+    min-height: 36px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    border: 1px solid var(--border);
+  }
+}
+@media (max-width: 560px) {
+  .sekme-icerik {
+    gap: 12px;
+  }
+  .kart-aksiyon {
+    justify-content: stretch;
+  }
+  .kart-aksiyon .p-button {
+    width: 100%;
+  }
 }
 .ayar-icerik {
   min-width: 0;
 }
+/* Native sekme seridi gizlendi: gezinme artik sol dikey menude.
+   PrimeVue v4 tablist konteyner sinifi: .p-tabview-tablist-container */
+.ayar-icerik :deep(.p-tabview-tablist-container) {
+  display: none;
+}
 /* PrimeVue v4 TabView: panelin varsayilan yan dolgusunu sifirla, sekmeler
    icerigi ile hizala. */
 .ayar-icerik :deep(.p-tabview-panels) {
-  padding: 1rem 0 0;
-}
-.ayar-icerik :deep(.p-tabview-tablist) {
-  border-color: var(--border);
+  padding: 0;
 }
 /* Tum sekmelerde ortak kart duzeni: sekme-icerik grid, ic grid'ler seffaf
    (display:contents) olur; boylece tek kartli ve cok kartli sekmeler ayni
@@ -1356,6 +1483,30 @@ const kopyala = async (text) => {
 .form-grid > button,
 .form-grid > .p-button {
   align-self: flex-start;
+}
+.kart-aksiyon {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.iki-fa-acik {
+  padding: 12px 14px;
+  border: 1px solid var(--success-border);
+  border-radius: 10px;
+  background: var(--success-soft);
+}
+.qr-gorsel {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
+}
+.qr-gorsel img {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px;
+  background: #fff;
 }
 .field {
   display: flex;
@@ -1455,11 +1606,14 @@ const kopyala = async (text) => {
 .tema-butonlari {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 .renk-secenekleri {
   display: flex;
   gap: 12px;
   padding-top: 4px;
+  flex-wrap: wrap;
+  align-items: center;
 }
 .renk-dot {
   width: 32px;
@@ -1503,11 +1657,17 @@ const kopyala = async (text) => {
   padding: 1.5rem;
   color: var(--text-muted);
 }
+.tercih-liste {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0 14px;
+  background: var(--bg-secondary);
+}
 .tercih-satir {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 0;
+  padding: 12px 0;
   border-bottom: 1px solid var(--border);
   font-size: 0.9rem;
 }
@@ -1533,10 +1693,23 @@ const kopyala = async (text) => {
   border-radius: 6px;
   font-size: 0.8rem;
 }
+.token-liste {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-primary);
+  overflow: hidden;
+}
 .token-bos {
-  padding: 16px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 22px 16px;
   color: var(--text-muted);
   font-size: 0.85rem;
+}
+.token-bos .pi {
+  opacity: 0.6;
 }
 .token-satir {
   display: flex;
@@ -1544,11 +1717,18 @@ const kopyala = async (text) => {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  padding: 10px 0;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.token-satir:hover {
+  background: var(--bg-secondary);
 }
 .token-satir:last-child {
   border-bottom: none;
+}
+.token-bilgi {
+  min-width: 0;
 }
 .token-ad {
   font-weight: 600;
@@ -1570,6 +1750,7 @@ const kopyala = async (text) => {
   align-items: center;
   justify-content: center;
   width: 180px;
+  max-width: 100%;
   height: 110px;
   padding: 10px;
   margin-bottom: 14px;

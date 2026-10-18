@@ -10,12 +10,11 @@ const SRC = join(process.cwd(), 'src')
 const kod = readFileSync(join(SRC, 'views/HesapAyarlari.vue'), 'utf8')
 
 describe('Faz3C — Hesap Ayarları', () => {
-  it('Kişisel / Sistem sekme gruplaması var', () => {
-    expect(kod).toMatch(/const kisiselMi\s*=/)
-    expect(kod).toMatch(/const bolumGrubu\s*=/)
-    expect(kod).toMatch(/<SelectButton/)
-    expect(kod).toMatch(/v-if="kisiselMi\(0\)"/)
-    expect(kod).toMatch(/v-if="kisiselMi\(7\)"/)
+  it('Kişisel / Sistem sol dikey gezinme var', () => {
+    expect(kod).toMatch(/const navGruplari\s*=/)
+    expect(kod).toMatch(/class="ayarlar-nav"/)
+    expect(kod).toMatch(/grupKisisel/)
+    expect(kod).toMatch(/grupSistem/)
   })
 
   it('şifre değiştirme tek kaynaktan (PasswordChangeModal)', () => {

@@ -24,4 +24,20 @@ public interface BankaRepository extends JpaRepository<Banka, Long> {
 
     @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(b.bakiye), 0) FROM Banka b WHERE b.sirketId = :sirketId")
     java.math.BigDecimal sumBakiyeBySirketId(@org.springframework.data.repository.query.Param("sirketId") Long sirketId);
+
+    /** KPI özeti: şirketin banka hesabı sayısı. */
+    long countBySirketId(Long sirketId);
+
+    /** KPI özeti: pozitif bakiyeli hesapların toplamı. */
+    @Query("SELECT COALESCE(SUM(b.bakiye), 0) FROM Banka b WHERE b.sirketId = :sirketId AND b.bakiye > 0")
+    java.math.BigDecimal sumPozitifBakiyeBySirketId(@Param("sirketId") Long sirketId);
+
+    // --- Mükerrer (IBAN / hesapNo) kontrolü: şirket içinde tekil olmalı. ---
+    boolean existsBySirketIdAndIbanIgnoreCase(Long sirketId, String iban);
+
+    boolean existsBySirketIdAndHesapNoIgnoreCase(Long sirketId, String hesapNo);
+
+    boolean existsBySirketIdAndIbanIgnoreCaseAndIdNot(Long sirketId, String iban, Long id);
+
+    boolean existsBySirketIdAndHesapNoIgnoreCaseAndIdNot(Long sirketId, String hesapNo, Long id);
 }

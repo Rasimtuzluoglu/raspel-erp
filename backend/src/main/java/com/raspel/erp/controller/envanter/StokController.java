@@ -3,6 +3,7 @@ package com.raspel.erp.controller.envanter;
 import com.raspel.erp.dto.envanter.StokDTO;
 import com.raspel.erp.dto.envanter.StokHareketDTO;
 import com.raspel.erp.dto.envanter.KritikStokDTO;
+import com.raspel.erp.dto.envanter.StokOzetDTO;
 import com.raspel.erp.service.envanter.StokService;
 import com.raspel.erp.service.envanter.StokAnalizService;
 import com.raspel.erp.service.sistem.QRService;
@@ -54,6 +55,13 @@ public class StokController {
             @PageableDefault(size = 50) Pageable pageable) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(stokService.tumunuGetir(sirketId, pageable));
+    }
+
+    @GetMapping("/ozet")
+    @Operation(summary = "Stok ozeti", description = "Toplam urun, kritik stok, toplam stok degeri ve kategori sayisi")
+    public ResponseEntity<StokOzetDTO> ozet(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokService.ozet(sirketId));
     }
 
     @GetMapping("/barkod/{kod}")

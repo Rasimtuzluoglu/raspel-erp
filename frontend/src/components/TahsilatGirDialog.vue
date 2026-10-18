@@ -2,12 +2,30 @@
   <Dialog
     :visible="visible"
     modal
-    :header="$t('tahsilat.tahsilatGir')"
+    :header="$t('tahsilat.tahsilatAl')"
     :style="{ width: '520px', maxWidth: 'calc(100vw - 24px)' }"
     :dismissable-mask="false"
     @update:visible="$emit('update:visible', $event)"
   >
     <div class="tahsilat-form">
+      <div
+        v-if="seciliCari"
+        class="etki-bandi etki-pozitif"
+      >
+        <span class="etki-ikon"><i class="pi pi-arrow-down-left" /></span>
+        <div class="etki-icerik">
+          <strong>{{ $t('tahsilat.etkiAzalir') }}</strong>
+          <div
+            v-if="bakiyeOnizleme"
+            class="etki-bakiye"
+          >
+            <span>{{ formatCurrency(mevcutBakiye) }}</span>
+            <i class="pi pi-arrow-right" />
+            <strong>{{ formatCurrency(sonrakiBakiye) }}</strong>
+          </div>
+        </div>
+      </div>
+
       <div class="form-panel">
         <div class="form-section-title">
           <i class="pi pi-user" /> {{ $t('tahsilat.cariHesap') }}
@@ -37,7 +55,7 @@
           <i class="pi pi-wallet" /> {{ $t('tahsilat.odeme') }}
         </div>
         <div class="form-grid-2">
-          <FormField :label="$t('tahsilat.odenecekTutar')">
+          <FormField :label="$t('tahsilat.alinanTutar')">
             <InputNumber
               v-model="form.tutar"
               :min="0"
@@ -276,7 +294,7 @@ const efektifCariler = computed(() => {
     const toplam = faturalar.length
       ? faturalar.reduce((s, f) => s + (Number(f.kalanTutar) || 0), 0)
       : Math.abs(Number(props.cari.bakiye) || 0)
-    map.set(props.cari.id, { cariId: props.cari.id, ad: props.cari.ad, toplamAlacak: toplam, faturalar })
+    map.set(props.cari.id, { cariId: props.cari.id, ad: props.cari.ad, bakiye: props.cari.bakiye, toplamAlacak: toplam, faturalar })
   }
   return [...map.values()]
 })
@@ -350,6 +368,18 @@ const seciliCari = computed(() => {
   }
   return props.cari && props.cari.id === form.value.cariId ? props.cari : null
 })
+
+// Etki onizlemesi: tahsilat cari bakiyesini ARTIRIR (borcu azaltir).
+const mevcutBakiye = computed(() => {
+  const b = seciliCari.value?.bakiye
+  return b == null || b === '' ? null : Number(b)
+})
+const sonrakiBakiye = computed(() =>
+  mevcutBakiye.value == null ? null : mevcutBakiye.value + Number(form.value.tutar || 0)
+)
+const bakiyeOnizleme = computed(
+  () => mevcutBakiye.value != null && Number(form.value.tutar || 0) > 0
+)
 
 const gecerli = computed(() => {
   const t = form.value.tutar
@@ -490,6 +520,56 @@ const kaydet = async () => {
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+.etki-bandi {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+}
+.etki-bandi.etki-pozitif {
+  border-color: var(--success-border, rgba(34, 197, 94, 0.4));
+  background: var(--success-soft, rgba(34, 197, 94, 0.12));
+}
+.etki-ikon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--success-soft, rgba(34, 197, 94, 0.15));
+  color: var(--success, #22c55e);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.etki-icerik {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.etki-icerik strong {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.etki-bakiye {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.etki-bakiye > i {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.etki-bakiye > strong {
+  color: var(--success, #22c55e);
 }
 .form-panel {
   display: flex;

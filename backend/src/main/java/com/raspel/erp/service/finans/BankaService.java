@@ -42,13 +42,49 @@ public class BankaService {
         return entityDTOyeCevir(banka);
     }
 
+    /**
+     * Bankalar ekranı KPI özeti: hesap sayısı, toplam/pozitif bakiye ve
+     * eşleşmemiş (mutabakat bekleyen) hareket sayısı.
+     */
+    @Transactional(readOnly = true)
+    public com.raspel.erp.dto.finans.BankaOzetDTO ozet(Long sirketId) {
+        if (sirketId == null) {
+            return com.raspel.erp.dto.finans.BankaOzetDTO.builder()
+                    .toplamBakiye(BigDecimal.ZERO).pozitifBakiye(BigDecimal.ZERO).build();
+        }
+        BigDecimal toplam = bankaRepository.sumBakiyeBySirketId(sirketId);
+        BigDecimal pozitif = bankaRepository.sumPozitifBakiyeBySirketId(sirketId);
+        return com.raspel.erp.dto.finans.BankaOzetDTO.builder()
+                .toplamBanka(bankaRepository.countBySirketId(sirketId))
+                .toplamBakiye(toplam != null ? toplam : BigDecimal.ZERO)
+                .pozitifBakiye(pozitif != null ? pozitif : BigDecimal.ZERO)
+                .eslesmemisHareket(bankaHareketiRepository.countBySirketIdAndEslestirildiFalse(sirketId))
+                .build();
+    }
+
+    /** IBAN'i karsilastirma icin normalize eder (bosluk yok, buyuk harf). */
+    private String normalizeIban(String iban) {
+        if (iban == null) return null;
+        String s = iban.replaceAll("\\s+", "").toUpperCase(java.util.Locale.ROOT);
+        return s.isBlank() ? null : s;
+    }
+
     @CacheEvict(value = "lookup", allEntries = true)
     public BankaDTO bankaOlustur(BankaDTO dto, Long sirketId) {
         log.info("Yeni banka hesabı oluşturuluyor: {}, sirketId: {}", dto.getAd(), sirketId);
+        String iban = normalizeIban(dto.getIban());
+        String hesapNo = dto.getHesapNo() != null && !dto.getHesapNo().isBlank() ? dto.getHesapNo().trim() : null;
+        // Mükerrer kontrolü: aynı şirkette aynı IBAN/hesapNo iki kez tanımlanamaz.
+        if (sirketId != null && iban != null && bankaRepository.existsBySirketIdAndIbanIgnoreCase(sirketId, iban)) {
+            throw new BusinessException("Bu IBAN ile kayıtlı bir banka hesabı zaten var.");
+        }
+        if (sirketId != null && hesapNo != null && bankaRepository.existsBySirketIdAndHesapNoIgnoreCase(sirketId, hesapNo)) {
+            throw new BusinessException("Bu hesap numarası ile kayıtlı bir banka hesabı zaten var.");
+        }
         Banka banka = Banka.builder()
                 .ad(dto.getAd())
-                .hesapNo(dto.getHesapNo())
-                .iban(dto.getIban())
+                .hesapNo(hesapNo)
+                .iban(iban)
                 .bakiye(dto.getBakiye() != null ? dto.getBakiye() : BigDecimal.ZERO)
                 .sirketId(sirketId)
                 .build();
@@ -62,9 +98,24 @@ public class BankaService {
         Banka banka = bankaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Banka", id));
         tenantChecker.check(banka.getSirketId(), "Banka");
+        Long sirketId = banka.getSirketId();
+        if (dto.getIban() != null) {
+            String iban = normalizeIban(dto.getIban());
+            if (sirketId != null && iban != null
+                    && bankaRepository.existsBySirketIdAndIbanIgnoreCaseAndIdNot(sirketId, iban, id)) {
+                throw new BusinessException("Bu IBAN ile kayıtlı bir banka hesabı zaten var.");
+            }
+            banka.setIban(iban);
+        }
+        if (dto.getHesapNo() != null) {
+            String hesapNo = dto.getHesapNo().isBlank() ? null : dto.getHesapNo().trim();
+            if (sirketId != null && hesapNo != null
+                    && bankaRepository.existsBySirketIdAndHesapNoIgnoreCaseAndIdNot(sirketId, hesapNo, id)) {
+                throw new BusinessException("Bu hesap numarası ile kayıtlı bir banka hesabı zaten var.");
+            }
+            banka.setHesapNo(hesapNo);
+        }
         if (dto.getAd() != null) banka.setAd(dto.getAd());
-        if (dto.getHesapNo() != null) banka.setHesapNo(dto.getHesapNo());
-        if (dto.getIban() != null) banka.setIban(dto.getIban());
         Banka guncellenen = bankaRepository.save(banka);
         cacheYardimci.commitSonrasiTemizle("dashboard");
         return entityDTOyeCevir(guncellenen);

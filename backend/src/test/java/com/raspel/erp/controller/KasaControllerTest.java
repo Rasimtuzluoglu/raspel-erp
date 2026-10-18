@@ -134,6 +134,18 @@ class KasaControllerTest {
         mockMvc.perform(delete("/api/kasalar/hareketler/1"))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    void shouldGetOzet() throws Exception {
+        when(kasaService.ozet(1L)).thenReturn(com.raspel.erp.dto.finans.KasaOzetDTO.builder()
+                .toplamKasa(3).toplamBakiye(BigDecimal.valueOf(2500))
+                .bugunGelir(BigDecimal.valueOf(500)).bugunGider(BigDecimal.valueOf(200)).build());
+
+        mockMvc.perform(get("/api/kasalar/ozet").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.toplamKasa").value(3))
+                .andExpect(jsonPath("$.bugunGelir").value(500));
+    }
 }
 
 

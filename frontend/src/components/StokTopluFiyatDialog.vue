@@ -1,10 +1,15 @@
 <template>
   <Dialog
     v-model:visible="visible"
-    :header="$t('cmp.topluFiyatHeader')"
     :modal="true"
-    style="width: 480px"
+    :style="{ width: '480px', maxWidth: '96vw' }"
   >
+    <template #header>
+      <div class="dialog-baslik">
+        <i class="pi pi-dollar" />
+        <span>{{ $t('cmp.topluFiyatHeader') }}</span>
+      </div>
+    </template>
     <div class="form-grup">
       <label>{{ $t('stoklar.islemYonu') }}</label>
       <Dropdown
@@ -75,6 +80,16 @@ const stokGrubu = defineModel('stokGrubu', { type: String, default: '' })
 </script>
 
 <style scoped>
+.dialog-baslik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+}
+.dialog-baslik i {
+  color: var(--accent);
+}
 .form-grup {
   margin-bottom: 18px;
 }

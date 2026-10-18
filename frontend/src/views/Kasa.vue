@@ -1,51 +1,91 @@
 <template>
   <div class="kasa-container">
-    <h1 class="page-title">
-      {{ t('kasa.title') }}
-    </h1>
-
-    <Toolbar class="toolbar">
-      <template #start>
+    <PageHeader :title="t('kasa.title')">
+      <template #actions>
         <Button
+          v-if="yazabilir"
           :label="t('kasa.yeniKasa')"
           icon="pi pi-plus"
-          class="p-button-success"
           @click="openKasaDialog"
         />
-      </template>
-      <template #end>
         <Button
-          :label="t('kasa.bankadanAktar')"
-          icon="pi pi-building-columns"
-          class="p-button-sm p-button-outlined mr-2"
-          @click="openBankadanAktarDialog"
-        />
-        <Button
-          :label="t('kasa.bankayaAktar')"
-          icon="pi pi-building"
-          class="p-button-sm p-button-outlined mr-2"
-          @click="openBankaAktarDialog"
-        />
-        <Button
-          :label="t('kasa.kasaAktar')"
+          v-if="aktarabilir"
+          :label="t('kasa.transferler')"
           icon="pi pi-arrow-right-arrow-left"
-          class="p-button-sm p-button-outlined mr-2"
-          @click="openAktarDialog"
+          class="p-button-outlined"
+          aria-haspopup="true"
+          aria-controls="kasa-transfer-menu"
+          @click="transferMenu?.toggle($event)"
+        />
+        <Menu
+          id="kasa-transfer-menu"
+          ref="transferMenu"
+          :model="transferMenuModel"
+          :popup="true"
         />
         <Button
           :label="t('kasa.gunSonu')"
           icon="pi pi-calendar"
-          class="p-button-sm p-button-outlined mr-2"
+          class="p-button-outlined"
           @click="gunSonuRef?.open()"
+        />
+        <Button
+          :icon="bakiyeGorunur ? 'pi pi-eye-slash' : 'pi pi-eye'"
+          text
+          rounded
+          :title="bakiyeGorunur ? t('kasa.bakiyeGizle') : t('kasa.bakiyeGoster')"
+          :aria-label="bakiyeGorunur ? t('kasa.bakiyeGizle') : t('kasa.bakiyeGoster')"
+          @click="bakiyeGorunurlukDegistir"
         />
         <Button
           :label="t('kasa.excel')"
           icon="pi pi-file-excel"
-          class="p-button-sm p-button-outlined"
+          class="p-button-outlined"
+          :loading="excelYukleniyor"
           @click="excelIndir"
         />
       </template>
-    </Toolbar>
+    </PageHeader>
+
+    <div class="kpi-grid">
+      <KpiKart
+        :baslik="t('kasa.kpiToplamKasa')"
+        :deger="ozet.toplamKasa"
+        ikon="pi pi-wallet"
+        :para-birimi="false"
+        renk="#3b82f6"
+      />
+      <KpiKart
+        :baslik="t('kasa.kpiToplamBakiye')"
+        :deger="ozet.toplamBakiye"
+        ikon="pi pi-money-bill"
+        renk="#10b981"
+      >
+        <template #deger>
+          {{ bakiyeGorunur ? formatCurrency(ozet.toplamBakiye) : '••••' }}
+        </template>
+      </KpiKart>
+      <KpiKart
+        :baslik="t('kasa.kpiBugunGelir')"
+        :deger="ozet.bugunGelir"
+        ikon="pi pi-arrow-down-left"
+        renk="#22c55e"
+      >
+        <template #deger>
+          {{ bakiyeGorunur ? formatCurrency(ozet.bugunGelir) : '••••' }}
+        </template>
+      </KpiKart>
+      <KpiKart
+        :baslik="t('kasa.kpiBugunGider')"
+        :deger="ozet.bugunGider"
+        ikon="pi pi-arrow-up-right"
+        renk="#ef4444"
+      >
+        <template #deger>
+          {{ bakiyeGorunur ? formatCurrency(ozet.bugunGider) : '••••' }}
+        </template>
+      </KpiKart>
+    </div>
 
     <div
       v-if="kasaStore.loading"
@@ -68,26 +108,32 @@
         <div class="kasa-ust">
           <i class="pi pi-wallet" />
           <h3>{{ kasa.ad }}</h3>
+          <i
+            v-if="seciliKasaId === kasa.id"
+            class="pi pi-check-circle secili-ikon"
+            :title="t('kasa.secili')"
+          />
         </div>
         <p
+          v-if="bakiyeGorunur"
           class="kasa-bakiye gizli-veri"
           :class="kasa.bakiye >= 0 ? 'positive' : 'negative'"
         >
           {{ formatCurrency(kasa.bakiye) }}
         </p>
+        <p
+          v-else
+          class="kasa-bakiye"
+        >
+          ••••
+        </p>
         <div class="kasa-islem">
-          <Button
-            icon="pi pi-pencil"
-            :aria-label="$t('common.edit')"
-            class="p-button-rounded p-button-info p-button-sm"
-            @click.stop="editKasa(kasa)"
-          />
-          <Button
-            v-permission="'FINANS_DELETE'"
-            icon="pi pi-trash"
-            :aria-label="$t('common.delete')"
-            class="p-button-rounded p-button-danger p-button-sm"
-            @click.stop="confirmDel(kasa.id)"
+          <SatirEylemleri
+            :gorunur="{ duzenle: yazabilir, sil: silebilir }"
+            :baslik="kasa.ad"
+            :items="kasaMenuItems(kasa)"
+            @duzenle="editKasa(kasa)"
+            @sil="confirmDel(kasa.id)"
           />
         </div>
       </div>
@@ -108,6 +154,7 @@
       :header="editingKasaId ? t('kasa.kasaDuzenle') : t('kasa.yeniKasa')"
       :modal="true"
       style="width: 400px"
+      :breakpoints="{ '575px': '92vw' }"
     >
       <div class="form-group">
         <label>{{ t('kasa.kasaAdi') }}</label>
@@ -153,12 +200,14 @@
       <div class="hareket-header">
         <h2>{{ seciliKasa.ad }} {{ t('kasa.hareketler') }}</h2>
         <Button
+          v-if="yazabilir"
           :label="t('kasa.gelirEkle')"
           icon="pi pi-plus-circle"
           class="p-button-success p-button-sm"
           @click="openHareketDialog('GELIR')"
         />
         <Button
+          v-if="yazabilir"
           :label="t('kasa.giderEkle')"
           icon="pi pi-minus-circle"
           class="p-button-danger p-button-sm"
@@ -167,8 +216,29 @@
       </div>
 
       <div class="table-container">
+        <div class="hareket-filtre">
+          <Select
+            v-model="hareketTurFiltre"
+            :options="hareketTurSecenekleri"
+            option-label="label"
+            option-value="value"
+            :placeholder="t('kasa.tumTurler')"
+            show-clear
+            class="hareket-filtre-alan"
+          />
+          <DatePicker
+            v-model="hareketTarihFiltre"
+            selection-mode="range"
+            date-format="dd.mm.yy"
+            :placeholder="t('kasa.tarihAraligi')"
+            class="hareket-filtre-alan"
+          />
+          <span class="hareket-toplam">
+            {{ t('kasa.hareketSayisi') }}: <strong>{{ filtreliHareketler.length }}</strong>
+          </span>
+        </div>
         <AppDataTable
-          :value="kasaHareketler"
+          :value="filtreliHareketler"
           striped-rows
           :rows="10"
           :paginator="true"
@@ -180,6 +250,7 @@
             field="tarih"
             :header="t('common.date')"
             style="width: 100px"
+            sortable
           >
             <template #body="s">
               {{ formatDate(s.data.hareketTarihi) }}
@@ -200,14 +271,17 @@
             field="tutar"
             :header="t('common.amount')"
             style="width: 120px"
+            sortable
           >
             <template #body="s">
               <span
+                v-if="bakiyeGorunur"
                 class="gizli-veri"
                 :class="s.data.tur === 'GELIR' ? 'positive' : 'negative'"
               >
                 {{ formatCurrency(s.data.tutar) }}
               </span>
+              <span v-else>••••</span>
             </template>
           </Column>
           <Column
@@ -229,6 +303,7 @@
           >
             <template #body="s">
               <Button
+                v-if="silebilir"
                 icon="pi pi-trash"
                 :aria-label="$t('common.delete')"
                 class="p-button-rounded p-button-danger p-button-sm"
@@ -237,10 +312,9 @@
             </template>
           </Column>
           <template #empty>
-            <Message
-              v-if="kasaHareketler && kasaHareketler.length === 0"
-              severity="info"
-              :text="t('kasa.hareketYok')"
+            <EmptyState
+              icon="pi pi-wallet"
+              :message="t('kasa.hareketYok')"
             />
           </template>
         </AppDataTable>
@@ -252,6 +326,7 @@
       :header="hareketBaslik"
       :modal="true"
       style="width: 500px"
+      :breakpoints="{ '575px': '92vw' }"
     >
       <div class="form-group">
         <label>{{ t('kasa.tutar') }}</label>
@@ -317,6 +392,7 @@
       :header="t('kasa.kasaAktar')"
       :modal="true"
       style="width: 480px"
+      :breakpoints="{ '575px': '92vw' }"
     >
       <div class="form-group">
         <label>{{ t('kasa.kaynakKasa') }}</label>
@@ -338,7 +414,12 @@
           option-value="id"
           :placeholder="t('faturalar.seciniz')"
           class="w-full"
+          :invalid="kasaAktarAyni"
         />
+        <small
+          v-if="kasaAktarAyni"
+          class="alan-hata"
+        >{{ t('kasa.kaynakHedefAyni') }}</small>
       </div>
       <div class="form-group">
         <label>{{ t('kasa.tutar') }}</label>
@@ -349,6 +430,22 @@
           :max-fraction-digits="2"
           class="w-full"
         />
+      </div>
+      <div
+        v-if="aktarForm.kaynakKasaId"
+        class="transfer-etki"
+      >
+        <div class="etki-satir">
+          <span>{{ t('kasa.mevcutBakiye') }}</span>
+          <strong>{{ bakiyeGorunur ? formatCurrency(kasaAktarKaynakBakiye) : '••••' }}</strong>
+        </div>
+        <div class="etki-satir">
+          <span>{{ t('kasa.transferSonrasi') }}</span>
+          <strong
+            class="gizli-veri"
+            :class="{ negative: kasaAktarSonrasi < 0 }"
+          >{{ bakiyeGorunur ? formatCurrency(kasaAktarSonrasi) : '••••' }}</strong>
+        </div>
       </div>
       <div class="form-group">
         <label>{{ t('common.description') }}</label>
@@ -369,6 +466,7 @@
           :label="t('kasa.aktar')"
           icon="pi pi-check"
           :loading="saving"
+          :disabled="!kasaAktarGecerli"
           @click="saveAktar"
         />
       </template>
@@ -379,6 +477,7 @@
       :header="t('kasa.kasadanBankaya')"
       :modal="true"
       style="width: 480px"
+      :breakpoints="{ '575px': '92vw' }"
     >
       <div class="form-group">
         <label>{{ t('kasa.kaynakKasa') }}</label>
@@ -413,6 +512,22 @@
           class="w-full"
         />
       </div>
+      <div
+        v-if="bankaAktarForm.kasaId"
+        class="transfer-etki"
+      >
+        <div class="etki-satir">
+          <span>{{ t('kasa.mevcutBakiye') }}</span>
+          <strong>{{ bakiyeGorunur ? formatCurrency(bankaAktarKaynakBakiye) : '••••' }}</strong>
+        </div>
+        <div class="etki-satir">
+          <span>{{ t('kasa.transferSonrasi') }}</span>
+          <strong
+            class="gizli-veri"
+            :class="{ negative: bankaAktarSonrasi < 0 }"
+          >{{ bakiyeGorunur ? formatCurrency(bankaAktarSonrasi) : '••••' }}</strong>
+        </div>
+      </div>
       <div class="form-group">
         <label>{{ t('common.description') }}</label>
         <InputText
@@ -432,6 +547,7 @@
           :label="t('kasa.aktar')"
           icon="pi pi-check"
           :loading="saving"
+          :disabled="!bankaAktarGecerli"
           @click="saveBankaAktar"
         />
       </template>
@@ -442,6 +558,7 @@
       :header="t('kasa.bankadanKasaya')"
       :modal="true"
       style="width: 480px"
+      :breakpoints="{ '575px': '92vw' }"
     >
       <div class="form-group">
         <label>{{ t('kasa.kaynakBanka') }}</label>
@@ -476,6 +593,22 @@
           class="w-full"
         />
       </div>
+      <div
+        v-if="bankadanAktarForm.bankaId"
+        class="transfer-etki"
+      >
+        <div class="etki-satir">
+          <span>{{ t('kasa.mevcutBakiye') }}</span>
+          <strong>{{ bakiyeGorunur ? formatCurrency(bankadanAktarKaynakBakiye) : '••••' }}</strong>
+        </div>
+        <div class="etki-satir">
+          <span>{{ t('kasa.transferSonrasi') }}</span>
+          <strong
+            class="gizli-veri"
+            :class="{ negative: bankadanAktarSonrasi < 0 }"
+          >{{ bakiyeGorunur ? formatCurrency(bankadanAktarSonrasi) : '••••' }}</strong>
+        </div>
+      </div>
       <div class="form-group">
         <label>{{ t('common.description') }}</label>
         <InputText
@@ -495,6 +628,7 @@
           :label="t('kasa.aktar')"
           icon="pi pi-check"
           :loading="saving"
+          :disabled="!bankadanAktarGecerli"
           @click="saveBankadanAktar"
         />
       </template>
@@ -511,10 +645,12 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useKasaStore } from '../stores/kasaStore.js'
 import { useKategoriStore } from '../stores/kategoriStore.js'
+import { useAuthStore } from '../stores/authStore.js'
 import { kasaAPI, excelAPI, bankaAPI } from '../api/index.js'
 import EmptyState from '../components/EmptyState.vue'
+import KpiKart from '../components/KpiKart.vue'
 import KasaGunSonuDialog from '../components/KasaGunSonuDialog.vue'
-import { formatCurrency, getLocalDateString } from '../utils/format.js'
+import { formatCurrency, getLocalDateString, formatTarih as formatDate } from '../utils/format.js'
 import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
@@ -522,11 +658,46 @@ const confirm = useConfirm()
 const { t } = useI18n()
 const kasaStore = useKasaStore()
 const kategoriStore = useKategoriStore()
+const authStore = useAuthStore()
 
 const seciliKasaId = ref(null)
 const seciliKasa = ref(null)
 const kasaHareketler = ref([])
 const saving = ref(false)
+const excelYukleniyor = ref(false)
+const transferMenu = ref(null)
+
+// Yetki kapilari — backend ile hizali (403 onlenir).
+const yazabilir = computed(() =>
+  authStore.isAdmin || authStore.kullanici?.role === 'MUHASEBE' || authStore.hasPermission('FINANS_WRITE'))
+const silebilir = computed(() => authStore.isAdmin || authStore.hasPermission('FINANS_DELETE'))
+const aktarabilir = computed(() => authStore.isAdmin || authStore.kullanici?.role === 'MUHASEBE')
+
+// KPI ozeti.
+const ozet = ref({ toplamKasa: 0, toplamBakiye: 0, bugunGelir: 0, bugunGider: 0 })
+const ozetYukle = async () => {
+  try {
+    const r = await kasaAPI.ozet()
+    ozet.value = { ...ozet.value, ...(r.data || {}) }
+  } catch {
+    /* ozet alinamazsa KPI sifirda kalir */
+  }
+}
+
+// Bakiye gizle/goster (memur ekrani icin); tercih hatirlanir.
+const BAKIYE_ANAHTAR = 'raspel_kasa_bakiye_gorunur'
+const bakiyeGorunur = ref(localStorage.getItem(BAKIYE_ANAHTAR) !== '0')
+const bakiyeGorunurlukDegistir = () => {
+  bakiyeGorunur.value = !bakiyeGorunur.value
+  localStorage.setItem(BAKIYE_ANAHTAR, bakiyeGorunur.value ? '1' : '0')
+}
+
+// Aktarimlar tek menude toplanir.
+const transferMenuModel = computed(() => [
+  { label: t('kasa.bankadanAktar'), icon: 'pi pi-building-columns', command: () => openBankadanAktarDialog() },
+  { label: t('kasa.bankayaAktar'), icon: 'pi pi-building', command: () => openBankaAktarDialog() },
+  { label: t('kasa.kasaAktar'), icon: 'pi pi-arrow-right-arrow-left', command: () => openAktarDialog() }
+])
 
 const showKasaDialog = ref(false)
 const editingKasaId = ref(null)
@@ -555,11 +726,50 @@ const hareketleriTazele = async () => {
     const r = await kasaAPI.getHareketler(seciliKasaId.value)
     kasaHareketler.value = r.data
   }
+  ozetYukle()
 }
 
 const hareketBaslik = computed(() => (hareketTur.value === 'GELIR' ? t('kasa.gelirEkleBaslik') : t('kasa.giderEkleBaslik')))
 
+// Hareket tablosu filtreleri (tur + tarih araligi).
+const hareketTurFiltre = ref(null)
+const hareketTarihFiltre = ref(null)
+const hareketTurSecenekleri = computed(() => [
+  { label: t('kasa.gelir'), value: 'GELIR' },
+  { label: t('kasa.gider'), value: 'GIDER' }
+])
+const filtreliHareketler = computed(() =>
+  kasaHareketler.value.filter((h) => {
+    if (hareketTurFiltre.value && h.tur !== hareketTurFiltre.value) return false
+    if (Array.isArray(hareketTarihFiltre.value) && hareketTarihFiltre.value.length === 2 && hareketTarihFiltre.value[0]) {
+      const tr = h.hareketTarihi || ''
+      if (tr < getLocalDateString(hareketTarihFiltre.value[0]) || tr > getLocalDateString(hareketTarihFiltre.value[1])) return false
+    }
+    return true
+  })
+)
+
 const kategoriSecenekler = computed(() => kategoriStore.kategoriler.filter((k) => k.tur === hareketTur.value))
+
+// Aktarim dogrulama + bakiye onizlemesi.
+const kasaAktarKaynakBakiye = computed(() => Number(kasaStore.kasalar.find((k) => k.id === aktarForm.value.kaynakKasaId)?.bakiye) || 0)
+const kasaAktarAyni = computed(() => !!aktarForm.value.kaynakKasaId && aktarForm.value.kaynakKasaId === aktarForm.value.hedefKasaId)
+const kasaAktarSonrasi = computed(() => kasaAktarKaynakBakiye.value - (Number(aktarForm.value.tutar) || 0))
+const kasaAktarGecerli = computed(() =>
+  !!aktarForm.value.kaynakKasaId && !!aktarForm.value.hedefKasaId && !kasaAktarAyni.value
+  && Number(aktarForm.value.tutar) > 0 && Number(aktarForm.value.tutar) <= kasaAktarKaynakBakiye.value)
+
+const bankaAktarKaynakBakiye = computed(() => Number(kasaStore.kasalar.find((k) => k.id === bankaAktarForm.value.kasaId)?.bakiye) || 0)
+const bankaAktarSonrasi = computed(() => bankaAktarKaynakBakiye.value - (Number(bankaAktarForm.value.tutar) || 0))
+const bankaAktarGecerli = computed(() =>
+  !!bankaAktarForm.value.kasaId && !!bankaAktarForm.value.bankaId
+  && Number(bankaAktarForm.value.tutar) > 0 && Number(bankaAktarForm.value.tutar) <= bankaAktarKaynakBakiye.value)
+
+const bankadanAktarKaynakBakiye = computed(() => Number(bankalar.value.find((b) => b.id === bankadanAktarForm.value.bankaId)?.bakiye) || 0)
+const bankadanAktarSonrasi = computed(() => bankadanAktarKaynakBakiye.value - (Number(bankadanAktarForm.value.tutar) || 0))
+const bankadanAktarGecerli = computed(() =>
+  !!bankadanAktarForm.value.bankaId && !!bankadanAktarForm.value.kasaId
+  && Number(bankadanAktarForm.value.tutar) > 0 && Number(bankadanAktarForm.value.tutar) <= bankadanAktarKaynakBakiye.value)
 
 onMounted(async () => {
   // Store cagrilari hata firlatabilir; bir hata diger yuklemeyi durdurmasin.
@@ -570,11 +780,14 @@ onMounted(async () => {
   } catch {
     bankalar.value = []
   }
+  ozetYukle()
 })
 
 const kasaSec = async (kasa) => {
   seciliKasaId.value = kasa.id
   seciliKasa.value = kasa
+  hareketTurFiltre.value = null
+  hareketTarihFiltre.value = null
   try {
     const r = await kasaAPI.getHareketler(kasa.id)
     kasaHareketler.value = r.data
@@ -595,6 +808,11 @@ const editKasa = (kasa) => {
   showKasaDialog.value = true
 }
 
+// Kart ⋮ menusu: hareketleri gor (sec); duzenle/sil yerlesik gelir.
+const kasaMenuItems = (kasa) => [
+  { etiket: t('kasa.hareketleriGor'), ikon: 'pi pi-list', islem: () => kasaSec(kasa) }
+]
+
 const saveKasa = async () => {
   // Cift gonderim engeli: ayni kasa kaydi iki kez olusmasin.
   if (saving.value) return
@@ -612,6 +830,7 @@ const saveKasa = async () => {
       toastBildirim.basarili(t('kasa.kasaOlusturuldu'))
     }
     showKasaDialog.value = false
+    ozetYukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('kasa.islemBasarisiz'))
   } finally {
@@ -635,6 +854,7 @@ const confirmDel = (id) => {
           kasaHareketler.value = []
         }
         toastBildirim.basarili(t('kasa.kasaSilindi'))
+        ozetYukle()
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || err?.message || t('kasa.silmeBasarisiz'))
       }
@@ -672,6 +892,7 @@ const saveHareket = async () => {
     if (guncel) seciliKasa.value = guncel
     showHareketDialog.value = false
     toastBildirim.basarili(t('kasa.hareketEklendi'))
+    ozetYukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('kasa.islemBasarisiz'))
   } finally {
@@ -694,6 +915,7 @@ const delHareket = (id) => {
         const guncel = kasaStore.kasalar.find((k) => k.id === seciliKasaId.value)
         if (guncel) seciliKasa.value = guncel
         toastBildirim.basarili(t('kasa.hareketSilindi'))
+        ozetYukle()
       } catch (err) {
         toastBildirim.hata(err?.response?.data?.message || err?.message || t('kasa.silmeBasarisiz'))
       }
@@ -725,6 +947,10 @@ const saveBankadanAktar = async () => {
     toastBildirim.uyari(t('kasa.gecerliTutarGiriniz'))
     return
   }
+  if (Number(bankadanAktarForm.value.tutar) > bankadanAktarKaynakBakiye.value) {
+    toastBildirim.uyari(t('kasa.yetersizBakiye'))
+    return
+  }
   saving.value = true
   try {
     await kasaAPI.bankadanAktar(bankadanAktarForm.value)
@@ -747,6 +973,10 @@ const saveBankaAktar = async () => {
     toastBildirim.uyari(t('kasa.gecerliTutarGiriniz'))
     return
   }
+  if (Number(bankaAktarForm.value.tutar) > bankaAktarKaynakBakiye.value) {
+    toastBildirim.uyari(t('kasa.yetersizBakiye'))
+    return
+  }
   saving.value = true
   try {
     await kasaAPI.bankayaAktar(bankaAktarForm.value)
@@ -767,8 +997,16 @@ const saveAktar = async () => {
     toastBildirim.uyari(t('kasa.kaynakHedefKasa'))
     return
   }
+  if (kasaAktarAyni.value) {
+    toastBildirim.uyari(t('kasa.kaynakHedefAyni'))
+    return
+  }
   if (!aktarForm.value.tutar || aktarForm.value.tutar <= 0) {
     toastBildirim.uyari(t('kasa.gecerliTutar'))
+    return
+  }
+  if (Number(aktarForm.value.tutar) > kasaAktarKaynakBakiye.value) {
+    toastBildirim.uyari(t('kasa.yetersizBakiye'))
     return
   }
   saving.value = true
@@ -785,6 +1023,7 @@ const saveAktar = async () => {
 }
 
 const excelIndir = async () => {
+  excelYukleniyor.value = true
   try {
     const res = await excelAPI.kasalar()
     const url = window.URL.createObjectURL(new Blob([res.data]))
@@ -795,13 +1034,13 @@ const excelIndir = async () => {
     link.click()
     link.remove()
     window.URL.revokeObjectURL(url)
+    toastBildirim.basarili(t('kasa.excelIndirildi'))
   } catch {
-    /* silent */
+    toastBildirim.hata(t('kasa.excelHata'))
+  } finally {
+    excelYukleniyor.value = false
   }
 }
-
-
-import { formatTarih as formatDate } from '../utils/format.js'
 </script>
 
 <style scoped>
@@ -809,24 +1048,16 @@ import { formatTarih as formatDate } from '../utils/format.js'
   padding: 0;
   max-width: 100%;
 }
-h1 {
-  color: var(--text-primary);
-  margin-bottom: 20px;
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
+  gap: 12px;
+  margin-bottom: 1rem;
 }
 h2 {
   color: var(--text-primary);
   font-size: 20px;
   margin: 0;
-}
-.toolbar {
-  margin-bottom: 20px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px 18px;
 }
 .loading {
   text-align: center;
@@ -871,6 +1102,11 @@ h2 {
   margin: 0;
   font-size: 18px;
 }
+.secili-ikon {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: 20px;
+}
 .kasa-bakiye {
   font-size: 24px;
   font-weight: bold;
@@ -878,6 +1114,7 @@ h2 {
 }
 .kasa-islem {
   display: flex;
+  justify-content: flex-end;
   gap: 8px;
 }
 .positive {
@@ -933,5 +1170,58 @@ h2 {
 }
 .full-width {
   grid-column: 1 / -1;
+}
+.hareket-filtre {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.hareket-filtre-alan {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.hareket-toplam {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+.transfer-etki {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+}
+.etki-satir {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.alan-hata {
+  display: block;
+  margin-top: 6px;
+  color: var(--danger, #ef4444);
+  font-size: 0.75rem;
+}
+
+/* Mobil: hareket filtreleri alt alta, kart aksiyonlari sola. */
+@media (max-width: 640px) {
+  .hareket-filtre {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .hareket-filtre-alan {
+    flex: 1 1 100%;
+  }
+  .kasa-islem {
+    justify-content: flex-start;
+  }
 }
 </style>

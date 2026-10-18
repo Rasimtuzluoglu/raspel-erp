@@ -652,6 +652,22 @@ import { formatTarih as formatDate, formatTarihKisa as formatDateTime } from '..
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+}
+@media (max-width: 768px) {
+  .detay-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .detay-ayarlar {
+    flex-wrap: wrap;
+  }
 }
 .detay-ayarlar {
   display: flex;
@@ -904,16 +920,22 @@ import { formatTarih as formatDate, formatTarihKisa as formatDateTime } from '..
   color: var(--danger);
 }
 .durum-badge {
+  display: inline-flex;
+  align-items: center;
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: bold;
+  white-space: nowrap;
 }
 .teslim-badge {
+  display: inline-flex;
+  align-items: center;
   padding: 2px 10px;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
+  white-space: nowrap;
 }
 .teslim-badge.bekliyor {
   background: var(--warning-soft);

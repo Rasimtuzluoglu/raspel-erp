@@ -37,6 +37,7 @@ class DepoServiceTest {
     @Mock private StokRepository stokRepository;
     @Mock private TenantChecker tenantChecker;
     @Mock private com.raspel.erp.service.envanter.StokService stokService;
+    @Mock private com.raspel.erp.repository.sube.DepoTransferRepository depoTransferRepository;
     @InjectMocks private DepoService depoService;
 
     private Depo ornekDepo(Long id) {
@@ -162,5 +163,29 @@ class DepoServiceTest {
         when(depoRepository.findById(1L)).thenReturn(Optional.of(ornekDepo(1L)));
         depoService.sil(1L);
         verify(depoRepository).deleteById(1L);
+    }
+
+    @Test
+    void ozet_sayimlariDondurur() {
+        when(depoRepository.countBySirketId(1L)).thenReturn(5L);
+        when(depoRepository.countBySirketIdAndAktifTrue(1L)).thenReturn(4L);
+        when(depoTransferRepository.countBySirketIdAndDurum(1L, "BEKLIYOR")).thenReturn(2L);
+        when(depoStokRepository.ozet(1L)).thenReturn(new Object[] { 10L, 3L });
+
+        var ozet = depoService.ozet(1L);
+
+        assertEquals(5, ozet.getToplamDepo());
+        assertEquals(4, ozet.getAktifDepo());
+        assertEquals(1, ozet.getPasifDepo());
+        assertEquals(10, ozet.getStokKalemiSayisi());
+        assertEquals(3, ozet.getSifirStokluKalem());
+        assertEquals(2, ozet.getBekleyenTalep());
+    }
+
+    @Test
+    void ozet_sirketYoksaSifirDoner() {
+        var ozet = depoService.ozet(null);
+        assertEquals(0, ozet.getToplamDepo());
+        verifyNoInteractions(depoRepository);
     }
 }

@@ -1,26 +1,46 @@
 <template>
   <Dialog
     v-model:visible="visible"
-    :header="baslik"
     :modal="true"
-    style="width: 500px"
+    :style="{ width: '560px', maxWidth: '96vw' }"
   >
-    <div class="form-grup">
-      <label>{{ $t('common.quantity') }} *</label>
-      <InputNumber
-        v-model="miktar"
-        :min="0.01"
-        :min-fraction-digits="1"
-        class="w-full"
-      />
+    <template #header>
+      <div
+        class="hareket-baslik"
+        :class="giris ? 'giris' : 'cikis'"
+      >
+        <i :class="giris ? 'pi pi-plus-circle' : 'pi pi-minus-circle'" />
+        <span>{{ baslik }}</span>
+      </div>
+    </template>
+
+    <!-- Yon bandi: giris stogu artirir, cikis azaltir. -->
+    <div
+      class="hareket-bandi"
+      :class="giris ? 'pozitif' : 'negatif'"
+    >
+      <i :class="giris ? 'pi pi-arrow-up-right' : 'pi pi-arrow-down-right'" />
+      <span>{{ giris ? $t('stoklar.girisEtki') : $t('stoklar.cikisEtki') }}</span>
     </div>
-    <div class="form-grup">
-      <label>{{ $t('common.date') }} *</label>
-      <DatePicker
-        v-model="hareketTarihi"
-        date-format="dd.mm.yy"
-        class="w-full"
-      />
+
+    <div class="form-grid-2">
+      <div class="form-grup">
+        <label>{{ $t('common.quantity') }} *</label>
+        <InputNumber
+          v-model="miktar"
+          :min="0.01"
+          :min-fraction-digits="1"
+          class="w-full"
+        />
+      </div>
+      <div class="form-grup">
+        <label>{{ $t('common.date') }} *</label>
+        <DatePicker
+          v-model="hareketTarihi"
+          date-format="dd.mm.yy"
+          class="w-full"
+        />
+      </div>
     </div>
     <div class="form-grup">
       <label>{{ $t('nav.cari') }}</label>
@@ -68,6 +88,7 @@
       <Button
         :label="$t('common.save')"
         icon="pi pi-check"
+        :severity="giris ? 'success' : 'danger'"
         :loading="loading"
         @click="$emit('kaydet')"
       />
@@ -76,16 +97,20 @@
 </template>
 
 <script setup>
-import { watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useCariOnerileri } from '../composables/useCariOnerileri.js'
 
-defineProps({
+const props = defineProps({
   baslik: { type: String, default: '' },
+  /** 'GIRIS' | 'CIKIS' — yon bandi ve renk icin. */
+  tur: { type: String, default: 'GIRIS' },
   depolar: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false }
 })
 
 defineEmits(['kaydet'])
+
+const giris = computed(() => props.tur !== 'CIKIS')
 
 // Cari secici sunucu aramali. Once `Stoklar.vue` 50 kayitlik listeyi prop ile
 // geciyordu; 50. kayittan sonraki cari stok hareketine atanamadan kayboluyordu.
@@ -111,6 +136,49 @@ watch(
 </script>
 
 <style scoped>
+.hareket-baslik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+}
+.hareket-baslik.giris i {
+  color: #22c55e;
+}
+.hareket-baslik.cikis i {
+  color: #ef4444;
+}
+.hareket-bandi {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.hareket-bandi.pozitif {
+  background: var(--success-soft, rgba(34, 197, 94, 0.12));
+  border: 1px solid var(--success-border, rgba(34, 197, 94, 0.4));
+  color: var(--success, #22c55e);
+}
+.hareket-bandi.negatif {
+  background: var(--danger-soft, rgba(239, 68, 68, 0.12));
+  border: 1px solid var(--danger-border, rgba(239, 68, 68, 0.4));
+  color: var(--danger, #ef4444);
+}
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 480px) {
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
 .form-grup {
   margin-bottom: 18px;
 }

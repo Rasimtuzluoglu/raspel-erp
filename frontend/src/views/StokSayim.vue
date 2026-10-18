@@ -1,10 +1,10 @@
 <template>
   <div class="stoksayim-container">
-    <div class="sayfa-baslik">
-      <h1 class="page-title">
-        {{ t('stokSayim.title') }}
-      </h1>
-      <div class="header-actions">
+    <PageHeader
+      :title="t('stokSayim.title')"
+      icon="pi pi-clipboard"
+    >
+      <template #actions>
         <div class="tarama-adet">
           <label>{{ t('stokSayim.taramaAdet') }}</label>
           <InputNumber
@@ -24,8 +24,8 @@
           icon="pi pi-plus"
           @click="dialogAc()"
         />
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <div
       v-if="sonTaramalar.length"
@@ -136,10 +136,15 @@
 
     <Dialog
       v-model:visible="dialog"
-      :header="dialogHeader"
       modal
-      :style="{ width: '520px' }"
+      :style="{ width: '520px', maxWidth: '96vw' }"
     >
+      <template #header>
+        <div class="dialog-baslik">
+          <i class="pi pi-clipboard" />
+          <span>{{ dialogHeader }}</span>
+        </div>
+      </template>
       <div class="form-grid">
         <div class="field">
           <label>{{ t('stokSayim.tarihZorunlu') }}</label><DatePicker
@@ -365,6 +370,16 @@ const sil = (data) => {
 </script>
 
 <style scoped>
+.dialog-baslik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+}
+.dialog-baslik i {
+  color: var(--accent);
+}
 .stoksayim-container {
   padding: 0;
 }

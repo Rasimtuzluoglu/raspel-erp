@@ -109,10 +109,20 @@ class AuditLogServiceTest {
     /** C9: tenant baglami olmadan denetim kaydi SORGULANMAZ (fail-closed). */
     @Test
     void filtreliGetir_tenantBaglamiYoksaBosDoner() {
-        var sonuc = auditLogService.filtreliGetir(null, null, null, null, null, null,
+        var sonuc = auditLogService.filtreliGetir(null, null, null, null, null, null, null, null, null,
                 org.springframework.data.domain.PageRequest.of(0, 20));
 
         assertTrue(sonuc.isEmpty());
-        verify(auditLogRepository, never()).filtreliGetir(any(), any(), any(), any(), any(), any(), any());
+        verify(auditLogRepository, never()).filtreliGetir(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    /** Özet: tenant baglami yoksa toplam 0 ve bos dagilim doner. */
+    @Test
+    void ozet_tenantBaglamiYoksaSifirDoner() {
+        var ozet = auditLogService.ozet(null, null, null, null, null, null, null);
+
+        assertEquals(0, ozet.getToplam());
+        assertTrue(ozet.getIslemBazli().isEmpty());
+        verify(auditLogRepository, never()).ozetIslem(any(), any(), any(), any(), any(), any(), any());
     }
 }

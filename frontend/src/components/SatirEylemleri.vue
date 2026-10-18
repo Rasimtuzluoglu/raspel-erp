@@ -27,6 +27,13 @@
           @click.stop
           @keydown="menuKeydown"
         >
+          <div
+            v-if="baslik"
+            class="eylem-baslik"
+            :title="baslik"
+          >
+            {{ baslik }}
+          </div>
           <button
             v-if="gorunur.duzenle"
             class="eylem-item"
@@ -42,15 +49,37 @@
             <i class="pi pi-copy" /> {{ $t('common.duplicate') }}
           </button>
 
-          <button
+          <template
             v-for="(it, i) in items"
             :key="i"
-            class="eylem-item"
-            :class="it.sinif"
-            @click="calistirItem(it)"
           >
-            <i :class="it.ikon" /> {{ it.etiket }}
-          </button>
+            <div
+              v-if="it.grup"
+              class="eylem-grup"
+            >
+              {{ it.grup }}
+            </div>
+            <div
+              v-else-if="it.ayrac"
+              class="eylem-ayrac"
+            />
+            <button
+              v-else
+              class="eylem-item"
+              :class="it.sinif"
+              :title="it.aciklama || it.etiket"
+              @click="calistirItem(it)"
+            >
+              <i :class="it.ikon" />
+              <span class="eylem-metin">
+                <span class="eylem-etiket">{{ it.etiket }}</span>
+                <span
+                  v-if="it.aciklama"
+                  class="eylem-aciklama"
+                >{{ it.aciklama }}</span>
+              </span>
+            </button>
+          </template>
 
           <slot />
 
@@ -67,13 +96,24 @@
   </div>
 </template>
 
+<script>
+// Modul duzeyi (setup DISINDA): tum SatirEylemleri ornekleri ayni kapatıcıyı
+// paylasir. `<script setup>` icindeki degiskenler ornek-basina olurdu; bu
+// yuzden burada tanimlanir. Yeni menu acilirken onceki kapatilir.
+let aktifKapat = null
+</script>
+
 <script setup>
 import { ref, nextTick, onMounted, onUnmounted } from 'vue'
 
-defineProps({
+const props = defineProps({
   gorunur: { type: Object, default: () => ({ duzenle: true, cogalt: false, sil: true }) },
-  /** Ek aksiyonlar: [{ etiket, ikon, islem, sinif? }] */
-  items: { type: Array, default: () => [] }
+  /** Ek aksiyonlar: [{ etiket, ikon, islem, sinif?, aciklama?, grup?, ayrac? }] */
+  items: { type: Array, default: () => [] },
+  /** Menu ustunde gosterilen kayit adi basligi. */
+  baslik: { type: String, default: '' },
+  /** true ise menu satira degil, liste alaninin sag ustune sabit konumlanir. */
+  sabitKonum: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['duzenle', 'cogalt', 'sil', 'eylem'])
@@ -83,6 +123,11 @@ const rootEl = ref(null)
 const menuRef = ref(null)
 const menuStil = ref({ position: 'fixed', left: '-9999px', top: '0', visibility: 'hidden' })
 const acik = ref(false)
+
+const kapat = () => {
+  acik.value = false
+  if (aktifKapat === kapat) aktifKapat = null
+}
 
 const odaklanIlk = () => {
   menuRef.value?.querySelector?.('.eylem-item')?.focus?.()
@@ -106,14 +151,20 @@ const menuKeydown = (e) => {
     ogeler[ogeler.length - 1].focus()
   } else if (e.key === 'Escape') {
     e.preventDefault()
-    acik.value = false
+    kapat()
     ;(btnRef.value?.$el || btnRef.value)?.focus?.()
   }
 }
 
 const acToggle = async (e) => {
-  acik.value = !acik.value
-  if (!acik.value) return
+  if (acik.value) {
+    kapat()
+    return
+  }
+  // Baska bir satirin menusu aciksa once onu kapat.
+  if (aktifKapat && aktifKapat !== kapat) aktifKapat()
+  aktifKapat = kapat
+  acik.value = true
   // Menu olculene kadar ekran disinda ve gizli tut (body'ye teleport edildigi
   // icin varsayilan konum sol ust olurdu - "en solda aciliyor" bug'i).
   menuStil.value = { position: 'fixed', left: '-9999px', top: '0', visibility: 'hidden' }
@@ -124,6 +175,26 @@ const acToggle = async (e) => {
   const bosluk = 8
 
   const hesapla = () => {
+    //Sabit konum: menu, satira degil listeye (tablo konteyneri) gore sag ustte acilir.
+    if (props.sabitKonum) {
+      const konteyner = rootEl.value?.closest?.('.table-container, .app-datatable-wrapper')
+      const kr = konteyner?.getBoundingClientRect?.()
+      if (kr && (kr.width || kr.height)) {
+        const mw = menuRef.value?.offsetWidth || 220
+        let left = kr.right - mw - 8
+        left = Math.max(8, Math.min(left, window.innerWidth - mw - 8))
+        const top = Math.max(8, kr.top + 8)
+        menuStil.value = {
+          position: 'fixed',
+          left: `${left}px`,
+          top: `${top}px`,
+          visibility: 'visible',
+          maxHeight: `${Math.min(360, window.innerHeight - 2 * bosluk)}px`,
+          maxWidth: `calc(100vw - ${2 * bosluk}px)`
+        }
+        return true
+      }
+    }
     const r = el?.getBoundingClientRect?.()
     // Eleman henuz yerlesmediyse (0 rect) hesaplamayi ertele
     if (!r || (!r.width && !r.height)) return false
@@ -155,38 +226,43 @@ const acToggle = async (e) => {
 }
 
 const calistir = (eylem) => {
-  acik.value = false
+  kapat()
   emit(eylem)
 }
 
 const calistirItem = (it) => {
-  acik.value = false
+  kapat()
   if (typeof it.islem === 'function') it.islem()
   emit('eylem', it.etiket)
 }
 
 const disariTikla = (e) => {
-  // Menu body'ye teleport edildigi icin tiklamanin bu ornege ait olup olmadigi
-  // rootEl uzerinden kontrol edilir; boylece baska satirin menusu acilirsa kapanir.
-  if (acik.value && !rootEl.value?.contains(e.target)) acik.value = false
+  // Capture fazinda calisir; boylece buton `@click.stop` ile bubbles'i
+  // durdursa bile baska satirin ⋮'ine tiklandiginda ONCEKI menu kapanir.
+  // Kendi tetik butonu (rootEl) ve acik menu (menuRef, body'ye teleport) haric.
+  if (!acik.value) return
+  if (rootEl.value?.contains(e.target)) return
+  if (menuRef.value?.contains(e.target)) return
+  kapat()
 }
 
 // Sabit konumlu menu scroll/resize'da kaymasin: kapat (menu kendi icinde
 // kaydirilirken kapatma)
 const kaydirincaKapat = (e) => {
   if (e && e.target && menuRef.value?.contains(e.target)) return
-  if (acik.value) acik.value = false
+  if (acik.value) kapat()
 }
 
 onMounted(() => {
-  document.addEventListener('click', disariTikla)
+  document.addEventListener('click', disariTikla, true)
   window.addEventListener('scroll', kaydirincaKapat, true)
   window.addEventListener('resize', kaydirincaKapat)
 })
 onUnmounted(() => {
-  document.removeEventListener('click', disariTikla)
+  document.removeEventListener('click', disariTikla, true)
   window.removeEventListener('scroll', kaydirincaKapat, true)
   window.removeEventListener('resize', kaydirincaKapat)
+  if (aktifKapat === kapat) aktifKapat = null
 })
 </script>
 
@@ -200,48 +276,164 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 .eylem-menu {
-  /* REDTEAM/Faz2.5: 1200 idi. Dialog maski 1100'de oldugu icin bu menu
-   maskinin USTUNDE, modalin disinda gorunup tiklanabiliyordu.
-   Artik menü (1250) < modal (1300): bir Dialog icinde acildiginda maskinin
-   altinda kalir; dropdown/overlay'larin (1200) uzerinde kalmaya devam eder. */
+  /* z-index (1250) < modal (1300): bir Dialog icinde acildiginda maskinin
+     altinda kalir; dropdown/overlay'larin (1200) uzerinde kalmaya devam eder. */
   z-index: var(--z-menu);
-  min-width: 170px;
-  max-height: min(320px, 70vh);
+  min-width: 220px;
+  max-height: min(360px, 70vh);
   overflow-y: auto;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  padding: 4px;
+  border-radius: var(--radius-lg, 14px);
+  box-shadow: var(--elev-2, 0 12px 32px rgba(0, 0, 0, 0.35));
+  padding: 6px;
+  scrollbar-width: thin;
+}
+.eylem-menu::-webkit-scrollbar {
+  width: 8px;
+}
+.eylem-menu::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.eylem-baslik {
+  padding: 6px 10px 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.eylem-grup {
+  padding: 8px 10px 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.eylem-ayrac {
+  height: 1px;
+  background: var(--border);
+  margin: 5px 6px;
 }
 .eylem-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  padding: 8px 12px;
+  min-height: 40px;
+  padding: 8px 10px;
   border: none;
   background: transparent;
   color: var(--text-primary);
   font-size: 13px;
-  border-radius: 7px;
+  font-weight: 500;
+  border-radius: var(--radius-md, 10px);
   cursor: pointer;
   text-align: left;
   white-space: nowrap;
+  transition:
+    background var(--dur-fast, 0.15s) var(--ease-standard, ease),
+    color var(--dur-fast, 0.15s) var(--ease-standard, ease);
 }
 .eylem-item:hover {
-  background: rgba(148, 163, 184, 0.1);
+  background: var(--accent-soft);
+  color: var(--accent);
 }
-.eylem-item i {
-  font-size: 13px;
+.eylem-item:active {
+  transform: translateY(1px);
+}
+.eylem-item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft-strong);
+}
+/* Ikon rozeti: yuvarlak-kare tintli zemin. */
+.eylem-item > i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  font-size: 14px;
+  transition:
+    background var(--dur-fast, 0.15s) var(--ease-standard, ease),
+    color var(--dur-fast, 0.15s) var(--ease-standard, ease);
+}
+.eylem-item:hover > i {
+  background: var(--accent-soft-strong);
+  color: var(--accent);
+}
+.eylem-metin {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.eylem-aciklama {
+  font-size: 11.5px;
+  font-weight: 400;
   color: var(--text-muted);
-  width: 14px;
+  white-space: normal;
+  line-height: 1.25;
+  transition: color var(--dur-fast, 0.15s) var(--ease-standard, ease);
 }
+.eylem-item:hover .eylem-aciklama {
+  color: var(--accent);
+  opacity: 0.9;
+}
+/* Renk kodlama: finansal aksiyonlar bir bakista ayirt edilir. */
+.eylem-item.eylem-pozitif > i {
+  background: var(--success-soft);
+  color: var(--success, #22c55e);
+}
+.eylem-item.eylem-pozitif:hover {
+  background: var(--success-soft);
+  color: var(--success, #22c55e);
+}
+.eylem-item.eylem-pozitif:hover > i {
+  background: var(--success-soft);
+  color: var(--success, #22c55e);
+}
+.eylem-item.eylem-uyari > i {
+  background: var(--warning-soft);
+  color: var(--warning, #f59e0b);
+}
+.eylem-item.eylem-uyari:hover {
+  background: var(--warning-soft);
+  color: var(--warning, #f59e0b);
+}
+.eylem-item.eylem-uyari:hover > i {
+  background: var(--warning-soft);
+  color: var(--warning, #f59e0b);
+}
+/* Yikici aksiyon: ayrac + kirmizi. */
 .eylem-item.eylem-sil {
-  color: #ef4444;
+  color: var(--danger, #ef4444);
+  margin-top: 6px;
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--radius-md, 10px) var(--radius-md, 10px);
 }
-.eylem-item.eylem-sil i {
-  color: #ef4444;
+.eylem-item.eylem-sil > i {
+  background: var(--danger-soft);
+  color: var(--danger, #ef4444);
+}
+.eylem-item.eylem-sil:hover {
+  background: var(--danger-soft);
+  color: var(--danger, #ef4444);
+}
+.eylem-item.eylem-sil:hover > i {
+  background: var(--danger-soft);
+  color: var(--danger, #ef4444);
 }
 .fade-enter-active,
 .fade-leave-active {
@@ -252,6 +444,12 @@ onUnmounted(() => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-  transform: translateY(-4px);
+  transform: translateY(-4px) scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: none;
+  }
 }
 </style>

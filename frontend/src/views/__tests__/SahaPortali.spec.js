@@ -152,4 +152,43 @@ describe('SahaPortali.vue', () => {
     expect(kalan[0].tur).toBe('TESLIMAT')
     postMock.mockImplementation(() => Promise.resolve({ data: {} }))
   })
+
+  it('aktif sekme localStorage degerinden yuklenir', async () => {
+    localStorage.setItem('raspel_saha_aktif_sekme', '4')
+    const SahaPortali = (await import('../SahaPortali.vue')).default
+    const wrapper = mount(SahaPortali, {
+      global: { stubs, plugins: [createPinia(), ToastService, i18n] }
+    })
+    await flushPromises()
+    expect(wrapper.vm.aktifSekme).toBe(4)
+  })
+
+  it('cevrimdisi iken tahsilat kaydedilmez (guard)', async () => {
+    postMock.mockClear()
+    const descriptor = Object.getOwnPropertyDescriptor(window.navigator, 'onLine')
+    Object.defineProperty(window.navigator, 'onLine', { configurable: true, get: () => false })
+    try {
+      const SahaPortali = (await import('../SahaPortali.vue')).default
+      const wrapper = mount(SahaPortali, {
+        global: { stubs, plugins: [createPinia(), ToastService, i18n] }
+      })
+      await flushPromises()
+      wrapper.vm.tahsilatForm = {
+        cariHesapId: 1,
+        tutar: 100,
+        odemeYontemi: 'NAKIT',
+        kasaId: null,
+        bankaId: null,
+        aciklama: ''
+      }
+      await wrapper.vm.tahsilatKaydet()
+      await flushPromises()
+      expect(
+        postMock.mock.calls.some((c) => String(c[0]).toLowerCase().includes('tahsilat'))
+      ).toBe(false)
+    } finally {
+      if (descriptor) Object.defineProperty(window.navigator, 'onLine', descriptor)
+      else Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: true })
+    }
+  })
 })

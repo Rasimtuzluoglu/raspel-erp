@@ -46,6 +46,10 @@ export const stokAPI = {
   kritik() {
     return apiClient.get('/stoklar/kritik')
   },
+  // Liste ekrani ust ozeti (KPI): toplam urun, kritik adet, toplam deger, kategori.
+  ozet() {
+    return apiClient.get('/stoklar/ozet')
+  },
   talepTahmini() {
     return apiClient.get('/stoklar/talep-tahmini')
   },
@@ -125,6 +129,9 @@ export const depoAPI = {
   getAll(params) {
     return apiClient.get('/depolar', { params })
   },
+  ozet() {
+    return apiClient.get('/depolar/ozet')
+  },
   getById(id) {
     return apiClient.get(`/depolar/${id}`)
   },
@@ -157,6 +164,9 @@ export const depoAPI = {
 export const depoTransferAPI = {
   getAll() {
     return apiClient.get('/depo-transferler')
+  },
+  create(data) {
+    return apiClient.post('/depo-transferler', data)
   },
   onayla(id) {
     return apiClient.post(`/depo-transferler/${id}/onayla`)

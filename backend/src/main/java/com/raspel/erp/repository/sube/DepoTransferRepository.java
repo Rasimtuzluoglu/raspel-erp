@@ -10,4 +10,7 @@ import java.util.List;
 public interface DepoTransferRepository extends JpaRepository<DepoTransfer, Long> {
     List<DepoTransfer> findBySirketIdOrderByIdDesc(Long sirketId);
     List<DepoTransfer> findBySirketIdAndDurumOrderByIdAsc(Long sirketId, String durum);
+
+    /** KPI özeti: belirtilen durumdaki transfer talebi sayısı. */
+    long countBySirketIdAndDurum(Long sirketId, String durum);
 }

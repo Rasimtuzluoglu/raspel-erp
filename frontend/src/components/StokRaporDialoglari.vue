@@ -1,11 +1,16 @@
 <template>
   <Dialog
     :visible="degerlemeVisible"
-    :header="t('stoklar.degerleme')"
     modal
-    :style="{ width: '860px' }"
+    :style="{ width: '860px', maxWidth: '96vw' }"
     @update:visible="emit('update:degerlemeVisible', $event)"
   >
+    <template #header>
+      <div class="dialog-baslik">
+        <i class="pi pi-chart-line" />
+        <span>{{ t('stoklar.degerleme') }}</span>
+      </div>
+    </template>
     <div
       v-if="degerlemeVerisi"
       class="degerleme-ozet"
@@ -79,11 +84,16 @@
 
   <Dialog
     :visible="oneriVisible"
-    :header="t('stoklar.siparisOnerisi')"
     modal
-    :style="{ width: '760px' }"
+    :style="{ width: '760px', maxWidth: '96vw' }"
     @update:visible="emit('update:oneriVisible', $event)"
   >
+    <template #header>
+      <div class="dialog-baslik">
+        <i class="pi pi-shopping-cart" />
+        <span>{{ t('stoklar.siparisOnerisi') }}</span>
+      </div>
+    </template>
     <DataTable
       :value="oneriVerisi"
       striped-rows
@@ -152,6 +162,16 @@ const { t } = useI18n()
 </script>
 
 <style scoped>
+.dialog-baslik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+}
+.dialog-baslik i {
+  color: var(--accent);
+}
 .degerleme-ozet {
   display: flex;
   gap: 24px;

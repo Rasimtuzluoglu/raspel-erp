@@ -20,7 +20,9 @@
     </div>
 
     <div class="kpi-deger gizli-veri">
-      {{ bicimliDeger }}
+      <slot name="deger">
+        {{ bicimliDeger }}
+      </slot>
     </div>
 
     <SparkLine

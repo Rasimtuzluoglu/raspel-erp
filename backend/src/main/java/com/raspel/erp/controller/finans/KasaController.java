@@ -35,6 +35,13 @@ public class KasaController {
         return ResponseEntity.ok(kasaService.tumKasalarGetir(sirketId, pageable));
     }
 
+    @GetMapping("/ozet")
+    @Operation(summary = "Kasa özeti", description = "Kasa ekranı KPI özetini (kasa/bakiye/bugünkü gelir-gider) döndürür")
+    public ResponseEntity<com.raspel.erp.dto.finans.KasaOzetDTO> ozet(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(kasaService.ozet(sirketId));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "ID'ye göre kasa getir", description = "Kasa ID'sine göre detayları getirir")
     public ResponseEntity<KasaDTO> getir(@PathVariable Long id) { return ResponseEntity.ok(kasaService.kasaGetir(id)); }
@@ -121,8 +128,8 @@ public class KasaController {
     }
 
     @DeleteMapping("/hareketler/{hareketId}")
-    @Operation(summary = "Kasa hareketi sil", description = "Kasa hareketini siler (yalnızca ADMIN)")
-    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Kasa hareketi sil", description = "Kasa hareketini siler (ADMIN veya FINANS_DELETE)")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FINANS_DELETE')")
     public ResponseEntity<Void> hareketSil(@PathVariable Long hareketId) {
         kasaService.hareketSil(hareketId);
         return ResponseEntity.noContent().build();

@@ -1,9 +1,10 @@
 <template>
   <div class="fgr-container">
-    <div class="sayfa-baslik">
-      <h1 class="page-title">
-        {{ t('faturaGecmisRapor.title') }}
-      </h1>
+    <PageHeader
+      :title="t('faturaGecmisRapor.title')"
+      icon="pi pi-history"
+    />
+    <div class="fgr-filtre-cubugu">
       <div class="filtreler">
         <DatePicker
           v-model="baslangic"
@@ -374,6 +375,13 @@ onMounted(yukle)
   font-size: 22px;
   font-weight: 700;
   color: var(--text-primary);
+}
+.fgr-filtre-cubugu {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
 }
 .filtreler {
   display: flex;

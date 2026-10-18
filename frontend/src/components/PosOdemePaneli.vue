@@ -32,6 +32,30 @@
         v-if="odemeAktif"
         class="odenen-satir"
       >
+        <label>{{ t('hizliSatis.odemeYontemi') }}</label>
+        <div class="odeme-yontem-grid">
+          <button
+            v-for="y in odemeYontemleri"
+            :key="y.value"
+            type="button"
+            class="odeme-yontem-btn"
+            :class="{ active: odemeYontemi === y.value }"
+            @click="$emit('update:odemeYontemi', y.value)"
+          >
+            <span class="odeme-yontem-ikon"><i :class="y.icon" /></span>
+            <span class="odeme-yontem-ad">{{ y.label }}</span>
+            <i
+              v-if="odemeYontemi === y.value"
+              class="pi pi-check odeme-yontem-onay"
+              aria-hidden="true"
+            />
+          </button>
+        </div>
+      </div>
+      <div
+        v-if="odemeAktif && !odenenGirisGizle"
+        class="odenen-satir"
+      >
         <label>{{ t('hizliSatis.odenenTutar') }}</label>
         <InputNumber
           :model-value="odenenTutar"
@@ -46,7 +70,7 @@
       </div>
 
       <div
-        v-if="odemeAktif && odemeYontemi === 'NAKIT'"
+        v-if="odemeAktif && odemeYontemi === 'NAKIT' && !nakitGirisGizle"
         class="odenen-satir"
       >
         <label>{{ t('hizliSatis.alinanNakit') }}</label>
@@ -74,34 +98,15 @@
             class="hizli-nakit-btn"
             @click="$emit('update:alinanNakit', (alinanNakit || 0) + n)"
           >
-            {{ n }}
+            ₺{{ n }}
           </button>
           <button
             type="button"
             class="hizli-nakit-btn tam"
             @click="$emit('update:alinanNakit', genelToplam)"
           >
-            {{ t('hizliSatis.nakitTam') }}
-          </button>
-        </div>
-      </div>
-
-      <div
-        v-if="odemeAktif"
-        class="odenen-satir"
-      >
-        <label>{{ t('hizliSatis.odemeYontemi') }}</label>
-        <div class="odeme-yontem-grid">
-          <button
-            v-for="y in odemeYontemleri"
-            :key="y.value"
-            type="button"
-            class="odeme-yontem-btn"
-            :class="{ active: odemeYontemi === y.value }"
-            @click="$emit('update:odemeYontemi', y.value)"
-          >
-            <i :class="y.icon" />
-            {{ y.label }}
+            <span class="hizli-nakit-tam-etiket">{{ t('hizliSatis.nakitTam') }}</span>
+            <strong class="hizli-nakit-tam-tutar">{{ formatCurrency(genelToplam) }}</strong>
           </button>
         </div>
       </div>
@@ -210,21 +215,6 @@
           }) }}
         </small>
       </div>
-
-      <div class="odeme-durum">
-        <Tag
-          :value="odemeDurumText"
-          :severity="odemeDurumSeverity"
-          class="w-full"
-        />
-      </div>
-      <div
-        v-if="kalanTutar > 0"
-        class="odeme-kalan"
-      >
-        <span>{{ t('hizliSatis.kalan') }}:</span>
-        <span class="kalan-deger">{{ formatCurrency(kalanTutar) }}</span>
-      </div>
     </div>
   </div>
 </template>
@@ -238,6 +228,10 @@ const props = defineProps({
   acik: { type: Boolean, default: true },
   /** Overlay icinde kullanildiginda katlanir basligi gizler (icerik daima acik). */
   baslikGizle: { type: Boolean, default: false },
+  /** Nakit girisi (input + hizli nakit) cagiran bilesende sunuluyorsa gizle. */
+  nakitGirisGizle: { type: Boolean, default: false },
+  /** Odenen tutar girisi cagiran bilesende (ozet kartinda) sunuluyorsa gizle. */
+  odenenGirisGizle: { type: Boolean, default: false },
   odemeDurumu: { type: String, default: 'tam' },
   odemeTipleri: { type: Array, default: () => [] },
   odemeYontemi: { type: String, default: 'NAKIT' },

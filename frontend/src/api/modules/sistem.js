@@ -359,6 +359,9 @@ export const auditLogAPI = {
   getAll(params) {
     return apiClient.get('/audit-log', { params })
   },
+  ozet(params) {
+    return apiClient.get('/audit-log/ozet', { params })
+  },
   getIslemTipleri() {
     return apiClient.get('/audit-log/islem-tipleri')
   },

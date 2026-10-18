@@ -53,6 +53,27 @@ public class KasaService {
         return kasaRepository.findBySirketId(sirketId, pageable).map(this::entityToDTO);
     }
 
+    /**
+     * Kasa ekranı KPI özeti: kasa sayısı, toplam bakiye ve bugünkü gelir/gider.
+     */
+    @Transactional(readOnly = true)
+    public com.raspel.erp.dto.finans.KasaOzetDTO ozet(Long sirketId) {
+        if (sirketId == null) {
+            return com.raspel.erp.dto.finans.KasaOzetDTO.builder()
+                    .toplamBakiye(BigDecimal.ZERO).bugunGelir(BigDecimal.ZERO).bugunGider(BigDecimal.ZERO).build();
+        }
+        java.time.LocalDate bugun = java.time.LocalDate.now();
+        BigDecimal bakiye = kasaRepository.sumBakiyeBySirketId(sirketId);
+        BigDecimal gelir = kasaHareketRepository.sumBySirketVeTurVeTarih(sirketId, "GELIR", bugun);
+        BigDecimal gider = kasaHareketRepository.sumBySirketVeTurVeTarih(sirketId, "GIDER", bugun);
+        return com.raspel.erp.dto.finans.KasaOzetDTO.builder()
+                .toplamKasa(kasaRepository.countBySirketId(sirketId))
+                .toplamBakiye(bakiye != null ? bakiye : BigDecimal.ZERO)
+                .bugunGelir(gelir != null ? gelir : BigDecimal.ZERO)
+                .bugunGider(gider != null ? gider : BigDecimal.ZERO)
+                .build();
+    }
+
     @Transactional(readOnly = true)
     public KasaDTO kasaGetir(Long id) {
         Kasa kasa = kasaRepository.findById(id)

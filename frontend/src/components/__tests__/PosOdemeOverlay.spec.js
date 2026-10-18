@@ -82,6 +82,51 @@ describe('PosOdemeOverlay.vue', () => {
     expect(w.emitted('tamamla')).toBeTruthy()
   })
 
+  it('nakit odemede hizli nakit kisayollari tutari ekler', async () => {
+    const onUpdate = vi.fn()
+    const w = mountOverlay({
+      odemeDurumu: 'tam',
+      odemeYontemi: 'NAKIT',
+      alinanNakit: 200,
+      hizliNakit: [50, 100],
+      'onUpdate:alinanNakit': onUpdate
+    })
+    const btn = w.findAll('.hizli-nakit-btn').find((b) => b.text() === '₺50')
+    expect(btn).toBeTruthy()
+    await btn.trigger('click')
+    expect(onUpdate).toHaveBeenCalledWith(250)
+  })
+
+  it('odeme ozetinde odenen tutar gosterilir', () => {
+    const w = mountOverlay({ odemeDurumu: 'tam', odemeYontemi: 'NAKIT', genelToplam: 500, odenenTutar: 500 })
+    expect(w.find('.odeme-ozet').exists()).toBe(true)
+    expect(w.find('.odeme-ozet').text()).toContain('500')
+  })
+
+  it('klavyeden rakam girisi alinan nakit tutarini gunceller', () => {
+    const onUpdate = vi.fn()
+    const w = mountOverlay({ odemeDurumu: 'tam', odemeYontemi: 'NAKIT', alinanNakit: 0, 'onUpdate:alinanNakit': onUpdate })
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: '5' }))
+    expect(onUpdate).toHaveBeenCalledWith(5)
+    w.unmount()
+  })
+
+  it('klavyeden Backspace son haneyi siler', () => {
+    const onUpdate = vi.fn()
+    const w = mountOverlay({ odemeDurumu: 'tam', odemeYontemi: 'NAKIT', alinanNakit: 125, 'onUpdate:alinanNakit': onUpdate })
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace' }))
+    expect(onUpdate).toHaveBeenCalledWith(12)
+    w.unmount()
+  })
+
+  it('nakit disi yontemde klavye tutari degistirmez', () => {
+    const onUpdate = vi.fn()
+    const w = mountOverlay({ odemeDurumu: 'tam', odemeYontemi: 'KART', 'onUpdate:alinanNakit': onUpdate })
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: '5' }))
+    expect(onUpdate).not.toHaveBeenCalled()
+    w.unmount()
+  })
+
   it('gorunur degisince update:gorunur yayar', async () => {
     const w = mountOverlay({ gorunur: true, odemeDurumu: 'tam', odemeYontemi: 'NAKIT' })
     // DialogStub visible prop'u yerine overlay kendi $emit'i ile kapanir; burada
