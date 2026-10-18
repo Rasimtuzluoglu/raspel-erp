@@ -67,6 +67,8 @@ class ExcelExportControllerTest {
     private com.raspel.erp.service.sistem.RaporService raporService;
     @MockBean
     private com.raspel.erp.service.ticaret.SiparisTakipService siparisTakipService;
+    @MockBean
+    private com.raspel.erp.service.ticaret.TeslimatService teslimatService;
 
     @Test
     void cariHesaplar_excelDoner() throws Exception {
@@ -117,6 +119,16 @@ class ExcelExportControllerTest {
         when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
 
         mockMvc.perform(get("/api/exports/siparis-takip").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void teslimatlar_excelDoner() throws Exception {
+        when(teslimatService.teslimatlar(any(), any(), any()))
+                .thenReturn(List.of(com.raspel.erp.dto.ticaret.TeslimatDTO.builder().id(1L).durum("YOLDA").build()));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/teslimatlar").requestAttr("sirketId", 1L).requestAttr("kullaniciId", 2L))
                 .andExpect(status().isOk());
     }
 }

@@ -1,18 +1,63 @@
 <template>
   <div class="teslimat-sayfasi">
-    <div class="teslimat-baslik">
-      <h1>
-        <i
-          class="pi pi-truck"
-          style="margin-right: 8px; color: #3b82f6"
-        />{{ t('teslimatlar.title') }}
-      </h1>
-      <Button
-        icon="pi pi-refresh"
-        :aria-label="$t('common.refresh')"
-        class="p-button-text p-button-sm"
-        :loading="yukleniyor"
-        @click="suruculeriYukle"
+    <PageHeader
+      :title="t('teslimatlar.title')"
+      icon="pi pi-truck"
+    >
+      <template #actions>
+        <Button
+          :label="t('teslimatlar.excel')"
+          icon="pi pi-file-excel"
+          class="p-button-outlined"
+          :loading="excelYukleniyor"
+          @click="excelIndir"
+        />
+        <Button
+          icon="pi pi-refresh"
+          :aria-label="$t('common.refresh')"
+          class="p-button-text p-button-sm"
+          :loading="yukleniyor"
+          @click="suruculeriYukle"
+        />
+      </template>
+    </PageHeader>
+
+    <!-- KPI ozeti -->
+    <div class="kpi-grid">
+      <KpiKart
+        :baslik="t('teslimatlar.kpiToplam')"
+        :deger="ozet.toplam"
+        ikon="pi pi-truck"
+        :para-birimi="false"
+        renk="#3b82f6"
+      />
+      <KpiKart
+        :baslik="t('teslimatlar.kpiBekleyen')"
+        :deger="ozet.bekleyen"
+        ikon="pi pi-clock"
+        :para-birimi="false"
+        renk="#f59e0b"
+      />
+      <KpiKart
+        :baslik="t('teslimatlar.kpiYolda')"
+        :deger="ozet.yolda"
+        ikon="pi pi-send"
+        :para-birimi="false"
+        renk="#0ea5e9"
+      />
+      <KpiKart
+        :baslik="t('teslimatlar.kpiTeslim')"
+        :deger="ozet.teslimEdildi"
+        ikon="pi pi-check-circle"
+        :para-birimi="false"
+        renk="#10b981"
+      />
+      <KpiKart
+        :baslik="t('teslimatlar.kpiGeciken')"
+        :deger="ozet.geciken"
+        ikon="pi pi-exclamation-triangle"
+        :para-birimi="false"
+        renk="#ef4444"
       />
     </div>
 
@@ -58,20 +103,35 @@
         v-if="!soforMu"
         class="surucu-listesi"
       >
+        <span
+          v-if="suruculer.length"
+          class="surucu-arama"
+        >
+          <i class="pi pi-search" />
+          <InputText
+            v-model="surucuArama"
+            :placeholder="t('teslimatlar.soforAra')"
+            class="arama-input"
+          />
+        </span>
         <div
           v-if="yukleniyor"
           class="bos"
         >
           {{ t('common.loading') }}
         </div>
-        <div
+        <EmptyState
           v-else-if="!suruculer.length"
-          class="bos"
-        >
-          {{ t('teslimatlar.soforYok') }}
-        </div>
+          icon="pi pi-user"
+          :message="t('teslimatlar.soforYok')"
+        />
+        <EmptyState
+          v-else-if="!filtreliSuruculer.length"
+          icon="pi pi-search"
+          :message="t('teslimatlar.soforBulunamadi')"
+        />
         <button
-          v-for="s in suruculer"
+          v-for="s in filtreliSuruculer"
           :key="s.id"
           class="surucu-kart"
           :class="{ aktif: seciliSurucu?.id === s.id }"
@@ -88,13 +148,11 @@
 
       <!-- Teslimat Noktaları -->
       <div class="teslimat-icerik">
-        <div
+        <EmptyState
           v-if="!seciliSurucu"
-          class="bos buyuk"
-        >
-          <i class="pi pi-user" />
-          <p>{{ t('teslimatlar.soforSec') }}</p>
-        </div>
+          icon="pi pi-user"
+          :message="t('teslimatlar.soforSec')"
+        />
 
         <template v-else>
           <div class="teslimat-icerik-baslik">
@@ -129,6 +187,20 @@
             >
               {{ t('teslimatlar.geciken') }}
             </button>
+            <button
+              class="filtre-sekme"
+              :class="{ aktif: filtre === 'TESLIM' }"
+              @click="filtre = 'TESLIM'"
+            >
+              {{ t('teslimatlar.kpiTeslim') }}
+            </button>
+            <Dropdown
+              v-model="sirala"
+              :options="siralamaSecenekleri"
+              option-label="ad"
+              option-value="deger"
+              class="siralama-select"
+            />
           </div>
 
           <div
@@ -137,18 +209,16 @@
           >
             {{ t('common.loading') }}
           </div>
-          <div
+          <EmptyState
             v-else-if="!teslimatlar.length"
-            class="bos"
-          >
-            {{ t('teslimatlar.teslimatYok') }}
-          </div>
-          <div
+            icon="pi pi-truck"
+            :message="t('teslimatlar.teslimatYok')"
+          />
+          <EmptyState
             v-else-if="!filtreliTeslimatlar.length"
-            class="bos"
-          >
-            {{ t('teslimatlar.filtreBos') }}
-          </div>
+            icon="pi pi-filter-slash"
+            :message="t('teslimatlar.filtreBos')"
+          />
 
           <div
             v-for="teslim in filtreliTeslimatlar"
@@ -196,14 +266,6 @@
             >
               <i class="pi pi-receipt" /> {{ t('teslimatlar.siparisEtiketi') }} #{{ teslim.siparisId }}
             </div>
-            <button
-              v-if="!soforMu"
-              type="button"
-              class="gecmis-toggle"
-              @click="gecmisToggle(teslim)"
-            >
-              <i class="pi pi-history" /> {{ t('teslimatlar.gecmis') }}
-            </button>
             <div
               v-if="!soforMu && gecmisAcik[teslim.id]"
               class="gecmis-liste"
@@ -225,39 +287,19 @@
               </div>
             </div>
             <div class="teslimat-aksiyonlar">
-              <div class="foto-alan">
-                <img
-                  v-if="teslim.teslimatFoto"
-                  :src="teslim.teslimatFoto"
-                  class="teslimat-foto"
-                  :alt="t('teslimatlar.teslimatFotografi')"
-                >
-                <label class="foto-yukle">
-                  <i class="pi pi-camera" /> {{ t('teslimatlar.foto') }}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    @change="(e) => fotoYukle(teslim, e)"
-                  >
-                </label>
-              </div>
-              <a
-                class="yol-tarifi"
-                :href="yolTarifiUrl(teslim)"
-                target="_blank"
-                rel="noopener"
+              <img
+                v-if="teslim.teslimatFoto"
+                :src="teslim.teslimatFoto"
+                class="teslimat-foto"
+                :alt="t('teslimatlar.teslimatFotografi')"
               >
-                <i class="pi pi-directions" /> {{ t('teslimatlar.yolTarifiAl') }}
-              </a>
-              <button
+              <Button
                 v-if="teslim.durum !== 'TESLIM_EDILDI'"
-                type="button"
-                class="durum-btn imzala"
+                :label="t('teslimatlar.teslimEtImzala')"
+                icon="pi pi-pencil"
+                class="p-button-success p-button-sm"
                 @click="teslimModalAc(teslim)"
-              >
-                <i class="pi pi-pencil" /> {{ t('teslimatlar.teslimEtImzala') }}
-              </button>
+              />
               <div
                 v-if="teslim.durum === 'TESLIM_EDILDI'"
                 class="teslim-bilgi"
@@ -297,31 +339,26 @@
                 option-label="label"
                 option-value="value"
                 class="durum-dropdown"
-                @update:model-value="(d) => durumGuncelle(teslim, d)"
+                @update:model-value="(d) => durumSecildi(teslim, d)"
               />
-              <div class="hizli-durum">
-                <button
-                  v-if="teslim.durum !== 'YOLDA' && teslim.durum !== 'TESLIM_EDILDI'"
-                  type="button"
-                  class="durum-btn yolda"
-                  @click="durumGuncelle(teslim, 'YOLDA')"
-                >
-                  <i class="pi pi-truck" /> {{ t('teslimatlar.durumYolda') }}
-                </button>
-                <button
-                  v-if="!soforMu && teslim.durum !== 'TESLIM_EDILDI'"
-                  type="button"
-                  class="durum-btn teslim"
-                  @click="teslimModalAc(teslim)"
-                >
-                  <i class="pi pi-check" /> {{ t('teslimatlar.durumTeslimEdildi') }}
-                </button>
-              </div>
+              <SatirEylemleri
+                :gorunur="{ duzenle: false, sil: false }"
+                :baslik="teslim.faturaNumarasi ? '#' + teslim.faturaNumarasi : ''"
+                :items="teslimMenuItems(teslim)"
+              />
             </div>
           </div>
         </template>
       </div>
     </div>
+
+    <input
+      ref="fotoInput"
+      type="file"
+      accept="image/*"
+      hidden
+      @change="fotoSecildi"
+    >
 
     <Dialog
       v-model:visible="imzaModal"
@@ -443,12 +480,14 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { teslimatAPI } from '../api/index.js'
+import { teslimatAPI, excelAPI } from '../api/index.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useI18n } from 'vue-i18n'
 import { formatTarih } from '../utils/format.js'
 import ImzaPad from '../components/ImzaPad.vue'
+import KpiKart from '../components/KpiKart.vue'
+import EmptyState from '../components/EmptyState.vue'
 
 const toastBildirim = useToastBildirim()
 const router = useRouter()
@@ -458,9 +497,29 @@ const { t } = useI18n()
 const suruculer = ref([])
 const teslimatlar = ref([])
 const seciliSurucu = ref(null)
+const surucuArama = ref('')
 const yukleniyor = ref(false)
 const teslimatYukleniyor = ref(false)
+
+// KPI ozeti.
+const ozet = ref({ toplam: 0, bekleyen: 0, yolda: 0, teslimEdildi: 0, iptal: 0, geciken: 0 })
+const ozetYukle = async () => {
+  try {
+    const r = await teslimatAPI.ozet()
+    ozet.value = { ...ozet.value, ...(r.data || {}) }
+  } catch {
+    /* ozet alinamazsa KPI sifirda kalir */
+  }
+}
+
+const filtreliSuruculer = computed(() => {
+  const q = surucuArama.value.trim().toLowerCase()
+  if (!q) return suruculer.value
+  return suruculer.value.filter((s) => (s.ad || '').toLowerCase().includes(q))
+})
 const filtre = ref(authStore?.kullanici?.role === 'DRIVER' ? 'BUGUN' : 'TUMU')
+const sirala = ref('yok')
+const excelYukleniyor = ref(false)
 const rehberAcik = ref(false)
 const gecmisAcik = ref({})
 const gecmisler = ref({})
@@ -490,6 +549,50 @@ const gecmisToggle = async (teslim) => {
   if (acik && !gecmisler.value[teslim.id]) await gecmisYukle(teslim)
 }
 
+// Kart ⋮ menüsü aksiyonları: foto, yol tarifi, geçmiş, yolda, iptal.
+const fotoInput = ref(null)
+const fotoHedef = ref(null)
+const fotoSecAc = (teslim) => {
+  fotoHedef.value = teslim
+  fotoInput.value?.click()
+}
+const fotoSecildi = (event) => {
+  if (fotoHedef.value) fotoYukle(fotoHedef.value, event)
+}
+
+// İmza zorunluluğu: TESLIM_EDILDI yalnızca imza modalıyla yapılır.
+const durumSecildi = (teslim, d) => {
+  if (d === 'TESLIM_EDILDI') {
+    teslimModalAc(teslim)
+    return
+  }
+  durumGuncelle(teslim, d)
+}
+
+const iptalAc = (teslim) => {
+  iptalSebebi.value = ''
+  iptalTeslimat.value = teslim
+  iptalDialog.value = true
+}
+
+const teslimMenuItems = (teslim) => {
+  const items = [
+    { etiket: t('teslimatlar.foto'), ikon: 'pi pi-camera', islem: () => fotoSecAc(teslim) },
+    { etiket: t('teslimatlar.yolTarifiAl'), ikon: 'pi pi-directions', islem: () => window.open(yolTarifiUrl(teslim), '_blank') }
+  ]
+  if (!soforMu.value) {
+    items.push({ etiket: t('teslimatlar.gecmis'), ikon: 'pi pi-history', islem: () => gecmisToggle(teslim) })
+  }
+  if (teslim.durum !== 'YOLDA' && teslim.durum !== 'TESLIM_EDILDI') {
+    items.push({ ayrac: true })
+    items.push({ etiket: t('teslimatlar.durumYolda'), ikon: 'pi pi-truck', islem: () => durumGuncelle(teslim, 'YOLDA') })
+  }
+  if (!soforMu.value && teslim.durum !== 'TESLIM_EDILDI') {
+    items.push({ etiket: t('teslimatlar.iptalEt'), ikon: 'pi pi-ban', islem: () => iptalAc(teslim) })
+  }
+  return items
+}
+
 const bugunStr = () => {
   const bugun = new Date()
   const ay = String(bugun.getMonth() + 1).padStart(2, '0')
@@ -498,14 +601,27 @@ const bugunStr = () => {
 }
 
 const filtreliTeslimatlar = computed(() => {
+  let liste = teslimatlar.value
   if (filtre.value === 'BUGUN') {
-    return teslimatlar.value.filter((t) => t.beklenenTeslimTarihi === bugunStr())
+    liste = liste.filter((t) => t.beklenenTeslimTarihi === bugunStr())
+  } else if (filtre.value === 'GECIKEN') {
+    liste = liste.filter((t) => t.gecikti)
+  } else if (filtre.value === 'TESLIM') {
+    liste = liste.filter((t) => t.durum === 'TESLIM_EDILDI')
   }
-  if (filtre.value === 'GECIKEN') {
-    return teslimatlar.value.filter((t) => t.gecikti)
+  if (sirala.value === 'beklenen') {
+    liste = [...liste].sort((a, b) => String(a.beklenenTeslimTarihi || '9999').localeCompare(String(b.beklenenTeslimTarihi || '9999')))
+  } else if (sirala.value === 'fatura') {
+    liste = [...liste].sort((a, b) => String(a.faturaNumarasi || '').localeCompare(String(b.faturaNumarasi || ''), 'tr'))
   }
-  return teslimatlar.value
+  return liste
 })
+
+const siralamaSecenekleri = computed(() => [
+  { ad: t('teslimatlar.siralaYok'), deger: 'yok' },
+  { ad: t('teslimatlar.siralaBeklenen'), deger: 'beklenen' },
+  { ad: t('teslimatlar.siralaFatura'), deger: 'fatura' }
+])
 
 const durumSecenekleri = computed(() => [
   { label: t('teslimatlar.durumBeklemede'), value: 'BEKLEMEDE' },
@@ -582,6 +698,7 @@ const durumGuncelle = async (teslim, yeniDurum, sebep = null) => {
     if (seciliSurucu.value) {
       await suruculeriYukle()
     }
+    ozetYukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('teslimatlar.hataDurumGuncelleme'))
   }
@@ -677,6 +794,7 @@ const teslimatiTamamla = async () => {
     toastBildirim.basarili(t('teslimatlar.teslimEdildi'))
     imzaModal.value = false
     await suruculeriYukle()
+    ozetYukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('teslimatlar.teslimEdilemedi'))
   } finally {
@@ -684,8 +802,15 @@ const teslimatiTamamla = async () => {
   }
 }
 
-const fisAc = (teslim) => {
-  window.open(`/api/deliveries/${teslim.id}/fis`, '_blank')
+const fisAc = async (teslim) => {
+  try {
+    const res = await teslimatAPI.fis(teslim.id)
+    const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+    window.open(url, '_blank')
+    setTimeout(() => window.URL.revokeObjectURL(url), 60000)
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('teslimatlar.fisAcilamadi'))
+  }
 }
 
 const teslimPaylas = (teslim) => {
@@ -700,8 +825,33 @@ const teslimPaylas = (teslim) => {
   window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(satirlar.join('\n'))}`, '_blank')
 }
 
+const excelIndir = async () => {
+  excelYukleniyor.value = true
+  try {
+    const params = {}
+    if (seciliSurucu.value?.id) params.driverId = seciliSurucu.value.id
+    const res = await excelAPI.teslimatlar(params)
+    const url = window.URL.createObjectURL(
+      new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    )
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `teslimatlar-${new Date().toISOString().slice(0, 10)}.xlsx`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+    toastBildirim.basarili(t('teslimatlar.excelIndirildi'))
+  } catch {
+    toastBildirim.hata(t('teslimatlar.excelHata'))
+  } finally {
+    excelYukleniyor.value = false
+  }
+}
+
 onMounted(() => {
   suruculeriYukle()
+  ozetYukle()
 })
 </script>
 
@@ -711,16 +861,26 @@ onMounted(() => {
   flex-direction: column;
   gap: 16px;
 }
-.teslimat-baslik {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+  gap: 12px;
 }
-.teslimat-baslik h1 {
-  margin: 0;
-  font-size: 20px;
-  display: flex;
+.surucu-arama {
+  position: relative;
+  display: inline-flex;
   align-items: center;
+  margin-bottom: 4px;
+}
+.surucu-arama > i {
+  position: absolute;
+  left: 10px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.arama-input {
+  width: 100%;
+  padding-left: 32px;
 }
 .teslimat-duzen {
   display: flex;
@@ -822,8 +982,23 @@ onMounted(() => {
 }
 .filtre-sekme.aktif {
   background: var(--accent-soft);
-  border-color: var(--accent, var(--accent));
-  color: var(--accent, var(--accent));
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.siralama-select {
+  margin-left: auto;
+  min-width: 160px;
+}
+
+/* Mobil: iki kolon yigilir (sofor listesi ustte). */
+@media (max-width: 768px) {
+  .teslimat-duzen {
+    flex-direction: column;
+  }
+  .surucu-listesi {
+    width: 100%;
+    min-width: 0;
+  }
 }
 .teslimat-kart {
   background: var(--bg-card);
@@ -881,21 +1056,6 @@ onMounted(() => {
   flex-wrap: wrap;
   margin-top: 4px;
 }
-.yol-tarifi {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  background: var(--accent-soft);
-  color: var(--accent, var(--accent));
-  font-size: 12px;
-  font-weight: 600;
-  text-decoration: none;
-}
-.yol-tarifi:hover {
-  background: rgba(59, 130, 246, 0.22);
-}
 .durum-dropdown {
   min-width: 150px;
 }
@@ -906,11 +1066,6 @@ onMounted(() => {
   align-items: center;
   gap: 6px;
 }
-.foto-alan {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 .teslimat-foto {
   width: 48px;
   height: 48px;
@@ -918,37 +1073,11 @@ onMounted(() => {
   border-radius: 8px;
   border: 1px solid var(--border);
 }
-.foto-yukle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.foto-yukle:hover {
-  border-color: var(--accent, var(--accent));
-  color: var(--accent, var(--accent));
-}
 .bos {
   text-align: center;
   color: var(--text-muted);
   padding: 24px 12px;
   font-size: 13px;
-}
-.bos.buyuk {
-  padding: 60px 20px;
-}
-.bos.buyuk i {
-  font-size: 40px;
-  display: block;
-  margin-bottom: 12px;
-  color: var(--text-muted);
 }
 .nasil-kart {
   background: var(--bg-card);
@@ -990,24 +1119,6 @@ onMounted(() => {
   color: var(--text-primary);
   font-size: 12.5px;
 }
-.gecmis-toggle {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.gecmis-toggle:hover {
-  border-color: var(--accent, var(--accent));
-  color: var(--accent, var(--accent));
-}
 .gecmis-liste {
   display: flex;
   flex-direction: column;
@@ -1040,26 +1151,11 @@ onMounted(() => {
   font-size: 12px;
   color: var(--text-muted);
 }
-.hizli-durum {
-  display: flex;
-  gap: 8px;
-}
 /* Sofor gorunumu: buyuk dokunma hedefleri (sahada tek elle kullanim) */
 .teslimat-kart.sofor-gorunum .durum-btn {
   min-height: 46px;
   font-size: 14.5px;
   padding: 10px 16px;
-}
-.teslimat-kart.sofor-gorunum .durum-btn.imzala {
-  width: 100%;
-  justify-content: center;
-}
-.teslimat-kart.sofor-gorunum .hizli-durum {
-  width: 100%;
-}
-.teslimat-kart.sofor-gorunum .hizli-durum .durum-btn {
-  flex: 1;
-  justify-content: center;
 }
 .durum-btn {
   display: inline-flex;
@@ -1072,15 +1168,6 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 600;
   color: #fff;
-}
-.durum-btn.yolda {
-  background: var(--accent);
-}
-.durum-btn.teslim {
-  background: #10b981;
-}
-.durum-btn.imzala {
-  background: #10b981;
 }
 .durum-btn.fis {
   background: #ef4444;

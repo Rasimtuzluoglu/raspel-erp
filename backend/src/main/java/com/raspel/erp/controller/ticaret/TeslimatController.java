@@ -61,6 +61,13 @@ public class TeslimatController {
         return ResponseEntity.ok(teslimatService.suruculer(sirketId, kullaniciId));
     }
 
+    @GetMapping("/api/deliveries/ozet")
+    @Operation(summary = "Teslimat özeti", description = "Teslimatlar ekranı KPI özetini (durum bazlı sayılar + geciken) döndürür")
+    public ResponseEntity<com.raspel.erp.dto.ticaret.TeslimatOzetDTO> ozet(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(teslimatService.ozet(sirketId));
+    }
+
     @GetMapping("/api/deliveries")
     @Operation(summary = "Şoförün teslimatları", description = "Bir şoförün tüm teslimat noktalarını getirir")
     public ResponseEntity<List<TeslimatDTO>> teslimatlar(

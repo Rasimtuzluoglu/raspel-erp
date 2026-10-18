@@ -66,6 +66,9 @@ export const excelAPI = {
   siparisTakip(params) {
     return apiClient.get('/exports/siparis-takip', { params, responseType: 'blob' })
   },
+  teslimatlar(params) {
+    return apiClient.get('/exports/teslimatlar', { params, responseType: 'blob' })
+  },
   personel() {
     return apiClient.get('/exports/personel', { responseType: 'blob' })
   },

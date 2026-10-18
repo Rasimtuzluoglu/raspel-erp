@@ -49,6 +49,25 @@ public class TeslimatService {
     private static final String FOTO_KLASOR = "teslimat-fotolari";
     private static final String IMZA_KLASOR = "teslimat-imzalari";
 
+    /**
+     * Teslimatlar ekranı KPI özeti: durum bazlı sayılar + geciken teslimat.
+     */
+    @Transactional(readOnly = true)
+    public com.raspel.erp.dto.ticaret.TeslimatOzetDTO ozet(Long sirketId) {
+        if (sirketId == null) {
+            return com.raspel.erp.dto.ticaret.TeslimatOzetDTO.builder().build();
+        }
+        return com.raspel.erp.dto.ticaret.TeslimatOzetDTO.builder()
+                .toplam(teslimatRepository.countBySirketId(sirketId))
+                .bekleyen(teslimatRepository.countBySirketIdAndDurum(sirketId, "BEKLEMEDE"))
+                .yolda(teslimatRepository.countBySirketIdAndDurum(sirketId, "YOLDA"))
+                .teslimEdildi(teslimatRepository.countBySirketIdAndDurum(sirketId, "TESLIM_EDILDI"))
+                .iptal(teslimatRepository.countBySirketIdAndDurum(sirketId, "IPTAL"))
+                .geciken(teslimatRepository.countGeciken(sirketId, java.time.LocalDate.now()))
+                .build();
+    }
+
+
     @Transactional(readOnly = true)
     public List<SurucuDTO> suruculer(Long sirketId, Long kullaniciId) {
         boolean driverMi = driverMi(kullaniciId);
@@ -289,6 +308,11 @@ public class TeslimatService {
     public TeslimatDTO durumGuncelle(Long id, String durum, String sebep, Long sirketId, Long kullaniciId) {
         if (durum == null || !gecerliDurum(durum)) {
             throw new BusinessException("Geçersiz teslimat durumu");
+        }
+        // İmzasız teslim engeli: TESLIM_EDILDI yalnızca imzalı teslim akışı
+        // (/teslim) ile yapılır; durum ucu bu geçişe izin vermez.
+        if (Teslimat.Durum.TESLIM_EDILDI.name().equals(durum)) {
+            throw new BusinessException("Teslim edildi durumu yalnızca imzalı teslim akışıyla yapılabilir.");
         }
         // Başarısız teslimat (iptal) sebebi zorunlu: iade/dönüş kararı bu bilgiye dayanır.
         if ("IPTAL".equals(durum) && (sebep == null || sebep.isBlank())) {

@@ -37,4 +37,14 @@ public interface TeslimatRepository extends JpaRepository<Teslimat, Long> {
            "AND t.beklenenTeslimTarihi IS NOT NULL AND t.beklenenTeslimTarihi < :tarih " +
            "AND t.durum NOT IN ('TESLIM_EDILDI', 'IPTAL')")
     long countGecikenDistinctSiparis(@Param("sirketId") Long sirketId, @Param("tarih") LocalDate tarih);
+
+    // --- Teslimatlar ekranı KPI özeti ---
+    long countBySirketId(Long sirketId);
+
+    long countBySirketIdAndDurum(Long sirketId, String durum);
+
+    @Query("SELECT COUNT(t) FROM Teslimat t WHERE t.sirketId = :sirketId " +
+           "AND t.beklenenTeslimTarihi IS NOT NULL AND t.beklenenTeslimTarihi < :tarih " +
+           "AND t.durum NOT IN ('TESLIM_EDILDI', 'IPTAL')")
+    long countGeciken(@Param("sirketId") Long sirketId, @Param("tarih") LocalDate tarih);
 }

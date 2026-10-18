@@ -454,6 +454,9 @@ export const teslimatAPI = {
   byDriver() {
     return apiClient.get('/deliveries/by-driver')
   },
+  ozet() {
+    return apiClient.get('/deliveries/ozet')
+  },
   teslimatlar(driverId) {
     return apiClient.get('/deliveries', { params: { driverId } })
   },

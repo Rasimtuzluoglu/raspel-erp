@@ -337,4 +337,37 @@ class TeslimatServiceTest {
         assertEquals("TESLIM_EDILDI", s.getDurum());
         verify(siparisRepository).save(s);
     }
+
+    @Test
+    void ozet_sayimlariDondurur() {
+        when(teslimatRepository.countBySirketId(1L)).thenReturn(20L);
+        when(teslimatRepository.countBySirketIdAndDurum(1L, "BEKLEMEDE")).thenReturn(5L);
+        when(teslimatRepository.countBySirketIdAndDurum(1L, "YOLDA")).thenReturn(4L);
+        when(teslimatRepository.countBySirketIdAndDurum(1L, "TESLIM_EDILDI")).thenReturn(9L);
+        when(teslimatRepository.countBySirketIdAndDurum(1L, "IPTAL")).thenReturn(2L);
+        when(teslimatRepository.countGeciken(eq(1L), any(LocalDate.class))).thenReturn(3L);
+
+        var ozet = teslimatService.ozet(1L);
+
+        assertEquals(20, ozet.getToplam());
+        assertEquals(5, ozet.getBekleyen());
+        assertEquals(4, ozet.getYolda());
+        assertEquals(9, ozet.getTeslimEdildi());
+        assertEquals(2, ozet.getIptal());
+        assertEquals(3, ozet.getGeciken());
+    }
+
+    @Test
+    void ozet_sirketYoksaSifirDoner() {
+        var ozet = teslimatService.ozet(null);
+        assertEquals(0, ozet.getToplam());
+        verifyNoInteractions(teslimatRepository);
+    }
+
+    @Test
+    void durumGuncelle_teslimEdildiImzasizReddedilir() {
+        assertThrows(BusinessException.class,
+                () -> teslimatService.durumGuncelle(1L, "TESLIM_EDILDI", 1L, 99L));
+        verify(teslimatRepository, never()).save(any(Teslimat.class));
+    }
 }

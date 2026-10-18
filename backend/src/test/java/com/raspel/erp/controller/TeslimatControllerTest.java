@@ -77,4 +77,15 @@ class TeslimatControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(5));
     }
+
+    @Test
+    void shouldGetOzet() throws Exception {
+        when(teslimatService.ozet(1L)).thenReturn(com.raspel.erp.dto.ticaret.TeslimatOzetDTO.builder()
+                .toplam(20).bekleyen(5).yolda(4).teslimEdildi(9).iptal(2).geciken(3).build());
+
+        mockMvc.perform(get("/api/deliveries/ozet").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.toplam").value(20))
+                .andExpect(jsonPath("$.geciken").value(3));
+    }
 }

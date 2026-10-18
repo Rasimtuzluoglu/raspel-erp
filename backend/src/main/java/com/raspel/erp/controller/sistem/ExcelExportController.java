@@ -53,6 +53,7 @@ public class ExcelExportController {
     private final MuhasebeService muhasebeService;
     private final com.raspel.erp.service.sistem.RaporService raporService;
     private final com.raspel.erp.service.ticaret.SiparisTakipService siparisTakipService;
+    private final com.raspel.erp.service.ticaret.TeslimatService teslimatService;
 
     @GetMapping("/kdv-beyanname")
     @Operation(summary = "KDV beyannamesini Excel dışa aktar",
@@ -324,6 +325,30 @@ public class ExcelExportController {
         return excel("SiparisTakip", new String[]{"Sipariş No", "Cari", "Sipariş Durum", "Şoför",
                 "Üretim Durum", "Üretim Adet", "Sevk Durum", "Sevk Adet", "Teslimat Durum",
                 "Beklenen Teslim", "Gecikti"}, rows);
+    }
+
+    @GetMapping("/teslimatlar")
+    @Operation(summary = "Teslimatları Excel dışa aktar", description = "Teslimat kayıtlarını Excel (.xlsx) olarak dışa aktarır (opsiyonel driverId).")
+    public ResponseEntity<byte[]> teslimatlar(
+            HttpServletRequest request,
+            @RequestParam(required = false) Long driverId) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        var list = teslimatService.teslimatlar(sirketId, driverId, kullaniciId);
+        List<Map<String, Object>> rows = list.stream().map(t -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("Fatura", t.getFaturaNumarasi());
+            m.put("Müşteri", t.getMusteriAdi());
+            m.put("Adres", t.getTeslimatAdresi());
+            m.put("Durum", t.getDurum());
+            m.put("Beklenen Teslim", t.getBeklenenTeslimTarihi());
+            m.put("Şoför", t.getTeslimEdenAd());
+            m.put("Teslim Alan", t.getTeslimAlanAd());
+            m.put("Teslim Tarihi", t.getTeslimTarihi());
+            return m;
+        }).toList();
+        return excel("Teslimatlar", new String[]{"Fatura", "Müşteri", "Adres", "Durum",
+                "Beklenen Teslim", "Şoför", "Teslim Alan", "Teslim Tarihi"}, rows);
     }
 
     private ResponseEntity<byte[]> excel(String name, String[] cols, List<Map<String, Object>> rows) {
