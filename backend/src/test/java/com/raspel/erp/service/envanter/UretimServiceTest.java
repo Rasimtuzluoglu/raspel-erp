@@ -234,6 +234,35 @@ class UretimServiceTest {
     }
 
     @Test
+    void filtreliEmirler_sayfaliDonerVeFiltreleriIletir() {
+        UretimEmri e = UretimEmri.builder().id(1L).sirketId(1L).urunId(10L)
+                .miktar(BigDecimal.ONE).durum("TASLAK").oncelik("YUKSEK").build();
+        var pageable = org.springframework.data.domain.PageRequest.of(0, 25);
+        when(uretimEmriRepository.filtreliGetir(eq(1L), isNull(), eq("TASLAK"), eq("YUKSEK"),
+                eq(true), eq(false), any(), isNull(), isNull(), any(), eq(pageable)))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(e)));
+        when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Masa", "0")));
+
+        var sonuc = uretimService.filtreliEmirler(1L, "  ", "TASLAK", "YUKSEK", true, false, null, null, pageable);
+
+        assertEquals(1, sonuc.getTotalElements());
+        assertEquals("Masa", sonuc.getContent().get(0).getUrunAd());
+        assertEquals("TASLAK", sonuc.getContent().get(0).getDurum());
+    }
+
+    @Test
+    void filtreliEmirler_kisaAramaHicEslesmeyenDeseneCevrilir() {
+        var pageable = org.springframework.data.domain.PageRequest.of(0, 25);
+        when(uretimEmriRepository.filtreliGetir(eq(1L), eq(com.raspel.erp.util.AramaTemizleyici.like("a")),
+                isNull(), isNull(), eq(false), eq(false), any(), isNull(), isNull(), any(), eq(pageable)))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of()));
+
+        var sonuc = uretimService.filtreliEmirler(1L, "a", null, null, null, null, null, null, pageable);
+
+        assertTrue(sonuc.isEmpty());
+    }
+
+    @Test
     void emirTamamla_bazMiktarOlarakOlcekler() {
         UretimEmri emri = UretimEmri.builder().id(1L).sirketId(1L).urunId(10L)
                 .miktar(new BigDecimal("4")).durum("URETIMDE").build();

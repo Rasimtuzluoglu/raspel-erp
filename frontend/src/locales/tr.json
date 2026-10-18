@@ -4502,7 +4502,19 @@
     "pasif": "Pasif",
     "fireOrani": "Fire Oranı (%)",
     "birim": "Birim",
-    "kalemFireOrani": "Kalem Fire (%)"
+    "kalemFireOrani": "Kalem Fire (%)",
+    "aramaPlaceholder": "Ürün adı ara...",
+    "baslangicTarihi": "Plan. Başlangıç",
+    "bitisTarihi": "Plan. Bitiş",
+    "excel": "Excel",
+    "excelIndirildi": "Excel indirildi",
+    "excelHata": "Excel indirilemedi",
+    "emirFiltreYok": "Filtreye uyan üretim emri yok.",
+    "cipTumu": "Tümü",
+    "cipGeciken": "Geciken",
+    "toplamUretilen": "Toplam Üretilen",
+    "toplamFire": "Toplam Fire",
+    "gecikti": "Gecikti"
   },
   "vardiyalar": {
     "title": "Vardiya Yönetimi",

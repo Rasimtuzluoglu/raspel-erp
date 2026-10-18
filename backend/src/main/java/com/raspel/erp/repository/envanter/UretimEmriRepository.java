@@ -2,12 +2,15 @@ package com.raspel.erp.repository.envanter;
 
 import com.raspel.erp.entity.envanter.UretimEmri;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,4 +35,38 @@ public interface UretimEmriRepository extends JpaRepository<UretimEmri, Long> {
     @Query("SELECT COUNT(DISTINCT e.siparisId) FROM UretimEmri e " +
            "WHERE e.sirketId = :sirketId AND e.siparisId IS NOT NULL AND e.durum <> :durum")
     long countDistinctSiparisAktif(@Param("sirketId") Long sirketId, @Param("durum") String durum);
+
+    /**
+     * Üretim emirleri ekranı: sunucu taraflı arama + durum/öncelik/geciken/tarih
+     * filtreleri + sayfalama. Önceden tüm emirler belleğe çekilip istemcide
+     * filtreleniyordu; büyük veri setlerinde hem yavaş hem de eksikti.
+     *
+     * <p><b>{@code :q}</b> ham terim DEĞİL, {@code AramaTemizleyici.like(q)}
+     * desenidir (joker kaçışlı). Ürün adı {@code UretimEmri} üzerinde kolon
+     * olmadığı için {@code Stok} alt sorgusuyla eşleştirilir.
+     *
+     * <p><b>{@code geciken}</b>: planlanan bitiş geçmiş, tamamlanmamış/iptal
+     * edilmemiş emirler.
+     */
+    @Query("SELECT e FROM UretimEmri e WHERE e.sirketId = :sirketId " +
+           "AND (:durum IS NULL OR e.durum = :durum) " +
+           "AND (:oncelik IS NULL OR e.oncelik = :oncelik) " +
+           "AND (:q IS NULL OR EXISTS (SELECT s.id FROM Stok s WHERE s.id = e.urunId AND LOWER(s.ad) LIKE :q ESCAPE '\\')) " +
+           "AND (:geciken = false OR (e.planlananBitis IS NOT NULL AND e.planlananBitis < :bugun " +
+           "  AND e.durum NOT IN ('TAMAMLANDI', 'IPTAL'))) " +
+           "AND (:buAy = false OR (e.durum = 'TAMAMLANDI' AND e.tamamlanmaTarihi IS NOT NULL " +
+           "  AND e.tamamlanmaTarihi >= :ayBaslangic)) " +
+           "AND (:baslangic IS NULL OR e.planlananBitis >= :baslangic) " +
+           "AND (:bitis IS NULL OR e.planlananBitis <= :bitis)")
+    Page<UretimEmri> filtreliGetir(@Param("sirketId") Long sirketId,
+                                   @Param("q") String q,
+                                   @Param("durum") String durum,
+                                   @Param("oncelik") String oncelik,
+                                   @Param("geciken") Boolean geciken,
+                                   @Param("buAy") Boolean buAy,
+                                   @Param("ayBaslangic") java.time.LocalDateTime ayBaslangic,
+                                   @Param("baslangic") LocalDate baslangic,
+                                   @Param("bitis") LocalDate bitis,
+                                   @Param("bugun") LocalDate bugun,
+                                   Pageable pageable);
 }

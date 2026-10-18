@@ -54,6 +54,7 @@ public class ExcelExportController {
     private final com.raspel.erp.service.sistem.RaporService raporService;
     private final com.raspel.erp.service.ticaret.SiparisTakipService siparisTakipService;
     private final com.raspel.erp.service.ticaret.TeslimatService teslimatService;
+    private final com.raspel.erp.service.envanter.UretimService uretimService;
 
     @GetMapping("/kdv-beyanname")
     @Operation(summary = "KDV beyannamesini Excel dışa aktar",
@@ -349,6 +350,60 @@ public class ExcelExportController {
         }).toList();
         return excel("Teslimatlar", new String[]{"Fatura", "Müşteri", "Adres", "Durum",
                 "Beklenen Teslim", "Şoför", "Teslim Alan", "Teslim Tarihi"}, rows);
+    }
+
+    @GetMapping("/uretim-emirleri")
+    @Operation(summary = "Üretim emirlerini Excel dışa aktar", description = "Filtrelenen üretim emirlerini Excel (.xlsx) olarak dışa aktarır.")
+    public ResponseEntity<byte[]> uretimEmirleri(
+            HttpServletRequest request,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) String oncelik,
+            @RequestParam(required = false) Boolean geciken,
+            @RequestParam(required = false) Boolean buAy,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        var page = uretimService.filtreliEmirler(sirketId, q, durum, oncelik, geciken, buAy, baslangic, bitis,
+                PageRequest.of(0, MAX_EXPORT_ROWS, org.springframework.data.domain.Sort.by(
+                        org.springframework.data.domain.Sort.Direction.DESC, "olusturmaTarihi")));
+        List<Map<String, Object>> rows = page.getContent().stream().map(e -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("ID", e.getId());
+            m.put("Mamul", e.getUrunAd());
+            m.put("Miktar", e.getMiktar());
+            m.put("Durum", e.getDurum());
+            m.put("Öncelik", e.getOncelik());
+            m.put("Planlanan Başlangıç", e.getPlanlananBaslangic());
+            m.put("Planlanan Bitiş", e.getPlanlananBitis());
+            m.put("Üretilen", e.getUretilenMiktar());
+            m.put("Fire", e.getFireMiktar());
+            m.put("Toplam Maliyet", e.getToplamMaliyet());
+            m.put("Oluşturma", e.getOlusturmaTarihi());
+            return m;
+        }).toList();
+        return excel("UretimEmirleri", new String[]{"ID", "Mamul", "Miktar", "Durum", "Öncelik",
+                "Planlanan Başlangıç", "Planlanan Bitiş", "Üretilen", "Fire", "Toplam Maliyet", "Oluşturma"}, rows);
+    }
+
+    @GetMapping("/uretim-receteler")
+    @Operation(summary = "Üretim reçetelerini Excel dışa aktar", description = "Reçeteleri (ürün ağacı) Excel (.xlsx) olarak dışa aktarır.")
+    public ResponseEntity<byte[]> uretimReceteler(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        var list = uretimService.receteler(sirketId);
+        List<Map<String, Object>> rows = list.stream().map(r -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("ID", r.getId());
+            m.put("Reçete", r.getAd());
+            m.put("Mamul", r.getUrunAd());
+            m.put("Kalem Sayısı", r.getKalemler() != null ? r.getKalemler().size() : 0);
+            m.put("Fire Oranı", r.getFireOrani());
+            m.put("Revizyon", r.getRevizyon());
+            m.put("Aktif", Boolean.FALSE.equals(r.getAktif()) ? "Hayır" : "Evet");
+            return m;
+        }).toList();
+        return excel("UretimReceteler", new String[]{"ID", "Reçete", "Mamul", "Kalem Sayısı",
+                "Fire Oranı", "Revizyon", "Aktif"}, rows);
     }
 
     private ResponseEntity<byte[]> excel(String name, String[] cols, List<Map<String, Object>> rows) {

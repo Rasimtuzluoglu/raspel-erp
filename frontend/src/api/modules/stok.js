@@ -222,6 +222,9 @@ export const uretimAPI = {
   emirler() {
     return apiClient.get('/uretim/emirler')
   },
+  emirlerFiltreli(params = {}) {
+    return apiClient.get('/uretim/emirler/filtreli', { params })
+  },
   emirOlustur(data) {
     return apiClient.post('/uretim/emirler', data)
   },

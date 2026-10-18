@@ -164,6 +164,25 @@ public class UretimService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Üretim emirleri ekranı için sunucu taraflı arama/filtre/sayfalama.
+     * Boş {@code durum}/{@code oncelik} ve {@code null} tarihler filtre uygulamaz.
+     */
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<UretimEmriDTO> filtreliEmirler(
+            Long sirketId, String q, String durum, String oncelik, Boolean geciken, Boolean buAy,
+            LocalDate baslangic, LocalDate bitis,
+            org.springframework.data.domain.Pageable pageable) {
+        String qq = com.raspel.erp.util.AramaTemizleyici.like(q);
+        String dd = (durum == null || durum.isBlank()) ? null : durum.trim();
+        String oo = (oncelik == null || oncelik.isBlank()) ? null : oncelik.trim();
+        LocalDateTime ayBaslangic = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+        return uretimEmriRepository.filtreliGetir(sirketId, qq, dd, oo,
+                Boolean.TRUE.equals(geciken), Boolean.TRUE.equals(buAy), ayBaslangic,
+                baslangic, bitis, LocalDate.now(), pageable)
+                .map(this::emriDTO);
+    }
+
     @Transactional
     public UretimEmriDTO uretimEmriOlustur(UretimEmriDTO dto, Long sirketId) {
         if (dto.getUrunId() == null) {
@@ -476,6 +495,7 @@ public class UretimService {
         long taslak = 0, uretimde = 0, tamamlandi = 0, iptal = 0, geciken = 0, buAyTamamlanan = 0;
         BigDecimal toplamUretilen = BigDecimal.ZERO;
         BigDecimal toplamFire = BigDecimal.ZERO;
+        BigDecimal toplamMaliyet = BigDecimal.ZERO;
         long sureSayisi = 0;
         BigDecimal toplamSureSaat = BigDecimal.ZERO;
         for (UretimEmri e : emirler) {
@@ -494,6 +514,7 @@ public class UretimService {
             }
             if (e.getUretilenMiktar() != null) toplamUretilen = toplamUretilen.add(e.getUretilenMiktar());
             if (e.getFireMiktar() != null) toplamFire = toplamFire.add(e.getFireMiktar());
+            if (e.getToplamMaliyet() != null) toplamMaliyet = toplamMaliyet.add(e.getToplamMaliyet());
             if (e.getBaslamaTarihi() != null && e.getTamamlanmaTarihi() != null) {
                 toplamSureSaat = toplamSureSaat.add(BigDecimal.valueOf(
                         Duration.between(e.getBaslamaTarihi(), e.getTamamlanmaTarihi()).toMinutes() / 60.0));
@@ -511,6 +532,9 @@ public class UretimService {
                 .taslak(taslak).uretimde(uretimde).tamamlandi(tamamlandi).iptal(iptal)
                 .geciken(geciken).buAyTamamlanan(buAyTamamlanan)
                 .fireOrani(fireOrani).ortalamaSureSaat(ortSure)
+                .toplamUretilen(toplamUretilen.setScale(2, RoundingMode.HALF_UP))
+                .toplamFire(toplamFire.setScale(2, RoundingMode.HALF_UP))
+                .toplamMaliyet(toplamMaliyet.setScale(2, RoundingMode.HALF_UP))
                 .build();
     }
 

@@ -69,6 +69,8 @@ class ExcelExportControllerTest {
     private com.raspel.erp.service.ticaret.SiparisTakipService siparisTakipService;
     @MockBean
     private com.raspel.erp.service.ticaret.TeslimatService teslimatService;
+    @MockBean
+    private com.raspel.erp.service.envanter.UretimService uretimService;
 
     @Test
     void cariHesaplar_excelDoner() throws Exception {
@@ -129,6 +131,29 @@ class ExcelExportControllerTest {
         when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
 
         mockMvc.perform(get("/api/exports/teslimatlar").requestAttr("sirketId", 1L).requestAttr("kullaniciId", 2L))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void uretimEmirleri_excelDoner() throws Exception {
+        when(uretimService.filtreliEmirler(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new PageImpl<>(List.of(com.raspel.erp.dto.envanter.UretimEmriDTO.builder()
+                        .id(1L).urunAd("Masa").durum("TASLAK").build())));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/uretim-emirleri").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(new byte[]{1, 2, 3}));
+    }
+
+    @Test
+    void uretimReceteler_excelDoner() throws Exception {
+        when(uretimService.receteler(any()))
+                .thenReturn(List.of(com.raspel.erp.dto.envanter.ReceteDTO.builder()
+                        .id(1L).ad("Masa Reçetesi").urunAd("Masa").build()));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/uretim-receteler").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk());
     }
 }

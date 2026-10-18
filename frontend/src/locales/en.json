@@ -4502,7 +4502,19 @@
     "pasif": "Passive",
     "fireOrani": "Scrap Rate (%)",
     "birim": "Unit",
-    "kalemFireOrani": "Item Scrap (%)"
+    "kalemFireOrani": "Item Scrap (%)",
+    "aramaPlaceholder": "Search product name...",
+    "baslangicTarihi": "Plan. Start",
+    "bitisTarihi": "Plan. End",
+    "excel": "Excel",
+    "excelIndirildi": "Excel downloaded",
+    "excelHata": "Excel could not be downloaded",
+    "emirFiltreYok": "No production orders match the filter.",
+    "cipTumu": "All",
+    "cipGeciken": "Overdue",
+    "toplamUretilen": "Total Produced",
+    "toplamFire": "Total Scrap",
+    "gecikti": "Overdue"
   },
   "vardiyalar": {
     "title": "Shift Management",

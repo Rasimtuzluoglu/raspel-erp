@@ -17,4 +17,7 @@ public class UretimOzetDTO {
     private long buAyTamamlanan;
     private BigDecimal fireOrani;
     private BigDecimal ortalamaSureSaat;
+    private BigDecimal toplamUretilen;
+    private BigDecimal toplamFire;
+    private BigDecimal toplamMaliyet;
 }

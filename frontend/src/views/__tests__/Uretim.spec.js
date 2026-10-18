@@ -25,27 +25,30 @@ vi.mock('../../api/index.js', () => ({
         ]
       })
     ),
-    emirler: vi.fn(() =>
+    emirlerFiltreli: vi.fn(() =>
       Promise.resolve({
-        data: [
-          {
-            id: 1,
-            urunId: 10,
-            urunAd: 'Masa',
-            miktar: 5,
-            durum: 'TASLAK',
-            oncelik: 'NORMAL',
-            planlananBaslangic: '2026-09-01',
-            planlananBitis: '2026-09-10',
-            uretilenMiktar: null,
-            fireMiktar: 0,
-            hammaddeMaliyeti: 0,
-            iscilikMaliyeti: 0,
-            toplamMaliyet: 0,
-            aciklama: ''
-          },
-          { id: 2, urunAd: 'Sandalye', miktar: 10, durum: 'URETIMDE', oncelik: 'YUKSEK', toplamMaliyet: 1500 }
-        ]
+        data: {
+          content: [
+            {
+              id: 1,
+              urunId: 10,
+              urunAd: 'Masa',
+              miktar: 5,
+              durum: 'TASLAK',
+              oncelik: 'NORMAL',
+              planlananBaslangic: '2026-09-01',
+              planlananBitis: '2026-09-10',
+              uretilenMiktar: null,
+              fireMiktar: 0,
+              hammaddeMaliyeti: 0,
+              iscilikMaliyeti: 0,
+              toplamMaliyet: 0,
+              aciklama: ''
+            },
+            { id: 2, urunAd: 'Sandalye', miktar: 10, durum: 'URETIMDE', oncelik: 'YUKSEK', toplamMaliyet: 1500 }
+          ],
+          totalElements: 2
+        }
       })
     ),
     ozet: vi.fn(() =>
@@ -100,6 +103,10 @@ vi.mock('../../api/index.js', () => ({
         }
       })
     )
+  },
+  excelAPI: {
+    uretimEmirleri: vi.fn(() => Promise.resolve({ data: new Blob([]) })),
+    uretimReceteler: vi.fn(() => Promise.resolve({ data: new Blob([]) }))
   }
 }))
 
@@ -116,13 +123,16 @@ const stubs = {
   DatePicker: true,
   Textarea: true,
   InputSwitch: true,
+  IconField: { template: '<div><slot /></div>' },
+  InputIcon: true,
   Tag: true,
   Dialog: { template: '<div><slot /><slot name="footer" /></div>' },
   TabView: { template: '<div><slot /></div>' },
   TabPanel: { props: ['header'], template: '<div><span class="tab-stub">{{ header }}</span><slot /></div>' },
   Column: true,
   SatirEylemleri: true,
-  EmptyState: true
+  EmptyState: true,
+  UretimEmriDetayDrawer: true
 }
 
 describe('Uretim.vue', () => {
@@ -138,7 +148,7 @@ describe('Uretim.vue', () => {
     await flushPromises()
     expect(wrapper.find('.uretim-sayfasi').exists()).toBe(true)
     expect(uretimAPI.receteler).toHaveBeenCalledTimes(1)
-    expect(uretimAPI.emirler).toHaveBeenCalledTimes(1)
+    expect(uretimAPI.emirlerFiltreli).toHaveBeenCalledTimes(1)
     expect(uretimAPI.ozet).toHaveBeenCalledTimes(1)
     expect(stokAPI.getAll).toHaveBeenCalledTimes(1)
   })

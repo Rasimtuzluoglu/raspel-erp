@@ -92,6 +92,12 @@ export const excelAPI = {
   },
   baBsExcel(params) {
     return apiClient.get('/exports/ba-bs', { params, responseType: 'blob' })
+  },
+  uretimEmirleri(params) {
+    return apiClient.get('/exports/uretim-emirleri', { params, responseType: 'blob' })
+  },
+  uretimReceteler() {
+    return apiClient.get('/exports/uretim-receteler', { responseType: 'blob' })
   }
 }
 

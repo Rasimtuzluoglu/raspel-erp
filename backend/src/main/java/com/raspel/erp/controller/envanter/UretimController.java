@@ -12,12 +12,18 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Tag(name = "Üretim", description = "Reçete (ürün ağacı) ve üretim emri yönetimi API")
@@ -70,6 +76,23 @@ public class UretimController {
     @Operation(summary = "Üretim emirlerini listele")
     public ResponseEntity<List<UretimEmriDTO>> emirler(HttpServletRequest request) {
         return ResponseEntity.ok(uretimService.uretimEmirleri(sirket(request)));
+    }
+
+    @GetMapping("/emirler/filtreli")
+    @Operation(summary = "Üretim emirlerini filtreli ve sayfalı listele",
+            description = "q (ürün adı), durum, oncelik, geciken, planlanan bitiş tarih aralığı ve sayfalama destekler")
+    public ResponseEntity<Page<UretimEmriDTO>> filtreliEmirler(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) String oncelik,
+            @RequestParam(required = false) Boolean geciken,
+            @RequestParam(required = false) Boolean buAy,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis,
+            @PageableDefault(size = 25, sort = "olusturmaTarihi", direction = Sort.Direction.DESC) Pageable pageable,
+            HttpServletRequest request) {
+        return ResponseEntity.ok(uretimService.filtreliEmirler(
+                sirket(request), q, durum, oncelik, geciken, buAy, baslangic, bitis, pageable));
     }
 
     @PostMapping("/emirler")
