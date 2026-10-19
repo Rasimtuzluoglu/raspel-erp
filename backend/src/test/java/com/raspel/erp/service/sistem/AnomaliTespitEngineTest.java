@@ -68,7 +68,7 @@ class AnomaliTespitEngineTest {
         List<AnomaliDTO> list = anomaliTespitEngine.anomalileriTara(100L);
 
         assertNotNull(list);
-        assertTrue(list.stream().anyMatch(a -> a.getTur().equals("ANORMAL_MASRAF")));
+        assertTrue(list.stream().anyMatch(a -> a.getTur().equals("YUKSEK_TUTAR")));
     }
 
 }

@@ -59,6 +59,8 @@ public class ExcelExportController {
     private final com.raspel.erp.service.sistem.DonemService donemService;
     private final com.raspel.erp.service.envanter.StokSayimService stokSayimService;
     private final com.raspel.erp.service.envanter.StokSeriService stokSeriService;
+    private final com.raspel.erp.service.sistem.AnomaliTespitEngine anomaliTespitEngine;
+    private final com.raspel.erp.service.sistem.IpWhitelistService ipWhitelistService;
 
     @GetMapping("/kdv-beyanname")
     @Operation(summary = "KDV beyannamesini Excel dışa aktar",
@@ -574,6 +576,63 @@ public class ExcelExportController {
         }).toList();
         return excel("StokSeriLot", new String[]{"ID", "Ürün", "Seri No", "Lot No", "Miktar",
                 "Kalan", "Depo ID", "SKT", "Durum", "Giriş"}, rows);
+    }
+
+    @GetMapping("/anomaliler")
+    @Operation(summary = "Anomalileri Excel dışa aktar",
+            description = "Taranan anomalileri (tür, seviye, başlık, açıklama, öneri) Excel (.xlsx) olarak dışa aktarır.")
+    public ResponseEntity<byte[]> anomaliler(
+            HttpServletRequest request,
+            @RequestParam(required = false) String seviye,
+            @RequestParam(required = false) String tur,
+            @RequestParam(required = false) String q) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        String qq = (q == null || q.isBlank()) ? null : q.trim().toLowerCase(java.util.Locale.ROOT);
+        java.util.Set<String> seviyeler = null;
+        if (seviye != null && !seviye.isBlank()) {
+            seviyeler = new java.util.HashSet<>();
+            for (String s : seviye.split(",")) {
+                if (!s.isBlank()) seviyeler.add(s.trim());
+            }
+        }
+        final java.util.Set<String> seviyeFiltre = seviyeler;
+        List<Map<String, Object>> rows = anomaliTespitEngine.anomalileriTara(sirketId).stream()
+                .filter(a -> seviyeFiltre == null || seviyeFiltre.contains(a.getSeviye()))
+                .filter(a -> tur == null || tur.isBlank() || tur.equals(a.getTur()))
+                .filter(a -> qq == null
+                        || (a.getBaslik() != null && a.getBaslik().toLowerCase(java.util.Locale.ROOT).contains(qq))
+                        || (a.getAciklama() != null && a.getAciklama().toLowerCase(java.util.Locale.ROOT).contains(qq))
+                        || (a.getOneri() != null && a.getOneri().toLowerCase(java.util.Locale.ROOT).contains(qq)))
+                .map(a -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("Tür", a.getTur());
+                    m.put("Seviye", a.getSeviye());
+                    m.put("Başlık", a.getBaslik());
+                    m.put("Açıklama", a.getAciklama());
+                    m.put("İlgili Kayıt", a.getIlgiliKayitId());
+                    m.put("Öneri", a.getOneri());
+                    m.put("Tespit Tarihi", a.getTespitTarihi());
+                    return m;
+                }).toList();
+        return excel("Anomaliler", new String[]{"Tür", "Seviye", "Başlık", "Açıklama",
+                "İlgili Kayıt", "Öneri", "Tespit Tarihi"}, rows);
+    }
+
+    @GetMapping("/ip-whitelist")
+    @Operation(summary = "IP beyaz listesini Excel dışa aktar",
+            description = "Güvenli IP/CIDR tanımlarını Excel (.xlsx) olarak dışa aktarır (yalnızca ADMIN).")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<byte[]> ipWhitelist(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        List<Map<String, Object>> rows = ipWhitelistService.listele(sirketId).stream().map(k -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("IP/CIDR", k.get("ipAdresi"));
+            m.put("Açıklama", k.get("aciklama"));
+            m.put("Durum", k.get("durum"));
+            m.put("Ekleme Tarihi", k.get("eklemeTarihi"));
+            return m;
+        }).toList();
+        return excel("IpWhitelist", new String[]{"IP/CIDR", "Açıklama", "Durum", "Ekleme Tarihi"}, rows);
     }
 
     private ResponseEntity<byte[]> excel(String name, String[] cols, List<Map<String, Object>> rows) {

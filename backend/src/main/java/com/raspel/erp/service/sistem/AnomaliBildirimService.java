@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class AnomaliBildirimService {
 
     private static final Set<String> BILDIRILECEK_TURLER = Set.of(
-            "MUKERRER_FATURA", "MUKERRER_ODEME", "ANORMAL_MASRAF"
+            "MUKERRER_FATURA", "MUKERRER_ODEME", "YUKSEK_TUTAR"
     );
 
     private final AnomaliTespitEngine anomaliTespitEngine;

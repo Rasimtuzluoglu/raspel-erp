@@ -53,7 +53,7 @@ class AnomaliBildirimServiceTest {
     void anomaliBildir_alertEmailBosIsSirketEmailKullanir() {
         ReflectionTestUtils.setField(anomaliBildirimService, "alertEmail", "");
         Sirket sirket = Sirket.builder().id(1L).email("sirket@test.com").build();
-        AnomaliDTO a = AnomaliDTO.builder().tur("ANORMAL_MASRAF").seviye("ORTA").build();
+        AnomaliDTO a = AnomaliDTO.builder().tur("YUKSEK_TUTAR").seviye("ORTA").build();
 
         anomaliBildirimService.anomaliBildir(sirket, List.of(a));
 

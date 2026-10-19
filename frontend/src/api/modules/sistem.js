@@ -425,6 +425,12 @@ export const anomaliAPI = {
   addIpWhitelist(data) {
     return apiClient.post('/anomaliler/ip-whitelist', data)
   },
+  updateIpWhitelist(id, data) {
+    return apiClient.put(`/anomaliler/ip-whitelist/${id}`, data)
+  },
+  durumGuncelle(anahtar, durum) {
+    return apiClient.put(`/anomaliler/${anahtar}/durum`, { durum })
+  },
   deleteIpWhitelist(id) {
     return apiClient.delete(`/anomaliler/ip-whitelist/${id}`)
   }

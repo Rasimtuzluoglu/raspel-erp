@@ -119,6 +119,12 @@ export const excelAPI = {
   },
   stokSeri(params) {
     return apiClient.get('/exports/stok-seri', { params, responseType: 'blob' })
+  },
+  anomaliler(params) {
+    return apiClient.get('/exports/anomaliler', { params, responseType: 'blob' })
+  },
+  ipWhitelist() {
+    return apiClient.get('/exports/ip-whitelist', { responseType: 'blob' })
   }
 }
 

@@ -79,6 +79,10 @@ class ExcelExportControllerTest {
     private com.raspel.erp.service.envanter.StokSayimService stokSayimService;
     @MockBean
     private com.raspel.erp.service.envanter.StokSeriService stokSeriService;
+    @MockBean
+    private com.raspel.erp.service.sistem.AnomaliTespitEngine anomaliTespitEngine;
+    @MockBean
+    private com.raspel.erp.service.sistem.IpWhitelistService ipWhitelistService;
 
     @Test
     void cariHesaplar_excelDoner() throws Exception {
@@ -246,6 +250,30 @@ class ExcelExportControllerTest {
         when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
 
         mockMvc.perform(get("/api/exports/stok-seri").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void anomaliler_excelDoner() throws Exception {
+        when(anomaliTespitEngine.anomalileriTara(any()))
+                .thenReturn(List.of(com.raspel.erp.dto.sistem.AnomaliDTO.builder()
+                        .id("a1").tur("MUKERRER_FATURA").seviye("YUKSEK").baslik("Mükerrer fatura").build()));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/anomaliler").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void ipWhitelist_excelDoner() throws Exception {
+        when(ipWhitelistService.listele(any()))
+                .thenReturn(List.of(Map.of("ipAdresi", "10.0.0.1", "aciklama", "Ofis", "durum", "AKTIF")));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/ip-whitelist")
+                        .requestAttr("sirketId", 1L)
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                                .user("admin").roles("ADMIN")))
                 .andExpect(status().isOk());
     }
 }

@@ -35,6 +35,7 @@ class AnomaliControllerTest {
     @Autowired private ObjectMapper objectMapper;
     @MockBean private AnomaliTespitEngine anomaliTespitEngine;
     @MockBean private IpWhitelistService ipWhitelistService;
+    @MockBean private com.raspel.erp.service.sistem.AnomaliDurumService anomaliDurumService;
 
     @Test
     void shouldGetAnomaliler() throws Exception {
@@ -54,7 +55,9 @@ class AnomaliControllerTest {
         map.put("aciklama", "Ofis");
         when(ipWhitelistService.listele(1L)).thenReturn(List.of(map));
 
-        mockMvc.perform(get("/api/anomaliler/ip-whitelist").requestAttr("sirketId", 1L))
+        mockMvc.perform(get("/api/anomaliler/ip-whitelist").requestAttr("sirketId", 1L)
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                                .user("admin").roles("ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].ipAdresi").value("192.168.1.1"));
     }
@@ -68,6 +71,8 @@ class AnomaliControllerTest {
 
         mockMvc.perform(post("/api/anomaliler/ip-whitelist")
                         .requestAttr("sirketId", 1L)
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                                .user("admin").roles("ADMIN"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(entry)))
                 .andExpect(status().isOk())
@@ -78,7 +83,21 @@ class AnomaliControllerTest {
     void shouldDeleteIpWhitelist() throws Exception {
         when(ipWhitelistService.sil(eq(1L), eq(1L))).thenReturn(List.of());
 
-        mockMvc.perform(delete("/api/anomaliler/ip-whitelist/1").requestAttr("sirketId", 1L))
+        mockMvc.perform(delete("/api/anomaliler/ip-whitelist/1").requestAttr("sirketId", 1L)
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                                .user("admin").roles("ADMIN")))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldUpdateAnomaliDurum() throws Exception {
+        mockMvc.perform(put("/api/anomaliler/a1/durum")
+                        .requestAttr("sirketId", 1L)
+                        .requestAttr("kullaniciId", 2L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"durum\":\"INCELENDI\"}"))
+                .andExpect(status().isNoContent());
+
+        org.mockito.Mockito.verify(anomaliDurumService).isaretle(1L, "a1", "INCELENDI", 2L);
     }
 }

@@ -42,16 +42,29 @@ public class AnomaliTespitEngine {
 
     // IP beyaz listesi artik IpWhitelistService ile veritabaninda (tenant bazli) tutulur.
 
+    /**
+     * Aynı bulgunun her taramada aynı anahtarı üretmesini sağlar; kalıcı
+     * "incelendi / yok say" durumu bu anahtara bağlanır.
+     */
+    private static String anahtar(String tur, Long kayitId) {
+        return UUID.nameUUIDFromBytes((tur + ":" + kayitId)
+                .getBytes(java.nio.charset.StandardCharsets.UTF_8)).toString();
+    }
+
     private void mukerrerFaturaKontrol(Long sirketId, List<AnomaliDTO> list) {
         for (Map<String, Object> g : faturaRepository.mukerrerFaturaGruplari(sirketId)) {
+            Long ilkId = ((Number) g.get("ilkId")).longValue();
+            String ilkNo = faturaRepository.findById(ilkId)
+                    .map(Fatura::getFaturaNumarasi).orElse(null);
             list.add(AnomaliDTO.builder()
-                    .id(UUID.randomUUID().toString())
+                    .id(anahtar("MUKERRER_FATURA", ilkId))
                     .tur("MUKERRER_FATURA")
                     .seviye("YUKSEK")
                     .baslik("Mükerrer Fatura Şüphesi")
                     .aciklama(String.format("%s cari hesabı için aynı tutarda (%s TL) %d adet fatura kesilmiş.",
                             g.get("cariAd"), g.get("tutar"), ((Number) g.get("adet")).longValue()))
-                    .ilgiliKayitId(((Number) g.get("ilkId")).longValue())
+                    .ilgiliKayitId(ilkId)
+                    .ilgiliKayitNo(ilkNo)
                     .oneri("Faturaların ayrıntılarını ve fatura numaralarını kontrol ederek mükerrer kaydı iptal ediniz.")
                     .tespitTarihi(LocalDateTime.now())
                     .build());
@@ -60,14 +73,15 @@ public class AnomaliTespitEngine {
 
     private void mukerrerHareketKontrol(Long sirketId, List<AnomaliDTO> list) {
         for (Map<String, Object> g : hareketRepository.mukerrerHareketGruplari(sirketId)) {
+            Long ilkId = ((Number) g.get("ilkId")).longValue();
             list.add(AnomaliDTO.builder()
-                    .id(UUID.randomUUID().toString())
+                    .id(anahtar("MUKERRER_ODEME", ilkId))
                     .tur("MUKERRER_ODEME")
                     .seviye("YUKSEK")
                     .baslik("Mükerrer Ödeme/Tahsilat Şüphesi")
                     .aciklama(String.format("Cari #%s için %s türünde aynı tutarda (%s TL) %d adet hareket kaydı var.",
                             g.get("cariAd"), g.get("tur"), g.get("tutar"), ((Number) g.get("adet")).longValue()))
-                    .ilgiliKayitId(((Number) g.get("ilkId")).longValue())
+                    .ilgiliKayitId(ilkId)
                     .oneri("Kasa/Banka hesap ekstrelerini karşılaştırarak mükerrer finans hareketini siliniz.")
                     .tespitTarihi(LocalDateTime.now())
                     .build());
@@ -78,12 +92,13 @@ public class AnomaliTespitEngine {
         BigDecimal esik = BigDecimal.valueOf(50000);
         for (Fatura f : faturaRepository.yuksekTutarliFaturalar(sirketId, esik)) {
             list.add(AnomaliDTO.builder()
-                    .id(UUID.randomUUID().toString())
-                    .tur("ANORMAL_MASRAF")
+                    .id(anahtar("YUKSEK_TUTAR", f.getId()))
+                    .tur("YUKSEK_TUTAR")
                     .seviye("ORTA")
                     .baslik("Yüksek Tutarlı İşlem Uyarısı")
                     .aciklama(String.format("%s numaralı fatura %s TL tutarı ile yüksek tutarlı işlem eşiğini (%s TL) aşmaktadır.", f.getFaturaNumarasi(), f.getGenelToplam(), esik))
                     .ilgiliKayitId(f.getId())
+                    .ilgiliKayitNo(f.getFaturaNumarasi())
                     .oneri("Yüksek tutarlı fatura için yönetici onay durumunu kontrol edin.")
                     .tespitTarihi(LocalDateTime.now())
                     .build());
