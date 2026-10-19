@@ -41,6 +41,39 @@ public class StokSayimService {
         return stokSayimRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable).map(this::entityToDTO);
     }
 
+    /** Sayım KPI özeti: toplam/durum dağılımı + farklı ve bugünkü sayımlar. */
+    @Transactional(readOnly = true)
+    public com.raspel.erp.dto.envanter.StokSayimOzetDTO ozet(Long sirketId) {
+        if (sirketId == null) {
+            return com.raspel.erp.dto.envanter.StokSayimOzetDTO.builder().build();
+        }
+        return com.raspel.erp.dto.envanter.StokSayimOzetDTO.builder()
+                .toplam(stokSayimRepository.countBySirketId(sirketId))
+                .taslak(stokSayimRepository.countBySirketIdAndDurum(sirketId, "TASLAK"))
+                .tamamlanan(stokSayimRepository.countBySirketIdAndDurum(sirketId, "TAMAMLANDI"))
+                .iptal(stokSayimRepository.countBySirketIdAndDurum(sirketId, "IPTAL"))
+                .farkli(stokSayimRepository.countFarkliTamamlanan(sirketId))
+                .bugun(stokSayimRepository.countBySirketIdAndTarih(sirketId, java.time.LocalDate.now()))
+                .build();
+    }
+
+    /**
+     * Sunucu taraflı sayım listesi. Boş {@code durum} ve {@code null} tarihler
+     * filtre uygulamaz; {@code q} joker kaçışlı arama desenine çevrilir.
+     */
+    @Transactional(readOnly = true)
+    public Page<StokSayimDTO> filtreliGetir(Long sirketId, String q, String durum,
+                                            java.time.LocalDate baslangic, java.time.LocalDate bitis,
+                                            Pageable pageable) {
+        if (sirketId == null) {
+            return Page.empty(pageable);
+        }
+        String qq = com.raspel.erp.util.AramaTemizleyici.like(q);
+        String dd = (durum == null || durum.isBlank()) ? null : durum.trim();
+        return stokSayimRepository.filtreliGetir(sirketId, qq, dd, baslangic, bitis, pageable)
+                .map(this::entityToDTO);
+    }
+
     @Transactional(readOnly = true)
     public StokSayimDTO getir(Long id) {
         StokSayim s = stokSayimRepository.findById(id)
@@ -50,18 +83,32 @@ public class StokSayimService {
     }
 
     public StokSayimDTO olustur(StokSayimDTO dto, Long sirketId) {
+        if (dto.getStokId() == null) {
+            throw new BusinessException("Ürün seçilmelidir");
+        }
+        if (dto.getTarih() == null) {
+            throw new BusinessException("Sayım tarihi zorunludur");
+        }
         Stok stok = stokRepository.findById(dto.getStokId())
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", dto.getStokId()));
         tenantChecker.check(stok.getSirketId(), "Stok");
         if (sirketId != null && stok.getSirketId() != null && !sirketId.equals(stok.getSirketId())) {
             throw new ResourceNotFoundException("Stok bu sirkete ait degil");
         }
+        BigDecimal beklenen = dto.getBeklenenMiktar() != null
+                ? dto.getBeklenenMiktar()
+                : (stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO);
+        BigDecimal sayilan = dto.getSayilanMiktar() != null ? dto.getSayilanMiktar() : BigDecimal.ZERO;
+        if (sayilan.signum() < 0) {
+            throw new BusinessException("Sayılan miktar negatif olamaz");
+        }
         StokSayim sayim = StokSayim.builder()
                 .tarih(dto.getTarih())
                 .stok(stok)
-                .beklenenMiktar(dto.getBeklenenMiktar() != null ? dto.getBeklenenMiktar() : BigDecimal.ZERO)
-                .sayilanMiktar(dto.getSayilanMiktar() != null ? dto.getSayilanMiktar() : BigDecimal.ZERO)
-                .fark(dto.getFark())
+                .beklenenMiktar(beklenen)
+                .sayilanMiktar(sayilan)
+                // Fark istemciden ALINMAZ; sunucuda beklenen-sayılan üzerinden hesaplanır.
+                .fark(sayilan.subtract(beklenen))
                 // Faz 0.8: durum istemciden ALINMAZ. Yeni sayım her zaman TASLAK
                 // başlar; stok etkisi yalnızca durumGuncelle(TAMAMLANDI) ile uygulanır.
                 .durum("TASLAK")
@@ -75,13 +122,12 @@ public class StokSayimService {
         StokSayim sayim = stokSayimRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("StokSayim", id));
         tenantChecker.check(sayim.getSirketId(), "StokSayim");
+        // Tamamlanmış/iptal sayım düzenlenemez: stok etkisi yeniden uygulanmadığı
+        // için tutarsız fark oluşur. Önce durum TASLAK'a alınmalıdır.
+        if (!"TASLAK".equals(sayim.getDurum())) {
+            throw new BusinessException("Yalnızca taslak sayımlar düzenlenebilir.");
+        }
         if (dto.getTarih() != null) sayim.setTarih(dto.getTarih());
-        if (dto.getBeklenenMiktar() != null) sayim.setBeklenenMiktar(dto.getBeklenenMiktar());
-        if (dto.getSayilanMiktar() != null) sayim.setSayilanMiktar(dto.getSayilanMiktar());
-        if (dto.getFark() != null) sayim.setFark(dto.getFark());
-        // Faz 0.8: durum güncellemede istemciden yazılmaz; yalnızca
-        // durumGuncelle(TASLAK/TAMAMLANDI/IPTAL) ile değiştirilebilir.
-        if (dto.getAciklama() != null) sayim.setAciklama(dto.getAciklama());
         if (dto.getStokId() != null) {
             Stok stok = stokRepository.findById(dto.getStokId())
                     .orElseThrow(() -> new ResourceNotFoundException("Stok", dto.getStokId()));
@@ -91,6 +137,16 @@ public class StokSayimService {
             }
             sayim.setStok(stok);
         }
+        if (dto.getBeklenenMiktar() != null) sayim.setBeklenenMiktar(dto.getBeklenenMiktar());
+        if (dto.getSayilanMiktar() != null) {
+            if (dto.getSayilanMiktar().signum() < 0) {
+                throw new BusinessException("Sayılan miktar negatif olamaz");
+            }
+            sayim.setSayilanMiktar(dto.getSayilanMiktar());
+        }
+        // Fark istemciden ALINMAZ; güncel beklenen/sayılan üzerinden sunucuda hesaplanır.
+        sayim.setFark(nz(sayim.getSayilanMiktar()).subtract(nz(sayim.getBeklenenMiktar())));
+        if (dto.getAciklama() != null) sayim.setAciklama(dto.getAciklama());
         return entityToDTO(stokSayimRepository.save(sayim));
     }
 
@@ -218,11 +274,14 @@ public class StokSayimService {
             throw new BusinessException("Barkod eşleşen stok bulunamadı: " + barkod);
         }
         BigDecimal miktar = (adet != null && adet.compareTo(BigDecimal.ZERO) > 0) ? adet : BigDecimal.ONE;
+        java.time.LocalDate bugun = java.time.LocalDate.now();
+        // Yalnızca BUGÜNKÜ TASLAK sayıma eklenir; dünkü taslak sessizce büyümez.
         StokSayim sayim = stokSayimRepository
-                .findFirstBySirketIdAndStokIdAndDurumOrderByOlusturmaTarihiDesc(sirketId, stok.getId(), "TASLAK")
+                .findFirstBySirketIdAndStokIdAndDurumAndTarihOrderByOlusturmaTarihiDesc(
+                        sirketId, stok.getId(), "TASLAK", bugun)
                 .orElseGet(() -> {
                     StokSayim yeni = StokSayim.builder()
-                            .tarih(java.time.LocalDate.now())
+                            .tarih(bugun)
                             .stok(stok)
                             .beklenenMiktar(stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO)
                             .sayilanMiktar(BigDecimal.ZERO)

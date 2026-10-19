@@ -57,6 +57,7 @@ public class ExcelExportController {
     private final com.raspel.erp.service.envanter.UretimService uretimService;
     private final com.raspel.erp.service.sistem.Gorunum360Service gorunum360Service;
     private final com.raspel.erp.service.sistem.DonemService donemService;
+    private final com.raspel.erp.service.envanter.StokSayimService stokSayimService;
 
     @GetMapping("/kdv-beyanname")
     @Operation(summary = "KDV beyannamesini Excel dışa aktar",
@@ -514,6 +515,33 @@ public class ExcelExportController {
         }).toList();
         return excel("DonemKapanislar", new String[]{"ID", "Mali Yıl", "Kapanış Tarihi",
                 "Kullanıcı ID", "Kilitlenen Dönem", "Not"}, rows);
+    }
+
+    @GetMapping("/stok-sayim")
+    @Operation(summary = "Stok sayımlarını Excel dışa aktar",
+            description = "Filtrelenen stok sayımlarını (tarih, ürün, beklenen/sayılan/fark, durum) Excel (.xlsx) olarak dışa aktarır.")
+    public ResponseEntity<byte[]> stokSayim(
+            HttpServletRequest request,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        var list = stokSayimService.filtreliGetir(sirketId, q, durum, baslangic, bitis, MAX_EXPORT_PAGE).getContent();
+        List<Map<String, Object>> rows = list.stream().map(s -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("ID", s.getId());
+            m.put("Tarih", s.getTarih());
+            m.put("Ürün", s.getStokAdi());
+            m.put("Beklenen", s.getBeklenenMiktar());
+            m.put("Sayılan", s.getSayilanMiktar());
+            m.put("Fark", s.getFark());
+            m.put("Durum", s.getDurum());
+            m.put("Açıklama", s.getAciklama());
+            return m;
+        }).toList();
+        return excel("StokSayim", new String[]{"ID", "Tarih", "Ürün", "Beklenen", "Sayılan",
+                "Fark", "Durum", "Açıklama"}, rows);
     }
 
     private ResponseEntity<byte[]> excel(String name, String[] cols, List<Map<String, Object>> rows) {

@@ -113,6 +113,9 @@ export const excelAPI = {
   },
   donemKapanislari() {
     return apiClient.get('/exports/donem-kapanislar', { responseType: 'blob' })
+  },
+  stokSayim(params) {
+    return apiClient.get('/exports/stok-sayim', { params, responseType: 'blob' })
   }
 }
 

@@ -267,11 +267,20 @@ export const stokSayimAPI = {
   getAll(params = { size: 500 }) {
     return apiClient.get('/stok-sayim', { params })
   },
+  ozet() {
+    return apiClient.get('/stok-sayim/ozet')
+  },
+  filtreli(params = {}) {
+    return apiClient.get('/stok-sayim/filtreli', { params })
+  },
   getById(id) {
     return apiClient.get(`/stok-sayim/${id}`)
   },
   create(data) {
     return apiClient.post('/stok-sayim', data)
+  },
+  update(id, data) {
+    return apiClient.put(`/stok-sayim/${id}`, data)
   },
   durumGuncelle(id, durum) {
     return apiClient.put(`/stok-sayim/${id}/durum`, { durum })

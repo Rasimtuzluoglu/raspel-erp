@@ -14,8 +14,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import com.raspel.erp.entity.envanter.Stok;
+
+import java.time.LocalDate;
 
 @Tag(name = "Stok Sayım", description = "Stok sayım yönetimi API")
 @RestController
@@ -31,6 +35,28 @@ public class StokSayimController {
     public ResponseEntity<Page<StokSayimDTO>> tumu(HttpServletRequest request, @PageableDefault(size = 50) Pageable pageable) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(stokSayimService.tumunuGetir(sirketId, pageable));
+    }
+
+    @GetMapping("/ozet")
+    @Operation(summary = "Stok sayım KPI özeti",
+            description = "Toplam/taslak/tamamlanan/iptal sayıları, farklı ve bugünkü sayım adetleri")
+    public ResponseEntity<com.raspel.erp.dto.envanter.StokSayimOzetDTO> ozet(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokSayimService.ozet(sirketId));
+    }
+
+    @GetMapping("/filtreli")
+    @Operation(summary = "Stok sayımlarını filtreli ve sayfalı listele",
+            description = "q (ürün/kod/barkod), durum, tarih aralığı ve sayfalama destekler")
+    public ResponseEntity<Page<StokSayimDTO>> filtreli(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis,
+            @PageableDefault(size = 25, sort = "tarih", direction = Sort.Direction.DESC) Pageable pageable,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokSayimService.filtreliGetir(sirketId, q, durum, baslangic, bitis, pageable));
     }
 
     @PostMapping("/tarama")
