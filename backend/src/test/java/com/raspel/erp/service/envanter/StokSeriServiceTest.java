@@ -41,13 +41,27 @@ class StokSeriServiceTest {
 
     private StokSeri seri(Long id, Long stokId) {
         Stok stok = Stok.builder().id(stokId).ad("Ürün").sirketId(1L).build();
-        return StokSeri.builder().id(id).stok(stok).seriNo("SN" + id).build();
+        return StokSeri.builder().id(id).stok(stok).seriNo("SN" + id).durum("STOKTA").build();
     }
 
     @Test
     void tumunuGetir_nullSirketIdBosSayfaDoner() {
         Page<StokSeriDTO> sonuc = stokSeriService.tumunuGetir(null, Pageable.unpaged());
         assertTrue(sonuc.isEmpty());
+    }
+
+    @Test
+    void filtreliGetir_sayfaliDonerVeDTOyaMapEder() {
+        StokSeri s = seri(1L, 10L);
+        s.setDurum("STOKTA");
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 25);
+        when(stokSeriRepository.filtreliGetir(eq(1L), any(), eq("STOKTA"), any(), any(), any(), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of(s)));
+
+        Page<StokSeriDTO> sonuc = stokSeriService.filtreliGetir(1L, "SN", "STOKTA", null, null, null, pageable);
+
+        assertEquals(1, sonuc.getTotalElements());
+        assertEquals("SN1", sonuc.getContent().get(0).getSeriNo());
     }
 
     @Test
@@ -133,5 +147,46 @@ class StokSeriServiceTest {
         assertEquals("TUKETILDI", yakin.getDurum());
         assertEquals(0, uzak.getKalanMiktar().compareTo(new java.math.BigDecimal("8")));
         assertEquals(2, tuketilen.size());
+    }
+
+    @Test
+    void olustur_mukerrerSeriNoReddedilir() {
+        Stok stok = Stok.builder().id(10L).ad("Ürün").sirketId(1L).build();
+        when(stokRepository.findById(10L)).thenReturn(Optional.of(stok));
+        when(stokSeriRepository.existsByStokIdAndSeriNo(10L, "SN-X")).thenReturn(true);
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () ->
+                stokSeriService.olustur(StokSeriDTO.builder().stokId(10L).seriNo("SN-X").build()));
+        verify(stokSeriRepository, never()).save(any());
+    }
+
+    @Test
+    void guncelle_tuketilmisReddedilir() {
+        StokSeri s = seri(1L, 10L);
+        s.setDurum("TUKETILDI");
+        when(stokSeriRepository.findById(1L)).thenReturn(Optional.of(s));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () ->
+                stokSeriService.guncelle(1L, StokSeriDTO.builder().seriNo("YENI").build()));
+        verify(stokSeriRepository, never()).save(any());
+    }
+
+    @Test
+    void sil_tuketilmisReddedilir() {
+        StokSeri s = seri(1L, 10L);
+        s.setDurum("TUKETILDI");
+        when(stokSeriRepository.findById(1L)).thenReturn(Optional.of(s));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () -> stokSeriService.sil(1L));
+        verify(stokSeriRepository, never()).deleteById(1L);
+    }
+
+    @Test
+    void sil_hareketeBagliReddedilir() {
+        when(stokSeriRepository.findById(1L)).thenReturn(Optional.of(seri(1L, 10L)));
+        when(stokHareketRepository.existsBySeriId(1L)).thenReturn(true);
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () -> stokSeriService.sil(1L));
+        verify(stokSeriRepository, never()).deleteById(1L);
     }
 }

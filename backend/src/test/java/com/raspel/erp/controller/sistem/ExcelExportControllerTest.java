@@ -77,6 +77,8 @@ class ExcelExportControllerTest {
     private com.raspel.erp.service.sistem.DonemService donemService;
     @MockBean
     private com.raspel.erp.service.envanter.StokSayimService stokSayimService;
+    @MockBean
+    private com.raspel.erp.service.envanter.StokSeriService stokSeriService;
 
     @Test
     void cariHesaplar_excelDoner() throws Exception {
@@ -233,6 +235,17 @@ class ExcelExportControllerTest {
         when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
 
         mockMvc.perform(get("/api/exports/stok-sayim").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void stokSeri_excelDoner() throws Exception {
+        when(stokSeriService.filtreliGetir(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new PageImpl<>(List.of(com.raspel.erp.dto.envanter.StokSeriDTO.builder()
+                        .id(1L).stokAdi("Masa").seriNo("SN-1").durum("STOKTA").build())));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/stok-seri").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk());
     }
 }

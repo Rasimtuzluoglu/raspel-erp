@@ -116,6 +116,9 @@ export const excelAPI = {
   },
   stokSayim(params) {
     return apiClient.get('/exports/stok-sayim', { params, responseType: 'blob' })
+  },
+  stokSeri(params) {
+    return apiClient.get('/exports/stok-seri', { params, responseType: 'blob' })
   }
 }
 

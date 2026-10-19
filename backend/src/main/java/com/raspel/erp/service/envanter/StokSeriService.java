@@ -38,6 +38,40 @@ public class StokSeriService {
         return stokSeriRepository.findByStokSirketId(sirketId, pageable).map(this::entityToDTO);
     }
 
+    /** Seri/lot KPI özeti: durum dağılımı + SKT yaklaşan/geçmiş. */
+    @Transactional(readOnly = true)
+    public com.raspel.erp.dto.envanter.StokSeriOzetDTO ozet(Long sirketId, int gun) {
+        if (sirketId == null) {
+            return com.raspel.erp.dto.envanter.StokSeriOzetDTO.builder().build();
+        }
+        java.time.LocalDate bugun = java.time.LocalDate.now();
+        java.time.LocalDate esik = bugun.plusDays(Math.max(0, gun));
+        return com.raspel.erp.dto.envanter.StokSeriOzetDTO.builder()
+                .toplam(stokSeriRepository.countByStokSirketId(sirketId))
+                .stokta(stokSeriRepository.countByStokSirketIdAndDurum(sirketId, "STOKTA"))
+                .tuketildi(stokSeriRepository.countByStokSirketIdAndDurum(sirketId, "TUKETILDI"))
+                .sktYaklasan(stokSeriRepository.countSktYaklasan(sirketId, bugun, esik))
+                .sktGecmis(stokSeriRepository.countSktGecmis(sirketId, bugun))
+                .build();
+    }
+
+    /**
+     * Sunucu taraflı seri/lot listesi. Boş {@code durum} ve {@code null}
+     * filtreler uygulanmaz; {@code q} joker kaçışlı arama desenine çevrilir.
+     */
+    @Transactional(readOnly = true)
+    public Page<StokSeriDTO> filtreliGetir(Long sirketId, String q, String durum, Long depoId,
+                                           java.time.LocalDate sktBaslangic, java.time.LocalDate sktBitis,
+                                           Pageable pageable) {
+        if (sirketId == null) {
+            return Page.empty(pageable);
+        }
+        String qq = com.raspel.erp.util.AramaTemizleyici.like(q);
+        String dd = (durum == null || durum.isBlank()) ? null : durum.trim();
+        return stokSeriRepository.filtreliGetir(sirketId, qq, dd, depoId, sktBaslangic, sktBitis, pageable)
+                .map(this::entityToDTO);
+    }
+
     @Transactional(readOnly = true)
     public List<StokSeriDTO> stokIcinGetir(Long stokId) {
         Stok stok = stokRepository.findById(stokId)
@@ -64,13 +98,27 @@ public class StokSeriService {
     }
 
     public StokSeriDTO olustur(StokSeriDTO dto) {
+        if (dto.getStokId() == null) {
+            throw new com.raspel.erp.exception.BusinessException("Ürün seçilmelidir");
+        }
+        String seriNo = dto.getSeriNo() != null ? dto.getSeriNo().trim() : null;
+        if (seriNo == null || seriNo.isEmpty()) {
+            throw new com.raspel.erp.exception.BusinessException("Seri no zorunludur");
+        }
+        java.math.BigDecimal miktar = dto.getMiktar() != null ? dto.getMiktar() : java.math.BigDecimal.ONE;
+        if (miktar.signum() <= 0) {
+            throw new com.raspel.erp.exception.BusinessException("Miktar 0'dan büyük olmalıdır");
+        }
         Stok stok = stokRepository.findById(dto.getStokId())
                 .orElseThrow(() -> new ResourceNotFoundException("Stok", dto.getStokId()));
         tenantChecker.check(stok.getSirketId(), "Stok");
-        java.math.BigDecimal miktar = dto.getMiktar() != null ? dto.getMiktar() : java.math.BigDecimal.ONE;
+        if (stokSeriRepository.existsByStokIdAndSeriNo(stok.getId(), seriNo)) {
+            throw new com.raspel.erp.exception.BusinessException(
+                    "Bu üründe aynı seri no zaten kayıtlı: " + seriNo);
+        }
         StokSeri seri = StokSeri.builder()
                 .stok(stok)
-                .seriNo(dto.getSeriNo())
+                .seriNo(seriNo)
                 .lotNo(dto.getLotNo())
                 .sonKullanmaTarihi(dto.getSonKullanmaTarihi())
                 .depoId(dto.getDepoId())
@@ -118,24 +166,33 @@ public class StokSeriService {
         return tuketilen;
     }
 
+    /**
+     * Yalnızca STOKTA serilerde güvenli alanlar güncellenir: seriNo, lotNo,
+     * SKT ve depo. Ürün, miktar ve kalan miktar harekete/FEFO'ya bağlı olduğu
+     * için değiştirilmez.
+     */
     public StokSeriDTO guncelle(Long id, StokSeriDTO dto) {
         StokSeri seri = stokSeriRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("StokSeri", id));
         tenantChecker.check(seri.getStok().getSirketId(), "StokSeri");
-        if (dto.getSeriNo() != null) seri.setSeriNo(dto.getSeriNo());
+        if (!"STOKTA".equals(seri.getDurum())) {
+            throw new com.raspel.erp.exception.BusinessException(
+                    "Yalnızca stoktaki seri/lotlar düzenlenebilir.");
+        }
+        String yeniSeriNo = dto.getSeriNo() != null ? dto.getSeriNo().trim() : seri.getSeriNo();
+        if (yeniSeriNo == null || yeniSeriNo.isEmpty()) {
+            throw new com.raspel.erp.exception.BusinessException("Seri no zorunludur");
+        }
+        if (!yeniSeriNo.equals(seri.getSeriNo())
+                && stokSeriRepository.existsByStokIdAndSeriNoAndIdNot(seri.getStok().getId(), yeniSeriNo, id)) {
+            throw new com.raspel.erp.exception.BusinessException(
+                    "Bu üründe aynı seri no zaten kayıtlı: " + yeniSeriNo);
+        }
+        seri.setSeriNo(yeniSeriNo);
         if (dto.getLotNo() != null) seri.setLotNo(dto.getLotNo());
         if (dto.getSonKullanmaTarihi() != null) seri.setSonKullanmaTarihi(dto.getSonKullanmaTarihi());
-        if (dto.getStokId() != null) {
-            Stok stok = stokRepository.findById(dto.getStokId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Stok", dto.getStokId()));
-            tenantChecker.check(stok.getSirketId(), "Stok");
-            seri.setStok(stok);
-        }
-        if (dto.getStokHareketId() != null) {
-            StokHareket hareket = stokHareketRepository.findById(dto.getStokHareketId())
-                    .orElseThrow(() -> new ResourceNotFoundException("StokHareket", dto.getStokHareketId()));
-            seri.setStokHareket(hareket);
-        }
+        // depo temizlenebilsin diye her zaman yazılır (form tam gönderilir).
+        seri.setDepoId(dto.getDepoId());
         return entityToDTO(stokSeriRepository.save(seri));
     }
 
@@ -143,6 +200,13 @@ public class StokSeriService {
         StokSeri seri = stokSeriRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("StokSeri", id));
         tenantChecker.check(seri.getStok().getSirketId(), "StokSeri");
+        if ("TUKETILDI".equals(seri.getDurum())) {
+            throw new com.raspel.erp.exception.BusinessException("Tüketilmiş seri/lot silinemez.");
+        }
+        if (stokHareketRepository.existsBySeriId(id)) {
+            throw new com.raspel.erp.exception.BusinessException(
+                    "Bu seri/lot bir stok hareketine bağlı olduğu için silinemez.");
+        }
         stokSeriRepository.deleteById(id);
     }
 

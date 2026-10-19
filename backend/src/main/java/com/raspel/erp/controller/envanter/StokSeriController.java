@@ -14,7 +14,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
+import java.time.LocalDate;
 import java.util.List;
 import com.raspel.erp.entity.envanter.Stok;
 
@@ -32,6 +35,32 @@ public class StokSeriController {
     public ResponseEntity<Page<StokSeriDTO>> tumu(HttpServletRequest request, @PageableDefault(size = 50) Pageable pageable) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(stokSeriService.tumunuGetir(sirketId, pageable));
+    }
+
+    @GetMapping("/ozet")
+    @Operation(summary = "Seri/lot KPI özeti",
+            description = "Toplam/stokta/tüketildi, SKT yaklaşan ve geçmiş seri adetleri")
+    public ResponseEntity<com.raspel.erp.dto.envanter.StokSeriOzetDTO> ozet(
+            HttpServletRequest request,
+            @RequestParam(defaultValue = "30") int gun) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokSeriService.ozet(sirketId, gun));
+    }
+
+    @GetMapping("/filtreli")
+    @Operation(summary = "Seri/lotları filtreli ve sayfalı listele",
+            description = "q (ürün/seri/lot), durum, depo ve SKT aralığı destekler")
+    public ResponseEntity<Page<StokSeriDTO>> filtreli(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) Long depoId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate sktBaslangic,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate sktBitis,
+            @PageableDefault(size = 25, sort = "olusturmaTarihi", direction = Sort.Direction.DESC) Pageable pageable,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(stokSeriService.filtreliGetir(
+                sirketId, q, durum, depoId, sktBaslangic, sktBitis, pageable));
     }
 
     @GetMapping("/stok/{stokId}")

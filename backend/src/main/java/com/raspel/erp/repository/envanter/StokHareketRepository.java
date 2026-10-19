@@ -39,6 +39,9 @@ public interface StokHareketRepository extends JpaRepository<StokHareket, Long> 
     long countByStokId(Long stokId);
     long countByStokSirketIdAndTur(Long sirketId, String tur);
 
+    /** Bir stok hareketi bu seriye bağlı mı? (silme koruması) */
+    boolean existsBySeriId(Long seriId);
+
     @Query("SELECT new map(h.stok.ad as stokAd, h.stok.stokKodu as stokKodu, SUM(h.miktar) as satisMiktari) FROM StokHareket h WHERE h.tur = 'CIKIS' AND h.stok.sirketId = :sirketId GROUP BY h.stok.ad, h.stok.stokKodu ORDER BY SUM(h.miktar) DESC")
     List<Map<String, Object>> enCokSatanlar();
 

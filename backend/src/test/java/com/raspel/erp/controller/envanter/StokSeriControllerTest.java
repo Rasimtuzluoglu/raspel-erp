@@ -61,4 +61,27 @@ class StokSeriControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1));
     }
+
+    @Test
+    void filtreli_donar() throws Exception {
+        when(stokSeriService.filtreliGetir(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new PageImpl<>(List.of(
+                        StokSeriDTO.builder().id(1L).seriNo("SN-1").durum("STOKTA").build())));
+
+        mockMvc.perform(get("/api/stok-seri/filtreli")
+                        .requestAttr("sirketId", 1L)
+                        .param("durum", "STOKTA"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].seriNo").value("SN-1"));
+    }
+
+    @Test
+    void ozet_donar() throws Exception {
+        when(stokSeriService.ozet(1L, 30))
+                .thenReturn(com.raspel.erp.dto.envanter.StokSeriOzetDTO.builder().toplam(3).build());
+
+        mockMvc.perform(get("/api/stok-seri/ozet").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.toplam").value(3));
+    }
 }

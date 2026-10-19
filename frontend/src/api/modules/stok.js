@@ -192,6 +192,12 @@ export const stokSeriAPI = {
   getAll() {
     return apiClient.get('/stok-seri')
   },
+  ozet(gun = 30) {
+    return apiClient.get('/stok-seri/ozet', { params: { gun } })
+  },
+  filtreli(params = {}) {
+    return apiClient.get('/stok-seri/filtreli', { params })
+  },
   create(data) {
     return apiClient.post('/stok-seri', data)
   },
