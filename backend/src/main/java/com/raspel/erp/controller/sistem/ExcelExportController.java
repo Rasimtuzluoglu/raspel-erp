@@ -56,6 +56,7 @@ public class ExcelExportController {
     private final com.raspel.erp.service.ticaret.TeslimatService teslimatService;
     private final com.raspel.erp.service.envanter.UretimService uretimService;
     private final com.raspel.erp.service.sistem.Gorunum360Service gorunum360Service;
+    private final com.raspel.erp.service.sistem.DonemService donemService;
 
     @GetMapping("/kdv-beyanname")
     @Operation(summary = "KDV beyannamesini Excel dışa aktar",
@@ -471,6 +472,48 @@ public class ExcelExportController {
         }).toList();
         return excel("Gorunum360-Segment", new String[]{"Müşteri", "Segment", "Gerekçe", "Ciro",
                 "Kalan", "Fatura Adet", "Son Fatura (gün)"}, rows);
+    }
+
+    @GetMapping("/donemler")
+    @Operation(summary = "Dönemleri Excel dışa aktar",
+            description = "Seçili şirketin mali dönemlerini (tarih aralığı, aktif/kilitli, kilit bilgisi) Excel (.xlsx) olarak dışa aktarır.")
+    public ResponseEntity<byte[]> donemler(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        var list = donemService.sirketeGoreGetir(sirketId);
+        List<Map<String, Object>> rows = list.stream().map(d -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("ID", d.getId());
+            m.put("Dönem", d.getAd());
+            m.put("Başlangıç", d.getBaslangic());
+            m.put("Bitiş", d.getBitis());
+            m.put("Aktif", Boolean.TRUE.equals(d.getAktif()) ? "Evet" : "Hayır");
+            m.put("Kilitli", Boolean.TRUE.equals(d.getKilitli()) ? "Evet" : "Hayır");
+            m.put("Kilit Tarihi", d.getKilitTarihi());
+            m.put("Oluşturma", d.getOlusturmaTarihi());
+            return m;
+        }).toList();
+        return excel("Donemler", new String[]{"ID", "Dönem", "Başlangıç", "Bitiş", "Aktif",
+                "Kilitli", "Kilit Tarihi", "Oluşturma"}, rows);
+    }
+
+    @GetMapping("/donem-kapanislar")
+    @Operation(summary = "Dönem kapanışlarını Excel dışa aktar",
+            description = "Yıl sonu kapanış kayıtlarını (mali yıl, tarih, kullanıcı, kilitlenen dönem, not) Excel (.xlsx) olarak dışa aktarır.")
+    public ResponseEntity<byte[]> donemKapanislar(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        var list = donemService.kapanislariGetir(sirketId);
+        List<Map<String, Object>> rows = list.stream().map(k -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("ID", k.getId());
+            m.put("Mali Yıl", k.getYil());
+            m.put("Kapanış Tarihi", k.getKapanisTarihi());
+            m.put("Kullanıcı ID", k.getKullaniciId());
+            m.put("Kilitlenen Dönem", k.getKilitlenenDonemSayisi());
+            m.put("Not", k.getOzet());
+            return m;
+        }).toList();
+        return excel("DonemKapanislar", new String[]{"ID", "Mali Yıl", "Kapanış Tarihi",
+                "Kullanıcı ID", "Kilitlenen Dönem", "Not"}, rows);
     }
 
     private ResponseEntity<byte[]> excel(String name, String[] cols, List<Map<String, Object>> rows) {

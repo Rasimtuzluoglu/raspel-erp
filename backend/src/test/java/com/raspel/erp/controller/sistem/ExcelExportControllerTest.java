@@ -73,6 +73,8 @@ class ExcelExportControllerTest {
     private com.raspel.erp.service.envanter.UretimService uretimService;
     @MockBean
     private com.raspel.erp.service.sistem.Gorunum360Service gorunum360Service;
+    @MockBean
+    private com.raspel.erp.service.sistem.DonemService donemService;
 
     @Test
     void cariHesaplar_excelDoner() throws Exception {
@@ -196,6 +198,28 @@ class ExcelExportControllerTest {
         when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
 
         mockMvc.perform(get("/api/exports/gorunum360-segment").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void donemler_excelDoner() throws Exception {
+        when(donemService.sirketeGoreGetir(any()))
+                .thenReturn(List.of(com.raspel.erp.dto.sistem.DonemDTO.builder()
+                        .id(1L).ad("2026 Yılı").aktif(true).kilitli(false).build()));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/donemler").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void donemKapanislar_excelDoner() throws Exception {
+        when(donemService.kapanislariGetir(any()))
+                .thenReturn(List.of(com.raspel.erp.dto.sistem.DonemKapanisDTO.builder()
+                        .id(1L).yil(2025).kilitlenenDonemSayisi(1).build()));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/donem-kapanislar").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk());
     }
 }

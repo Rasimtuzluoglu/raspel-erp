@@ -107,6 +107,12 @@ export const excelAPI = {
   },
   gorunum360Segment() {
     return apiClient.get('/exports/gorunum360-segment', { responseType: 'blob' })
+  },
+  donemler() {
+    return apiClient.get('/exports/donemler', { responseType: 'blob' })
+  },
+  donemKapanislari() {
+    return apiClient.get('/exports/donem-kapanislar', { responseType: 'blob' })
   }
 }
 

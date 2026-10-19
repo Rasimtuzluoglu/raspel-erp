@@ -69,6 +69,8 @@ public class DonemService {
             throw new com.raspel.erp.exception.BusinessException("Şirket bilgisi zorunludur");
         }
         tenantChecker.checkSirketId(dto.getSirketId(), "Dönem");
+        tarihAraligiDogrula(dto.getAd(), dto.getBaslangic(), dto.getBitis());
+        cakismaDogrula(dto.getSirketId(), null, dto.getBaslangic(), dto.getBitis());
         boolean aktif = dto.getAktif() == null || dto.getAktif();
         if (aktif) {
             digerleriniPasifle(dto.getSirketId(), null);
@@ -88,7 +90,12 @@ public class DonemService {
         Donem d = donemRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Dönem", id));
         tenantChecker.check(d.getSirketId(), "Dönem");
-        if (dto.getAd() != null) d.setAd(dto.getAd());
+        java.time.LocalDate bas = dto.getBaslangic() != null ? dto.getBaslangic() : d.getBaslangic();
+        java.time.LocalDate bit = dto.getBitis() != null ? dto.getBitis() : d.getBitis();
+        String ad = dto.getAd() != null && !dto.getAd().isBlank() ? dto.getAd() : d.getAd();
+        tarihAraligiDogrula(ad, bas, bit);
+        cakismaDogrula(d.getSirketId(), id, bas, bit);
+        if (dto.getAd() != null && !dto.getAd().isBlank()) d.setAd(dto.getAd());
         if (dto.getBaslangic() != null) d.setBaslangic(dto.getBaslangic());
         if (dto.getBitis() != null) d.setBitis(dto.getBitis());
         if (Boolean.TRUE.equals(dto.getAktif())) {
@@ -98,6 +105,27 @@ public class DonemService {
             d.setAktif(false);
         }
         return entityToDTO(donemRepository.save(d));
+    }
+
+    /** Ad ve tarih aralığı doğrulaması (oluştur/güncelle ortak). */
+    private void tarihAraligiDogrula(String ad, LocalDate baslangic, LocalDate bitis) {
+        if (ad == null || ad.isBlank()) {
+            throw new BusinessException("Dönem adı zorunludur");
+        }
+        if (baslangic == null || bitis == null) {
+            throw new BusinessException("Başlangıç ve bitiş tarihi zorunludur");
+        }
+        if (bitis.isBefore(baslangic)) {
+            throw new BusinessException("Bitiş tarihi başlangıç tarihinden önce olamaz");
+        }
+    }
+
+    /** Aynı şirkette kesişen dönem varsa reddeder; güncellemede dönemin kendisi hariç tutulur. */
+    private void cakismaDogrula(Long sirketId, Long haricId, LocalDate baslangic, LocalDate bitis) {
+        if (donemRepository.cakisanDonemSayisi(sirketId, haricId, baslangic, bitis) > 0) {
+            throw new BusinessException(
+                    "Bu tarih aralığı mevcut bir dönemle çakışıyor. Lütfen farklı bir aralık seçin.");
+        }
     }
 
     /** Belirtilen dönemi aktif yapar ve aynı şirketteki diğer dönemleri pasifleştirir. */
@@ -251,12 +279,21 @@ public class DonemService {
     @Transactional(readOnly = true)
     public List<com.raspel.erp.dto.sistem.DonemKapanisDTO> kapanislariGetir(Long sirketId) {
         if (sirketId == null) return List.of();
+        List<Donem> tumDonemler = donemRepository.findBySirketIdOrderByBaslangicDesc(sirketId, Pageable.unpaged())
+                .getContent();
         return donemKapanisRepository.findBySirketIdOrderByYilDesc(sirketId).stream()
-                .map(k -> com.raspel.erp.dto.sistem.DonemKapanisDTO.builder()
-                        .id(k.getId()).sirketId(k.getSirketId()).donemId(k.getDonemId())
-                        .yil(k.getYil()).kapanisTarihi(k.getKapanisTarihi())
-                        .kullaniciId(k.getKullaniciId()).ozet(k.getOzet())
-                        .build())
+                .map(k -> {
+                    int adet = k.getYil() == null ? 0 : (int) tumDonemler.stream()
+                            .filter(d -> !d.getBitis().isBefore(LocalDate.of(k.getYil(), 1, 1))
+                                    && !d.getBaslangic().isAfter(LocalDate.of(k.getYil(), 12, 31)))
+                            .count();
+                    return com.raspel.erp.dto.sistem.DonemKapanisDTO.builder()
+                            .id(k.getId()).sirketId(k.getSirketId()).donemId(k.getDonemId())
+                            .yil(k.getYil()).kapanisTarihi(k.getKapanisTarihi())
+                            .kullaniciId(k.getKullaniciId()).ozet(k.getOzet())
+                            .kilitlenenDonemSayisi(adet)
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 
