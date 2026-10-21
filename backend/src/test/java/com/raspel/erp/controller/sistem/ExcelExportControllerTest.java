@@ -60,6 +60,8 @@ class ExcelExportControllerTest {
     @MockBean
     private com.raspel.erp.service.ik.PersonelPuantajService personelPuantajService;
     @MockBean
+    private com.raspel.erp.service.ik.VardiyaService vardiyaService;
+    @MockBean
     private BankaService bankaService;
     @MockBean
     private KasaService kasaService;
@@ -238,6 +240,19 @@ class ExcelExportControllerTest {
         when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
 
         mockMvc.perform(get("/api/exports/puantaj").requestAttr("sirketId", 1L).param("durum", "GELDI"))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(new byte[]{1, 2, 3}));
+    }
+
+    @Test
+    void vardiyalar_excelDoner() throws Exception {
+        when(vardiyaService.filtreli(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(
+                        com.raspel.erp.dto.ik.VardiyaDTO.builder()
+                                .id(1L).personelAdi("Ahmet Yılmaz").tur("SABAH").build())));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/vardiyalar").requestAttr("sirketId", 1L).param("tur", "SABAH"))
                 .andExpect(status().isOk())
                 .andExpect(content().bytes(new byte[]{1, 2, 3}));
     }

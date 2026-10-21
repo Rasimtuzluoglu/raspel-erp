@@ -77,6 +77,39 @@ class VardiyaControllerTest {
     }
 
     @Test
+    void shouldGetFiltreli() throws Exception {
+        var list = List.of(VardiyaDTO.builder().id(1L).personelId(2L).tur("GECE").build());
+        when(vardiyaService.filtreli(eq(1L), eq(2L), any(), any(), eq("GECE"), eq("ahmet"), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(list));
+
+        mockMvc.perform(get("/api/vardiyalar/filtreli")
+                        .requestAttr("sirketId", 1L)
+                        .param("personelId", "2")
+                        .param("baslangic", "2026-10-01")
+                        .param("bitis", "2026-10-31")
+                        .param("tur", "GECE")
+                        .param("q", "ahmet"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].tur").value("GECE"));
+
+        verify(vardiyaService).filtreli(eq(1L), eq(2L),
+                any(java.time.LocalDate.class), any(java.time.LocalDate.class), eq("GECE"), eq("ahmet"), any(Pageable.class));
+    }
+
+    @Test
+    void shouldGetOzet() throws Exception {
+        when(vardiyaService.ozet(1L)).thenReturn(com.raspel.erp.dto.ik.VardiyaOzetDTO.builder()
+                .toplam(30).bugun(4).buHafta(11).personelSayisi(7).build());
+
+        mockMvc.perform(get("/api/vardiyalar/ozet").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.toplam").value(30))
+                .andExpect(jsonPath("$.bugun").value(4))
+                .andExpect(jsonPath("$.buHafta").value(11))
+                .andExpect(jsonPath("$.personelSayisi").value(7));
+    }
+
+    @Test
     void shouldDelete() throws Exception {
         doNothing().when(vardiyaService).sil(1L);
         mockMvc.perform(delete("/api/vardiyalar/1"))

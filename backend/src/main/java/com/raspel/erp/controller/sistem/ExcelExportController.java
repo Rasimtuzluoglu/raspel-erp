@@ -49,6 +49,7 @@ public class ExcelExportController {
     private final PersonelService personelService;
     private final com.raspel.erp.service.ik.PersonelIzinService personelIzinService;
     private final com.raspel.erp.service.ik.PersonelPuantajService personelPuantajService;
+    private final com.raspel.erp.service.ik.VardiyaService vardiyaService;
     private final BankaService bankaService;
     private final KasaService kasaService;
     private final AuditLogService auditLogService;
@@ -267,6 +268,28 @@ public class ExcelExportController {
             return m;
         }).toList();
         return excel("Puantaj", new String[]{"ID", "Personel", "Tarih", "Durum", "Açıklama"}, rows);
+    }
+
+    @GetMapping("/vardiyalar")
+    @Operation(summary = "Vardiyaları Excel dışa aktar", description = "Vardiya kayıtlarını (personel/tarih/tür/arama filtreleriyle) Excel (.xlsx) olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'IK_EXPORT')")
+    public ResponseEntity<byte[]> vardiyalar(
+            HttpServletRequest req,
+            @RequestParam(required = false) Long personelId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis,
+            @RequestParam(required = false) String tur,
+            @RequestParam(required = false) String q) {
+        Long sirketId = (Long) req.getAttribute("sirketId");
+        var list = vardiyaService.filtreli(sirketId, personelId, baslangic, bitis, tur, q, MAX_EXPORT_PAGE).getContent();
+        var rows = list.stream().map(v -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("ID", v.getId()); m.put("Personel", v.getPersonelAdi());
+            m.put("Tarih", v.getTarih()); m.put("Başlangıç", v.getBaslangic());
+            m.put("Bitiş", v.getBitis()); m.put("Tür", v.getTur());
+            return m;
+        }).toList();
+        return excel("Vardiyalar", new String[]{"ID", "Personel", "Tarih", "Başlangıç", "Bitiş", "Tür"}, rows);
     }
 
     @GetMapping("/bankalar")

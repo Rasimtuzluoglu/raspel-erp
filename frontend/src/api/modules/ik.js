@@ -127,6 +127,12 @@ export const vardiyaAPI = {
   getAll(params = { size: 500 }) {
     return apiClient.get('/vardiyalar', { params })
   },
+  ozet() {
+    return apiClient.get('/vardiyalar/ozet')
+  },
+  filtreli(params) {
+    return apiClient.get('/vardiyalar/filtreli', { params })
+  },
   getByPersonel(personelId) {
     return apiClient.get(`/vardiyalar/personel/${personelId}`)
   },

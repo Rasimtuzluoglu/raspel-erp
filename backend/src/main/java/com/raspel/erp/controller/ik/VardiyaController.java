@@ -33,6 +33,29 @@ public class VardiyaController {
         return ResponseEntity.ok(vardiyaService.tumunuGetir(sirketId, pageable));
     }
 
+    @GetMapping("/ozet")
+    @Operation(summary = "Vardiya KPI özeti",
+            description = "Toplam/bugün/bu hafta vardiya sayıları ve vardiyası olan personel sayısı")
+    public ResponseEntity<com.raspel.erp.dto.ik.VardiyaOzetDTO> ozet(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(vardiyaService.ozet(sirketId));
+    }
+
+    @GetMapping("/filtreli")
+    @Operation(summary = "Vardiya ara/filtrele (sayfalı)",
+            description = "Personel, tarih aralığı, tür ve personel adı araması")
+    public ResponseEntity<Page<VardiyaDTO>> filtreli(
+            HttpServletRequest request,
+            @RequestParam(required = false) Long personelId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis,
+            @RequestParam(required = false) String tur,
+            @RequestParam(required = false) String q,
+            @PageableDefault(size = 50, sort = "tarih", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(vardiyaService.filtreli(sirketId, personelId, baslangic, bitis, tur, q, pageable));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "ID'ye göre vardiya getir", description = "Vardiya ID'sine göre detayları getirir")
     public ResponseEntity<VardiyaDTO> getir(@PathVariable Long id) {
