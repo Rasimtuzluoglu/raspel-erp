@@ -33,6 +33,14 @@ public class SubeController {
         return ResponseEntity.ok(subeService.tumunuGetir(sirketId, pageable));
     }
 
+    @GetMapping("/ozet")
+    @Operation(summary = "Şube KPI özeti",
+            description = "Toplam/aktif/pasif şube sayıları ve şirket depo sayısı")
+    public ResponseEntity<com.raspel.erp.dto.sube.SubeOzetDTO> ozet(HttpServletRequest req) {
+        Long sirketId = (Long) req.getAttribute("sirketId");
+        return ResponseEntity.ok(subeService.ozet(sirketId));
+    }
+
     @GetMapping("/aktif")
     @Operation(summary = "Aktif şubeleri getir", description = "Aktif durumdaki şubeleri listeler")
     public ResponseEntity<List<SubeDTO>> aktifSubeler(HttpServletRequest req) {
@@ -46,8 +54,15 @@ public class SubeController {
         return ResponseEntity.ok(subeService.getir(id));
     }
 
+    @GetMapping("/{id}/depolar")
+    @Operation(summary = "Şubeye bağlı depolar", description = "Şube detayında gösterilen bağlı depoları listeler")
+    public ResponseEntity<List<com.raspel.erp.dto.sube.DepoDTO>> depolar(@PathVariable Long id) {
+        return ResponseEntity.ok(subeService.depolar(id));
+    }
+
     @PostMapping
-    @Operation(summary = "Yeni şube oluştur", description = "Yeni bir şube oluşturur")
+    @Operation(summary = "Yeni şube oluştur", description = "Yeni bir şube oluşturur (yalnızca ADMIN)")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SubeDTO> olustur(@Valid @RequestBody SubeDTO dto, HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
         dto.setSirketId(sirketId);
@@ -55,7 +70,8 @@ public class SubeController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Şube güncelle", description = "Şube bilgilerini günceller")
+    @Operation(summary = "Şube güncelle", description = "Şube bilgilerini günceller (yalnızca ADMIN)")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SubeDTO> guncelle(@PathVariable Long id, @Valid @RequestBody SubeDTO dto) {
         return ResponseEntity.ok(subeService.guncelle(id, dto));
     }

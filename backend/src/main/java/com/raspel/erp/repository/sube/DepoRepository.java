@@ -18,4 +18,10 @@ public interface DepoRepository extends JpaRepository<Depo, Long> {
 
     /** KPI özeti: şirketin aktif depo sayısı. */
     long countBySirketIdAndAktifTrue(Long sirketId);
+
+    /** Bir şubeye bağlı depo var mı? (silme guard'ı) */
+    boolean existsBySubeId(Long subeId);
+
+    /** Bir şubeye bağlı depolar (alfabetik). */
+    List<Depo> findBySubeIdAndSirketIdOrderByAdAsc(Long subeId, Long sirketId);
 }

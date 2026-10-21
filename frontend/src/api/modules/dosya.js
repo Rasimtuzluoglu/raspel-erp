@@ -125,6 +125,9 @@ export const excelAPI = {
   },
   ipWhitelist() {
     return apiClient.get('/exports/ip-whitelist', { responseType: 'blob' })
+  },
+  subeler(params) {
+    return apiClient.get('/exports/subeler', { params, responseType: 'blob' })
   }
 }
 

@@ -61,6 +61,7 @@ public class ExcelExportController {
     private final com.raspel.erp.service.envanter.StokSeriService stokSeriService;
     private final com.raspel.erp.service.sistem.AnomaliTespitEngine anomaliTespitEngine;
     private final com.raspel.erp.service.sistem.IpWhitelistService ipWhitelistService;
+    private final com.raspel.erp.service.sube.SubeService subeService;
 
     @GetMapping("/kdv-beyanname")
     @Operation(summary = "KDV beyannamesini Excel dışa aktar",
@@ -633,6 +634,33 @@ public class ExcelExportController {
             return m;
         }).toList();
         return excel("IpWhitelist", new String[]{"IP/CIDR", "Açıklama", "Durum", "Ekleme Tarihi"}, rows);
+    }
+
+    @GetMapping("/subeler")
+    @Operation(summary = "Şubeleri Excel dışa aktar",
+            description = "Şubeleri (yetkili, telefon, adres, durum) Excel (.xlsx) olarak dışa aktarır; opsiyonel durum filtresi.")
+    public ResponseEntity<byte[]> subeler(
+            HttpServletRequest request,
+            @RequestParam(required = false) String durum) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        var list = subeService.tumunuGetir(sirketId, MAX_EXPORT_PAGE).getContent();
+        List<Map<String, Object>> rows = list.stream()
+                .filter(s -> durum == null || durum.isBlank()
+                        || ("AKTIF".equalsIgnoreCase(durum) && Boolean.TRUE.equals(s.getAktif()))
+                        || ("PASIF".equalsIgnoreCase(durum) && !Boolean.TRUE.equals(s.getAktif())))
+                .map(s -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("ID", s.getId());
+                    m.put("Şube", s.getAd());
+                    m.put("Yetkili", s.getYetkili());
+                    m.put("Telefon", s.getTelefon());
+                    m.put("Adres", s.getAdres());
+                    m.put("Durum", Boolean.FALSE.equals(s.getAktif()) ? "Pasif" : "Aktif");
+                    m.put("Oluşturma", s.getOlusturmaTarihi());
+                    return m;
+                }).toList();
+        return excel("Subeler", new String[]{"ID", "Şube", "Yetkili", "Telefon", "Adres",
+                "Durum", "Oluşturma"}, rows);
     }
 
     private ResponseEntity<byte[]> excel(String name, String[] cols, List<Map<String, Object>> rows) {

@@ -299,11 +299,17 @@ export const subeAPI = {
   getAll() {
     return apiClient.get('/subeler')
   },
+  ozet() {
+    return apiClient.get('/subeler/ozet')
+  },
   getAktif() {
     return apiClient.get('/subeler/aktif')
   },
   getById(id) {
     return apiClient.get(`/subeler/${id}`)
+  },
+  depolar(id) {
+    return apiClient.get(`/subeler/${id}/depolar`)
   },
   create(data) {
     return apiClient.post('/subeler', data)

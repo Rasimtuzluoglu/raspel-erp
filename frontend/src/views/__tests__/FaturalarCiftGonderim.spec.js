@@ -6,6 +6,15 @@ import ConfirmationService from 'primevue/confirmationservice'
 import PrimeVue from 'primevue/config'
 import i18n from '../../i18n.js'
 
+vi.mock('vue-router', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+    useRoute: () => ({ query: {} })
+  }
+})
+
 const postAxios = vi.fn(() => Promise.resolve({ data: { id: 1 } }))
 
 vi.mock('axios', () => {

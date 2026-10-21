@@ -83,6 +83,8 @@ class ExcelExportControllerTest {
     private com.raspel.erp.service.sistem.AnomaliTespitEngine anomaliTespitEngine;
     @MockBean
     private com.raspel.erp.service.sistem.IpWhitelistService ipWhitelistService;
+    @MockBean
+    private com.raspel.erp.service.sube.SubeService subeService;
 
     @Test
     void cariHesaplar_excelDoner() throws Exception {
@@ -274,6 +276,17 @@ class ExcelExportControllerTest {
                         .requestAttr("sirketId", 1L)
                         .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
                                 .user("admin").roles("ADMIN")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void subeler_excelDoner() throws Exception {
+        when(subeService.tumunuGetir(any(), any()))
+                .thenReturn(new PageImpl<>(List.of(com.raspel.erp.dto.sube.SubeDTO.builder()
+                        .id(1L).ad("Merkez").aktif(true).build())));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/subeler").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk());
     }
 }

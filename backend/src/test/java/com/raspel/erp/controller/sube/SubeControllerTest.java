@@ -62,6 +62,15 @@ class SubeControllerTest {
     }
 
     @Test
+    void shouldGetDepolar() throws Exception {
+        when(subeService.depolar(1L)).thenReturn(List.of(
+                com.raspel.erp.dto.sube.DepoDTO.builder().id(5L).ad("Ana Depo").subeId(1L).aktif(true).build()));
+        mockMvc.perform(get("/api/subeler/1/depolar"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].ad").value("Ana Depo"));
+    }
+
+    @Test
     void shouldCreate() throws Exception {
         when(subeService.olustur(any(SubeDTO.class))).thenReturn(ornek());
         mockMvc.perform(post("/api/subeler")

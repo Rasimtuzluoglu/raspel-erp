@@ -25,6 +25,7 @@ import static org.mockito.Mockito.*;
 class SubeServiceTest {
 
     @Mock private SubeRepository subeRepository;
+    @Mock private com.raspel.erp.repository.sube.DepoRepository depoRepository;
     @Mock private TenantChecker tenantChecker;
     @InjectMocks private SubeService subeService;
 
@@ -93,5 +94,75 @@ class SubeServiceTest {
         when(subeRepository.findById(1L)).thenReturn(Optional.of(ornekSube(1L)));
         subeService.sil(1L);
         verify(subeRepository).deleteById(1L);
+    }
+
+    @Test
+    void olustur_adZorunlu() {
+        SubeDTO dto = SubeDTO.builder().ad("   ").sirketId(1L).build();
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () -> subeService.olustur(dto));
+        verify(subeRepository, never()).save(any(Sube.class));
+    }
+
+    @Test
+    void olustur_trimVeAktifVarsayilan() {
+        SubeDTO dto = SubeDTO.builder().ad("  Yeni Şube  ").sirketId(1L).build();
+        when(subeRepository.save(any(Sube.class))).thenAnswer(inv -> inv.getArgument(0));
+        var sonuc = subeService.olustur(dto);
+        assertEquals("Yeni Şube", sonuc.getAd());
+        assertTrue(sonuc.getAktif());
+    }
+
+    @Test
+    void olustur_ayniAd_reddedilir() {
+        SubeDTO dto = SubeDTO.builder().ad("Merkez Şube").sirketId(1L).build();
+        when(subeRepository.existsBySirketIdAndAdIgnoreCase(1L, "Merkez Şube")).thenReturn(true);
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () -> subeService.olustur(dto));
+        verify(subeRepository, never()).save(any(Sube.class));
+    }
+
+    @Test
+    void olustur_gecersizTelefon_reddedilir() {
+        SubeDTO dto = SubeDTO.builder().ad("Yeni Şube").telefon("abc").sirketId(1L).build();
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () -> subeService.olustur(dto));
+        verify(subeRepository, never()).save(any(Sube.class));
+    }
+
+    @Test
+    void guncelle_ayniAdBaskaKayit_reddedilir() {
+        when(subeRepository.findById(1L)).thenReturn(Optional.of(ornekSube(1L)));
+        when(subeRepository.existsBySirketIdAndAdIgnoreCaseAndIdNot(1L, "Diğer", 1L)).thenReturn(true);
+        SubeDTO dto = SubeDTO.builder().ad("Diğer").build();
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () -> subeService.guncelle(1L, dto));
+        verify(subeRepository, never()).save(any(Sube.class));
+    }
+
+    @Test
+    void guncelle_kendiAdiKabul() {
+        when(subeRepository.findById(1L)).thenReturn(Optional.of(ornekSube(1L)));
+        when(subeRepository.save(any(Sube.class))).thenAnswer(inv -> inv.getArgument(0));
+        SubeDTO dto = SubeDTO.builder().ad("Merkez Şube").build();
+        var sonuc = subeService.guncelle(1L, dto);
+        assertEquals("Merkez Şube", sonuc.getAd());
+        verify(subeRepository, never()).existsBySirketIdAndAdIgnoreCaseAndIdNot(anyLong(), anyString(), anyLong());
+    }
+
+    @Test
+    void sil_bagliDepoVarsa_reddedilir() {
+        when(subeRepository.findById(1L)).thenReturn(Optional.of(ornekSube(1L)));
+        when(depoRepository.existsBySubeId(1L)).thenReturn(true);
+        assertThrows(com.raspel.erp.exception.BusinessException.class, () -> subeService.sil(1L));
+        verify(subeRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void depolar_listeler() {
+        when(subeRepository.findById(1L)).thenReturn(Optional.of(ornekSube(1L)));
+        var depo = com.raspel.erp.entity.sube.Depo.builder()
+                .id(5L).ad("Ana Depo").subeId(1L).sirketId(1L).aktif(true)
+                .olusturmaTarihi(LocalDateTime.now()).build();
+        when(depoRepository.findBySubeIdAndSirketIdOrderByAdAsc(1L, 1L)).thenReturn(List.of(depo));
+        var sonuc = subeService.depolar(1L);
+        assertEquals(1, sonuc.size());
+        assertEquals("Ana Depo", sonuc.get(0).getAd());
     }
 }
