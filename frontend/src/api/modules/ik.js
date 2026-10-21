@@ -58,6 +58,12 @@ export const personelIzinAPI = {
 }
 
 export const puantajAPI = {
+  ozet() {
+    return apiClient.get('/personel-puantaj/ozet')
+  },
+  filtreli(params) {
+    return apiClient.get('/personel-puantaj/filtreli', { params })
+  },
   getByPersonel(personelId, baslangic, bitis) {
     return apiClient.get(`/personel-puantaj/personel/${personelId}`, { params: { baslangic, bitis } })
   },

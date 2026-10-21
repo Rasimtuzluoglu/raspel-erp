@@ -48,6 +48,7 @@ public class ExcelExportController {
     private final StokService stokService;
     private final PersonelService personelService;
     private final com.raspel.erp.service.ik.PersonelIzinService personelIzinService;
+    private final com.raspel.erp.service.ik.PersonelPuantajService personelPuantajService;
     private final BankaService bankaService;
     private final KasaService kasaService;
     private final AuditLogService auditLogService;
@@ -244,6 +245,28 @@ public class ExcelExportController {
             return m;
         }).toList();
         return excel("Izinler", new String[]{"ID", "Personel", "İzin Türü", "Başlangıç", "Bitiş", "Gün", "Durum", "Açıklama", "Onaylayan"}, rows);
+    }
+
+    @GetMapping("/puantaj")
+    @Operation(summary = "Puantajı Excel dışa aktar", description = "Şirket geneli puantaj kayıtlarını (personel/tarih/durum/arama filtreleriyle) Excel (.xlsx) olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'IK_EXPORT')")
+    public ResponseEntity<byte[]> puantaj(
+            HttpServletRequest req,
+            @RequestParam(required = false) Long personelId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) String q) {
+        Long sirketId = (Long) req.getAttribute("sirketId");
+        var list = personelPuantajService.filtreli(sirketId, personelId, baslangic, bitis, durum, q, MAX_EXPORT_PAGE).getContent();
+        var rows = list.stream().map(p -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("ID", p.getId()); m.put("Personel", p.getPersonelAdi());
+            m.put("Tarih", p.getTarih()); m.put("Durum", p.getDurum());
+            m.put("Açıklama", p.getAciklama());
+            return m;
+        }).toList();
+        return excel("Puantaj", new String[]{"ID", "Personel", "Tarih", "Durum", "Açıklama"}, rows);
     }
 
     @GetMapping("/bankalar")

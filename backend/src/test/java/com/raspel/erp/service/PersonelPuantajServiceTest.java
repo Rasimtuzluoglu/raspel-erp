@@ -26,7 +26,10 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 import com.raspel.erp.service.ik.PersonelPuantajService;
 
@@ -92,13 +95,13 @@ class PersonelPuantajServiceTest {
     void olustur_creates() {
         oturumSirket(1L);
         PersonelPuantajDTO dto = PersonelPuantajDTO.builder().personelId(1L)
-                .tarih(LocalDate.now()).durum("IZIN").aciklama("Hastalik").build();
+                .tarih(LocalDate.now()).durum("IZINLI").aciklama("Hastalik").build();
         PersonelPuantaj saved = createPuantaj(1L, 1L);
-        saved.setDurum("IZIN");
+        saved.setDurum("IZINLI");
         when(personelRepository.findById(1L)).thenReturn(Optional.of(createPersonel(1L)));
         when(puantajRepository.save(any(PersonelPuantaj.class))).thenReturn(saved);
         var result = personelPuantajService.olustur(dto);
-        assertEquals("IZIN", result.getDurum());
+        assertEquals("IZINLI", result.getDurum());
         assertEquals(1L, result.getSirketId());
     }
 
@@ -106,7 +109,7 @@ class PersonelPuantajServiceTest {
     void olustur_baskaSirketPersoneline_KayitOlusturulamaz() {
         oturumSirket(2L);
         PersonelPuantajDTO dto = PersonelPuantajDTO.builder().personelId(1L)
-                .tarih(LocalDate.now()).durum("VAR").build();
+                .tarih(LocalDate.now()).durum("GELDI").build();
         when(personelRepository.findById(1L)).thenReturn(Optional.of(createPersonel(1L)));
         assertThrows(ResourceNotFoundException.class, () -> personelPuantajService.olustur(dto));
         verify(puantajRepository, never()).save(any());
@@ -116,7 +119,7 @@ class PersonelPuantajServiceTest {
     void guncelle_baskaSirketKaydiniDegistiremez() {
         oturumSirket(2L);
         when(puantajRepository.findById(5L)).thenReturn(Optional.of(createPuantaj(5L, 1L)));
-        PersonelPuantajDTO dto = PersonelPuantajDTO.builder().durum("VAR").build();
+        PersonelPuantajDTO dto = PersonelPuantajDTO.builder().durum("GELDI").build();
         assertThrows(ResourceNotFoundException.class, () -> personelPuantajService.guncelle(5L, dto));
     }
 
@@ -134,5 +137,124 @@ class PersonelPuantajServiceTest {
         when(puantajRepository.findById(1L)).thenReturn(Optional.of(createPuantaj(1L, 1L)));
         assertThrows(ResourceNotFoundException.class, () -> personelPuantajService.sil(1L));
         verify(puantajRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void ozet_sayilariDoner() {
+        when(puantajRepository.countBySirketId(1L)).thenReturn(20L);
+        when(puantajRepository.countBySirketIdAndDurum(1L, "GELDI")).thenReturn(12L);
+        when(puantajRepository.countBySirketIdAndDurum(1L, "GELMEDI")).thenReturn(3L);
+        when(puantajRepository.countBySirketIdAndDurum(1L, "IZINLI")).thenReturn(4L);
+        when(puantajRepository.countBySirketIdAndDurum(1L, "MAZERETLI")).thenReturn(1L);
+
+        var ozet = personelPuantajService.ozet(1L);
+
+        assertEquals(20L, ozet.getToplam());
+        assertEquals(12L, ozet.getGeldi());
+        assertEquals(3L, ozet.getGelmedi());
+        assertEquals(4L, ozet.getIzinli());
+        assertEquals(1L, ozet.getMazeretli());
+    }
+
+    @Test
+    void ozet_sirketYoksaSifir() {
+        var ozet = personelPuantajService.ozet(null);
+        assertEquals(0L, ozet.getToplam());
+        verifyNoInteractions(puantajRepository);
+    }
+
+    @Test
+    void filtreli_sirketYoksaBos() {
+        var sonuc = personelPuantajService.filtreli(null, 1L, null, null, "GELDI", "abc", org.springframework.data.domain.Pageable.unpaged());
+        assertTrue(sonuc.isEmpty());
+        verifyNoInteractions(puantajRepository);
+    }
+
+    @Test
+    void filtreli_sayfalarVeAdlariDoldurur() {
+        PersonelPuantaj kayit = createPuantaj(1L, 1L);
+        when(puantajRepository.filtrele(eq(1L), isNull(), isNull(), isNull(), isNull(), isNull(),
+                any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(kayit)));
+        com.raspel.erp.entity.ik.Personel p = new com.raspel.erp.entity.ik.Personel();
+        p.setId(1L);
+        p.setAd("Ahmet");
+        p.setSoyad("Yılmaz");
+        when(personelRepository.findAllById(anyList())).thenReturn(List.of(p));
+
+        var sonuc = personelPuantajService.filtreli(1L, null, null, null, "TUMU", "   ",
+                org.springframework.data.domain.Pageable.unpaged());
+
+        assertEquals(1, sonuc.getContent().size());
+        assertEquals("Ahmet Yılmaz", sonuc.getContent().get(0).getPersonelAdi());
+    }
+
+    @Test
+    void filtreli_durumVeAramaNormallestirilir() {
+        when(puantajRepository.filtrele(eq(1L), eq(3L), isNull(), isNull(), eq("GELDI"), eq("ahmet"),
+                any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of()));
+
+        personelPuantajService.filtreli(1L, 3L, null, null, "geldi", "  AHMET  ",
+                org.springframework.data.domain.Pageable.unpaged());
+
+        verify(puantajRepository).filtrele(eq(1L), eq(3L), isNull(), isNull(), eq("GELDI"), eq("ahmet"),
+                any(org.springframework.data.domain.Pageable.class));
+    }
+
+    @Test
+    void olustur_ciftKayitReddedilir() {
+        oturumSirket(1L);
+        when(personelRepository.findById(1L)).thenReturn(Optional.of(createPersonel(1L)));
+        when(puantajRepository.existsByPersonelIdAndTarih(1L, LocalDate.of(2026, 4, 1))).thenReturn(true);
+
+        assertThrows(BusinessException.class, () -> personelPuantajService.olustur(
+                PersonelPuantajDTO.builder().personelId(1L).tarih(LocalDate.of(2026, 4, 1)).durum("GELDI").build()));
+        verify(puantajRepository, never()).save(any(PersonelPuantaj.class));
+    }
+
+    @Test
+    void olustur_gecersizDurumReddedilir() {
+        oturumSirket(1L);
+        when(personelRepository.findById(1L)).thenReturn(Optional.of(createPersonel(1L)));
+
+        assertThrows(BusinessException.class, () -> personelPuantajService.olustur(
+                PersonelPuantajDTO.builder().personelId(1L).tarih(LocalDate.now()).durum("BILINMEYEN").build()));
+        verify(puantajRepository, never()).save(any(PersonelPuantaj.class));
+    }
+
+    @Test
+    void olustur_tarihZorunlu() {
+        oturumSirket(1L);
+        when(personelRepository.findById(1L)).thenReturn(Optional.of(createPersonel(1L)));
+
+        assertThrows(BusinessException.class, () -> personelPuantajService.olustur(
+                PersonelPuantajDTO.builder().personelId(1L).durum("GELDI").build()));
+        verify(puantajRepository, never()).save(any(PersonelPuantaj.class));
+    }
+
+    @Test
+    void guncelle_ciftKayitReddedilir() {
+        oturumSirket(1L);
+        PersonelPuantaj mevcut = createPuantaj(5L, 1L);
+        when(puantajRepository.findById(5L)).thenReturn(Optional.of(mevcut));
+        when(puantajRepository.existsByPersonelIdAndTarihAndIdNot(1L, LocalDate.of(2026, 5, 1), 5L)).thenReturn(true);
+
+        assertThrows(BusinessException.class, () -> personelPuantajService.guncelle(5L,
+                PersonelPuantajDTO.builder().tarih(LocalDate.of(2026, 5, 1)).durum("GELDI").build()));
+        verify(puantajRepository, never()).save(any(PersonelPuantaj.class));
+    }
+
+    @Test
+    void guncelle_kendiKaydiKabulEdilir() {
+        oturumSirket(1L);
+        PersonelPuantaj mevcut = createPuantaj(5L, 1L);
+        when(puantajRepository.findById(5L)).thenReturn(Optional.of(mevcut));
+        when(puantajRepository.save(any(PersonelPuantaj.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var sonuc = personelPuantajService.guncelle(5L,
+                PersonelPuantajDTO.builder().durum("GELMEDI").build());
+
+        assertEquals("GELMEDI", sonuc.getDurum());
     }
 }

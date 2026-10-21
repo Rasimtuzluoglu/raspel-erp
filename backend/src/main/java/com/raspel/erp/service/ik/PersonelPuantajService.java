@@ -11,8 +11,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -38,13 +41,60 @@ public class PersonelPuantajService {
                 .stream().map(p -> entityToDTO(p, personelHaritasi)).collect(Collectors.toList());
     }
 
+    /**
+     * Şirket geneli puantaj listesi: personel, tarih aralığı, durum ve
+     * personel adı araması + sayfalama.
+     */
+    @Transactional(readOnly = true)
+    public Page<PersonelPuantajDTO> filtreli(Long sirketId, Long personelId, LocalDate baslangic,
+                                             LocalDate bitis, String durum, String q, Pageable pageable) {
+        if (sirketId == null) {
+            return Page.empty(pageable);
+        }
+        String durumFiltre = (durum == null || durum.isBlank() || "TUMU".equalsIgnoreCase(durum))
+                ? null : durum.trim().toUpperCase(Locale.ROOT);
+        String arama = (q == null || q.isBlank()) ? null : q.trim().toLowerCase(Locale.ROOT);
+
+        Page<PersonelPuantaj> sayfa = puantajRepository.filtrele(
+                sirketId, personelId, baslangic, bitis, durumFiltre, arama, pageable);
+
+        List<Long> personelIds = sayfa.getContent().stream()
+                .map(PersonelPuantaj::getPersonelId)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, String> adlar = personelRepository.findAllById(personelIds).stream()
+                .collect(Collectors.toMap(
+                        p -> p.getId(),
+                        p -> p.getAd() + " " + p.getSoyad()
+                ));
+        return sayfa.map(p -> entityToDTO(p, adlar));
+    }
+
+    @Transactional(readOnly = true)
+    public com.raspel.erp.dto.ik.PuantajOzetDTO ozet(Long sirketId) {
+        if (sirketId == null) {
+            return com.raspel.erp.dto.ik.PuantajOzetDTO.builder().build();
+        }
+        return com.raspel.erp.dto.ik.PuantajOzetDTO.builder()
+                .toplam(puantajRepository.countBySirketId(sirketId))
+                .geldi(puantajRepository.countBySirketIdAndDurum(sirketId, "GELDI"))
+                .gelmedi(puantajRepository.countBySirketIdAndDurum(sirketId, "GELMEDI"))
+                .izinli(puantajRepository.countBySirketIdAndDurum(sirketId, "IZINLI"))
+                .mazeretli(puantajRepository.countBySirketIdAndDurum(sirketId, "MAZERETLI"))
+                .build();
+    }
+
     public PersonelPuantajDTO olustur(PersonelPuantajDTO dto) {
         Long sirketId = personelSirketiniDogrula(dto.getPersonelId());
+        puantajDogrula(dto.getTarih(), dto.getDurum());
+        if (puantajRepository.existsByPersonelIdAndTarih(dto.getPersonelId(), dto.getTarih())) {
+            throw new BusinessException("Bu personel için seçilen tarihte puantaj kaydı zaten mevcut");
+        }
         PersonelPuantaj p = PersonelPuantaj.builder()
                 .personelId(dto.getPersonelId())
                 .sirketId(sirketId)
                 .tarih(dto.getTarih())
-                .durum(dto.getDurum())
+                .durum(dto.getDurum().trim().toUpperCase(Locale.ROOT))
                 .aciklama(dto.getAciklama())
                 .build();
         return entityToDTO(puantajRepository.save(p));
@@ -54,15 +104,25 @@ public class PersonelPuantajService {
         PersonelPuantaj p = puantajRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Puantaj kaydi", id));
         tenantChecker.check(p.getSirketId(), "Puantaj kaydi");
-        if (dto.getPersonelId() != null && !dto.getPersonelId().equals(p.getPersonelId())) {
-            Long yeniSirketId = personelSirketiniDogrula(dto.getPersonelId());
+
+        Long personelId = dto.getPersonelId() != null ? dto.getPersonelId() : p.getPersonelId();
+        LocalDate tarih = dto.getTarih() != null ? dto.getTarih() : p.getTarih();
+        String durum = dto.getDurum() != null ? dto.getDurum() : p.getDurum();
+        puantajDogrula(tarih, durum);
+
+        if (!personelId.equals(p.getPersonelId())) {
+            Long yeniSirketId = personelSirketiniDogrula(personelId);
             if (!yeniSirketId.equals(p.getSirketId())) {
                 throw new BusinessException("Puantaj kaydı farklı şirkete ait personele taşınamaz");
             }
-            p.setPersonelId(dto.getPersonelId());
         }
-        if (dto.getTarih() != null) p.setTarih(dto.getTarih());
-        if (dto.getDurum() != null) p.setDurum(dto.getDurum());
+        if (puantajRepository.existsByPersonelIdAndTarihAndIdNot(personelId, tarih, id)) {
+            throw new BusinessException("Bu personel için seçilen tarihte puantaj kaydı zaten mevcut");
+        }
+
+        p.setPersonelId(personelId);
+        p.setTarih(tarih);
+        p.setDurum(durum.trim().toUpperCase(Locale.ROOT));
         if (dto.getAciklama() != null) p.setAciklama(dto.getAciklama());
         return entityToDTO(puantajRepository.save(p));
     }
@@ -72,6 +132,20 @@ public class PersonelPuantajService {
                 .orElseThrow(() -> new ResourceNotFoundException("Puantaj kaydi", id));
         tenantChecker.check(p.getSirketId(), "Puantaj kaydi");
         puantajRepository.deleteById(id);
+    }
+
+    private static final List<String> GECERLI_DURUMLAR = List.of("GELDI", "GELMEDI", "IZINLI", "MAZERETLI");
+
+    private void puantajDogrula(LocalDate tarih, String durum) {
+        if (tarih == null) {
+            throw new BusinessException("Puantaj tarihi zorunludur");
+        }
+        if (durum == null || durum.isBlank()) {
+            throw new BusinessException("Puantaj durumu zorunludur");
+        }
+        if (!GECERLI_DURUMLAR.contains(durum.trim().toUpperCase(Locale.ROOT))) {
+            throw new BusinessException("Geçersiz puantaj durumu");
+        }
     }
 
     private Long personelSirketiniDogrula(Long personelId) {

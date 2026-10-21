@@ -11,6 +11,9 @@ import jakarta.validation.Valid;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import java.time.LocalDate;
 import java.util.List;
 import com.raspel.erp.entity.ik.Personel;
@@ -23,6 +26,29 @@ import com.raspel.erp.entity.ik.Personel;
 public class PersonelPuantajController {
 
     private final PersonelPuantajService personelPuantajService;
+
+    @GetMapping("/ozet")
+    @Operation(summary = "Puantaj KPI özeti",
+            description = "Şirket genelinde geldi/gelmedi/izinli/mazeretli puantaj kayıt sayıları")
+    public ResponseEntity<com.raspel.erp.dto.ik.PuantajOzetDTO> ozet(jakarta.servlet.http.HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(personelPuantajService.ozet(sirketId));
+    }
+
+    @GetMapping("/filtreli")
+    @Operation(summary = "Puantaj ara/filtrele (sayfalı)",
+            description = "Şirket geneli puantaj; personel, tarih aralığı, durum ve personel adı araması")
+    public ResponseEntity<Page<PersonelPuantajDTO>> filtreli(
+            jakarta.servlet.http.HttpServletRequest request,
+            @RequestParam(required = false) Long personelId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) String q,
+            @PageableDefault(size = 50, sort = "tarih", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(personelPuantajService.filtreli(sirketId, personelId, baslangic, bitis, durum, q, pageable));
+    }
 
     @GetMapping("/personel/{personelId}")
     @Operation(summary = "Personel puantajlarını getir", description = "Belirli bir personelin belirli tarih aralığındaki puantajlarını getirir")
