@@ -69,8 +69,8 @@ export const excelAPI = {
   teslimatlar(params) {
     return apiClient.get('/exports/teslimatlar', { params, responseType: 'blob' })
   },
-  personel() {
-    return apiClient.get('/exports/personel', { responseType: 'blob' })
+  personel(params) {
+    return apiClient.get('/exports/personel', { params, responseType: 'blob' })
   },
   bankalar() {
     return apiClient.get('/exports/bankalar', { responseType: 'blob' })

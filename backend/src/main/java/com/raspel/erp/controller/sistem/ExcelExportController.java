@@ -185,19 +185,40 @@ public class ExcelExportController {
     }
 
     @GetMapping("/personel")
-    @Operation(summary = "Personeli Excel dışa aktar", description = "Personel kayıtlarını Excel (.xlsx) dosyası olarak dışa aktarır")
+    @Operation(summary = "Personeli Excel dışa aktar", description = "Personel kayıtlarını (isteğe bağlı arama/departman/rol/durum filtresiyle) Excel (.xlsx) dosyası olarak dışa aktarır")
     @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'IK_EXPORT')")
-    public ResponseEntity<byte[]> personel(HttpServletRequest req) {
+    public ResponseEntity<byte[]> personel(
+            HttpServletRequest req,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String departman,
+            @RequestParam(required = false) String rol,
+            @RequestParam(required = false) String durum) {
         Long sirketId = (Long) req.getAttribute("sirketId");
-        var list = personelService.tumunuGetir(sirketId, MAX_EXPORT_PAGE).getContent();
+        var list = personelService.filtreli(sirketId, q, departman, rol, durum, MAX_EXPORT_PAGE).getContent();
+        boolean maasGoster = maasGorebilir();
         var rows = list.stream().map(p -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", p.getId()); m.put("Ad", p.getAd()); m.put("Soyad", p.getSoyad());
             m.put("TC", p.getTcKimlik()); m.put("Telefon", p.getTelefon()); m.put("Departman", p.getDepartman());
-            m.put("Pozisyon", p.getPozisyon()); m.put("Maaş", p.getMaas());
+            m.put("Pozisyon", p.getPozisyon());
+            if (maasGoster) m.put("Maaş", p.getMaas());
             return m;
         }).toList();
-        return excel("Personel", new String[]{"ID", "Ad", "Soyad", "TC", "Telefon", "Departman", "Pozisyon", "Maaş"}, rows);
+        String[] kolonlar = maasGoster
+                ? new String[]{"ID", "Ad", "Soyad", "TC", "Telefon", "Departman", "Pozisyon", "Maaş"}
+                : new String[]{"ID", "Ad", "Soyad", "TC", "Telefon", "Departman", "Pozisyon"};
+        return excel("Personel", kolonlar, rows);
+    }
+
+    /** Maaş kolonu yalnızca ADMIN ve MUHASEBE rollerine eklenir. */
+    private boolean maasGorebilir() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return false;
+        }
+        return auth.getAuthorities().stream()
+                .map(a -> a.getAuthority())
+                .anyMatch(r -> "ROLE_ADMIN".equals(r) || "ROLE_MUHASEBE".equals(r));
     }
 
     @GetMapping("/bankalar")

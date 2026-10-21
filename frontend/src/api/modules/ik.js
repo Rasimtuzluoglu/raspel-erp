@@ -4,8 +4,20 @@ export const personelAPI = {
   getAll(params) {
     return apiClient.get('/personel', { params })
   },
+  filtreli(params) {
+    return apiClient.get('/personel/filtreli', { params })
+  },
+  departmanlar() {
+    return apiClient.get('/personel/departmanlar')
+  },
+  ozet() {
+    return apiClient.get('/personel/ozet')
+  },
   getById(id) {
     return apiClient.get(`/personel/${id}`)
+  },
+  detay(id) {
+    return apiClient.get(`/personel/${id}/detay`)
   },
   create(data) {
     return apiClient.post('/personel', data)

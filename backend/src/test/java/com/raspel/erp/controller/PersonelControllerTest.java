@@ -93,6 +93,66 @@ class PersonelControllerTest {
     }
 
     @Test
+    void shouldGetFiltreli() throws Exception {
+        var list = List.of(PersonelDTO.builder().id(1L).ad("Ahmet").soyad("Yılmaz").build());
+        when(personelService.filtreli(eq(1L), eq("ahmet"), eq("IT"), eq("SOFOR"), eq("AKTIF"), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(list));
+
+        mockMvc.perform(get("/api/personel/filtreli")
+                        .requestAttr("sirketId", 1L)
+                        .param("q", "ahmet")
+                        .param("departman", "IT")
+                        .param("rol", "SOFOR")
+                        .param("durum", "AKTIF")
+                        .param("page", "0")
+                        .param("size", "25"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].ad").value("Ahmet"));
+
+        verify(personelService).filtreli(eq(1L), eq("ahmet"), eq("IT"), eq("SOFOR"), eq("AKTIF"), any(Pageable.class));
+    }
+
+    @Test
+    void shouldGetDepartmanlar() throws Exception {
+        when(personelService.departmanlar(1L)).thenReturn(List.of("IT", "Muhasebe"));
+
+        mockMvc.perform(get("/api/personel/departmanlar").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0]").value("IT"))
+                .andExpect(jsonPath("$[1]").value("Muhasebe"));
+    }
+
+    @Test
+    void shouldGetDetay() throws Exception {
+        when(personelService.detay(1L)).thenReturn(com.raspel.erp.dto.ik.PersonelDetayDTO.builder()
+                .personel(PersonelDTO.builder().id(1L).ad("Ahmet").soyad("Yılmaz").build())
+                .sonIzinler(List.of())
+                .bugunIzinli(true).bekleyenIzin(1L)
+                .puantajKayitSayisi(5L).geldi(3L).gelmedi(1L).izinli(1L).mazeretli(0L)
+                .build());
+
+        mockMvc.perform(get("/api/personel/1/detay"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.personel.ad").value("Ahmet"))
+                .andExpect(jsonPath("$.bugunIzinli").value(true))
+                .andExpect(jsonPath("$.puantajKayitSayisi").value(5));
+    }
+
+    @Test
+    void shouldGetOzet() throws Exception {
+        when(personelService.ozet(1L)).thenReturn(com.raspel.erp.dto.ik.PersonelOzetDTO.builder()
+                .toplam(12).aktif(9).pasif(3).bekleyenIzin(2).build());
+
+        mockMvc.perform(get("/api/personel/ozet").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.toplam").value(12))
+                .andExpect(jsonPath("$.aktif").value(9))
+                .andExpect(jsonPath("$.pasif").value(3))
+                .andExpect(jsonPath("$.bekleyenIzin").value(2))
+                .andExpect(jsonPath("$.maasToplam").doesNotExist());
+    }
+
+    @Test
     void shouldCreate() throws Exception {
         var dto = PersonelDTO.builder().id(1L).ad("Mehmet").soyad("Kaya").iseGirisTarihi(LocalDate.now()).build();
         when(personelService.olustur(any(PersonelDTO.class))).thenReturn(dto);
