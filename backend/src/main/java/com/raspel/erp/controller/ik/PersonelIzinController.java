@@ -36,6 +36,29 @@ public class PersonelIzinController {
         return ResponseEntity.ok(personelIzinService.tumunuGetir(sirketId, pageable));
     }
 
+    @GetMapping("/ozet")
+    @Operation(summary = "İzin KPI özeti",
+            description = "Bekleyen/onaylanan/reddedilen izin sayıları ve bugün izinli personel sayısı")
+    public ResponseEntity<com.raspel.erp.dto.ik.IzinOzetDTO> ozet(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(personelIzinService.ozet(sirketId));
+    }
+
+    @GetMapping("/filtreli")
+    @Operation(summary = "İzin ara/filtrele (sayfalı)",
+            description = "Durum, personel, tarih aralığı ve personel adı/izin türü/açıklama araması")
+    public ResponseEntity<Page<PersonelIzinDTO>> filtreli(
+            HttpServletRequest request,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) Long personelId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis,
+            @RequestParam(required = false) String q,
+            @PageableDefault(size = 50, sort = "baslangic", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(personelIzinService.filtreli(sirketId, durum, personelId, baslangic, bitis, q, pageable));
+    }
+
     @GetMapping("/personel/{personelId}")
     @Operation(summary = "Personele göre izinleri getir", description = "Belirli bir personele ait izinleri listeler")
     public ResponseEntity<List<PersonelIzinDTO>> personelIzinleri(@PathVariable Long personelId) {

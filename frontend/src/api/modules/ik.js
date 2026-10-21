@@ -34,6 +34,15 @@ export const personelIzinAPI = {
   getAll(params = { size: 500 }) {
     return apiClient.get('/personel-izin', { params })
   },
+  ozet() {
+    return apiClient.get('/personel-izin/ozet')
+  },
+  filtreli(params) {
+    return apiClient.get('/personel-izin/filtreli', { params })
+  },
+  getById(id) {
+    return apiClient.get(`/personel-izin/${id}`)
+  },
   getByPersonel(personelId) {
     return apiClient.get(`/personel-izin/personel/${personelId}`)
   },

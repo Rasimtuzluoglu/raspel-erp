@@ -961,15 +961,25 @@ const izinDialogAc = (data) => {
 }
 
 const izinKaydet = async () => {
+  if (!izinForm.value.izinTuru) {
+    toastBildirim.uyari(t('personel.izinTuruZorunluUyari'))
+    return
+  }
+  if (!izinForm.value.baslangic || !izinForm.value.bitis) {
+    toastBildirim.uyari(t('personel.izinTarihZorunlu'))
+    return
+  }
+  if (new Date(izinForm.value.bitis) < new Date(izinForm.value.baslangic)) {
+    toastBildirim.uyari(t('personel.izinBitisOnce'))
+    return
+  }
   kaydediliyor.value = true
   try {
-    const gunSayisi = Math.ceil((izinForm.value.bitis - izinForm.value.baslangic) / (1000 * 60 * 60 * 24)) + 1
     await personelIzinAPI.create({
       personelId: izinPersonelId.value,
       izinTuru: izinForm.value.izinTuru,
       baslangic: getLocalDateString(izinForm.value.baslangic),
       bitis: getLocalDateString(izinForm.value.bitis),
-      gunSayisi,
       aciklama: izinForm.value.aciklama
     })
     izinDialog.value = false

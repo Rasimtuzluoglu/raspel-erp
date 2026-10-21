@@ -108,6 +108,39 @@ class PersonelIzinControllerTest {
     }
 
     @Test
+    void shouldGetFiltreli() throws Exception {
+        var list = List.of(PersonelIzinDTO.builder().id(1L).personelId(5L).durum("BEKLEMEDE").build());
+        when(personelIzinService.filtreli(eq(1L), eq("BEKLEMEDE"), eq(5L), any(), any(), eq("ahmet"), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(list));
+
+        mockMvc.perform(get("/api/personel-izin/filtreli")
+                        .requestAttr("sirketId", 1L)
+                        .param("durum", "BEKLEMEDE")
+                        .param("personelId", "5")
+                        .param("baslangic", "2026-01-01")
+                        .param("bitis", "2026-12-31")
+                        .param("q", "ahmet"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].durum").value("BEKLEMEDE"));
+
+        verify(personelIzinService).filtreli(eq(1L), eq("BEKLEMEDE"), eq(5L),
+                any(java.time.LocalDate.class), any(java.time.LocalDate.class), eq("ahmet"), any(Pageable.class));
+    }
+
+    @Test
+    void shouldGetOzet() throws Exception {
+        when(personelIzinService.ozet(1L)).thenReturn(com.raspel.erp.dto.ik.IzinOzetDTO.builder()
+                .bekleyen(4).onaylandi(7).reddedildi(2).bugunIzinli(3).build());
+
+        mockMvc.perform(get("/api/personel-izin/ozet").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.bekleyen").value(4))
+                .andExpect(jsonPath("$.onaylandi").value(7))
+                .andExpect(jsonPath("$.reddedildi").value(2))
+                .andExpect(jsonPath("$.bugunIzinli").value(3));
+    }
+
+    @Test
     void shouldDelete() throws Exception {
         doNothing().when(personelIzinService).sil(1L);
 

@@ -56,6 +56,8 @@ class ExcelExportControllerTest {
     @MockBean
     private PersonelService personelService;
     @MockBean
+    private com.raspel.erp.service.ik.PersonelIzinService personelIzinService;
+    @MockBean
     private BankaService bankaService;
     @MockBean
     private KasaService kasaService;
@@ -209,6 +211,20 @@ class ExcelExportControllerTest {
 
         mockMvc.perform(get("/api/exports/gorunum360-segment").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void izinler_excelDoner() throws Exception {
+        when(personelIzinService.filtreli(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(
+                        com.raspel.erp.dto.ik.PersonelIzinDTO.builder()
+                                .id(1L).personelAdi("Ahmet Yılmaz").izinTuru("YILLIK_IZIN")
+                                .durum("BEKLEMEDE").gunSayisi(3).build())));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/izinler").requestAttr("sirketId", 1L).param("durum", "BEKLEMEDE"))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(new byte[]{1, 2, 3}));
     }
 
     @Test

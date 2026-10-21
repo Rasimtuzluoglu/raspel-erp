@@ -72,6 +72,9 @@ export const excelAPI = {
   personel(params) {
     return apiClient.get('/exports/personel', { params, responseType: 'blob' })
   },
+  izinler(params) {
+    return apiClient.get('/exports/izinler', { params, responseType: 'blob' })
+  },
   bankalar() {
     return apiClient.get('/exports/bankalar', { responseType: 'blob' })
   },

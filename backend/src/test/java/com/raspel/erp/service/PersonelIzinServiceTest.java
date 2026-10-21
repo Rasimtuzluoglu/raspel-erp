@@ -90,6 +90,12 @@ class PersonelIzinServiceTest {
 
     @Test
     void olustur_creates() {
+        Personel p = new Personel();
+        p.setId(1L);
+        p.setAd("Ahmet");
+        p.setSoyad("Yilmaz");
+        p.setSirketId(1L);
+        when(personelRepository.findById(1L)).thenReturn(Optional.of(p));
         PersonelIzinDTO dto = PersonelIzinDTO.builder().personelId(1L).izinTuru("HASTALIK")
                 .baslangic(LocalDate.now()).bitis(LocalDate.now().plusDays(3)).gunSayisi(3).build();
         PersonelIzin saved = createIzin(1L);
@@ -98,6 +104,65 @@ class PersonelIzinServiceTest {
         var result = personelIzinService.olustur(dto);
         assertEquals("HASTALIK", result.getIzinTuru());
         assertEquals("BEKLEMEDE", result.getDurum());
+    }
+
+    @Test
+    void olustur_gunSayisiSunucudaHesaplanir() {
+        Personel p = new Personel();
+        p.setId(1L);
+        p.setAd("Ahmet");
+        p.setSoyad("Yilmaz");
+        p.setSirketId(1L);
+        when(personelRepository.findById(1L)).thenReturn(Optional.of(p));
+        var tutucu = org.mockito.ArgumentCaptor.forClass(PersonelIzin.class);
+        when(izinRepository.save(tutucu.capture())).thenAnswer(inv -> inv.getArgument(0));
+
+        personelIzinService.olustur(PersonelIzinDTO.builder().personelId(1L).izinTuru("YILLIK_IZIN")
+                .baslangic(LocalDate.of(2026, 1, 1)).bitis(LocalDate.of(2026, 1, 5)).gunSayisi(99).build());
+
+        assertEquals(5, tutucu.getValue().getGunSayisi());
+    }
+
+    @Test
+    void olustur_izinTuruZorunlu() {
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> personelIzinService.olustur(PersonelIzinDTO.builder().personelId(1L)
+                        .baslangic(LocalDate.now()).bitis(LocalDate.now()).build()));
+        verify(izinRepository, never()).save(any(PersonelIzin.class));
+    }
+
+    @Test
+    void olustur_bitisOnceGirisReddedilir() {
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> personelIzinService.olustur(PersonelIzinDTO.builder().personelId(1L).izinTuru("YILLIK_IZIN")
+                        .baslangic(LocalDate.of(2026, 5, 10)).bitis(LocalDate.of(2026, 5, 1)).build()));
+        verify(izinRepository, never()).save(any(PersonelIzin.class));
+    }
+
+    @Test
+    void guncelle_tarihDegisinceGunYenilenir() {
+        Personel p = new Personel();
+        p.setId(1L);
+        p.setAd("Ahmet");
+        p.setSoyad("Yilmaz");
+        p.setSirketId(1L);
+        when(personelRepository.findById(1L)).thenReturn(Optional.of(p));
+        PersonelIzin izin = createIzin(1L);
+        when(izinRepository.findById(1L)).thenReturn(Optional.of(izin));
+        when(izinRepository.save(any(PersonelIzin.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var sonuc = personelIzinService.guncelle(1L, PersonelIzinDTO.builder()
+                .baslangic(LocalDate.of(2026, 3, 1)).bitis(LocalDate.of(2026, 3, 3)).gunSayisi(1).build());
+
+        assertEquals(3, sonuc.getGunSayisi());
+        assertEquals(LocalDate.of(2026, 3, 1), sonuc.getBaslangic());
+    }
+
+    @Test
+    void durumGuncelle_gecersizDurumReddedilir() {
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> personelIzinService.durumGuncelle(1L, "BILINMEYEN", "Yonetici"));
+        verifyNoInteractions(izinRepository);
     }
 
     @Test
@@ -121,5 +186,63 @@ class PersonelIzinServiceTest {
         when(izinRepository.findById(1L)).thenReturn(Optional.of(createIzin(1L)));
         personelIzinService.sil(1L);
         verify(izinRepository).deleteById(1L);
+    }
+
+    @Test
+    void ozet_sayilariDoner() {
+        when(izinRepository.countByDurumAndSirketId("BEKLEMEDE", 1L)).thenReturn(4L);
+        when(izinRepository.countByDurumAndSirketId("ONAYLANDI", 1L)).thenReturn(7L);
+        when(izinRepository.countByDurumAndSirketId("REDDEDILDI", 1L)).thenReturn(2L);
+        when(izinRepository.countBugunIzinliAndSirketId(any(LocalDate.class), eq(1L))).thenReturn(3L);
+
+        var ozet = personelIzinService.ozet(1L);
+
+        assertEquals(4L, ozet.getBekleyen());
+        assertEquals(7L, ozet.getOnaylandi());
+        assertEquals(2L, ozet.getReddedildi());
+        assertEquals(3L, ozet.getBugunIzinli());
+    }
+
+    @Test
+    void ozet_sirketYoksaSifir() {
+        var ozet = personelIzinService.ozet(null);
+        assertEquals(0L, ozet.getBekleyen());
+        assertEquals(0L, ozet.getOnaylandi());
+        assertEquals(0L, ozet.getReddedildi());
+        assertEquals(0L, ozet.getBugunIzinli());
+        verifyNoInteractions(izinRepository);
+    }
+
+    @Test
+    void filtreli_sirketYoksaBos() {
+        var sonuc = personelIzinService.filtreli(null, "BEKLEMEDE", 1L, null, null, "abc", Pageable.unpaged());
+        assertTrue(sonuc.isEmpty());
+        verifyNoInteractions(izinRepository);
+    }
+
+    @Test
+    void filtreli_sayfalarVeAdlariDoldurur() {
+        when(izinRepository.filtrele(eq(1L), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(createIzin(1L))));
+        Personel p = new Personel();
+        p.setId(1L);
+        p.setAd("Ahmet");
+        p.setSoyad("Yılmaz");
+        when(personelRepository.findAllById(anyList())).thenReturn(List.of(p));
+
+        var sonuc = personelIzinService.filtreli(1L, "TUMU", null, null, null, "   ", Pageable.unpaged());
+
+        assertEquals(1, sonuc.getContent().size());
+        assertEquals("Ahmet Yılmaz", sonuc.getContent().get(0).getPersonelAdi());
+    }
+
+    @Test
+    void filtreli_durumVeAramaNormallestirilir() {
+        when(izinRepository.filtrele(eq(1L), eq("BEKLEMEDE"), eq(5L), isNull(), isNull(), eq("ahmet"), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        personelIzinService.filtreli(1L, "beklemede", 5L, null, null, "  AHMET  ", Pageable.unpaged());
+
+        verify(izinRepository).filtrele(eq(1L), eq("BEKLEMEDE"), eq(5L), isNull(), isNull(), eq("ahmet"), any(Pageable.class));
     }
 }

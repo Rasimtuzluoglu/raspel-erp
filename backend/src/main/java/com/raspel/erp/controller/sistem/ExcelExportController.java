@@ -47,6 +47,7 @@ public class ExcelExportController {
     private final HareketService hareketService;
     private final StokService stokService;
     private final PersonelService personelService;
+    private final com.raspel.erp.service.ik.PersonelIzinService personelIzinService;
     private final BankaService bankaService;
     private final KasaService kasaService;
     private final AuditLogService auditLogService;
@@ -219,6 +220,30 @@ public class ExcelExportController {
         return auth.getAuthorities().stream()
                 .map(a -> a.getAuthority())
                 .anyMatch(r -> "ROLE_ADMIN".equals(r) || "ROLE_MUHASEBE".equals(r));
+    }
+
+    @GetMapping("/izinler")
+    @Operation(summary = "İzinleri Excel dışa aktar", description = "Personel izinlerini (durum/personel/tarih/arama filtreleriyle) Excel (.xlsx) olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'IK_EXPORT')")
+    public ResponseEntity<byte[]> izinler(
+            HttpServletRequest req,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) Long personelId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis,
+            @RequestParam(required = false) String q) {
+        Long sirketId = (Long) req.getAttribute("sirketId");
+        var list = personelIzinService.filtreli(sirketId, durum, personelId, baslangic, bitis, q, MAX_EXPORT_PAGE).getContent();
+        var rows = list.stream().map(i -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("ID", i.getId()); m.put("Personel", i.getPersonelAdi());
+            m.put("İzin Türü", i.getIzinTuru()); m.put("Başlangıç", i.getBaslangic());
+            m.put("Bitiş", i.getBitis()); m.put("Gün", i.getGunSayisi());
+            m.put("Durum", i.getDurum()); m.put("Açıklama", i.getAciklama());
+            m.put("Onaylayan", i.getOnaylayan());
+            return m;
+        }).toList();
+        return excel("Izinler", new String[]{"ID", "Personel", "İzin Türü", "Başlangıç", "Bitiş", "Gün", "Durum", "Açıklama", "Onaylayan"}, rows);
     }
 
     @GetMapping("/bankalar")
