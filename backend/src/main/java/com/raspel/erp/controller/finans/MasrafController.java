@@ -33,6 +33,28 @@ public class MasrafController {
         return ResponseEntity.ok(masrafService.tumunuGetir(sirketId, pageable));
     }
 
+    @GetMapping("/ozet")
+    @Operation(summary = "Masraf KPI özeti",
+            description = "Bu ay/bu yıl toplam masraf, bu yıl KDV toplamı ve toplam kayıt sayısı")
+    public ResponseEntity<com.raspel.erp.dto.finans.MasrafOzetDTO> ozet(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(masrafService.ozet(sirketId));
+    }
+
+    @GetMapping("/filtreli")
+    @Operation(summary = "Masraf ara/filtrele (sayfalı)",
+            description = "Kategori, tarih aralığı ve kategori/açıklama/belge no araması")
+    public ResponseEntity<Page<MasrafDTO>> filtreli(
+            HttpServletRequest request,
+            @RequestParam(required = false) String kategori,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis,
+            @RequestParam(required = false) String q,
+            @PageableDefault(size = 50, sort = "tarih", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(masrafService.filtreli(sirketId, kategori, baslangic, bitis, q, pageable));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "ID'ye göre masraf getir", description = "Masraf ID'sine göre detayları getirir")
     public ResponseEntity<MasrafDTO> getir(@PathVariable Long id) {

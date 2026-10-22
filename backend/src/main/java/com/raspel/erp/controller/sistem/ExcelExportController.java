@@ -50,6 +50,7 @@ public class ExcelExportController {
     private final com.raspel.erp.service.ik.PersonelIzinService personelIzinService;
     private final com.raspel.erp.service.ik.PersonelPuantajService personelPuantajService;
     private final com.raspel.erp.service.ik.VardiyaService vardiyaService;
+    private final com.raspel.erp.service.finans.MasrafService masrafService;
     private final BankaService bankaService;
     private final KasaService kasaService;
     private final AuditLogService auditLogService;
@@ -290,6 +291,29 @@ public class ExcelExportController {
             return m;
         }).toList();
         return excel("Vardiyalar", new String[]{"ID", "Personel", "Tarih", "Başlangıç", "Bitiş", "Tür"}, rows);
+    }
+
+    @GetMapping("/masraflar")
+    @Operation(summary = "Masrafları Excel dışa aktar", description = "Masrafları (kategori/tarih/arama filtreleriyle) Excel (.xlsx) olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'RAPOR_EXPORT') or @yetkiKontrol.kontrol(authentication, 'FINANS_EXPORT')")
+    public ResponseEntity<byte[]> masraflar(
+            HttpServletRequest req,
+            @RequestParam(required = false) String kategori,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis,
+            @RequestParam(required = false) String q) {
+        Long sirketId = (Long) req.getAttribute("sirketId");
+        var list = masrafService.filtreli(sirketId, kategori, baslangic, bitis, q, MAX_EXPORT_PAGE).getContent();
+        var rows = list.stream().map(m -> {
+            Map<String, Object> satir = new LinkedHashMap<>();
+            satir.put("ID", m.getId()); satir.put("Tarih", m.getTarih());
+            satir.put("Kategori", m.getKategori()); satir.put("Açıklama", m.getAciklama());
+            satir.put("Tutar", m.getTutar()); satir.put("KDV Oranı", m.getKdvOrani());
+            satir.put("KDV", m.getKdvTutar()); satir.put("Matrah", m.getMatrah());
+            satir.put("Belge No", m.getBelgeNo());
+            return satir;
+        }).toList();
+        return excel("Masraflar", new String[]{"ID", "Tarih", "Kategori", "Açıklama", "Tutar", "KDV Oranı", "KDV", "Matrah", "Belge No"}, rows);
     }
 
     @GetMapping("/bankalar")

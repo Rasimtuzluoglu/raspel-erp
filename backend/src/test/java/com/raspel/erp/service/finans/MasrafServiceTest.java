@@ -36,6 +36,7 @@ class MasrafServiceTest {
     @Mock private com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
     @Mock private com.raspel.erp.service.sistem.DonemService donemService;
     @Mock private com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
+    @Mock private com.raspel.erp.repository.finans.CariHesapRepository cariHesapRepository;
     @InjectMocks private MasrafService masrafService;
 
     private Masraf ornekMasraf(Long id) {
@@ -84,7 +85,7 @@ class MasrafServiceTest {
     void olustur_kdvAyristirilirVeKasadanOdemeIslenir() {
         MasrafDTO dto = MasrafDTO.builder().tarih(LocalDate.now())
                 .tutar(new BigDecimal("120")).kdvOrani(new BigDecimal("20"))
-                .kasaId(5L).aciklama("Yakıt").build();
+                .kasaId(5L).aciklama("Yakıt").kategori("YAKIT").build();
         when(masrafRepository.save(any(Masraf.class))).thenAnswer(inv -> {
             Masraf m = inv.getArgument(0);
             m.setId(1L);
@@ -134,5 +135,89 @@ class MasrafServiceTest {
     void sil_notFound_throws() {
         when(masrafRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> masrafService.sil(99L));
+    }
+
+    @Test
+    void ozet_toplamlariDoner() {
+        when(masrafRepository.sumTutarBySirketIdAndTarihBetween(eq(1L), any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(new BigDecimal("1000"), new BigDecimal("5000"));
+        when(masrafRepository.sumKdvBySirketIdAndTarihBetween(eq(1L), any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(new BigDecimal("900"));
+        when(masrafRepository.countBySirketId(1L)).thenReturn(12L);
+
+        var ozet = masrafService.ozet(1L);
+
+        assertEquals(new BigDecimal("1000"), ozet.getBuAyToplam());
+        assertEquals(new BigDecimal("5000"), ozet.getBuYilToplam());
+        assertEquals(new BigDecimal("900"), ozet.getBuYilKdv());
+        assertEquals(12L, ozet.getToplamKayit());
+    }
+
+    @Test
+    void ozet_sirketYoksaSifir() {
+        var ozet = masrafService.ozet(null);
+        assertEquals(BigDecimal.ZERO, ozet.getBuAyToplam());
+        assertEquals(BigDecimal.ZERO, ozet.getBuYilToplam());
+        assertEquals(BigDecimal.ZERO, ozet.getBuYilKdv());
+        assertEquals(0L, ozet.getToplamKayit());
+        verifyNoInteractions(masrafRepository);
+    }
+
+    @Test
+    void filtreli_sirketYoksaBos() {
+        var sonuc = masrafService.filtreli(null, "OFIS", null, null, "abc", Pageable.unpaged());
+        assertTrue(sonuc.isEmpty());
+        verifyNoInteractions(masrafRepository);
+    }
+
+    @Test
+    void filtreli_sayfalar() {
+        when(masrafRepository.filtrele(eq(1L), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(ornekMasraf(1L))));
+
+        var sonuc = masrafService.filtreli(1L, "TUMU", null, null, "   ", Pageable.unpaged());
+
+        assertEquals(1, sonuc.getContent().size());
+    }
+
+    @Test
+    void filtreli_kategoriVeAramaNormallestirilir() {
+        when(masrafRepository.filtrele(eq(1L), eq("OFIS"), isNull(), isNull(), eq("kirtasiye"), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        masrafService.filtreli(1L, "ofis", null, null, "  KIRTASIYE  ", Pageable.unpaged());
+
+        verify(masrafRepository).filtrele(eq(1L), eq("OFIS"), isNull(), isNull(), eq("kirtasiye"), any(Pageable.class));
+    }
+
+    @Test
+    void olustur_kategoriZorunlu() {
+        MasrafDTO dto = MasrafDTO.builder().tarih(LocalDate.now()).tutar(new BigDecimal("100")).build();
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> masrafService.olustur(dto, 1L));
+        verify(masrafRepository, never()).save(any(Masraf.class));
+    }
+
+    @Test
+    void olustur_gecersizOdemeYontemiReddedilir() {
+        MasrafDTO dto = MasrafDTO.builder().tarih(LocalDate.now()).tutar(new BigDecimal("100"))
+                .kategori("OFIS").odemeYontemi("CEK").build();
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> masrafService.olustur(dto, 1L));
+        verify(masrafRepository, never()).save(any(Masraf.class));
+    }
+
+    @Test
+    void olustur_cariHesapBaskaSirketseReddedilir() {
+        com.raspel.erp.entity.finans.CariHesap cari = com.raspel.erp.entity.finans.CariHesap.builder()
+                .id(9L).sirketId(2L).build();
+        when(cariHesapRepository.findById(9L)).thenReturn(Optional.of(cari));
+        doThrow(new ResourceNotFoundException("Cari hesap", 9L))
+                .when(tenantChecker).check(2L, "Cari hesap");
+
+        MasrafDTO dto = MasrafDTO.builder().tarih(LocalDate.now()).tutar(new BigDecimal("100"))
+                .kategori("OFIS").cariHesapId(9L).build();
+        assertThrows(ResourceNotFoundException.class, () -> masrafService.olustur(dto, 1L));
+        verify(masrafRepository, never()).save(any(Masraf.class));
     }
 }

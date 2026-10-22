@@ -114,6 +114,12 @@ export const masrafAPI = {
   getAll(params = { size: 500 }) {
     return apiClient.get('/masraflar', { params })
   },
+  ozet() {
+    return apiClient.get('/masraflar/ozet')
+  },
+  filtreli(params) {
+    return apiClient.get('/masraflar/filtreli', { params })
+  },
   getById(id) {
     return apiClient.get(`/masraflar/${id}`)
   },

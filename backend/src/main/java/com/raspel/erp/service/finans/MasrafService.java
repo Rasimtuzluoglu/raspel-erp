@@ -24,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * Masraf yönetimi. Tutar KDV DAHİL kabul edilir; matrah/KDV ayrıştırılır.
@@ -46,10 +48,32 @@ public class MasrafService {
     private final BankaHareketiRepository bankaHareketiRepository;
     private final com.raspel.erp.service.sistem.DonemService donemService;
     private final com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
+    private final com.raspel.erp.repository.finans.CariHesapRepository cariHesapRepository;
 
     @Transactional(readOnly = true)
     public Page<MasrafDTO> tumunuGetir(Long sirketId, Pageable pageable) {
         return masrafRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable).map(this::entityToDTO);
+    }
+
+    /** Masraf KPI özeti: bu ay/bu yıl toplam, bu yıl KDV ve toplam kayıt sayısı. */
+    @Transactional(readOnly = true)
+    public com.raspel.erp.dto.finans.MasrafOzetDTO ozet(Long sirketId) {
+        if (sirketId == null) {
+            return com.raspel.erp.dto.finans.MasrafOzetDTO.builder()
+                    .buAyToplam(BigDecimal.ZERO).buYilToplam(BigDecimal.ZERO).buYilKdv(BigDecimal.ZERO)
+                    .toplamKayit(0).build();
+        }
+        LocalDate bugun = LocalDate.now();
+        LocalDate ayBaslangic = bugun.withDayOfMonth(1);
+        LocalDate ayBitis = bugun.withDayOfMonth(bugun.lengthOfMonth());
+        LocalDate yilBaslangic = bugun.withDayOfYear(1);
+        LocalDate yilBitis = bugun.withDayOfYear(bugun.lengthOfYear());
+        return com.raspel.erp.dto.finans.MasrafOzetDTO.builder()
+                .buAyToplam(masrafRepository.sumTutarBySirketIdAndTarihBetween(sirketId, ayBaslangic, ayBitis))
+                .buYilToplam(masrafRepository.sumTutarBySirketIdAndTarihBetween(sirketId, yilBaslangic, yilBitis))
+                .buYilKdv(masrafRepository.sumKdvBySirketIdAndTarihBetween(sirketId, yilBaslangic, yilBitis))
+                .toplamKayit(masrafRepository.countBySirketId(sirketId))
+                .build();
     }
 
     @Transactional(readOnly = true)
@@ -60,6 +84,22 @@ public class MasrafService {
         return entityToDTO(m);
     }
 
+    /**
+     * Masraf listesi: kategori, tarih aralığı ve serbest metin araması + sayfalama.
+     */
+    @Transactional(readOnly = true)
+    public Page<MasrafDTO> filtreli(Long sirketId, String kategori, LocalDate baslangic,
+                                    LocalDate bitis, String q, Pageable pageable) {
+        if (sirketId == null) {
+            return Page.empty(pageable);
+        }
+        String kategoriFiltre = (kategori == null || kategori.isBlank() || "TUMU".equalsIgnoreCase(kategori))
+                ? null : kategori.trim().toUpperCase(Locale.ROOT);
+        String arama = (q == null || q.isBlank()) ? null : q.trim().toLowerCase(Locale.ROOT);
+        return masrafRepository.filtrele(sirketId, kategoriFiltre, baslangic, bitis, arama, pageable)
+                .map(this::entityToDTO);
+    }
+
     @CacheEvict(value = "lookup", allEntries = true)
     public MasrafDTO olustur(MasrafDTO dto, Long sirketId) {
         if (dto.getTutar() == null || dto.getTutar().signum() <= 0) {
@@ -68,6 +108,7 @@ public class MasrafService {
         if (dto.getKasaId() != null && dto.getBankaId() != null) {
             throw new BusinessException("Ödeme hem kasadan hem bankadan yapılamaz; tek hesap seçin");
         }
+        masrafDogrula(dto.getKategori(), dto.getOdemeYontemi(), dto.getCariHesapId());
         LocalDate tarih = dto.getTarih() != null ? dto.getTarih() : LocalDate.now();
         donemService.kilitKontrol(sirketId, tarih, "masraf oluşturma");
 
@@ -81,10 +122,10 @@ public class MasrafService {
                 .kdvOrani(kdvOrani)
                 .kdvTutar(satir.kdv())
                 .aciklama(dto.getAciklama())
-                .kategori(dto.getKategori())
+                .kategori(dto.getKategori().trim().toUpperCase(Locale.ROOT))
                 .cariHesapId(dto.getCariHesapId())
                 .belgeNo(dto.getBelgeNo())
-                .odemeYontemi(dto.getOdemeYontemi())
+                .odemeYontemi(normalizeOdemeYontemi(dto.getOdemeYontemi()))
                 .kasaId(dto.getKasaId())
                 .bankaId(dto.getBankaId())
                 .sirketId(sirketId)
@@ -110,6 +151,10 @@ public class MasrafService {
         if (dto.getKasaId() != null && dto.getBankaId() != null) {
             throw new BusinessException("Ödeme hem kasadan hem bankadan yapılamaz; tek hesap seçin");
         }
+        String yeniKategori = dto.getKategori() != null ? dto.getKategori() : masraf.getKategori();
+        String yeniOdeme = dto.getOdemeYontemi() != null ? dto.getOdemeYontemi() : masraf.getOdemeYontemi();
+        Long yeniCari = dto.getCariHesapId() != null ? dto.getCariHesapId() : masraf.getCariHesapId();
+        masrafDogrula(yeniKategori, yeniOdeme, yeniCari);
 
         // Eski ödeme (varsa) geri alınır; kasa/banka eski tutar kadar iade edilir.
         odemeTersineCevir(masraf);
@@ -117,10 +162,10 @@ public class MasrafService {
         if (dto.getTarih() != null) masraf.setTarih(dto.getTarih());
         if (dto.getTutar() != null) masraf.setTutar(dto.getTutar());
         if (dto.getAciklama() != null) masraf.setAciklama(dto.getAciklama());
-        if (dto.getKategori() != null) masraf.setKategori(dto.getKategori());
+        masraf.setKategori(yeniKategori.trim().toUpperCase(Locale.ROOT));
         if (dto.getCariHesapId() != null) masraf.setCariHesapId(dto.getCariHesapId());
         if (dto.getBelgeNo() != null) masraf.setBelgeNo(dto.getBelgeNo());
-        if (dto.getOdemeYontemi() != null) masraf.setOdemeYontemi(dto.getOdemeYontemi());
+        masraf.setOdemeYontemi(normalizeOdemeYontemi(yeniOdeme));
         // PUT (tam güncelleme): ödeme hesabı istemciden gelen değerle belirlenir
         // (null = ödeme hesabı yok / kaldırılır). Böylece kasa↔banka geçişi doğru işler.
         masraf.setKasaId(dto.getKasaId());
@@ -234,6 +279,28 @@ public class MasrafService {
                     .kaynakTip("MASRAF_IPTAL")
                     .build());
         }
+    }
+
+    private static final Set<String> ODEME_YONTEMLERI = Set.of("NAKIT", "HAVALE", "KART");
+
+    private void masrafDogrula(String kategori, String odemeYontemi, Long cariHesapId) {
+        if (kategori == null || kategori.isBlank()) {
+            throw new BusinessException("Masraf kategorisi zorunludur");
+        }
+        if (odemeYontemi != null && !odemeYontemi.isBlank()
+                && !ODEME_YONTEMLERI.contains(odemeYontemi.trim().toUpperCase(Locale.ROOT))) {
+            throw new BusinessException("Geçersiz ödeme yöntemi");
+        }
+        if (cariHesapId != null) {
+            var cari = cariHesapRepository.findById(cariHesapId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Cari hesap", cariHesapId));
+            tenantChecker.check(cari.getSirketId(), "Cari hesap");
+        }
+    }
+
+    private String normalizeOdemeYontemi(String odemeYontemi) {
+        return (odemeYontemi == null || odemeYontemi.isBlank())
+                ? null : odemeYontemi.trim().toUpperCase(Locale.ROOT);
     }
 
     private MasrafDTO entityToDTO(Masraf m) {

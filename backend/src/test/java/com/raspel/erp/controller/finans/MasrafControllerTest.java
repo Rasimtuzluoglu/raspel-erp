@@ -68,6 +68,39 @@ class MasrafControllerTest {
     }
 
     @Test
+    void shouldGetFiltreli() throws Exception {
+        var list = List.of(MasrafDTO.builder().id(1L).kategori("OFIS").tutar(new BigDecimal("750")).build());
+        when(masrafService.filtreli(eq(1L), eq("OFIS"), any(), any(), eq("kirtasiye"), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(list));
+
+        mockMvc.perform(get("/api/masraflar/filtreli")
+                        .requestAttr("sirketId", 1L)
+                        .param("kategori", "OFIS")
+                        .param("baslangic", "2026-01-01")
+                        .param("bitis", "2026-12-31")
+                        .param("q", "kirtasiye"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].kategori").value("OFIS"));
+
+        verify(masrafService).filtreli(eq(1L), eq("OFIS"),
+                any(java.time.LocalDate.class), any(java.time.LocalDate.class), eq("kirtasiye"), any(Pageable.class));
+    }
+
+    @Test
+    void shouldGetOzet() throws Exception {
+        when(masrafService.ozet(1L)).thenReturn(com.raspel.erp.dto.finans.MasrafOzetDTO.builder()
+                .buAyToplam(new BigDecimal("1000")).buYilToplam(new BigDecimal("5000"))
+                .buYilKdv(new BigDecimal("900")).toplamKayit(12L).build());
+
+        mockMvc.perform(get("/api/masraflar/ozet").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.buAyToplam").value(1000))
+                .andExpect(jsonPath("$.buYilToplam").value(5000))
+                .andExpect(jsonPath("$.buYilKdv").value(900))
+                .andExpect(jsonPath("$.toplamKayit").value(12));
+    }
+
+    @Test
     void shouldDelete() throws Exception {
         doNothing().when(masrafService).sil(1L);
         mockMvc.perform(delete("/api/masraflar/1"))
