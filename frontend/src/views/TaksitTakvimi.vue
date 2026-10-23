@@ -12,160 +12,471 @@
           icon="pi pi-plus"
           @click="planDialogAc"
         />
+        <Button
+          icon="pi pi-refresh"
+          :aria-label="t('common.refresh')"
+          class="p-button-text p-button-sm"
+          :loading="yukleniyor"
+          @click="yukle"
+        />
       </template>
     </PageHeader>
 
-    <div class="ozet-kartlar">
-      <div class="ozet-kart">
-        <span class="ozet-baslik">{{ t('taksitTakvimi.bekleyen') }}</span>
-        <strong class="ozet-deger">{{ formatCurrency(ozet.bekleyenToplam) }}</strong>
-        <small class="ozet-alt">{{ ozet.bekleyenAdet || 0 }} {{ t('taksitTakvimi.adet') }}</small>
-      </div>
-      <div class="ozet-kart gecikmis">
-        <span class="ozet-baslik">{{ t('taksitTakvimi.gecikmis') }}</span>
-        <strong class="ozet-deger">{{ formatCurrency(ozet.gecikmisToplam) }}</strong>
-        <small class="ozet-alt">{{ ozet.gecikmisAdet || 0 }} {{ t('taksitTakvimi.adet') }}</small>
-      </div>
-      <div class="ozet-kart bu-ay">
-        <span class="ozet-baslik">{{ t('taksitTakvimi.buAy') }}</span>
-        <strong class="ozet-deger">{{ formatCurrency(ozet.buAyToplam) }}</strong>
-      </div>
+    <div class="kpi-satiri">
+      <KpiKart
+        :baslik="t('taksitTakvimi.bekleyen')"
+        :deger="ozet.bekleyenToplam"
+        ikon="pi pi-hourglass"
+        renk="#f59e0b"
+      />
+      <KpiKart
+        :baslik="t('taksitTakvimi.gecikmis')"
+        :deger="ozet.gecikmisToplam"
+        ikon="pi pi-exclamation-triangle"
+        renk="#ef4444"
+      />
+      <KpiKart
+        :baslik="t('taksitTakvimi.buAy')"
+        :deger="ozet.buAyToplam"
+        ikon="pi pi-calendar"
+        renk="#3b82f6"
+      />
+      <KpiKart
+        :baslik="t('taksitTakvimi.kpiOdenen')"
+        :deger="ozet.odenenBuYilToplam"
+        ikon="pi pi-check-circle"
+        renk="#10b981"
+      />
     </div>
 
-    <div class="takvim-kart">
-      <div class="takvim-baslik">
-        <Button
-          icon="pi pi-chevron-left"
-          text
-          rounded
-          :aria-label="t('taksitTakvimi.oncekiAy')"
-          @click="ayDegistir(-1)"
-        />
-        <strong class="takvim-ay">{{ ayAdi }}</strong>
-        <Button
-          icon="pi pi-chevron-right"
-          text
-          rounded
-          :aria-label="t('taksitTakvimi.sonrakiAy')"
-          @click="ayDegistir(1)"
-        />
-      </div>
-      <div class="takvim-grid">
-        <div
-          v-for="g in gunBasliklari"
-          :key="g"
-          class="gun-baslik"
-        >
-          {{ g }}
-        </div>
-        <div
-          v-for="hucre in takvimHucreleri"
-          :key="hucre.key"
-          class="gun-hucre"
-          :class="{ bugun: hucre.bugun, bos: !hucre.gun }"
-        >
-          <template v-if="hucre.gun">
-            <span class="gun-no">{{ hucre.gun }}</span>
-            <button
-              v-for="k in hucre.kalemler"
-              :key="k.id"
-              type="button"
-              class="kalem"
-              :class="kalemSinif(k)"
-              :title="`${k.cariAd} - ${formatCurrency(k.tutar)}`"
-              @click="kalemDetay(k)"
+    <TabView v-model:active-index="aktifTab">
+      <TabPanel :header="t('taksitTakvimi.tabTakvim')">
+        <div class="takvim-kart">
+          <div class="takvim-baslik">
+            <Button
+              icon="pi pi-chevron-left"
+              text
+              rounded
+              :aria-label="t('taksitTakvimi.oncekiAy')"
+              @click="ayDegistir(-1)"
+            />
+            <strong
+              class="takvim-ay"
+              aria-live="polite"
+            >{{ ayAdi }}</strong>
+            <Button
+              icon="pi pi-chevron-right"
+              text
+              rounded
+              :aria-label="t('taksitTakvimi.sonrakiAy')"
+              @click="ayDegistir(1)"
+            />
+          </div>
+          <div
+            class="takvim-grid"
+            role="grid"
+            :aria-label="ayAdi"
+          >
+            <div
+              v-for="g in gunBasliklari"
+              :key="g"
+              class="gun-baslik"
+              role="columnheader"
             >
-              {{ k.cariAd }} · {{ formatCurrency(k.tutar) }}
-            </button>
-          </template>
+              {{ g }}
+            </div>
+            <div
+              v-for="hucre in takvimHucreleri"
+              :key="hucre.key"
+              class="gun-hucre"
+              :class="{ bugun: hucre.bugun, bos: !hucre.gun }"
+              role="gridcell"
+            >
+              <template v-if="hucre.gun">
+                <span class="gun-no">{{ hucre.gun }}</span>
+                <button
+                  v-for="k in hucre.kalemler"
+                  :key="k.id"
+                  type="button"
+                  class="kalem"
+                  :class="kalemSinif(k)"
+                  :title="`${k.cariAd} - ${formatCurrency(k.tutar)}`"
+                  @click="kalemDetay(k)"
+                >
+                  <span class="kalem-metin">{{ k.cariAd }} · {{ formatCurrency(k.tutar) }}</span>
+                </button>
+              </template>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </TabPanel>
 
-    <div class="liste-kart">
-      <h3 class="liste-baslik">
-        {{ t('taksitTakvimi.yaklasan') }}
-      </h3>
-      <DataTable
-        :value="yaklasan"
-        data-key="id"
-        :loading="yukleniyor"
-        responsive-layout="scroll"
-        paginator
-        :rows="10"
-        :empty-message="t('taksitTakvimi.kayitYok')"
-      >
-        <template #empty>
-          <EmptyState />
-        </template>
-        <Column
-          field="vadeTarihi"
-          :header="t('taksitTakvimi.vade')"
-          sortable
-        >
-          <template #body="{ data }">
-            {{ formatDate(data.vadeTarihi) }}
-          </template>
-        </Column>
-        <Column
-          field="cariAd"
-          :header="t('taksitTakvimi.cari')"
-          sortable
-        />
-        <Column
-          field="kurum"
-          :header="t('taksitTakvimi.kurum')"
-        >
-          <template #body="{ data }">
-            {{ data.kurum || '-' }}
-          </template>
-        </Column>
-        <Column
-          :header="t('taksitTakvimi.taksitNo')"
-        >
-          <template #body="{ data }">
-            {{ data.taksitNo }}/{{ data.taksitSayisi }}
-          </template>
-        </Column>
-        <Column
-          field="tutar"
-          :header="t('taksitTakvimi.tutar')"
-        >
-          <template #body="{ data }">
-            {{ formatCurrency(data.tutar) }}
-          </template>
-        </Column>
-        <Column :header="t('taksitTakvimi.durum')">
-          <template #body="{ data }">
-            <Tag
-              :severity="durumSeverity(data)"
-              :value="durumEtiket(data)"
+      <TabPanel :header="t('taksitTakvimi.tabTaksitler')">
+        <div class="liste-kart">
+          <div class="taksit-arac">
+            <span class="arac-arama">
+              <i class="pi pi-search" />
+              <InputText
+                v-model="arama"
+                :placeholder="t('taksitTakvimi.aramaPlaceholder')"
+                class="arama-input"
+                @input="aramaGirdi"
+              />
+            </span>
+            <Dropdown
+              v-model="cariFiltre"
+              :options="cariler"
+              option-label="ad"
+              option-value="id"
+              :placeholder="t('taksitTakvimi.cari')"
+              show-clear
+              filter
+              class="arac-secim"
+              @change="filtreDegisti"
             />
-          </template>
-        </Column>
-        <Column :header="t('common.actions')">
-          <template #body="{ data }">
+            <Dropdown
+              v-model="durumFiltre"
+              :options="durumSecenekleri"
+              option-label="label"
+              option-value="value"
+              class="arac-secim"
+              @change="filtreDegisti"
+            />
+            <DatePicker
+              v-model="tarihAraligi"
+              selection-mode="range"
+              :placeholder="t('taksitTakvimi.vade')"
+              date-format="dd.mm.yy"
+              show-button-bar
+              class="arac-tarih"
+              @update:model-value="filtreDegisti"
+            />
+            <span class="arac-bosluk" />
             <Button
-              v-if="data.odemeDurumu !== 'ODENDI' && odeYetkisi"
-              icon="pi pi-check"
-              text
-              rounded
-              :aria-label="t('taksitTakvimi.ode')"
-              @click="ode(data)"
+              :label="t('taksitTakvimi.excel')"
+              icon="pi pi-file-excel"
+              outlined
+              size="small"
+              :loading="excelYukleniyor"
+              @click="excelIndir"
             />
-            <Button
-              v-if="silYetkisi"
-              icon="pi pi-trash"
-              text
-              rounded
-              severity="danger"
-              :aria-label="t('common.delete')"
-              @click="sil(data)"
+          </div>
+
+          <div
+            class="taksit-masa"
+            :aria-busy="listeYukleniyor"
+          >
+            <AppDataTable
+              :value="liste"
+              lazy
+              :total-records="toplam"
+              :rows="sayfaBoyutu"
+              striped-rows
+              :loading="listeYukleniyor"
+              :empty-message="filtreVar ? t('taksitTakvimi.filtreBos') : t('taksitTakvimi.kayitYok')"
+              gorunum-anahtari="taksitler"
+              @page="sayfaDegisti"
+              @sort="siralaDegisti"
+            >
+              <Column
+                field="vadeTarihi"
+                :header="t('taksitTakvimi.vade')"
+                sortable
+              >
+                <template #body="{ data }">
+                  {{ formatDate(data.vadeTarihi) }}
+                </template>
+              </Column>
+              <Column
+                field="cariAd"
+                :header="t('taksitTakvimi.cari')"
+                sortable
+              />
+              <Column
+                field="kurum"
+                :header="t('taksitTakvimi.kurum')"
+              >
+                <template #body="{ data }">
+                  {{ data.kurum || '-' }}
+                </template>
+              </Column>
+              <Column :header="t('taksitTakvimi.taksitNo')">
+                <template #body="{ data }">
+                  {{ data.taksitNo }}/{{ data.taksitSayisi }}
+                </template>
+              </Column>
+              <Column
+                field="tutar"
+                :header="t('taksitTakvimi.tutar')"
+              >
+                <template #body="{ data }">
+                  {{ formatCurrency(data.tutar) }}
+                </template>
+              </Column>
+              <Column :header="t('taksitTakvimi.durum')">
+                <template #body="{ data }">
+                  <Tag
+                    :severity="durumSeverity(data)"
+                    :value="durumEtiket(data)"
+                  />
+                </template>
+              </Column>
+              <Column
+                :header="t('common.actions')"
+                style="width: 72px"
+              >
+                <template #body="{ data }">
+                  <SatirEylemleri
+                    :gorunur="{ duzenle: false, cogalt: false, sil: false }"
+                    :items="kalemAksiyonlari(data)"
+                    :baslik="data.cariAd"
+                  />
+                </template>
+              </Column>
+              <template #empty>
+                <EmptyState
+                  :message="filtreVar ? t('taksitTakvimi.filtreBos') : t('taksitTakvimi.kayitYok')"
+                />
+              </template>
+            </AppDataTable>
+          </div>
+
+          <!-- Mobil kart görünümü -->
+          <div
+            class="taksit-mobil"
+            :aria-busy="listeYukleniyor"
+          >
+            <span
+              class="sr-only"
+              role="status"
+              aria-live="polite"
+            >{{ t('taksitTakvimi.sonucSayisi', { sayi: toplam }) }}</span>
+            <div
+              v-if="listeYukleniyor && !liste.length"
+              class="taksit-skeleton"
+              role="status"
+              :aria-label="t('common.loading')"
+            >
+              <SkeletonLoader
+                :count="4"
+                height="96px"
+              />
+            </div>
+            <EmptyState
+              v-else-if="!liste.length"
+              :message="filtreVar ? t('taksitTakvimi.filtreBos') : t('taksitTakvimi.kayitYok')"
             />
-          </template>
-        </Column>
-      </DataTable>
-    </div>
+            <article
+              v-for="k in liste"
+              :key="k.id"
+              class="taksit-mobil-kart"
+            >
+              <div class="tmk-ust">
+                <button
+                  type="button"
+                  class="tmk-ad"
+                  :title="t('taksitTakvimi.detay')"
+                  @click="kalemDetay(k)"
+                >
+                  <i class="pi pi-user" />
+                  <span>{{ k.cariAd }}</span>
+                </button>
+                <SatirEylemleri
+                  :gorunur="{ duzenle: false, cogalt: false, sil: false }"
+                  :items="kalemAksiyonlari(k)"
+                  :baslik="k.cariAd"
+                />
+              </div>
+              <div class="tmk-satir">
+                <Tag
+                  :value="durumEtiket(k)"
+                  :severity="durumSeverity(k)"
+                />
+                <strong class="tmk-tutar">{{ formatCurrency(k.tutar) }}</strong>
+              </div>
+              <div class="tmk-satir tmk-alt">
+                <span><i class="pi pi-calendar" /> {{ formatDate(k.vadeTarihi) }}</span>
+                <span>{{ k.taksitNo }}/{{ k.taksitSayisi }}</span>
+                <span v-if="k.kurum">{{ k.kurum }}</span>
+              </div>
+            </article>
+          </div>
+        </div>
+      </TabPanel>
+
+      <TabPanel :header="t('taksitTakvimi.tabPlanlar')">
+        <div class="liste-kart">
+          <div class="taksit-arac">
+            <span class="arac-arama">
+              <i class="pi pi-search" />
+              <InputText
+                v-model="planArama"
+                :placeholder="t('taksitTakvimi.planArama')"
+                class="arama-input"
+                @input="planAramaGirdi"
+              />
+            </span>
+            <span class="arac-bosluk" />
+          </div>
+
+          <div
+            class="plan-masa"
+            :aria-busy="planYukleniyor"
+          >
+            <AppDataTable
+              :value="planlar"
+              striped-rows
+              :loading="planYukleniyor"
+              :paginator="false"
+              :empty-message="planArama.trim() ? t('taksitTakvimi.filtreBos') : t('taksitTakvimi.planYok')"
+              gorunum-anahtari="taksit-planlar"
+            >
+              <Column
+                field="cariAd"
+                :header="t('taksitTakvimi.cari')"
+                sortable
+              />
+              <Column
+                field="planNo"
+                :header="t('taksitTakvimi.planNo')"
+              >
+                <template #body="{ data }">
+                  <span class="detay-mono">{{ data.planNo }}</span>
+                </template>
+              </Column>
+              <Column
+                field="kurum"
+                :header="t('taksitTakvimi.kurum')"
+              >
+                <template #body="{ data }">
+                  {{ data.kurum || '-' }}
+                </template>
+              </Column>
+              <Column :header="t('taksitTakvimi.taksitNo')">
+                <template #body="{ data }">
+                  <div class="plan-ilerleme">
+                    <span>{{ data.odenenAdet }}/{{ data.taksitSayisi }}</span>
+                    <span class="plan-bar">
+                      <span
+                        class="plan-bar-ic"
+                        :style="{ width: `${planYuzde(data)}%` }"
+                      />
+                    </span>
+                  </div>
+                </template>
+              </Column>
+              <Column
+                field="toplamTutar"
+                :header="t('taksitTakvimi.toplamTutar')"
+              >
+                <template #body="{ data }">
+                  {{ formatCurrency(data.toplamTutar) }}
+                </template>
+              </Column>
+              <Column
+                field="kalanTutar"
+                :header="t('taksitTakvimi.kalan')"
+              >
+                <template #body="{ data }">
+                  <strong>{{ formatCurrency(data.kalanTutar) }}</strong>
+                </template>
+              </Column>
+              <Column
+                field="sonVade"
+                :header="t('taksitTakvimi.sonVade')"
+              >
+                <template #body="{ data }">
+                  {{ formatDate(data.sonVade) }}
+                </template>
+              </Column>
+              <Column
+                :header="t('common.actions')"
+                style="width: 72px"
+              >
+                <template #body="{ data }">
+                  <SatirEylemleri
+                    :gorunur="{ duzenle: false, cogalt: false, sil: false }"
+                    :items="planAksiyonlari(data)"
+                    :baslik="data.cariAd"
+                  />
+                </template>
+              </Column>
+              <template #empty>
+                <EmptyState
+                  icon="pi pi-list"
+                  :message="planArama.trim() ? t('taksitTakvimi.filtreBos') : t('taksitTakvimi.planYok')"
+                />
+              </template>
+            </AppDataTable>
+          </div>
+
+          <!-- Mobil plan kartları -->
+          <div
+            class="plan-mobil"
+            :aria-busy="planYukleniyor"
+          >
+            <span
+              class="sr-only"
+              role="status"
+              aria-live="polite"
+            >{{ t('taksitTakvimi.sonucSayisi', { sayi: planlar.length }) }}</span>
+            <div
+              v-if="planYukleniyor && !planlar.length"
+              class="plan-skeleton"
+              role="status"
+              :aria-label="t('common.loading')"
+            >
+              <SkeletonLoader
+                :count="3"
+                height="104px"
+              />
+            </div>
+            <EmptyState
+              v-else-if="!planlar.length"
+              icon="pi pi-list"
+              :message="planArama.trim() ? t('taksitTakvimi.filtreBos') : t('taksitTakvimi.planYok')"
+            />
+            <article
+              v-for="p in planlar"
+              :key="p.planNo"
+              class="plan-mobil-kart"
+            >
+              <div class="pmk-ust">
+                <button
+                  type="button"
+                  class="pmk-ad"
+                  :title="t('taksitTakvimi.detay')"
+                  @click="planDetayAc(p)"
+                >
+                  <i class="pi pi-list" />
+                  <span>{{ p.cariAd }}</span>
+                </button>
+                <SatirEylemleri
+                  :gorunur="{ duzenle: false, cogalt: false, sil: false }"
+                  :items="planAksiyonlari(p)"
+                  :baslik="p.cariAd"
+                />
+              </div>
+              <div class="pmk-satir">
+                <span class="pmk-oran">{{ p.odenenAdet }}/{{ p.taksitSayisi }}</span>
+                <span class="plan-bar pmk-bar">
+                  <span
+                    class="plan-bar-ic"
+                    :style="{ width: `${planYuzde(p)}%` }"
+                  />
+                </span>
+                <strong class="pmk-kalan">{{ formatCurrency(p.kalanTutar) }}</strong>
+              </div>
+              <div class="pmk-satir pmk-alt">
+                <span>{{ formatCurrency(p.toplamTutar) }}</span>
+                <span v-if="p.kurum">{{ p.kurum }}</span>
+                <span>{{ formatDate(p.sonVade) }}</span>
+              </div>
+            </article>
+          </div>
+        </div>
+      </TabPanel>
+    </TabView>
 
     <Dialog
       v-model:visible="planDialog"
@@ -217,6 +528,13 @@
               class="w-full"
             />
           </div>
+        </div>
+        <div
+          v-if="form.toplamTutar > 0 && form.taksitSayisi > 0"
+          class="plan-onizleme"
+        >
+          <span>{{ t('taksitTakvimi.taksitBasi') }}: <strong>{{ formatCurrency(taksitBasiTutar) }}</strong></span>
+          <span>{{ t('taksitTakvimi.sonTaksit') }}: <strong>{{ formatCurrency(sonTaksitTutar) }}</strong></span>
         </div>
         <div class="form-satir">
           <label>{{ t('taksitTakvimi.baslangic') }}</label>
@@ -372,18 +690,41 @@
         />
       </template>
     </Dialog>
+
+    <TaksitDetayDrawer
+      v-model:visible="detayDrawer"
+      :kalem="detayKalem"
+      :ode-yetkisi="odeYetkisi"
+      :sil-yetkisi="silYetkisi"
+      @ode="detayOde"
+      @sil="detaySil"
+    />
+
+    <TaksitPlanDrawer
+      v-model:visible="planDrawer"
+      :plan="seciliPlan"
+      :kalemler="planKalemleri"
+      :yukleniyor="planKalemYukleniyor"
+      :ode-yetkisi="odeYetkisi"
+      :sil-yetkisi="silYetkisi"
+      @sil="planSilOnay"
+      @ode="planDrawerOde"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useI18n } from 'vue-i18n'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
-import { taksitAPI, cariHesapAPI, tahsilatAPI, kasaAPI, bankaAPI } from '../api/index.js'
+import { taksitAPI, cariHesapAPI, tahsilatAPI, kasaAPI, bankaAPI, excelAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
-import { formatCurrency, formatTarih as formatDate } from '../utils/format.js'
+import KpiKart from '../components/KpiKart.vue'
+import TaksitDetayDrawer from '../components/TaksitDetayDrawer.vue'
+import TaksitPlanDrawer from '../components/TaksitPlanDrawer.vue'
+import { formatCurrency, formatTarih as formatDate, getLocalDateString } from '../utils/format.js'
 
 // REDTEAM/Faz1.6: "YYYY-MM-DD" degerini YEREL olarak ayristirir.
 // utils/format.js icindeki parseDate ayni isi yapar ancak disa aktarilmamis;
@@ -415,13 +756,63 @@ const bugun = new Date()
 const seciliYil = ref(bugun.getFullYear())
 const seciliAy = ref(bugun.getMonth() + 1)
 
+const TAB_ANAHTAR = 'raspel_taksit_tab'
+const aktifTab = ref(Number(localStorage.getItem(TAB_ANAHTAR)) || 0)
+watch(aktifTab, (v) => localStorage.setItem(TAB_ANAHTAR, String(v)))
+
 const kalemler = ref([])
-const yaklasan = ref([])
-const ozet = ref({})
+const liste = ref([])
+const ozet = ref({
+  bekleyenToplam: 0,
+  gecikmisToplam: 0,
+  buAyToplam: 0,
+  odenenBuYilToplam: 0,
+  bekleyenAdet: 0,
+  gecikmisAdet: 0,
+  odenenBuYilAdet: 0
+})
 const cariler = ref([])
 const yukleniyor = ref(false)
+const listeYukleniyor = ref(false)
+const excelYukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const planDialog = ref(false)
+
+const planlar = ref([])
+const planArama = ref('')
+const planYukleniyor = ref(false)
+let planAramaZamanlayici = null
+const detayDrawer = ref(false)
+const detayKalem = ref(null)
+const planDrawer = ref(false)
+const seciliPlan = ref(null)
+const planKalemleri = ref([])
+const planKalemYukleniyor = ref(false)
+
+const SAYFA_ANAHTAR = 'raspel_taksit_rows'
+const arama = ref('')
+const cariFiltre = ref(null)
+const durumFiltre = ref('TUMU')
+const tarihAraligi = ref(null)
+const toplam = ref(0)
+const sayfa = ref(0)
+const sayfaBoyutu = ref(Number(localStorage.getItem(SAYFA_ANAHTAR)) || 25)
+const sirala = ref('vadeTarihi,asc')
+let aramaZamanlayici = null
+
+const durumSecenekleri = computed(() => [
+  { label: t('taksitTakvimi.durumTumu'), value: 'TUMU' },
+  { label: t('taksitTakvimi.bekliyor'), value: 'BEKLEMEDE' },
+  { label: t('taksitTakvimi.odendi'), value: 'ODENDI' }
+])
+
+const filtreVar = computed(
+  () =>
+    !!arama.value.trim() ||
+    !!cariFiltre.value ||
+    !!tarihAraligi.value?.[0] ||
+    durumFiltre.value !== 'TUMU'
+)
 
 const form = ref({
   cariId: null,
@@ -431,6 +822,19 @@ const form = ref({
   baslangicTarihi: new Date(),
   kurum: '',
   aciklama: ''
+})
+
+const taksitBasiTutar = computed(() => {
+  const toplam = Number(form.value.toplamTutar || 0)
+  const adet = Number(form.value.taksitSayisi || 0)
+  if (toplam <= 0 || adet <= 0) return 0
+  return Math.floor((toplam / adet) * 100) / 100
+})
+const sonTaksitTutar = computed(() => {
+  const toplam = Number(form.value.toplamTutar || 0)
+  const adet = Number(form.value.taksitSayisi || 0)
+  if (toplam <= 0 || adet <= 0) return 0
+  return Math.round((toplam - taksitBasiTutar.value * (adet - 1)) * 100) / 100
 })
 
 const gunBasliklari = computed(() => {
@@ -481,6 +885,12 @@ const kasaBankaYukle = async () => {
     kasalar.value = unwrapList(kR)
     bankalar.value = unwrapList(bR)
     kasaBankaYuklendi.value = true
+    if (!odemeForm.value.kasaId && kasalar.value.length) {
+      odemeForm.value.kasaId = kasalar.value[0].id
+    }
+    if (!odemeForm.value.bankaId && bankalar.value.length) {
+      odemeForm.value.bankaId = bankalar.value[0].id
+    }
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('taksitTakvimi.hata'))
   }
@@ -531,11 +941,7 @@ const tahsilatKaydet = async () => {
       odemeYontemi: odemeForm.value.odemeYontemi,
       kasaId: odemeForm.value.odemeYontemi === 'NAKIT' ? odemeForm.value.kasaId : null,
       bankaId: odemeForm.value.odemeYontemi !== 'NAKIT' ? odemeForm.value.bankaId : null,
-      hareketTarihi: odemeForm.value.hareketTarihi
-        ? (typeof odemeForm.value.hareketTarihi === 'string'
-            ? odemeForm.value.hareketTarihi
-            : odemeForm.value.hareketTarihi.toISOString().slice(0, 10))
-        : null,
+      hareketTarihi: getLocalDateString(odemeForm.value.hareketTarihi) || null,
       taksitId: k.id,
       aciklama: `${t('taksitTakvimi.taksitOdemesi')} #${k.taksitNo}/${k.taksitSayisi}`
     })
@@ -609,21 +1015,176 @@ const durumEtiket = (k) => {
   return t('taksitTakvimi.bekliyor')
 }
 
+const filtreParams = () => {
+  const p = { page: sayfa.value, size: sayfaBoyutu.value, sort: sirala.value }
+  if (cariFiltre.value) p.cariId = cariFiltre.value
+  if (durumFiltre.value !== 'TUMU') p.durum = durumFiltre.value
+  if (arama.value.trim()) p.q = arama.value.trim()
+  if (tarihAraligi.value?.[0]) p.baslangic = getLocalDateString(tarihAraligi.value[0])
+  if (tarihAraligi.value?.[1]) p.bitis = getLocalDateString(tarihAraligi.value[1])
+  return p
+}
+
+const yukleListe = async () => {
+  listeYukleniyor.value = true
+  try {
+    const r = await taksitAPI.listele(filtreParams())
+    liste.value = unwrapList(r)
+    toplam.value = r.data?.totalElements ?? liste.value.length
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('taksitTakvimi.hata'))
+  }
+  listeYukleniyor.value = false
+}
+
 const yukle = async () => {
   yukleniyor.value = true
   try {
-    const [takvimRes, ozetRes, yaklasanRes] = await Promise.all([
+    const [takvimRes, ozetRes] = await Promise.all([
       taksitAPI.takvim(seciliYil.value, seciliAy.value),
-      taksitAPI.ozet(),
-      taksitAPI.yaklasan(30)
+      taksitAPI.ozet()
     ])
     kalemler.value = takvimRes.data || []
-    ozet.value = ozetRes.data || {}
-    yaklasan.value = yaklasanRes.data || []
+    ozet.value = { ...ozet.value, ...(ozetRes.data || {}) }
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('taksitTakvimi.hata'))
   }
   yukleniyor.value = false
+  await yukleListe()
+  await planlariYukle()
+}
+
+const planlariYukle = async () => {
+  planYukleniyor.value = true
+  try {
+    const r = await taksitAPI.planlar(planArama.value.trim() ? { q: planArama.value.trim() } : {})
+    planlar.value = Array.isArray(r.data) ? r.data : []
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('taksitTakvimi.hata'))
+  }
+  planYukleniyor.value = false
+}
+
+const planAramaGirdi = () => {
+  clearTimeout(planAramaZamanlayici)
+  planAramaZamanlayici = setTimeout(planlariYukle, 300)
+}
+
+const planYuzde = (p) => {
+  const adet = Number(p?.taksitSayisi || 0)
+  const odenen = Number(p?.odenenAdet || 0)
+  return adet ? Math.min(100, Math.round((odenen / adet) * 100)) : 0
+}
+
+const planAksiyonlari = (p) => {
+  const items = [{ etiket: t('taksitTakvimi.detay'), ikon: 'pi pi-search', islem: () => planDetayAc(p) }]
+  if (silYetkisi.value) {
+    items.push({ etiket: t('common.delete'), ikon: 'pi pi-trash', sinif: 'eylem-sil', islem: () => planSilOnay(p) })
+  }
+  return items
+}
+
+const planDetayAc = async (p) => {
+  seciliPlan.value = p
+  planKalemleri.value = []
+  planDrawer.value = true
+  planKalemYukleniyor.value = true
+  try {
+    const r = await taksitAPI.planDetay(p.planNo)
+    planKalemleri.value = Array.isArray(r.data) ? r.data : []
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('taksitTakvimi.hata'))
+  } finally {
+    planKalemYukleniyor.value = false
+  }
+}
+
+const planSilOnay = (p) => {
+  confirm.require({
+    message: t('taksitTakvimi.planSilOnay', { plan: p.planNo }),
+    header: t('common.silmeOnayi'),
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: t('common.evetSil'),
+    rejectLabel: t('common.vazgec'),
+    accept: async () => {
+      try {
+        await taksitAPI.planSil(p.planNo)
+        planDrawer.value = false
+        toastBildirim.basarili(t('taksitTakvimi.planSilindi'))
+        await yukle()
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || t('taksitTakvimi.planSilinemedi'))
+      }
+    }
+  })
+}
+
+const carileriYukle = async () => {
+  if (cariler.value.length) return
+  try {
+    const r = await cariHesapAPI.getAll({ size: 500 })
+    cariler.value = unwrapList(r)
+  } catch {
+    cariler.value = []
+  }
+}
+
+const filtreDegisti = () => {
+  sayfa.value = 0
+  yukleListe()
+}
+
+const aramaGirdi = () => {
+  clearTimeout(aramaZamanlayici)
+  aramaZamanlayici = setTimeout(filtreDegisti, 300)
+}
+
+const sayfaDegisti = (e) => {
+  sayfa.value = e.page
+  sayfaBoyutu.value = e.rows
+  localStorage.setItem(SAYFA_ANAHTAR, String(e.rows))
+  yukleListe()
+}
+
+const siralaDegisti = (e) => {
+  sirala.value = `${e.sortField},${e.sortOrder === 1 ? 'asc' : 'desc'}`
+  sayfa.value = 0
+  yukleListe()
+}
+
+const excelIndir = async () => {
+  excelYukleniyor.value = true
+  try {
+    const params = filtreParams()
+    delete params.page
+    delete params.size
+    delete params.sort
+    const res = await excelAPI.taksitler(params)
+    const url = window.URL.createObjectURL(new Blob([res.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `Taksitler-${new Date().toISOString().slice(0, 10)}.xlsx`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+    toastBildirim.basarili(t('taksitTakvimi.excelIndirildi'))
+  } catch {
+    toastBildirim.hata(t('taksitTakvimi.excelHata'))
+  } finally {
+    excelYukleniyor.value = false
+  }
+}
+
+const kalemAksiyonlari = (k) => {
+  const items = [{ etiket: t('taksitTakvimi.detay'), ikon: 'pi pi-search', islem: () => kalemDetay(k) }]
+  if (k.odemeDurumu !== 'ODENDI' && odeYetkisi.value) {
+    items.push({ etiket: t('taksitTakvimi.ode'), ikon: 'pi pi-check', sinif: 'eylem-pozitif', islem: () => ode(k) })
+  }
+  if (silYetkisi.value) {
+    items.push({ etiket: t('common.delete'), ikon: 'pi pi-trash', sinif: 'eylem-sil', islem: () => sil(k) })
+  }
+  return items
 }
 
 const ayDegistir = (delta) => {
@@ -669,7 +1230,7 @@ const planKaydet = async () => {
       toplamTutar: form.value.toplamTutar,
       taksitSayisi: form.value.taksitSayisi,
       periyotAy: form.value.periyotAy,
-      baslangicTarihi: formatYyyyMmDd(form.value.baslangicTarihi),
+      baslangicTarihi: getLocalDateString(form.value.baslangicTarihi),
       kurum: form.value.kurum || null,
       aciklama: form.value.aciklama || null
     })
@@ -682,18 +1243,24 @@ const planKaydet = async () => {
   kaydediliyor.value = false
 }
 
-const formatYyyyMmDd = (d) => {
-  if (!d) return null
-  const t2 = d instanceof Date ? d : new Date(d)
-  const ay = String(t2.getMonth() + 1).padStart(2, '0')
-  const gun = String(t2.getDate()).padStart(2, '0')
-  return `${t2.getFullYear()}-${ay}-${gun}`
+const kalemDetay = (k) => {
+  detayKalem.value = k
+  detayDrawer.value = true
 }
 
-const kalemDetay = (k) => {
-  if (k.odemeDurumu !== 'ODENDI' && odeYetkisi.value) {
-    ode(k)
-  }
+const detayOde = (k) => {
+  detayDrawer.value = false
+  ode(k)
+}
+
+const detaySil = (k) => {
+  detayDrawer.value = false
+  sil(k)
+}
+
+const planDrawerOde = (k) => {
+  planDrawer.value = false
+  ode(k)
 }
 
 // REDTEAM/Faz1.2: Eski `ode` fonksiyonu kaldırıldı. `POST /taksitler/{id}/ode`
@@ -720,7 +1287,10 @@ const sil = (k) => {
   })
 }
 
-onMounted(yukle)
+onMounted(async () => {
+  await carileriYukle()
+  await yukle()
+})
 </script>
 
 <style scoped>
@@ -728,45 +1298,11 @@ onMounted(yukle)
   padding: 0;
 }
 
-.ozet-kartlar {
+.kpi-satiri {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.ozet-kart {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 16px 20px;
-  border-radius: 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--accent);
-}
-
-.ozet-kart.gecikmis {
-  border-left-color: #ef4444;
-}
-
-.ozet-kart.bu-ay {
-  border-left-color: #f59e0b;
-}
-
-.ozet-baslik {
-  font-size: 13px;
-  color: var(--text-secondary, #94a3b8);
-}
-
-.ozet-deger {
-  font-size: 22px;
-  font-weight: 600;
-}
-
-.ozet-alt {
-  font-size: 12px;
-  color: var(--text-secondary, #94a3b8);
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .takvim-kart,
@@ -860,6 +1396,46 @@ onMounted(yukle)
   margin: 0 0 12px 0;
 }
 
+.taksit-arac {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.arac-bosluk {
+  flex: 1 1 auto;
+}
+.arac-arama {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 10px);
+  background: var(--bg-card);
+  min-width: 200px;
+  flex: 1 1 220px;
+  max-width: 340px;
+}
+.arac-arama i {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.arac-arama :deep(.arama-input) {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  width: 100%;
+  padding-left: 0;
+}
+.arac-secim {
+  min-width: 170px;
+}
+.arac-tarih {
+  min-width: 210px;
+}
+
 .form-satir {
   display: flex;
   flex-direction: column;
@@ -876,6 +1452,46 @@ onMounted(yukle)
 .form-ikili {
   display: flex;
   gap: 12px;
+}
+
+.plan-onizleme {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+}
+
+.plan-ilerleme {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  min-width: 110px;
+}
+.plan-bar {
+  display: inline-block;
+  width: 56px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-muted);
+  overflow: hidden;
+}
+.plan-bar-ic {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+.detay-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
 }
 
 .w-full {
@@ -927,5 +1543,166 @@ onMounted(yukle)
   font-weight: 600;
   color: var(--text-secondary);
   margin-top: 4px;
+}
+
+.taksit-mobil,
+.plan-mobil {
+  display: none;
+}
+.taksit-skeleton,
+.plan-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.taksit-mobil-kart,
+.plan-mobil-kart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+}
+.tmk-ust,
+.pmk-ust {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.tmk-ad,
+.pmk-ad {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.tmk-ad i,
+.pmk-ad i {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.tmk-ad span,
+.pmk-ad span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tmk-satir,
+.pmk-satir {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+.tmk-satir i {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.tmk-tutar {
+  color: var(--accent);
+}
+.tmk-alt,
+.pmk-alt {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.pmk-oran {
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.pmk-bar {
+  flex: 1 1 auto;
+  max-width: 120px;
+}
+.pmk-kalan {
+  margin-left: auto;
+  color: var(--accent);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 768px) {
+  .taksit-masa,
+  .plan-masa {
+    display: none;
+  }
+  .taksit-mobil,
+  .plan-mobil {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .arac-bosluk {
+    display: none;
+  }
+  .arac-arama {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+  .arac-secim,
+  .arac-tarih {
+    flex: 1 1 45%;
+    min-width: 0;
+  }
+  .takvim-grid {
+    gap: 3px;
+  }
+  .gun-hucre {
+    min-height: 46px;
+    padding: 2px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 2px;
+  }
+  .kalem {
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 0;
+    line-height: 0;
+  }
+  .kalem-metin {
+    display: none;
+  }
+  :deep(.p-tabview-nav) {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+  :deep(.p-tabview-nav li) {
+    flex-shrink: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kalem,
+  .plan-bar-ic {
+    transition: none;
+  }
 }
 </style>

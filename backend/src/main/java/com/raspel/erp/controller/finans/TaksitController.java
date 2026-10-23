@@ -39,9 +39,10 @@ public class TaksitController {
             @RequestParam(required = false) String durum,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis,
+            @RequestParam(required = false) String q,
             @PageableDefault(size = 50, sort = "vadeTarihi") Pageable pageable) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(taksitService.listele(sirketId, cariId, durum, baslangic, bitis, pageable));
+        return ResponseEntity.ok(taksitService.listele(sirketId, cariId, durum, baslangic, bitis, q, pageable));
     }
 
     @GetMapping("/yaklasan")
@@ -64,10 +65,29 @@ public class TaksitController {
     }
 
     @GetMapping("/ozet")
-    @Operation(summary = "Taksit ozeti", description = "Bekleyen, gecikmis ve bu ay vadesi gelen taksit toplamlari")
-    public ResponseEntity<Map<String, Object>> ozet(HttpServletRequest request) {
+    @Operation(summary = "Taksit özeti",
+            description = "Bekleyen, gecikmiş, bu ay vadesi gelen ve bu yıl ödenen taksit toplamları")
+    public ResponseEntity<com.raspel.erp.dto.finans.TaksitOzetDTO> ozet(HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         return ResponseEntity.ok(taksitService.ozet(sirketId));
+    }
+
+    @GetMapping("/planlar")
+    @Operation(summary = "Taksit planları", description = "Plan bazında cari, adet, toplam/ödenen tutar ve vade aralığı özetleri")
+    public ResponseEntity<List<com.raspel.erp.dto.finans.TaksitPlanOzetDTO>> planlar(
+            HttpServletRequest request,
+            @RequestParam(required = false) String q) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(taksitService.planlar(sirketId, q));
+    }
+
+    @GetMapping("/plan/{planNo}")
+    @Operation(summary = "Plan detayı", description = "Bir plana ait tüm taksit kalemlerini getirir")
+    public ResponseEntity<List<TaksitDTO>> planDetay(
+            @PathVariable String planNo,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(taksitService.planDetay(sirketId, planNo));
     }
 
     @PostMapping("/plan")

@@ -50,11 +50,34 @@ class TaksitControllerTest {
 
     @Test
     void shouldListele() throws Exception {
-        when(taksitService.listele(anyLong(), any(), any(), any(), any(), any(Pageable.class)))
+        when(taksitService.listele(anyLong(), any(), any(), any(), any(), any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(ornek())));
         mockMvc.perform(get("/api/taksitler").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].odemeDurumu").value("BEKLEMEDE"));
+    }
+
+    @Test
+    void shouldPlanlar() throws Exception {
+        when(taksitService.planlar(1L, "ahmet")).thenReturn(List.of(
+                com.raspel.erp.dto.finans.TaksitPlanOzetDTO.builder()
+                        .planNo("TKS-1").cariAd("Ahmet").taksitSayisi(3).odenenAdet(1)
+                        .toplamTutar(new BigDecimal("300")).odenenTutar(new BigDecimal("100"))
+                        .kalanTutar(new BigDecimal("200")).build()));
+
+        mockMvc.perform(get("/api/taksitler/planlar").requestAttr("sirketId", 1L).param("q", "ahmet"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].planNo").value("TKS-1"))
+                .andExpect(jsonPath("$[0].kalanTutar").value(200));
+    }
+
+    @Test
+    void shouldPlanDetay() throws Exception {
+        when(taksitService.planDetay(1L, "TKS-1")).thenReturn(List.of(ornek()));
+
+        mockMvc.perform(get("/api/taksitler/plan/TKS-1").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].cariAd").value("Test Cari"));
     }
 
     @Test
@@ -76,15 +99,16 @@ class TaksitControllerTest {
 
     @Test
     void shouldOzet() throws Exception {
-        when(taksitService.ozet(1L)).thenReturn(Map.of(
-                "bekleyenToplam", new BigDecimal("600"),
-                "gecikmisToplam", new BigDecimal("300"),
-                "buAyToplam", new BigDecimal("200"),
-                "bekleyenAdet", 3,
-                "gecikmisAdet", 1));
+        when(taksitService.ozet(1L)).thenReturn(com.raspel.erp.dto.finans.TaksitOzetDTO.builder()
+                .bekleyenToplam(new BigDecimal("600")).bekleyenAdet(3)
+                .gecikmisToplam(new BigDecimal("300")).gecikmisAdet(1)
+                .buAyToplam(new BigDecimal("200"))
+                .odenenBuYilToplam(new BigDecimal("900")).odenenBuYilAdet(4)
+                .build());
         mockMvc.perform(get("/api/taksitler/ozet").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.bekleyenAdet").value(3));
+                .andExpect(jsonPath("$.bekleyenAdet").value(3))
+                .andExpect(jsonPath("$.odenenBuYilAdet").value(4));
     }
 
     @Test

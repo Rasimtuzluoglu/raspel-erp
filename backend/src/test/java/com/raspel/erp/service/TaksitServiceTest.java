@@ -122,28 +122,37 @@ class TaksitServiceTest {
     }
 
     @Test
-    void ozet_bekleyenGecikmisVeBuAyToplamlariniHesaplar() {
-        CariHesap c = cari(1L, 1L);
+    void ozet_agregasyonlariDoner() {
         LocalDate bugun = LocalDate.now();
-        LocalDate gecmis = bugun.minusDays(5);
-        LocalDate aySonu = bugun.withDayOfMonth(bugun.lengthOfMonth());
-        LocalDate ileri = bugun.plusMonths(2);
-        when(taksitRepository.findBySirketIdAndOdemeDurumuNot(1L, "ODENDI"))
-                .thenReturn(List.of(
-                        kalem(1L, c, gecmis, "100", "BEKLEMEDE"),
-                        kalem(2L, c, aySonu, "200", "BEKLEMEDE"),
-                        kalem(3L, c, ileri, "300", "BEKLEMEDE")));
+        LocalDate ayBas = bugun.withDayOfMonth(1);
+        LocalDate ayBit = bugun.withDayOfMonth(bugun.lengthOfMonth());
+        LocalDate yilBas = bugun.withDayOfYear(1);
+        LocalDate yilBit = bugun.withDayOfYear(bugun.lengthOfYear());
+        when(taksitRepository.sumBekleyenTutar(1L)).thenReturn(new BigDecimal("600"));
+        when(taksitRepository.countBekleyen(1L)).thenReturn(3L);
+        when(taksitRepository.sumGecikmisTutar(1L, bugun)).thenReturn(new BigDecimal("100"));
+        when(taksitRepository.countGecikmis(1L, bugun)).thenReturn(1L);
+        when(taksitRepository.sumBuAyTutar(1L, ayBas, ayBit)).thenReturn(new BigDecimal("200"));
+        when(taksitRepository.sumOdenenTutar(1L, yilBas, yilBit)).thenReturn(new BigDecimal("900"));
+        when(taksitRepository.countOdenen(1L, yilBas, yilBit)).thenReturn(4L);
 
-        Map<String, Object> ozet = taksitService.ozet(1L);
+        var ozet = taksitService.ozet(1L);
 
-        BigDecimal beklenenBuAy = new BigDecimal("200");
-        if (gecmis.getYear() == bugun.getYear() && gecmis.getMonth() == bugun.getMonth()) {
-            beklenenBuAy = beklenenBuAy.add(new BigDecimal("100"));
-        }
-        assertEquals(new BigDecimal("600"), ozet.get("bekleyenToplam"));
-        assertEquals(new BigDecimal("100"), ozet.get("gecikmisToplam"));
-        assertEquals(beklenenBuAy, ozet.get("buAyToplam"));
-        assertEquals(1, ozet.get("gecikmisAdet"));
+        assertEquals(new BigDecimal("600"), ozet.getBekleyenToplam());
+        assertEquals(3L, ozet.getBekleyenAdet());
+        assertEquals(new BigDecimal("100"), ozet.getGecikmisToplam());
+        assertEquals(1L, ozet.getGecikmisAdet());
+        assertEquals(new BigDecimal("200"), ozet.getBuAyToplam());
+        assertEquals(new BigDecimal("900"), ozet.getOdenenBuYilToplam());
+        assertEquals(4L, ozet.getOdenenBuYilAdet());
+    }
+
+    @Test
+    void ozet_sirketYoksaSifir() {
+        var ozet = taksitService.ozet(null);
+        assertEquals(BigDecimal.ZERO, ozet.getBekleyenToplam());
+        assertEquals(0L, ozet.getBekleyenAdet());
+        verifyNoInteractions(taksitRepository);
     }
 
     @Test
@@ -286,5 +295,45 @@ class TaksitServiceTest {
         verify(taksitRepository).save(captor.capture());
         assertEquals(4242L, captor.getValue().getHareketId(),
                 "Tahsilat hareketi taksite baglanmali (denetim izi)");
+    }
+
+    @Test
+    void planlar_ozetleriDoner() {
+        Object[] row = {"TKS-1", "Ahmet", "Banka", 3L, 1L,
+                new BigDecimal("300"), new BigDecimal("100"),
+                LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 1)};
+        when(taksitRepository.planOzetleri(1L, null)).thenReturn(java.util.Collections.singletonList(row));
+
+        var sonuc = taksitService.planlar(1L, null);
+
+        assertEquals(1, sonuc.size());
+        assertEquals("TKS-1", sonuc.get(0).getPlanNo());
+        assertEquals(3L, sonuc.get(0).getTaksitSayisi());
+        assertEquals(1L, sonuc.get(0).getOdenenAdet());
+        assertEquals(new BigDecimal("300"), sonuc.get(0).getToplamTutar());
+        assertEquals(new BigDecimal("200"), sonuc.get(0).getKalanTutar());
+    }
+
+    @Test
+    void planlar_sirketYoksaBos() {
+        assertTrue(taksitService.planlar(null, "abc").isEmpty());
+        verifyNoInteractions(taksitRepository);
+    }
+
+    @Test
+    void planDetay_kalemleriDoner() {
+        CariHesap c = cari(1L, 1L);
+        when(taksitRepository.findBySirketIdAndPlanNoOrderByTaksitNoAsc(1L, "TKS-1"))
+                .thenReturn(List.of(kalem(1L, c, LocalDate.now(), "100", "BEKLEMEDE")));
+
+        var sonuc = taksitService.planDetay(1L, "TKS-1");
+
+        assertEquals(1, sonuc.size());
+    }
+
+    @Test
+    void planDetay_bulunamazsaHata() {
+        when(taksitRepository.findBySirketIdAndPlanNoOrderByTaksitNoAsc(1L, "YOK")).thenReturn(List.of());
+        assertThrows(ResourceNotFoundException.class, () -> taksitService.planDetay(1L, "YOK"));
     }
 }

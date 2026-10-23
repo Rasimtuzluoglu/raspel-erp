@@ -47,20 +47,30 @@ public class TaksitService {
     @Transactional(readOnly = true)
     public Page<TaksitDTO> listele(Long sirketId, Long cariId, String durum,
                                    LocalDate baslangic, LocalDate bitis, Pageable pageable) {
+        return listele(sirketId, cariId, durum, baslangic, bitis, null, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TaksitDTO> listele(Long sirketId, Long cariId, String durum,
+                                   LocalDate baslangic, LocalDate bitis, String q, Pageable pageable) {
         Specification<Taksit> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("sirketId"), sirketId));
             if (cariId != null) {
                 predicates.add(cb.equal(root.get("cariHesap").get("id"), cariId));
             }
-            if (durum != null && !durum.isBlank()) {
-                predicates.add(cb.equal(root.get("odemeDurumu"), durum.toUpperCase()));
+            if (durum != null && !durum.isBlank() && !"TUMU".equalsIgnoreCase(durum)) {
+                predicates.add(cb.equal(root.get("odemeDurumu"), durum.trim().toUpperCase()));
             }
             if (baslangic != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("vadeTarihi"), baslangic));
             }
             if (bitis != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.get("vadeTarihi"), bitis));
+            }
+            if (q != null && !q.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("cariHesap").get("ad")),
+                        "%" + q.trim().toLowerCase(java.util.Locale.ROOT) + "%"));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
@@ -81,6 +91,43 @@ public class TaksitService {
                 .toList();
     }
 
+    /** Plan bazlı özet listesi (opsiyonel cari adı araması). */
+    @Transactional(readOnly = true)
+    public List<com.raspel.erp.dto.finans.TaksitPlanOzetDTO> planlar(Long sirketId, String q) {
+        if (sirketId == null) {
+            return List.of();
+        }
+        String arama = (q == null || q.isBlank()) ? null : q.trim().toLowerCase(java.util.Locale.ROOT);
+        return taksitRepository.planOzetleri(sirketId, arama).stream()
+                .map(row -> {
+                    BigDecimal toplam = row[5] != null ? (BigDecimal) row[5] : BigDecimal.ZERO;
+                    BigDecimal odenen = row[6] != null ? (BigDecimal) row[6] : BigDecimal.ZERO;
+                    return com.raspel.erp.dto.finans.TaksitPlanOzetDTO.builder()
+                            .planNo((String) row[0])
+                            .cariAd((String) row[1])
+                            .kurum((String) row[2])
+                            .taksitSayisi(((Number) row[3]).longValue())
+                            .odenenAdet(row[4] != null ? ((Number) row[4]).longValue() : 0L)
+                            .toplamTutar(toplam)
+                            .odenenTutar(odenen)
+                            .kalanTutar(toplam.subtract(odenen))
+                            .ilkVade((LocalDate) row[7])
+                            .sonVade((LocalDate) row[8])
+                            .build();
+                })
+                .toList();
+    }
+
+    /** Plan detayı: plana ait kalemler. */
+    @Transactional(readOnly = true)
+    public List<TaksitDTO> planDetay(Long sirketId, String planNo) {
+        List<Taksit> kalemler = taksitRepository.findBySirketIdAndPlanNoOrderByTaksitNoAsc(sirketId, planNo);
+        if (kalemler.isEmpty()) {
+            throw new ResourceNotFoundException("Taksit planı bulunamadı: " + planNo);
+        }
+        return kalemler.stream().map(this::toDTO).toList();
+    }
+
     /** Belirtilen ay icindeki tum taksitler (takvim gorunumu icin). */
     @Transactional(readOnly = true)
     public List<TaksitDTO> takvim(Long sirketId, int yil, int ay) {
@@ -94,36 +141,26 @@ public class TaksitService {
     }
 
     @Transactional(readOnly = true)
-    public Map<String, Object> ozet(Long sirketId) {
-        LocalDate bugun = LocalDate.now();
-        List<Taksit> bekleyen = taksitRepository.findBySirketIdAndOdemeDurumuNot(sirketId, DURUM_ODENDI);
-
-        BigDecimal bekleyenToplam = BigDecimal.ZERO;
-        BigDecimal gecikmisToplam = BigDecimal.ZERO;
-        BigDecimal buAyToplam = BigDecimal.ZERO;
-        int gecikmisAdet = 0;
-        for (Taksit t : bekleyen) {
-            BigDecimal tutar = t.getTutar() != null ? t.getTutar() : BigDecimal.ZERO;
-            bekleyenToplam = bekleyenToplam.add(tutar);
-            if (t.getVadeTarihi() != null) {
-                if (t.getVadeTarihi().isBefore(bugun)) {
-                    gecikmisToplam = gecikmisToplam.add(tutar);
-                    gecikmisAdet++;
-                }
-                if (t.getVadeTarihi().getYear() == bugun.getYear()
-                        && t.getVadeTarihi().getMonth() == bugun.getMonth()) {
-                    buAyToplam = buAyToplam.add(tutar);
-                }
-            }
+    public com.raspel.erp.dto.finans.TaksitOzetDTO ozet(Long sirketId) {
+        if (sirketId == null) {
+            return com.raspel.erp.dto.finans.TaksitOzetDTO.builder()
+                    .bekleyenToplam(BigDecimal.ZERO).gecikmisToplam(BigDecimal.ZERO)
+                    .buAyToplam(BigDecimal.ZERO).odenenBuYilToplam(BigDecimal.ZERO).build();
         }
-
-        Map<String, Object> sonuc = new LinkedHashMap<>();
-        sonuc.put("bekleyenToplam", bekleyenToplam);
-        sonuc.put("gecikmisToplam", gecikmisToplam);
-        sonuc.put("buAyToplam", buAyToplam);
-        sonuc.put("bekleyenAdet", bekleyen.size());
-        sonuc.put("gecikmisAdet", gecikmisAdet);
-        return sonuc;
+        LocalDate bugun = LocalDate.now();
+        LocalDate ayBas = bugun.withDayOfMonth(1);
+        LocalDate ayBit = bugun.withDayOfMonth(bugun.lengthOfMonth());
+        LocalDate yilBas = bugun.withDayOfYear(1);
+        LocalDate yilBit = bugun.withDayOfYear(bugun.lengthOfYear());
+        return com.raspel.erp.dto.finans.TaksitOzetDTO.builder()
+                .bekleyenToplam(taksitRepository.sumBekleyenTutar(sirketId))
+                .bekleyenAdet(taksitRepository.countBekleyen(sirketId))
+                .gecikmisToplam(taksitRepository.sumGecikmisTutar(sirketId, bugun))
+                .gecikmisAdet(taksitRepository.countGecikmis(sirketId, bugun))
+                .buAyToplam(taksitRepository.sumBuAyTutar(sirketId, ayBas, ayBit))
+                .odenenBuYilToplam(taksitRepository.sumOdenenTutar(sirketId, yilBas, yilBit))
+                .odenenBuYilAdet(taksitRepository.countOdenen(sirketId, yilBas, yilBit))
+                .build();
     }
 
     @Transactional

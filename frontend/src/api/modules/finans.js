@@ -205,6 +205,15 @@ export const taksitAPI = {
     // data: { cariId, toplamTutar, taksitSayisi, baslangicTarihi, periyotAy, kurum, faturaId, aciklama }
     return apiClient.post('/taksitler/plan', data)
   },
+  planlar(params) {
+    return apiClient.get('/taksitler/planlar', { params })
+  },
+  planDetay(planNo) {
+    return apiClient.get(`/taksitler/plan/${planNo}`)
+  },
+  planSil(planNo) {
+    return apiClient.delete(`/taksitler/plan/${planNo}`)
+  },
   ode(id, data) {
     return apiClient.post(`/taksitler/${id}/ode`, data || {})
   },

@@ -51,6 +51,7 @@ public class ExcelExportController {
     private final com.raspel.erp.service.ik.PersonelPuantajService personelPuantajService;
     private final com.raspel.erp.service.ik.VardiyaService vardiyaService;
     private final com.raspel.erp.service.finans.MasrafService masrafService;
+    private final com.raspel.erp.service.finans.TaksitService taksitService;
     private final BankaService bankaService;
     private final KasaService kasaService;
     private final AuditLogService auditLogService;
@@ -314,6 +315,30 @@ public class ExcelExportController {
             return satir;
         }).toList();
         return excel("Masraflar", new String[]{"ID", "Tarih", "Kategori", "Açıklama", "Tutar", "KDV Oranı", "KDV", "Matrah", "Belge No"}, rows);
+    }
+
+    @GetMapping("/taksitler")
+    @Operation(summary = "Taksitleri Excel dışa aktar", description = "Taksit kalemlerini (cari/durum/tarih/arama filtreleriyle) Excel (.xlsx) olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FINANS_EXPORT') or @yetkiKontrol.kontrol(authentication, 'RAPOR_EXPORT')")
+    public ResponseEntity<byte[]> taksitler(
+            HttpServletRequest req,
+            @RequestParam(required = false) Long cariId,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis,
+            @RequestParam(required = false) String q) {
+        Long sirketId = (Long) req.getAttribute("sirketId");
+        var list = taksitService.listele(sirketId, cariId, durum, baslangic, bitis, q, MAX_EXPORT_PAGE).getContent();
+        var rows = list.stream().map(t -> {
+            Map<String, Object> satir = new LinkedHashMap<>();
+            satir.put("ID", t.getId()); satir.put("Vade", t.getVadeTarihi());
+            satir.put("Cari", t.getCariAd()); satir.put("Kurum", t.getKurum());
+            satir.put("Taksit", t.getTaksitNo() + "/" + t.getTaksitSayisi());
+            satir.put("Tutar", t.getTutar()); satir.put("Durum", t.getOdemeDurumu());
+            satir.put("Ödeme Tarihi", t.getOdemeTarihi()); satir.put("Plan", t.getPlanNo());
+            return satir;
+        }).toList();
+        return excel("Taksitler", new String[]{"ID", "Vade", "Cari", "Kurum", "Taksit", "Tutar", "Durum", "Ödeme Tarihi", "Plan"}, rows);
     }
 
     @GetMapping("/bankalar")
