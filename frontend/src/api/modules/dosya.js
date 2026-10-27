@@ -57,6 +57,9 @@ export const excelAPI = {
   faturalar() {
     return apiClient.get('/exports/faturalar', { responseType: 'blob' })
   },
+  irsaliyeler(params) {
+    return apiClient.get('/exports/irsaliyeler', { params, responseType: 'blob' })
+  },
   hareketler() {
     return apiClient.get('/exports/hareketler', { responseType: 'blob' })
   },

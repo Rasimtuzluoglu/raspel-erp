@@ -205,17 +205,44 @@ export const irsaliyeAPI = {
   getAll(params) {
     return apiClient.get('/irsaliyeler', { params })
   },
+  filtreli(params) {
+    return apiClient.get('/irsaliyeler/filtreli', { params })
+  },
+  ozet(params) {
+    return apiClient.get('/irsaliyeler/ozet', { params })
+  },
   getById(id) {
     return apiClient.get(`/irsaliyeler/${id}`)
   },
   create(data) {
     return apiClient.post('/irsaliyeler', data)
   },
+  update(id, data) {
+    return apiClient.put(`/irsaliyeler/${id}`, data)
+  },
   durumGuncelle(id, durum) {
     return apiClient.put(`/irsaliyeler/${id}/durum`, { durum })
   },
+  hazirla(id) {
+    return apiClient.post(`/irsaliyeler/${id}/hazirla`)
+  },
+  sevk(id, data) {
+    return apiClient.post(`/irsaliyeler/${id}/sevk`, data)
+  },
+  teslim(id, data) {
+    return apiClient.post(`/irsaliyeler/${id}/teslim`, data)
+  },
+  sevkiGeriAl(id) {
+    return apiClient.post(`/irsaliyeler/${id}/sevki-geri-al`)
+  },
+  iptal(id, aciklama) {
+    return apiClient.post(`/irsaliyeler/${id}/iptal`, { aciklama })
+  },
   faturayaDonustur(id) {
     return apiClient.post(`/irsaliyeler/${id}/faturaya-donustur`)
+  },
+  topluFatura(ids) {
+    return apiClient.post('/irsaliyeler/toplu-fatura', { ids })
   },
   delete(id) {
     return apiClient.delete(`/irsaliyeler/${id}`)
