@@ -92,9 +92,41 @@ export const kasaAPI = {
   }
 }
 
-export const butceAPI = {
-  getAll(params = { size: 500 }) {
+export const butceAPI = {  getAll(params = { size: 500 }) {
     return apiClient.get('/butceler', { params })
+  },
+  filtreli(params = {}) {
+    return apiClient.get('/butceler/filtreli', { params })
+  },
+  ozet(params = {}) {
+    return apiClient.get('/butceler/ozet', { params })
+  },
+  kategoriler(params = {}) {
+    return apiClient.get('/butceler/kategoriler', { params })
+  },
+  gerceklesen(params = {}) {
+    return apiClient.get('/butceler/gerceklesen', { params })
+  },
+  gerceklesenPdf(params = {}) {
+    return apiClient.get('/butceler/gerceklesen/pdf', { params, responseType: 'blob' })
+  },
+  matris(params = {}) {
+    return apiClient.get('/butceler/matris', { params })
+  },
+  kopyala(data) {
+    return apiClient.post('/butceler/kopyala', data)
+  },
+  onayBekleyen(params = {}) {
+    return apiClient.get('/butceler/onay-bekleyen', { params })
+  },
+  onayla(id) {
+    return apiClient.put(`/butceler/${id}/onayla`)
+  },
+  reddet(id, gerekce) {
+    return apiClient.put(`/butceler/${id}/reddet`, { gerekce })
+  },
+  revizyonlar(id) {
+    return apiClient.get(`/butceler/${id}/revizyonlar`)
   },
   getById(id) {
     return apiClient.get(`/butceler/${id}`)

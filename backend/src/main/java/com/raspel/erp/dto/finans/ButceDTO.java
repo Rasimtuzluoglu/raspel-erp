@@ -19,4 +19,9 @@ public class ButceDTO {
     private Long sirketId;
     private String aciklama;
     private LocalDateTime olusturmaTarihi;
+    private String durum;
+    private Integer revizyon;
+    private Long onaylayanKullaniciId;
+    private LocalDateTime onayTarihi;
+    private String redGerekcesi;
 }

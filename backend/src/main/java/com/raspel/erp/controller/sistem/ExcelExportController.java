@@ -53,6 +53,7 @@ public class ExcelExportController {
     private final com.raspel.erp.service.finans.MasrafService masrafService;
     private final com.raspel.erp.service.finans.TaksitService taksitService;
     private final com.raspel.erp.service.sistem.AjandaService ajandaService;
+    private final com.raspel.erp.service.finans.ButceService butceService;
     private final BankaService bankaService;
     private final KasaService kasaService;
     private final AuditLogService auditLogService;
@@ -340,6 +341,81 @@ public class ExcelExportController {
             return satir;
         }).toList();
         return excel("Taksitler", new String[]{"ID", "Vade", "Cari", "Kurum", "Taksit", "Tutar", "Durum", "Ödeme Tarihi", "Plan"}, rows);
+    }
+
+    @GetMapping("/butceler")
+    @Operation(summary = "Bütçeleri Excel dışa aktar",
+            description = "Bütçe kayıtlarını yıl/ay/tür/kategori/arama filtreleriyle Excel (.xlsx) olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FINANS_EXPORT') or @yetkiKontrol.kontrol(authentication, 'RAPOR_EXPORT')")
+    public ResponseEntity<byte[]> butceler(
+            HttpServletRequest req,
+            @RequestParam(required = false) Integer yil,
+            @RequestParam(required = false) Integer ay,
+            @RequestParam(required = false) String tur,
+            @RequestParam(required = false) String kategori,
+            @RequestParam(required = false) String q) {
+        Long sirketId = (Long) req.getAttribute("sirketId");
+        var page = butceService.filtreli(sirketId, yil, ay, tur, kategori, null, q,
+                PageRequest.of(0, MAX_EXPORT_ROWS, org.springframework.data.domain.Sort.by(
+                        org.springframework.data.domain.Sort.Direction.DESC, "yil")));
+        var rows = page.getContent().stream().map(b -> {
+            Map<String, Object> satir = new LinkedHashMap<>();
+            satir.put("Kategori", b.getKategori());
+            satir.put("Ad", b.getAd());
+            satir.put("Yıl", b.getYil());
+            satir.put("Ay", b.getAy());
+            satir.put("Tür", "GELIR".equals(b.getTur()) ? "Gelir" : "Gider");
+            satir.put("Tutar", b.getTutar());
+            satir.put("Açıklama", b.getAciklama());
+            return satir;
+        }).toList();
+        return excel("Butceler", new String[]{"Kategori", "Ad", "Yıl", "Ay", "Tür", "Tutar", "Açıklama"}, rows);
+    }
+
+    @GetMapping("/butce-matris")
+    @Operation(summary = "12 aylık bütçe matrisini Excel dışa aktar",
+            description = "Kategori × ay bütçe dağılımını ve toplamları Excel (.xlsx) olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FINANS_EXPORT') or @yetkiKontrol.kontrol(authentication, 'RAPOR_EXPORT')")
+    public ResponseEntity<byte[]> butceMatris(
+            HttpServletRequest req,
+            @RequestParam(required = false) Integer yil,
+            @RequestParam(required = false) String tur) {
+        Long sirketId = (Long) req.getAttribute("sirketId");
+        var matris = butceService.matris(sirketId, yil, tur);
+        var rows = matris.getSatirlar().stream().map(s -> {
+            Map<String, Object> satir = new LinkedHashMap<>();
+            satir.put("Kategori", s.getKategori());
+            String[] aylar = {"Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+                    "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"};
+            for (int i = 0; i < 12; i++) satir.put(aylar[i], s.getAylar()[i]);
+            satir.put("Toplam", s.getToplam());
+            return satir;
+        }).toList();
+        return excel("ButceMatris", new String[]{"Kategori", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs",
+                "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık", "Toplam"}, rows);
+    }
+
+    @GetMapping("/butce-gerceklesen")
+    @Operation(summary = "Bütçe–gerçekleşen raporunu Excel dışa aktar",
+            description = "Tür ayrımlı bütçe–gerçekleşen raporunu Excel (.xlsx) olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FINANS_EXPORT') or @yetkiKontrol.kontrol(authentication, 'RAPOR_EXPORT')")
+    public ResponseEntity<byte[]> butceGerceklesen(
+            HttpServletRequest req,
+            @RequestParam(required = false) Integer yil,
+            @RequestParam(required = false) Integer ay,
+            @RequestParam(required = false) String tur) {
+        Long sirketId = (Long) req.getAttribute("sirketId");
+        var rapor = butceService.gerceklesen(sirketId, yil, ay, tur);
+        var rows = rapor.getSatirlar().stream().map(s -> {
+            Map<String, Object> satir = new LinkedHashMap<>();
+            satir.put("Kategori", s.getKategori());
+            satir.put("Bütçe", s.getButce());
+            satir.put("Gerçekleşen", s.getGerceklesen());
+            satir.put("Sapma", s.getSapma());
+            satir.put("Kullanım %", s.getKullanimYuzdesi());
+            return satir;
+        }).toList();
+        return excel("ButceGerceklesen", new String[]{"Kategori", "Bütçe", "Gerçekleşen", "Sapma", "Kullanım %"}, rows);
     }
 
     @GetMapping("/ajanda")

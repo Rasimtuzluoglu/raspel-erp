@@ -97,6 +97,8 @@ class ExcelExportControllerTest {
     private com.raspel.erp.service.sube.SubeService subeService;
     @MockBean
     private com.raspel.erp.service.sistem.AjandaService ajandaService;
+    @MockBean
+    private com.raspel.erp.service.finans.ButceService butceService;
 
     @Test
     void cariHesaplar_excelDoner() throws Exception {
@@ -306,8 +308,53 @@ class ExcelExportControllerTest {
     }
 
     @Test
-    void ajanda_excelDoner_veTipFiltresiUygular() throws Exception {
-        when(ajandaService.yaklasan(any(), any(), any(Integer.class)))
+    void butceler_veGerceklesen_excelDoner() throws Exception {
+        when(butceService.filtreli(any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new PageImpl<>(List.of(com.raspel.erp.dto.finans.ButceDTO.builder()
+                        .id(1L).ad("2026 Pazarlama").kategori("Pazarlama").yil(2026).ay(3)
+                        .tur("GIDER").tutar(new java.math.BigDecimal("1000")).build())));
+        when(butceService.gerceklesen(any(), any(), any(), any()))
+                .thenReturn(com.raspel.erp.dto.finans.ButceGerceklesenRaporDTO.builder()
+                        .tur("GIDER").yil(2026)
+                        .satirlar(List.of(com.raspel.erp.dto.finans.ButceGerceklesenSatirDTO.builder()
+                                .kategori("Pazarlama").butce(new java.math.BigDecimal("1000"))
+                                .gerceklesen(new java.math.BigDecimal("700")).build()))
+                        .build());
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/butceler").requestAttr("sirketId", 1L).param("yil", "2026"))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(new byte[]{1, 2, 3}));
+
+        mockMvc.perform(get("/api/exports/butce-gerceklesen")
+                        .requestAttr("sirketId", 1L)
+                        .param("yil", "2026")
+                        .param("tur", "GIDER"))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(new byte[]{1, 2, 3}));
+    }
+
+    @Test
+    void butceMatris_excelDoner() throws Exception {
+        java.math.BigDecimal[] aylar = new java.math.BigDecimal[12];
+        java.util.Arrays.fill(aylar, java.math.BigDecimal.ZERO);
+        when(butceService.matris(any(), any(), any()))
+                .thenReturn(com.raspel.erp.dto.finans.ButceMatrisDTO.builder()
+                        .yil(2026).tur("GIDER")
+                        .satirlar(List.of(com.raspel.erp.dto.finans.ButceMatrisDTO.Satir.builder()
+                                .kategori("Pazarlama").aylar(aylar).toplam(java.math.BigDecimal.ZERO).build()))
+                        .aylikToplam(aylar)
+                        .genelToplam(java.math.BigDecimal.ZERO)
+                        .build());
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{4, 5, 6});
+
+        mockMvc.perform(get("/api/exports/butce-matris").requestAttr("sirketId", 1L).param("yil", "2026"))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(new byte[]{4, 5, 6}));
+    }
+
+    @Test
+    void ajanda_excelDoner_veTipFiltresiUygular() throws Exception {        when(ajandaService.yaklasan(any(), any(), any(Integer.class)))
                 .thenReturn(List.of(
                         com.raspel.erp.dto.sistem.AjandaOlayDTO.builder()
                                 .tarih(java.time.LocalDate.now()).tip("VADE").baslik("Fatura vadesi")

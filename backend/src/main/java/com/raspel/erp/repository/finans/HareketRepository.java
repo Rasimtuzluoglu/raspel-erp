@@ -23,6 +23,14 @@ public interface HareketRepository extends JpaRepository<Hareket, Long> {
     @Query("SELECT COALESCE(SUM(h.tutar), 0) FROM Hareket h WHERE h.tur = :tur AND h.hareketTarihi = :tarih AND h.sirketId = :sirketId")
     BigDecimal sumTutarByTurAndHareketTarihi(@Param("tur") Hareket.HareketTuru tur, @Param("tarih") LocalDate tarih, @Param("sirketId") Long sirketId);
 
+    /** Bütçe gerçekleşmesi: iptal edilmemiş hareketlerin tarih aralığındaki tür toplamı. */
+    @Query("SELECT COALESCE(SUM(h.tutar), 0) FROM Hareket h WHERE h.sirketId = :sirketId " +
+           "AND h.tur = :tur AND h.iptal = false AND h.hareketTarihi BETWEEN :baslangic AND :bitis")
+    BigDecimal sumTutarBySirketIdAndTurAndTarihBetween(@Param("sirketId") Long sirketId,
+                                                      @Param("tur") Hareket.HareketTuru tur,
+                                                      @Param("baslangic") LocalDate baslangic,
+                                                      @Param("bitis") LocalDate bitis);
+
     @Query(value = "SELECT TO_CHAR(h.hareket_tarihi, 'YYYY-MM') AS ay, " +
            "COALESCE(SUM(CASE WHEN h.tur = 'TAHSILAT' THEN h.tutar ELSE 0 END), 0) AS gelir, " +
            "COALESCE(SUM(CASE WHEN h.tur = 'ODEME' THEN h.tutar ELSE 0 END), 0) AS gider " +

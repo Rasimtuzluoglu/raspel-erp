@@ -90,6 +90,15 @@ export const excelAPI = {
   ajanda(params) {
     return apiClient.get('/exports/ajanda', { params, responseType: 'blob' })
   },
+  butceler(params) {
+    return apiClient.get('/exports/butceler', { params, responseType: 'blob' })
+  },
+  butceGerceklesen(params) {
+    return apiClient.get('/exports/butce-gerceklesen', { params, responseType: 'blob' })
+  },
+  butceMatris(params) {
+    return apiClient.get('/exports/butce-matris', { params, responseType: 'blob' })
+  },
   bankalar() {
     return apiClient.get('/exports/bankalar', { responseType: 'blob' })
   },

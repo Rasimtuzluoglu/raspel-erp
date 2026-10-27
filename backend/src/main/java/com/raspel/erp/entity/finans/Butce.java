@@ -41,6 +41,23 @@ public class Butce {
     @Column(length = 500)
     private String aciklama;
 
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private String durum = "ONAYLANDI";
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer revizyon = 1;
+
+    @Column(name = "onaylayan_kullanici_id")
+    private Long onaylayanKullaniciId;
+
+    @Column(name = "onay_tarihi")
+    private LocalDateTime onayTarihi;
+
+    @Column(name = "red_gerekcesi", length = 500)
+    private String redGerekcesi;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private LocalDateTime olusturmaTarihi;
 
