@@ -5,6 +5,7 @@ import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.dto.muhasebe.IrsaliyeDTO;
 import com.raspel.erp.dto.muhasebe.IrsaliyeKalemDTO;
 import com.raspel.erp.entity.muhasebe.Irsaliye;
+import com.raspel.erp.entity.muhasebe.IrsaliyeKalem;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +22,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.muhasebe.IrsaliyeKalemRepository;
@@ -35,6 +37,7 @@ class IrsaliyeServiceTest {
     @Mock private IrsaliyeKalemRepository kalemRepository;
     @Mock private CariHesapRepository cariHesapRepository;
     @Mock private StokRepository stokRepository;
+    @Mock private com.raspel.erp.repository.envanter.StokHareketRepository stokHareketRepository;
     @Mock private TenantChecker tenantChecker;
     @Mock private CacheYardimci cacheYardimci;
     @Mock private com.raspel.erp.service.sube.DepoStokService depoStokService;
@@ -42,6 +45,7 @@ class IrsaliyeServiceTest {
     @Mock private com.raspel.erp.service.envanter.MaliyetService maliyetService;
     @Mock private com.raspel.erp.service.sistem.DonemService donemService;
     @Mock private com.raspel.erp.repository.muhasebe.IrsaliyeDurumLogRepository irsaliyeDurumLogRepository;
+    @Mock private com.raspel.erp.service.ticaret.TeslimatService teslimatService;
     @InjectMocks private IrsaliyeService irsaliyeService;
 
     private Irsaliye createIrsaliye(Long id) {
@@ -241,5 +245,59 @@ class IrsaliyeServiceTest {
 
         assertEquals(1, liste.size());
         assertEquals("OLUSTUR", liste.get(0).getIslem());
+    }
+
+    @Test
+    void sevk_hazirIrsaliyedeStokDuserVeTeslimatOlusur() {
+        Irsaliye i = createIrsaliye(1L);
+        i.setDurum("HAZIRLANDI");
+        IrsaliyeKalem kalem = IrsaliyeKalem.builder().id(1L).irsaliyeId(1L).stokId(10L)
+                .miktar(new java.math.BigDecimal("2")).build();
+        com.raspel.erp.entity.envanter.Stok stok = com.raspel.erp.entity.envanter.Stok.builder()
+                .id(10L).ad("Masa").sirketId(1L).miktar(new java.math.BigDecimal("10")).build();
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i));
+        when(kalemRepository.findByIrsaliyeId(1L)).thenReturn(List.of(kalem));
+        when(stokRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(stok));
+        when(depoStokService.coz(any(), any())).thenReturn(1L);
+        when(stokSeriService.fefoTuket(eq(10L), eq(1L), any())).thenReturn(List.of());
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.finans.CariHesap.builder().id(1L).ad("Müşteri").adres("Adres").build()));
+        when(teslimatService.irsaliyedenOlustur(any()))
+                .thenReturn(com.raspel.erp.dto.ticaret.TeslimatDTO.builder().id(55L).durum("YOLDA").build());
+        when(irsaliyeRepository.save(any(Irsaliye.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var istek = com.raspel.erp.dto.muhasebe.IrsaliyeSevkIstek.builder()
+                .soforId(7L).plaka("34ABC123").build();
+        var sonuc = irsaliyeService.sevk(1L, istek, 9L);
+
+        assertEquals("SEVK_EDILDI", sonuc.getDurum());
+        assertEquals(55L, sonuc.getTeslimatId());
+        assertEquals(0, stok.getMiktar().compareTo(new java.math.BigDecimal("8")));
+        verify(teslimatService).irsaliyedenOlustur(any());
+        verify(irsaliyeDurumLogRepository).save(argThat(l -> "SEVK".equals(l.getIslem())));
+    }
+
+    @Test
+    void sevk_soforYoksaHataVerirVeStokDegismez() {
+        Irsaliye i = createIrsaliye(1L);
+        i.setDurum("HAZIRLANDI");
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> irsaliyeService.sevk(1L,
+                        com.raspel.erp.dto.muhasebe.IrsaliyeSevkIstek.builder().build(), 9L));
+        verify(stokRepository, never()).findByIdForUpdate(any());
+    }
+
+    @Test
+    void sevk_ikinciKezCagrilirsaReddeder() {
+        Irsaliye i = createIrsaliye(1L);
+        i.setDurum("SEVK_EDILDI");
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> irsaliyeService.sevk(1L,
+                        com.raspel.erp.dto.muhasebe.IrsaliyeSevkIstek.builder().soforId(7L).build(), 9L));
+        verify(stokRepository, never()).findByIdForUpdate(any());
     }
 }

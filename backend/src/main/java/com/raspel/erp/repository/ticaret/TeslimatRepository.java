@@ -21,6 +21,8 @@ public interface TeslimatRepository extends JpaRepository<Teslimat, Long> {
 
     List<Teslimat> findBySirketIdAndFaturaId(Long sirketId, Long faturaId);
 
+    java.util.Optional<Teslimat> findByIrsaliyeId(Long irsaliyeId);
+
     List<Teslimat> findByFaturaIdIn(java.util.Collection<Long> faturaIdler);
 
     boolean existsByFaturaId(Long faturaId);

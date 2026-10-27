@@ -53,6 +53,7 @@ public class IrsaliyeService {
     private final com.raspel.erp.service.sistem.DonemService donemService;
     private final com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
     private final com.raspel.erp.service.ticaret.FaturaService faturaService;
+    private final com.raspel.erp.service.ticaret.TeslimatService teslimatService;
 
     @Transactional(readOnly = true)
     public Page<IrsaliyeDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -306,6 +307,88 @@ public class IrsaliyeService {
 
         i.setDurum(durum);
         return entityToDTO(irsaliyeRepository.save(i));
+    }
+
+    @Transactional
+    public IrsaliyeDTO sevk(Long id, com.raspel.erp.dto.muhasebe.IrsaliyeSevkIstek istek, Long kullaniciId) {
+        Irsaliye i = irsaliyeRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new ResourceNotFoundException("İrsaliye", id));
+        tenantChecker.check(i.getSirketId(), "İrsaliye");
+        donemService.kilitKontrol(i.getSirketId(), i.getTarih(), "irsaliye sevki");
+        if (!"HAZIRLANDI".equals(i.getDurum())) {
+            throw new BusinessException("Yalnızca hazırlanmış irsaliye sevk edilebilir (durum: " + i.getDurum() + ")");
+        }
+        if (istek == null || istek.getSoforId() == null) {
+            throw new BusinessException("Sevk için şoför seçilmelidir");
+        }
+        String adres = istek.getTeslimatAdresi();
+        if (adres == null || adres.isBlank()) {
+            adres = i.getCariHesapId() != null
+                    ? cariHesapRepository.findById(i.getCariHesapId()).map(c -> c.getAdres()).orElse(null)
+                    : null;
+        }
+        if (adres == null || adres.isBlank()) {
+            throw new BusinessException("Teslimat adresi zorunludur");
+        }
+        i.setPlaka(istek.getPlaka());
+        i.setSoforId(istek.getSoforId());
+        i.setTeslimatAdresi(adres.trim());
+        i.setTasiyiciFirma(istek.getTasiyiciFirma());
+        i.setKoliAdedi(istek.getKoliAdedi());
+        i.setDesi(istek.getDesi());
+        i.setBrutKg(istek.getBrutKg());
+
+        stokCikisIsle(i);
+        var teslimat = teslimatService.irsaliyedenOlustur(i);
+        i.setTeslimatId(teslimat.getId());
+        String eski = i.getDurum();
+        i.setDurum("SEVK_EDILDI");
+        i.setSevkTarihi(java.time.LocalDateTime.now());
+        Irsaliye kayit = irsaliyeRepository.save(i);
+        logYaz(kayit, eski, "SEVK_EDILDI", "SEVK", kullaniciId, null);
+        return entityToDTO(kayit);
+    }
+
+    private void stokCikisIsle(Irsaliye i) {
+        List<IrsaliyeKalem> kalemler = kalemRepository.findByIrsaliyeId(i.getId());
+        Long depoId = depoStokService.coz(i.getDepoId(), i.getSirketId());
+        for (IrsaliyeKalem k : kalemler) {
+            if (k.getStokId() == null) continue;
+            Stok stok = stokRepository.findByIdForUpdate(k.getStokId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Stok", k.getStokId()));
+            tenantChecker.check(stok.getSirketId(), "Stok");
+            BigDecimal adet = k.getMiktar() != null ? k.getMiktar() : BigDecimal.ZERO;
+            if ("SATIS".equals(i.getTur()) && stok.getMiktar().compareTo(adet) < 0) {
+                throw new BusinessException("Yetersiz stok! Ürün: " + stok.getAd()
+                        + ", Mevcut: " + stok.getMiktar() + ", İstenen: " + adet);
+            }
+            if ("SATIS".equals(i.getTur())) {
+                stok.setMiktar(stok.getMiktar().subtract(adet));
+                maliyetService.cikisIsle(stok, adet, stok.getMiktar(), i.getSirketId(), "IRSALIYE", i.getId());
+            } else {
+                BigDecimal eskiMiktar = stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO;
+                stok.setMiktar(stok.getMiktar().add(adet));
+                maliyetService.girisIsle(stok, eskiMiktar, adet, null, i.getSirketId(), "IRSALIYE", i.getId());
+            }
+            stokRepository.save(stok);
+            Long seriId = null;
+            if ("SATIS".equals(i.getTur())) {
+                var seriler = stokSeriService.fefoTuket(stok.getId(), depoId, adet);
+                if (seriler.size() == 1) seriId = seriler.get(0);
+            }
+            stokHareketRepository.save(StokHareket.builder()
+                    .stok(stok)
+                    .tur("SATIS".equals(i.getTur()) ? "CIKIS" : "GIRIS")
+                    .miktar(adet)
+                    .hareketTarihi(i.getTarih() != null ? i.getTarih() : LocalDate.now())
+                    .aciklama("İrsaliye #" + i.getIrsaliyeNo())
+                    .depoId(depoId)
+                    .seriId(seriId)
+                    .kaynakTip("IRSALIYE").kaynakId(i.getId())
+                    .build());
+            depoStokService.guncelle(depoId, stok.getId(),
+                    "SATIS".equals(i.getTur()) ? adet.negate() : adet);
+        }
     }
 
     @Transactional

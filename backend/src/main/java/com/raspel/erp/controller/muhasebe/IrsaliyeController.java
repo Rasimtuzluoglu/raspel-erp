@@ -70,6 +70,17 @@ public class IrsaliyeController {
         return ResponseEntity.ok(irsaliyeService.hazirla(id, kullaniciId));
     }
 
+    @PostMapping("/{id}/sevk")
+    @Operation(summary = "İrsaliyeyi sevk et (HAZIRLANDI -> SEVK_EDILDI)")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'IRSALIYE_WRITE')")
+    public ResponseEntity<IrsaliyeDTO> sevk(
+            @PathVariable Long id,
+            @RequestBody(required = false) com.raspel.erp.dto.muhasebe.IrsaliyeSevkIstek istek,
+            HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(irsaliyeService.sevk(id, istek, kullaniciId));
+    }
+
     @GetMapping("/{id}/gecmis")
     @Operation(summary = "İrsaliye durum/işlem geçmişi")
     public ResponseEntity<List<com.raspel.erp.dto.muhasebe.IrsaliyeDurumLogDTO>> gecmis(@PathVariable Long id) {

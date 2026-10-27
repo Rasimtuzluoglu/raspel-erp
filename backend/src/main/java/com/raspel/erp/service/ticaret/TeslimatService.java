@@ -44,6 +44,7 @@ public class TeslimatService {
     private final com.raspel.erp.repository.ik.PersonelRepository personelRepository;
     private final SiparisRepository siparisRepository;
     private final PdfRaporService pdfRaporService;
+    private final com.raspel.erp.repository.finans.CariHesapRepository cariHesapRepository;
 
     private static final List<String> BEKLEYEN_DURUMLAR = List.of("BEKLEMEDE", "YOLDA");
     private static final String FOTO_KLASOR = "teslimat-fotolari";
@@ -208,10 +209,101 @@ public class TeslimatService {
         return toDTO(t, surucu.getDisplayName() != null ? surucu.getDisplayName() : surucu.getUsername());
     }
 
+    /** İrsaliye sevkinde otomatik teslimat oluşturur (idempotent). */
+    @Transactional
+    public TeslimatDTO irsaliyedenOlustur(com.raspel.erp.entity.muhasebe.Irsaliye i) {
+        var mevcut = teslimatRepository.findByIrsaliyeId(i.getId());
+        if (mevcut.isPresent()) {
+            return teslimatDTOBasit(mevcut.get());
+        }
+        if (i.getSoforId() == null) {
+            throw new BusinessException("Sevk için şoför seçilmelidir");
+        }
+        Kullanici surucu = kullaniciRepository.findById(i.getSoforId())
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı", i.getSoforId()));
+        if (!gecerliSurucu(surucu)) {
+            throw new BusinessException("Seçilen kullanıcı şoför değil (DRIVER rolü veya aktif şoför personeli olmalı)");
+        }
+        String adres = i.getTeslimatAdresi();
+        if (adres == null || adres.isBlank()) {
+            adres = i.getCariHesapId() != null
+                    ? cariHesapRepository.findById(i.getCariHesapId())
+                        .map(c -> c.getAdres()).orElse(null)
+                    : null;
+        }
+        if (adres == null || adres.isBlank()) {
+            throw new BusinessException("Teslimat adresi zorunludur");
+        }
+        String musteriAdi = i.getCariHesapId() != null
+                ? cariHesapRepository.findById(i.getCariHesapId()).map(c -> c.getAd()).orElse(null)
+                : null;
+        String faturaNo = null;
+        if (i.getFaturaId() != null) {
+            faturaNo = faturaRepository.findById(i.getFaturaId())
+                    .map(Fatura::getFaturaNumarasi).orElse(null);
+        }
+        Teslimat t = Teslimat.builder()
+                .sirketId(i.getSirketId())
+                .irsaliyeId(i.getId())
+                .faturaId(i.getFaturaId())
+                .faturaNumarasi(faturaNo)
+                .siparisId(i.getSiparisId())
+                .driverId(i.getSoforId())
+                .teslimatAdresi(adres.trim())
+                .beklenenTeslimTarihi(LocalDate.now())
+                .musteriAdi(musteriAdi)
+                .durum("YOLDA")
+                .build();
+        try {
+            t = teslimatRepository.saveAndFlush(t);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new BusinessException("Bu irsaliye için zaten teslimat kaydı var");
+        }
+        return teslimatDTOBasit(t);
+    }
+
+    @Transactional
+    public void irsaliyeTeslimEdildi(Long teslimatId, String teslimAlan, LocalDateTime tarih) {
+        if (teslimatId == null) return;
+        Teslimat t = teslimatRepository.findById(teslimatId).orElse(null);
+        if (t == null) return;
+        t.setDurum("TESLIM_EDILDI");
+        t.setTeslimTarihi(tarih != null ? tarih : LocalDateTime.now());
+        if (teslimAlan != null && !teslimAlan.isBlank()) t.setTeslimAlanAd(teslimAlan);
+        teslimatRepository.save(t);
+    }
+
+    @Transactional
+    public void irsaliyeIptal(Long teslimatId) {
+        if (teslimatId == null) return;
+        Teslimat t = teslimatRepository.findById(teslimatId).orElse(null);
+        if (t == null) return;
+        t.setDurum("IPTAL");
+        teslimatRepository.save(t);
+    }
+
+    /** Fatura oluşunca teslimat kaydına fatura bağlar. */
+    @Transactional
+    public void faturaBaglaByIrsaliye(Long irsaliyeId, Long faturaId, String faturaNumarasi) {
+        teslimatRepository.findByIrsaliyeId(irsaliyeId).ifPresent(t -> {
+            t.setFaturaId(faturaId);
+            t.setFaturaNumarasi(faturaNumarasi);
+            teslimatRepository.save(t);
+        });
+    }
+
+    private TeslimatDTO teslimatDTOBasit(Teslimat t) {
+        String driverAd = t.getDriverId() != null
+                ? kullaniciRepository.findById(t.getDriverId())
+                    .map(k -> k.getDisplayName() != null ? k.getDisplayName() : k.getUsername())
+                    .orElse(null)
+                : null;
+        return toDTO(t, driverAd);
+    }
+
     /**
      * Sipariş bazlı teslimatı oluşturur veya günceller (şoför ataması Teslimatlar'a da yansır).
-     */
-    @Transactional
+     */    @Transactional
     public TeslimatDTO siparisTeslimatiUpsert(Long siparisId, Long driverId, Long sirketId, String musteriAdi, String teslimatAdresi) {
         List<Teslimat> mevcut = teslimatRepository.findBySirketIdAndSiparisId(sirketId, siparisId);
         Teslimat t;
