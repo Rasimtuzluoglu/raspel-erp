@@ -74,6 +74,8 @@ class ExcelExportControllerTest {
     @MockBean
     private MuhasebeService muhasebeService;
     @MockBean
+    private com.raspel.erp.service.muhasebe.IrsaliyeService irsaliyeService;
+    @MockBean
     private com.raspel.erp.service.sistem.RaporService raporService;
     @MockBean
     private com.raspel.erp.service.ticaret.SiparisTakipService siparisTakipService;
@@ -455,5 +457,41 @@ class ExcelExportControllerTest {
 
         mockMvc.perform(get("/api/exports/subeler").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void irsaliyeler_excelDoner() throws Exception {
+        var dto = com.raspel.erp.dto.muhasebe.IrsaliyeDTO.builder()
+                .id(1L).irsaliyeNo("IRS-1").tarih(java.time.LocalDate.now())
+                .cariHesapAdi("Müşteri A").tur("SATIS").durum("SEVK_EDILDI")
+                .plaka("34ABC123").soforAd("Ali Veli").faturaNumarasi("FTR-1")
+                .kalemler(List.of()).build();
+        when(irsaliyeService.filtreli(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new PageImpl<>(List.of(dto)));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/irsaliyeler")
+                        .requestAttr("sirketId", 1L)
+                        .param("durum", "SEVK_EDILDI")
+                        .param("faturali", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(new byte[]{1, 2, 3}));
+
+        org.mockito.Mockito.verify(irsaliyeService).filtreli(
+                org.mockito.ArgumentMatchers.eq(1L),
+                org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.eq("SEVK_EDILDI"),
+                org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.eq(Boolean.TRUE),
+                any(org.springframework.data.domain.Pageable.class));
+        org.mockito.Mockito.verify(excelService).export(
+                org.mockito.ArgumentMatchers.eq("Irsaliyeler"),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.argThat(l -> l != null && l.size() == 1
+                        && "IRS-1".equals(l.get(0).get("No"))
+                        && "Ali Veli".equals(l.get(0).get("Şoför"))));
     }
 }

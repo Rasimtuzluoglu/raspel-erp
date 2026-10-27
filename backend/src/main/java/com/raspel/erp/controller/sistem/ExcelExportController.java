@@ -20,6 +20,7 @@ import com.raspel.erp.service.finans.BankaService;
 import com.raspel.erp.service.finans.CariHesapService;
 import com.raspel.erp.service.sistem.ExcelExportService;
 import com.raspel.erp.service.muhasebe.MuhasebeService;
+import com.raspel.erp.service.muhasebe.IrsaliyeService;
 import com.raspel.erp.dto.muhasebe.BilancoDTO;
 import com.raspel.erp.dto.muhasebe.KarZararDTO;
 import com.raspel.erp.entity.ticaret.Fatura;
@@ -58,6 +59,7 @@ public class ExcelExportController {
     private final KasaService kasaService;
     private final AuditLogService auditLogService;
     private final MuhasebeService muhasebeService;
+    private final IrsaliyeService irsaliyeService;
     private final com.raspel.erp.service.sistem.RaporService raporService;
     private final com.raspel.erp.service.ticaret.SiparisTakipService siparisTakipService;
     private final com.raspel.erp.service.ticaret.TeslimatService teslimatService;
@@ -135,6 +137,43 @@ public class ExcelExportController {
             return m;
         }).toList();
         return excel("CariHesaplar", new String[]{"ID", "Ad", "Vergi No", "Telefon", "E-posta", "Bakiye"}, rows);
+    }
+
+    @GetMapping("/irsaliyeler")
+    @Operation(summary = "İrsaliyeleri Excel dışa aktar",
+            description = "Filtrelenen irsaliyeleri (arama, durum, tür, cari, tarih, faturalı) Excel (.xlsx) olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'IRSALIYE_EXPORT')")
+    public ResponseEntity<byte[]> irsaliyeler(
+            HttpServletRequest req,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) String tur,
+            @RequestParam(required = false) Long cariId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis,
+            @RequestParam(required = false) Boolean faturali) {
+        Long sirketId = (Long) req.getAttribute("sirketId");
+        var page = irsaliyeService.filtreli(sirketId, q, durum, tur, cariId, baslangic, bitis, faturali,
+                PageRequest.of(0, MAX_EXPORT_ROWS, org.springframework.data.domain.Sort.by(
+                        org.springframework.data.domain.Sort.Direction.DESC, "tarih")));
+        List<Map<String, Object>> rows = page.getContent().stream().map(i -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("No", i.getIrsaliyeNo());
+            m.put("Tarih", i.getTarih());
+            m.put("Cari", i.getCariHesapAdi());
+            m.put("Tür", i.getTur());
+            m.put("Durum", "KESILDI".equals(i.getDurum()) ? "SEVK_EDILDI" : i.getDurum());
+            m.put("Plaka", i.getPlaka());
+            m.put("Şoför", i.getSoforAd());
+            m.put("Sevk Tarihi", i.getSevkTarihi());
+            m.put("Teslim Tarihi", i.getTeslimTarihi());
+            m.put("Fatura No", i.getFaturaNumarasi());
+            m.put("Kalem Sayısı", i.getKalemler() != null ? i.getKalemler().size() : 0);
+            m.put("Açıklama", i.getAciklama());
+            return m;
+        }).toList();
+        return excel("Irsaliyeler", new String[]{"No", "Tarih", "Cari", "Tür", "Durum", "Plaka",
+                "Şoför", "Sevk Tarihi", "Teslim Tarihi", "Fatura No", "Kalem Sayısı", "Açıklama"}, rows);
     }
 
     @GetMapping("/faturalar")

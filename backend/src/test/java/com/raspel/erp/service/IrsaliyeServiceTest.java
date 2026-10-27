@@ -46,6 +46,12 @@ class IrsaliyeServiceTest {
     @Mock private com.raspel.erp.service.sistem.DonemService donemService;
     @Mock private com.raspel.erp.repository.muhasebe.IrsaliyeDurumLogRepository irsaliyeDurumLogRepository;
     @Mock private com.raspel.erp.service.ticaret.TeslimatService teslimatService;
+    @Mock private com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
+    @Mock private com.raspel.erp.service.ticaret.FaturaService faturaService;
+    @Mock private com.raspel.erp.repository.sistem.KullaniciRepository kullaniciRepository;
+    @Mock private com.raspel.erp.repository.ticaret.SiparisRepository siparisRepository;
+    @Mock private com.raspel.erp.repository.ticaret.TeslimatRepository teslimatRepository;
+    @Mock private org.springframework.transaction.PlatformTransactionManager transactionManager;
     @InjectMocks private IrsaliyeService irsaliyeService;
 
     private Irsaliye createIrsaliye(Long id) {
@@ -119,9 +125,10 @@ class IrsaliyeServiceTest {
     void durumGuncelle_updates() {
         Irsaliye irsaliye = createIrsaliye(1L);
         when(irsaliyeRepository.findById(1L)).thenReturn(Optional.of(irsaliye));
-        when(irsaliyeRepository.save(any(Irsaliye.class))).thenReturn(irsaliye);
-        var result = irsaliyeService.durumGuncelle(1L, "SEVK_EDILDI");
-        assertEquals("SEVK_EDILDI", result.getDurum());
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(irsaliye));
+        when(irsaliyeRepository.save(any(Irsaliye.class))).thenAnswer(inv -> inv.getArgument(0));
+        var result = irsaliyeService.durumGuncelle(1L, "HAZIRLANDI");
+        assertEquals("HAZIRLANDI", result.getDurum());
     }
 
     @Test
@@ -298,6 +305,380 @@ class IrsaliyeServiceTest {
         assertThrows(com.raspel.erp.exception.BusinessException.class,
                 () -> irsaliyeService.sevk(1L,
                         com.raspel.erp.dto.muhasebe.IrsaliyeSevkIstek.builder().soforId(7L).build(), 9L));
+        verify(stokRepository, never()).findByIdForUpdate(any());
+    }
+
+    // ------------------------------------------------------------------
+    // Teslim / sevki geri alma / iptal
+    // ------------------------------------------------------------------
+
+    private IrsaliyeKalem kalem(Long stokId, String miktar) {
+        return IrsaliyeKalem.builder().id(1L).irsaliyeId(1L).stokId(stokId)
+                .miktar(new java.math.BigDecimal(miktar)).build();
+    }
+
+    private com.raspel.erp.entity.envanter.Stok stok(Long id, String miktar) {
+        return com.raspel.erp.entity.envanter.Stok.builder()
+                .id(id).ad("Masa").sirketId(1L)
+                .miktar(new java.math.BigDecimal(miktar)).build();
+    }
+
+    @Test
+    void teslim_sevkEdilmisiTeslimEderVeTeslimatKapatir() {
+        Irsaliye i = createIrsaliye(1L);
+        i.setDurum("SEVK_EDILDI");
+        i.setTeslimatId(55L);
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i));
+        when(irsaliyeRepository.save(any(Irsaliye.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        LocalDateTime tarih = LocalDateTime.of(2026, 10, 20, 15, 30);
+        var sonuc = irsaliyeService.teslim(1L,
+                new com.raspel.erp.dto.muhasebe.IrsaliyeTeslimIstek("Ahmet Yılmaz", tarih), 7L);
+
+        assertEquals("TESLIM_EDILDI", sonuc.getDurum());
+        assertEquals("Ahmet Yılmaz", i.getTeslimAlan());
+        assertEquals(tarih, i.getTeslimTarihi());
+        verify(teslimatService).irsaliyeTeslimEdildi(55L, "Ahmet Yılmaz", tarih);
+        verify(irsaliyeDurumLogRepository).save(argThat(l -> "TESLIM".equals(l.getIslem())
+                && "TESLIM_EDILDI".equals(l.getYeniDurum())));
+    }
+
+    @Test
+    void teslim_sevkEdilmemisIrsaliyeyiTeslimEdemez() {
+        Irsaliye i = createIrsaliye(1L);
+        i.setDurum("HAZIRLANDI");
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> irsaliyeService.teslim(1L, new com.raspel.erp.dto.muhasebe.IrsaliyeTeslimIstek(), 7L));
+        verify(irsaliyeRepository, never()).save(any());
+    }
+
+    @Test
+    void sevkiGeriAl_stokIadesiYaparVeTeslimatiIptalEder() {
+        Irsaliye i = createIrsaliye(1L);
+        i.setDurum("SEVK_EDILDI");
+        i.setTeslimatId(55L);
+        com.raspel.erp.entity.envanter.Stok stok = stok(10L, "8");
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i));
+        when(kalemRepository.findByIrsaliyeId(1L)).thenReturn(List.of(kalem(10L, "2")));
+        when(stokRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(stok));
+        when(irsaliyeRepository.save(any(Irsaliye.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var sonuc = irsaliyeService.sevkiGeriAl(1L, 7L);
+
+        assertEquals("HAZIRLANDI", sonuc.getDurum());
+        assertEquals(0, stok.getMiktar().compareTo(new java.math.BigDecimal("10")));
+        assertNull(i.getSevkTarihi());
+        verify(teslimatService).irsaliyeIptal(55L);
+        verify(irsaliyeDurumLogRepository).save(argThat(l -> "SEVKI_GERI_AL".equals(l.getIslem())));
+    }
+
+    @Test
+    void sevkiGeriAl_canliFaturaVarsaReddederVeStokDegismez() {
+        Irsaliye i = createIrsaliye(1L);
+        i.setDurum("SEVK_EDILDI");
+        i.setFaturaId(77L);
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i));
+        when(faturaRepository.findById(77L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.ticaret.Fatura.builder().id(77L)
+                        .faturaNumarasi("FTR-77")
+                        .durum(com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.KESILDI).build()));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> irsaliyeService.sevkiGeriAl(1L, 7L));
+
+        verify(stokRepository, never()).findByIdForUpdate(any());
+        verify(irsaliyeRepository, never()).save(any());
+    }
+
+    @Test
+    void iptal_sevkEdilmisIrsaliyedeStokIadesiYapar() {
+        Irsaliye i = createIrsaliye(1L);
+        i.setDurum("SEVK_EDILDI");
+        i.setTeslimatId(55L);
+        com.raspel.erp.entity.envanter.Stok stok = stok(10L, "8");
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i));
+        when(kalemRepository.findByIrsaliyeId(1L)).thenReturn(List.of(kalem(10L, "2")));
+        when(stokRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(stok));
+        when(irsaliyeRepository.save(any(Irsaliye.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var sonuc = irsaliyeService.iptal(1L, "Müşteri vazgeçti", 7L);
+
+        assertEquals("IPTAL", sonuc.getDurum());
+        assertEquals(0, stok.getMiktar().compareTo(new java.math.BigDecimal("10")));
+        verify(teslimatService).irsaliyeIptal(55L);
+        verify(irsaliyeDurumLogRepository).save(argThat(l -> "IPTAL".equals(l.getIslem())
+                && "Müşteri vazgeçti".equals(l.getAciklama())));
+    }
+
+    @Test
+    void iptal_faturasiIptalEdilmisseIadeyeIzinVerir() {
+        Irsaliye i = createIrsaliye(1L);
+        i.setDurum("TESLIM_EDILDI");
+        i.setFaturaId(77L);
+        i.setTeslimatId(55L);
+        com.raspel.erp.entity.envanter.Stok stok = stok(10L, "8");
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i));
+        when(faturaRepository.findById(77L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.ticaret.Fatura.builder().id(77L)
+                        .durum(com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.IPTAL).build()));
+        when(kalemRepository.findByIrsaliyeId(1L)).thenReturn(List.of(kalem(10L, "2")));
+        when(stokRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(stok));
+        when(irsaliyeRepository.save(any(Irsaliye.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var sonuc = irsaliyeService.iptal(1L, null, 7L);
+
+        assertEquals("IPTAL", sonuc.getDurum());
+        assertEquals(0, stok.getMiktar().compareTo(new java.math.BigDecimal("10")));
+    }
+
+    @Test
+    void iptal_taslakIrsaliyedeStokEtkisiYok() {
+        Irsaliye i = createIrsaliye(1L);
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i));
+        when(irsaliyeRepository.save(any(Irsaliye.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var sonuc = irsaliyeService.iptal(1L, null, 7L);
+
+        assertEquals("IPTAL", sonuc.getDurum());
+        verify(stokRepository, never()).findByIdForUpdate(any());
+        verify(teslimatService, never()).irsaliyeIptal(any());
+    }
+
+    @Test
+    void iptal_canliFaturaVarsaReddeder() {
+        Irsaliye i = createIrsaliye(1L);
+        i.setDurum("SEVK_EDILDI");
+        i.setFaturaId(77L);
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i));
+        when(faturaRepository.findById(77L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.ticaret.Fatura.builder().id(77L)
+                        .durum(com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.KESILDI).build()));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> irsaliyeService.iptal(1L, null, 7L));
+        verify(stokRepository, never()).findByIdForUpdate(any());
+    }
+
+    // ------------------------------------------------------------------
+    // Erken fatura + toplu fatura
+    // ------------------------------------------------------------------
+
+    @Test
+    void faturayaDonustur_taslaktaOtomatikSevkEderVeStokDuser() {
+        Irsaliye i = createIrsaliye(1L);
+        i.setSoforId(7L);
+        i.setTeslimatAdresi("Teslim Adresi");
+        com.raspel.erp.entity.envanter.Stok stok = stok(10L, "10");
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i));
+        when(irsaliyeRepository.findById(1L)).thenReturn(Optional.of(i));
+        when(kalemRepository.findByIrsaliyeId(1L)).thenReturn(List.of(kalem(10L, "2")));
+        when(stokRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(stok));
+        when(stokRepository.findById(10L)).thenReturn(Optional.of(stok));
+        when(teslimatService.irsaliyedenOlustur(any()))
+                .thenReturn(com.raspel.erp.dto.ticaret.TeslimatDTO.builder().id(55L).durum("YOLDA").build());
+        when(irsaliyeRepository.save(any(Irsaliye.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(faturaService.faturaOlustur(any(), any(), any(), any()))
+                .thenReturn(com.raspel.erp.dto.ticaret.FaturaDTO.builder()
+                        .id(88L).faturaNumarasi("FTR-88").build());
+
+        var sonuc = irsaliyeService.faturayaDonustur(1L, 1L, 7L);
+
+        assertEquals("SEVK_EDILDI", sonuc.getDurum());
+        assertEquals(88L, sonuc.getFaturaId());
+        assertEquals(0, stok.getMiktar().compareTo(new java.math.BigDecimal("8")));
+        verify(faturaService).faturaOlustur(any(), eq(1L), eq(7L), any());
+        verify(teslimatService).faturaBaglaByIrsaliye(1L, 88L, "FTR-88");
+        verify(irsaliyeDurumLogRepository).save(argThat(l -> "FATURA".equals(l.getIslem())));
+    }
+
+    @Test
+    void faturayaDonustur_soforYoksaHataVerirVeStokDegismez() {
+        Irsaliye i = createIrsaliye(1L);
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i));
+        when(irsaliyeRepository.save(any(Irsaliye.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var hata = assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> irsaliyeService.faturayaDonustur(1L, 1L, 7L));
+
+        assertTrue(hata.getMessage().contains("şoför"), "Anlaşılır şoför hatası beklenir: " + hata.getMessage());
+        verify(stokRepository, never()).findByIdForUpdate(any());
+        verify(faturaService, never()).faturaOlustur(any(), any(), any(), any());
+    }
+
+    @Test
+    void faturayaDonustur_canliFaturaVarsaReddeder() {
+        Irsaliye i = createIrsaliye(1L);
+        i.setDurum("SEVK_EDILDI");
+        i.setFaturaId(77L);
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i));
+        when(faturaRepository.findById(77L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.ticaret.Fatura.builder().id(77L)
+                        .faturaNumarasi("FTR-77")
+                        .durum(com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.KESILDI).build()));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> irsaliyeService.faturayaDonustur(1L, 1L, 7L));
+        verify(faturaService, never()).faturaOlustur(any(), any(), any(), any());
+    }
+
+    @Test
+    void topluFatura_farkliCariSecilirseHicFaturaOlusturmaz() {
+        Irsaliye i1 = createIrsaliye(1L);
+        i1.setDurum("SEVK_EDILDI");
+        i1.setCariHesapId(5L);
+        Irsaliye i2 = createIrsaliye(2L);
+        i2.setDurum("SEVK_EDILDI");
+        i2.setCariHesapId(6L);
+        when(irsaliyeRepository.findAllById(any())).thenReturn(List.of(i1, i2));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> irsaliyeService.topluFatura(List.of(1L, 2L), 1L, 7L));
+
+        verify(faturaService, never()).faturaOlustur(any(), any(), any(), any());
+    }
+
+    @Test
+    void topluFatura_ayniCarideHerIrsaliyeIcinAyriFaturaUretir() {
+        Irsaliye i1 = createIrsaliye(1L);
+        i1.setDurum("SEVK_EDILDI");
+        i1.setCariHesapId(5L);
+        Irsaliye i2 = createIrsaliye(2L);
+        i2.setDurum("TESLIM_EDILDI");
+        i2.setCariHesapId(5L);
+        when(irsaliyeRepository.findAllById(any())).thenReturn(List.of(i1, i2));
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i1));
+        when(irsaliyeRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(i2));
+        when(irsaliyeRepository.save(any(Irsaliye.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(faturaService.faturaOlustur(any(), any(), any(), any()))
+                .thenReturn(com.raspel.erp.dto.ticaret.FaturaDTO.builder().id(101L).faturaNumarasi("F-101").build())
+                .thenReturn(com.raspel.erp.dto.ticaret.FaturaDTO.builder().id(102L).faturaNumarasi("F-102").build());
+
+        var sonuc = irsaliyeService.topluFatura(List.of(1L, 2L), 1L, 7L);
+
+        assertEquals(2, sonuc.getBasarili().size());
+        assertTrue(sonuc.getAtlanan().isEmpty());
+        assertEquals(101L, sonuc.getBasarili().get(0).getFaturaId());
+        assertEquals(102L, sonuc.getBasarili().get(1).getFaturaId());
+        verify(faturaService, times(2)).faturaOlustur(any(), any(), any(), any());
+    }
+
+    @Test
+    void topluFatura_iptalVeFaturalilariAtlar() {
+        Irsaliye iptal = createIrsaliye(1L);
+        iptal.setDurum("IPTAL");
+        iptal.setCariHesapId(5L);
+        Irsaliye faturali = createIrsaliye(2L);
+        faturali.setDurum("SEVK_EDILDI");
+        faturali.setCariHesapId(5L);
+        faturali.setFaturaId(77L);
+        when(irsaliyeRepository.findAllById(any())).thenReturn(List.of(iptal, faturali));
+        when(faturaRepository.findById(77L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.ticaret.Fatura.builder().id(77L)
+                        .durum(com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.KESILDI).build()));
+
+        var sonuc = irsaliyeService.topluFatura(List.of(1L, 2L), 1L, 7L);
+
+        assertTrue(sonuc.getBasarili().isEmpty());
+        assertEquals(2, sonuc.getAtlanan().size());
+        verify(faturaService, never()).faturaOlustur(any(), any(), any(), any());
+    }
+
+    @Test
+    void topluFatura_bosListeReddedilir() {
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> irsaliyeService.topluFatura(List.of(), 1L, 7L));
+    }
+
+    // ------------------------------------------------------------------
+    // Filtre / özet
+    // ------------------------------------------------------------------
+
+    @Test
+    void filtreli_parametreleriIletirVeSayfaliDoner() {
+        Irsaliye i = createIrsaliye(1L);
+        LocalDate bas = LocalDate.of(2026, 10, 1);
+        LocalDate bit = LocalDate.of(2026, 10, 31);
+        when(irsaliyeRepository.filtreliGetir(eq(1L), eq("%abc%"), eq("SEVK_EDILDI"), eq("SATIS"),
+                eq(5L), eq(bas), eq(bit), eq(Boolean.FALSE), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(i)));
+
+        var sonuc = irsaliyeService.filtreli(1L, "abc", "sevk_edildi", "satis", 5L, bas, bit,
+                Boolean.FALSE, Pageable.unpaged());
+
+        assertEquals(1, sonuc.getTotalElements());
+        assertEquals("IRS-0001", sonuc.getContent().get(0).getIrsaliyeNo());
+    }
+
+    @Test
+    void ozet_durumSayilariniVeFaturasizlariDoner() {
+        when(irsaliyeRepository.countDurum(1L, "TASLAK", null, null)).thenReturn(2L);
+        when(irsaliyeRepository.countDurum(1L, "HAZIRLANDI", null, null)).thenReturn(3L);
+        when(irsaliyeRepository.countDurum(1L, "SEVK_EDILDI", null, null)).thenReturn(4L);
+        when(irsaliyeRepository.countDurum(1L, "IPTAL", null, null)).thenReturn(1L);
+        when(irsaliyeRepository.countTeslimEdilen(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(5L);
+        when(irsaliyeRepository.countFaturasiz(1L, null, null)).thenReturn(6L);
+
+        var sonuc = irsaliyeService.ozet(1L, null, null);
+
+        assertEquals(2L, sonuc.getTaslak());
+        assertEquals(3L, sonuc.getHazirlanan());
+        assertEquals(4L, sonuc.getSevkEdilen());
+        assertEquals(1L, sonuc.getIptal());
+        assertEquals(5L, sonuc.getTeslimEdilenBuAy());
+        assertEquals(6L, sonuc.getFaturasiz());
+    }
+
+    // ------------------------------------------------------------------
+    // Legacy KESILDI alias
+    // ------------------------------------------------------------------
+
+    @Test
+    void durumGuncelle_kesildiAliasTaslaktaHazirlaSevkYapar() {
+        Irsaliye i = createIrsaliye(1L);
+        i.setSoforId(7L);
+        i.setTeslimatAdresi("Teslim Adresi");
+        when(irsaliyeRepository.findById(1L)).thenReturn(Optional.of(i));
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i));
+        when(irsaliyeRepository.save(any(Irsaliye.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(kalemRepository.findByIrsaliyeId(1L)).thenReturn(List.of());
+        when(teslimatService.irsaliyedenOlustur(any()))
+                .thenReturn(com.raspel.erp.dto.ticaret.TeslimatDTO.builder().id(55L).durum("YOLDA").build());
+
+        var sonuc = irsaliyeService.durumGuncelle(1L, "KESILDI");
+
+        assertEquals("SEVK_EDILDI", sonuc.getDurum());
+        assertEquals(55L, sonuc.getTeslimatId());
+        verify(irsaliyeDurumLogRepository).save(argThat(l -> "HAZIRLA".equals(l.getIslem())));
+        verify(irsaliyeDurumLogRepository).save(argThat(l -> "SEVK".equals(l.getIslem())));
+    }
+
+    @Test
+    void durumGuncelle_kesildiAliasSoforYoksaAnlasilirHataVerir() {
+        Irsaliye i = createIrsaliye(1L);
+        when(irsaliyeRepository.findById(1L)).thenReturn(Optional.of(i));
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i));
+        when(irsaliyeRepository.save(any(Irsaliye.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var hata = assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> irsaliyeService.durumGuncelle(1L, "KESILDI"));
+
+        assertTrue(hata.getMessage().contains("şoför"), "Anlaşılır hata beklenir: " + hata.getMessage());
+        verify(stokRepository, never()).findByIdForUpdate(any());
+    }
+
+    @Test
+    void durumGuncelle_kesildiSevkEdilmisseIdempotent() {
+        Irsaliye i = createIrsaliye(1L);
+        i.setDurum("SEVK_EDILDI");
+        when(irsaliyeRepository.findById(1L)).thenReturn(Optional.of(i));
+
+        var sonuc = irsaliyeService.durumGuncelle(1L, "KESILDI");
+
+        assertEquals("SEVK_EDILDI", sonuc.getDurum());
+        verify(irsaliyeRepository, never()).save(any());
         verify(stokRepository, never()).findByIdForUpdate(any());
     }
 }

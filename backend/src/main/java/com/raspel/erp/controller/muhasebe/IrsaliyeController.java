@@ -81,6 +81,81 @@ public class IrsaliyeController {
         return ResponseEntity.ok(irsaliyeService.sevk(id, istek, kullaniciId));
     }
 
+    @PostMapping("/{id}/teslim")
+    @Operation(summary = "İrsaliyeyi teslim et (SEVK_EDILDI -> TESLIM_EDILDI)")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'IRSALIYE_WRITE')")
+    public ResponseEntity<IrsaliyeDTO> teslim(
+            @PathVariable Long id,
+            @RequestBody(required = false) com.raspel.erp.dto.muhasebe.IrsaliyeTeslimIstek istek,
+            HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(irsaliyeService.teslim(id, istek, kullaniciId));
+    }
+
+    @PostMapping("/{id}/sevki-geri-al")
+    @Operation(summary = "Sevki geri al (SEVK_EDILDI -> HAZIRLANDI)",
+            description = "Stok iadesi yapar ve otomatik teslimatı iptal eder. Canlı fatura varsa reddedilir.")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'IRSALIYE_WRITE')")
+    public ResponseEntity<IrsaliyeDTO> sevkiGeriAl(@PathVariable Long id, HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(irsaliyeService.sevkiGeriAl(id, kullaniciId));
+    }
+
+    @PostMapping("/{id}/iptal")
+    @Operation(summary = "İrsaliyeyi iptal et",
+            description = "Sevk edilmiş/teslim edilmiş kayıtta stok iadesi yapar. Canlı fatura varsa reddedilir.")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'IRSALIYE_WRITE')")
+    public ResponseEntity<IrsaliyeDTO> iptal(
+            @PathVariable Long id,
+            @RequestBody(required = false) com.raspel.erp.dto.muhasebe.IrsaliyeIptalIstek istek,
+            HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        String aciklama = istek != null ? istek.getAciklama() : null;
+        return ResponseEntity.ok(irsaliyeService.iptal(id, aciklama, kullaniciId));
+    }
+
+    @GetMapping("/filtreli")
+    @Operation(summary = "Filtreli irsaliye listesi",
+            description = "Arama, durum, tür, cari, tarih aralığı ve faturalı/faturasız filtreleriyle sayfalı liste")
+    public ResponseEntity<Page<IrsaliyeDTO>> filtreli(
+            HttpServletRequest request,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) String tur,
+            @RequestParam(required = false) Long cariId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis,
+            @RequestParam(required = false) Boolean faturali,
+            @PageableDefault(size = 50) Pageable pageable) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(irsaliyeService.filtreli(sirketId, q, durum, tur, cariId,
+                baslangic, bitis, faturali, pageable));
+    }
+
+    @GetMapping("/ozet")
+    @Operation(summary = "İrsaliye KPI özeti",
+            description = "Taslak, hazırlanan, sevk edilen, teslim edilen (bu ay), faturasız ve iptal sayıları")
+    public ResponseEntity<com.raspel.erp.dto.muhasebe.IrsaliyeOzetDTO> ozet(
+            HttpServletRequest request,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(irsaliyeService.ozet(sirketId, baslangic, bitis));
+    }
+
+    @PostMapping("/toplu-fatura")
+    @Operation(summary = "Toplu faturaya dönüştür",
+            description = "Aynı cariye ait birden çok irsaliyeyi tek istekte faturalar; kayıt bazında sonuç döner.")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'IRSALIYE_WRITE')")
+    public ResponseEntity<com.raspel.erp.dto.muhasebe.TopluFaturaSonucDTO> topluFatura(
+            @RequestBody com.raspel.erp.dto.muhasebe.TopluFaturaIstek istek,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(irsaliyeService.topluFatura(istek != null ? istek.getIds() : null,
+                sirketId, kullaniciId));
+    }
+
     @GetMapping("/{id}/gecmis")
     @Operation(summary = "İrsaliye durum/işlem geçmişi")
     public ResponseEntity<List<com.raspel.erp.dto.muhasebe.IrsaliyeDurumLogDTO>> gecmis(@PathVariable Long id) {
@@ -94,7 +169,8 @@ public class IrsaliyeController {
     public ResponseEntity<IrsaliyeDTO> faturayaDonustur(@PathVariable Long id,
                                                         jakarta.servlet.http.HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(irsaliyeService.faturayaDonustur(id, sirketId));
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(irsaliyeService.faturayaDonustur(id, sirketId, kullaniciId));
     }
 
     @DeleteMapping("/{id}")

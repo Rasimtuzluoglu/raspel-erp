@@ -214,7 +214,21 @@ public class TeslimatService {
     public TeslimatDTO irsaliyedenOlustur(com.raspel.erp.entity.muhasebe.Irsaliye i) {
         var mevcut = teslimatRepository.findByIrsaliyeId(i.getId());
         if (mevcut.isPresent()) {
-            return teslimatDTOBasit(mevcut.get());
+            Teslimat t = mevcut.get();
+            // Sevk geri alındıktan/iptalden sonra tekrar sevk edilirse aynı kayıt
+            // yeniden kullanılır (irsaliye_id unique); yeni teslimat oluşturulmaz.
+            if (Teslimat.Durum.IPTAL.name().equals(t.getDurum())) {
+                t.setDurum("YOLDA");
+                t.setTeslimTarihi(null);
+                t.setTeslimAlanAd(null);
+                t.setGecikmeBildirildi(false);
+                t.setBeklenenTeslimTarihi(LocalDate.now());
+                if (i.getSoforId() != null) t.setDriverId(i.getSoforId());
+                if (i.getTeslimatAdresi() != null) t.setTeslimatAdresi(i.getTeslimatAdresi());
+                if (i.getSiparisId() != null) t.setSiparisId(i.getSiparisId());
+                t = teslimatRepository.save(t);
+            }
+            return teslimatDTOBasit(t);
         }
         if (i.getSoforId() == null) {
             throw new BusinessException("Sevk için şoför seçilmelidir");

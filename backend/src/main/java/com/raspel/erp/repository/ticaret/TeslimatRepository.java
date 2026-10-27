@@ -23,6 +23,9 @@ public interface TeslimatRepository extends JpaRepository<Teslimat, Long> {
 
     java.util.Optional<Teslimat> findByIrsaliyeId(Long irsaliyeId);
 
+    /** Liste ekranlarında N+1 önlemek için toplu irsaliye teslimatı okuma. */
+    List<Teslimat> findByIrsaliyeIdIn(java.util.Collection<Long> irsaliyeIdler);
+
     List<Teslimat> findByFaturaIdIn(java.util.Collection<Long> faturaIdler);
 
     boolean existsByFaturaId(Long faturaId);

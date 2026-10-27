@@ -39,6 +39,7 @@ class TeslimatServiceTest {
     @Mock private com.raspel.erp.repository.ik.PersonelRepository personelRepository;
     @Mock private com.raspel.erp.repository.ticaret.SiparisRepository siparisRepository;
     @Mock private com.raspel.erp.service.sistem.PdfRaporService pdfRaporService;
+    @Mock private com.raspel.erp.repository.finans.CariHesapRepository cariHesapRepository;
     @InjectMocks private TeslimatService teslimatService;
 
     @Test
@@ -369,5 +370,92 @@ class TeslimatServiceTest {
         assertThrows(BusinessException.class,
                 () -> teslimatService.durumGuncelle(1L, "TESLIM_EDILDI", 1L, 99L));
         verify(teslimatRepository, never()).save(any(Teslimat.class));
+    }
+
+    // ------------------------------------------------------------------
+    // İrsaliye entegrasyonu
+    // ------------------------------------------------------------------
+
+    private com.raspel.erp.entity.muhasebe.Irsaliye irsaliye() {
+        return com.raspel.erp.entity.muhasebe.Irsaliye.builder()
+                .id(1L).irsaliyeNo("IRS-1").sirketId(1L).cariHesapId(2L)
+                .soforId(9L).teslimatAdresi("Teslim Adresi").durum("HAZIRLANDI").build();
+    }
+
+    @Test
+    void irsaliyedenOlustur_yeniTeslimatYoldaOlusur() {
+        when(teslimatRepository.findByIrsaliyeId(1L)).thenReturn(Optional.empty());
+        when(kullaniciRepository.findById(9L))
+                .thenReturn(Optional.of(Kullanici.builder().id(9L).displayName("Ali").role("DRIVER").build()));
+        when(cariHesapRepository.findById(2L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.finans.CariHesap.builder().id(2L).ad("Müşteri").adres("Adres").build()));
+        when(teslimatRepository.saveAndFlush(any(Teslimat.class))).thenAnswer(inv -> {
+            Teslimat t = inv.getArgument(0);
+            t.setId(55L);
+            return t;
+        });
+
+        var sonuc = teslimatService.irsaliyedenOlustur(irsaliye());
+
+        assertEquals(55L, sonuc.getId());
+        assertEquals("YOLDA", sonuc.getDurum());
+        assertEquals("Ali", sonuc.getDriverAd());
+    }
+
+    @Test
+    void irsaliyedenOlustur_idempotentMevcutKaydiDoner() {
+        Teslimat mevcut = Teslimat.builder().id(55L).sirketId(1L).irsaliyeId(1L)
+                .driverId(9L).durum("YOLDA").build();
+        when(teslimatRepository.findByIrsaliyeId(1L)).thenReturn(Optional.of(mevcut));
+        when(kullaniciRepository.findById(9L))
+                .thenReturn(Optional.of(Kullanici.builder().id(9L).displayName("Ali").build()));
+
+        var sonuc = teslimatService.irsaliyedenOlustur(irsaliye());
+
+        assertEquals(55L, sonuc.getId());
+        assertEquals("YOLDA", sonuc.getDurum());
+        verify(teslimatRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void irsaliyedenOlustur_iptalEdilmisTeslimatiYenidenAktifEder() {
+        Teslimat mevcut = Teslimat.builder().id(55L).sirketId(1L).irsaliyeId(1L)
+                .driverId(3L).durum("IPTAL").build();
+        when(teslimatRepository.findByIrsaliyeId(1L)).thenReturn(Optional.of(mevcut));
+        when(teslimatRepository.save(any(Teslimat.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(kullaniciRepository.findById(9L))
+                .thenReturn(Optional.of(Kullanici.builder().id(9L).displayName("Ali").build()));
+
+        var sonuc = teslimatService.irsaliyedenOlustur(irsaliye());
+
+        assertEquals("YOLDA", mevcut.getDurum());
+        assertEquals(9L, mevcut.getDriverId());
+        assertEquals(55L, sonuc.getId());
+        verify(teslimatRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void irsaliyeTeslimEdildi_teslimatiKapatir() {
+        Teslimat t = Teslimat.builder().id(55L).sirketId(1L).irsaliyeId(1L).durum("YOLDA").build();
+        when(teslimatRepository.findById(55L)).thenReturn(Optional.of(t));
+        when(teslimatRepository.save(any(Teslimat.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        java.time.LocalDateTime tarih = java.time.LocalDateTime.of(2026, 10, 20, 9, 0);
+        teslimatService.irsaliyeTeslimEdildi(55L, "Ahmet", tarih);
+
+        assertEquals("TESLIM_EDILDI", t.getDurum());
+        assertEquals("Ahmet", t.getTeslimAlanAd());
+        assertEquals(tarih, t.getTeslimTarihi());
+    }
+
+    @Test
+    void irsaliyeIptal_teslimatiIptalEder() {
+        Teslimat t = Teslimat.builder().id(55L).sirketId(1L).irsaliyeId(1L).durum("YOLDA").build();
+        when(teslimatRepository.findById(55L)).thenReturn(Optional.of(t));
+        when(teslimatRepository.save(any(Teslimat.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        teslimatService.irsaliyeIptal(55L);
+
+        assertEquals("IPTAL", t.getDurum());
     }
 }
