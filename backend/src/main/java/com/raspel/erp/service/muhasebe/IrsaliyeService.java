@@ -5,6 +5,7 @@ import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.dto.muhasebe.IrsaliyeDTO;
 import com.raspel.erp.dto.muhasebe.IrsaliyeKalemDTO;
 import com.raspel.erp.entity.muhasebe.Irsaliye;
+import com.raspel.erp.entity.muhasebe.IrsaliyeDurumLog;
 import com.raspel.erp.entity.muhasebe.IrsaliyeKalem;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.entity.envanter.Stok;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.muhasebe.IrsaliyeKalemRepository;
 import com.raspel.erp.repository.muhasebe.IrsaliyeRepository;
+import com.raspel.erp.repository.muhasebe.IrsaliyeDurumLogRepository;
 import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
 
@@ -38,6 +40,7 @@ import com.raspel.erp.repository.envanter.StokRepository;
 public class IrsaliyeService {
 
     private final IrsaliyeRepository irsaliyeRepository;
+    private final IrsaliyeDurumLogRepository irsaliyeDurumLogRepository;
     private final IrsaliyeKalemRepository kalemRepository;
     private final CariHesapRepository cariHesapRepository;
     private final StokRepository stokRepository;
@@ -61,7 +64,9 @@ public class IrsaliyeService {
         Irsaliye i = irsaliyeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("İrsaliye", id));
         tenantChecker.check(i.getSirketId(), "İrsaliye");
-        return entityToDTO(i);
+        IrsaliyeDTO dto = entityToDTO(i);
+        dto.setGecmis(loglariGetir(i.getId()));
+        return dto;
     }
 
     public IrsaliyeDTO olustur(IrsaliyeDTO dto, Long sirketId) {
@@ -82,6 +87,7 @@ public class IrsaliyeService {
                         .birim(k.getBirim()).build());
             }
         }
+        logYaz(i, null, i.getDurum(), "OLUSTUR", null, "İrsaliye oluşturuldu");
         return entityToDTO(i);
     }
 
@@ -302,8 +308,58 @@ public class IrsaliyeService {
         return entityToDTO(irsaliyeRepository.save(i));
     }
 
-    public void sil(Long id) {
+    @Transactional
+    public IrsaliyeDTO hazirla(Long id, Long kullaniciId) {
+        Irsaliye i = irsaliyeRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new ResourceNotFoundException("İrsaliye", id));
+        tenantChecker.check(i.getSirketId(), "İrsaliye");
+        donemService.kilitKontrol(i.getSirketId(), i.getTarih(), "irsaliye hazırlama");
+        if (!"TASLAK".equals(i.getDurum())) {
+            throw new BusinessException("Yalnızca taslak irsaliye hazırlanabilir (durum: " + i.getDurum() + ")");
+        }
+        String eski = i.getDurum();
+        i.setDurum("HAZIRLANDI");
+        Irsaliye kayit = irsaliyeRepository.save(i);
+        logYaz(kayit, eski, "HAZIRLANDI", "HAZIRLA", kullaniciId, null);
+        return entityToDTO(kayit);
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.raspel.erp.dto.muhasebe.IrsaliyeDurumLogDTO> gecmis(Long id) {
         Irsaliye i = irsaliyeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("İrsaliye", id));
+        tenantChecker.check(i.getSirketId(), "İrsaliye");
+        return loglariGetir(i.getId());
+    }
+
+    private List<com.raspel.erp.dto.muhasebe.IrsaliyeDurumLogDTO> loglariGetir(Long irsaliyeId) {
+        return irsaliyeDurumLogRepository.findByIrsaliyeIdOrderByOlusturmaTarihiAscIdAsc(irsaliyeId).stream()
+                .map(l -> com.raspel.erp.dto.muhasebe.IrsaliyeDurumLogDTO.builder()
+                        .id(l.getId())
+                        .eskiDurum(l.getEskiDurum())
+                        .yeniDurum(l.getYeniDurum())
+                        .islem(l.getIslem())
+                        .aciklama(l.getAciklama())
+                        .kullaniciId(l.getKullaniciId())
+                        .olusturmaTarihi(l.getOlusturmaTarihi())
+                        .build())
+                .toList();
+    }
+
+    private void logYaz(Irsaliye i, String eskiDurum, String yeniDurum, String islem,
+                        Long kullaniciId, String aciklama) {
+        irsaliyeDurumLogRepository.save(IrsaliyeDurumLog.builder()
+                .irsaliyeId(i.getId())
+                .sirketId(i.getSirketId())
+                .eskiDurum(eskiDurum)
+                .yeniDurum(yeniDurum)
+                .islem(islem)
+                .kullaniciId(kullaniciId)
+                .aciklama(aciklama)
+                .build());
+    }
+
+    public void sil(Long id) {        Irsaliye i = irsaliyeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("İrsaliye", id));
         tenantChecker.check(i.getSirketId(), "İrsaliye");
         donemService.kilitKontrol(i.getSirketId(), i.getTarih(), "irsaliye silme");
@@ -342,6 +398,13 @@ public class IrsaliyeService {
                 .faturaId(i.getFaturaId()).durum(i.getDurum()).tur(i.getTur())
                 .siparisId(i.getSiparisId())
                 .aciklama(i.getAciklama()).sirketId(i.getSirketId()).depoId(i.getDepoId())
-                .olusturmaTarihi(i.getOlusturmaTarihi()).kalemler(kalemler).build();
+                .olusturmaTarihi(i.getOlusturmaTarihi()).kalemler(kalemler)
+                .plaka(i.getPlaka()).soforId(i.getSoforId())
+                .teslimAlan(i.getTeslimAlan()).teslimTarihi(i.getTeslimTarihi())
+                .teslimatAdresi(i.getTeslimatAdresi())
+                .koliAdedi(i.getKoliAdedi()).desi(i.getDesi()).brutKg(i.getBrutKg())
+                .tasiyiciFirma(i.getTasiyiciFirma()).sevkTarihi(i.getSevkTarihi())
+                .teslimatId(i.getTeslimatId())
+                .build();
     }
 }

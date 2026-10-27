@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import java.util.Map;
+import java.util.List;
 
 @Tag(name = "İrsaliyeler", description = "İrsaliye yönetimi API")
 @RestController
@@ -59,6 +60,20 @@ public class IrsaliyeController {
     @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'IRSALIYE_WRITE')")
     public ResponseEntity<IrsaliyeDTO> durumGuncelle(@PathVariable Long id, @RequestBody @jakarta.validation.Valid com.raspel.erp.dto.sistem.DurumGuncelleRequest body) {
         return ResponseEntity.ok(irsaliyeService.durumGuncelle(id, body.getDurum()));
+    }
+
+    @PostMapping("/{id}/hazirla")
+    @Operation(summary = "İrsaliyeyi hazırla (TASLAK -> HAZIRLANDI)")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'IRSALIYE_WRITE')")
+    public ResponseEntity<IrsaliyeDTO> hazirla(@PathVariable Long id, HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(irsaliyeService.hazirla(id, kullaniciId));
+    }
+
+    @GetMapping("/{id}/gecmis")
+    @Operation(summary = "İrsaliye durum/işlem geçmişi")
+    public ResponseEntity<List<com.raspel.erp.dto.muhasebe.IrsaliyeDurumLogDTO>> gecmis(@PathVariable Long id) {
+        return ResponseEntity.ok(irsaliyeService.gecmis(id));
     }
 
     @PostMapping("/{id}/faturaya-donustur")

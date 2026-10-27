@@ -41,6 +41,7 @@ class IrsaliyeServiceTest {
     @Mock private com.raspel.erp.service.envanter.StokSeriService stokSeriService;
     @Mock private com.raspel.erp.service.envanter.MaliyetService maliyetService;
     @Mock private com.raspel.erp.service.sistem.DonemService donemService;
+    @Mock private com.raspel.erp.repository.muhasebe.IrsaliyeDurumLogRepository irsaliyeDurumLogRepository;
     @InjectMocks private IrsaliyeService irsaliyeService;
 
     private Irsaliye createIrsaliye(Long id) {
@@ -187,5 +188,58 @@ class IrsaliyeServiceTest {
 
         assertEquals("TASLAK", sonuc.getDurum());
         assertEquals("Guncellendi mi", sonuc.getAciklama());
+    }
+
+    @Test
+    void olustur_taslakDurumundaIlkLoguYazar() {
+        IrsaliyeDTO dto = IrsaliyeDTO.builder().irsaliyeNo("IRS-100").tarih(LocalDate.now())
+                .cariHesapId(1L).tur("SATIS").kalemler(List.of()).build();
+        Irsaliye saved = createIrsaliye(1L);
+        when(irsaliyeRepository.save(any(Irsaliye.class))).thenReturn(saved);
+
+        var sonuc = irsaliyeService.olustur(dto, 1L);
+
+        assertEquals("TASLAK", sonuc.getDurum());
+        verify(irsaliyeDurumLogRepository).save(argThat(l -> "OLUSTUR".equals(l.getIslem())
+                && "TASLAK".equals(l.getYeniDurum())));
+    }
+
+    @Test
+    void hazirla_taslakIrsaliyeyiHazirlarVeLogYazar() {
+        Irsaliye i = createIrsaliye(1L);
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i));
+        when(irsaliyeRepository.save(any(Irsaliye.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var sonuc = irsaliyeService.hazirla(1L, 7L);
+
+        assertEquals("HAZIRLANDI", sonuc.getDurum());
+        verify(irsaliyeDurumLogRepository).save(argThat(l -> "HAZIRLA".equals(l.getIslem())
+                && "HAZIRLANDI".equals(l.getYeniDurum()) && Long.valueOf(7L).equals(l.getKullaniciId())));
+    }
+
+    @Test
+    void hazirla_taslakDegilseReddeder() {
+        Irsaliye i = createIrsaliye(1L);
+        i.setDurum("SEVK_EDILDI");
+        when(irsaliyeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(i));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> irsaliyeService.hazirla(1L, 7L));
+        verify(irsaliyeRepository, never()).save(any());
+    }
+
+    @Test
+    void gecmis_loglariTarihSirasiylaDoner() {
+        Irsaliye i = createIrsaliye(1L);
+        when(irsaliyeRepository.findById(1L)).thenReturn(Optional.of(i));
+        when(irsaliyeDurumLogRepository.findByIrsaliyeIdOrderByOlusturmaTarihiAscIdAsc(1L))
+                .thenReturn(List.of(com.raspel.erp.entity.muhasebe.IrsaliyeDurumLog.builder()
+                        .id(1L).irsaliyeId(1L).eskiDurum(null).yeniDurum("TASLAK")
+                        .islem("OLUSTUR").olusturmaTarihi(LocalDateTime.now()).build()));
+
+        var liste = irsaliyeService.gecmis(1L);
+
+        assertEquals(1, liste.size());
+        assertEquals("OLUSTUR", liste.get(0).getIslem());
     }
 }

@@ -47,6 +47,39 @@ public class Irsaliye {
     @Column(name = "depo_id")
     private Long depoId;
 
+    @Column(length = 20)
+    private String plaka;
+
+    @Column(name = "sofor_id")
+    private Long soforId;
+
+    @Column(name = "teslim_alan", length = 150)
+    private String teslimAlan;
+
+    @Column(name = "teslim_tarihi")
+    private LocalDateTime teslimTarihi;
+
+    @Column(name = "teslimat_adresi", length = 500)
+    private String teslimatAdresi;
+
+    @Column(name = "koli_adeti")
+    private Integer koliAdedi;
+
+    @Column(precision = 10, scale = 2)
+    private java.math.BigDecimal desi;
+
+    @Column(name = "brut_kg", precision = 10, scale = 2)
+    private java.math.BigDecimal brutKg;
+
+    @Column(name = "tasiyici_firma", length = 150)
+    private String tasiyiciFirma;
+
+    @Column(name = "sevk_tarihi")
+    private LocalDateTime sevkTarihi;
+
+    @Column(name = "teslimat_id")
+    private Long teslimatId;
+
     /** İyimser kilitleme. */
     @Version
     private Long version;
