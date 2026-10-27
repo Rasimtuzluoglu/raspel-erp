@@ -72,7 +72,7 @@ describe('Üretim revizyonu', () => {
 
   it('Excel export (emirler + reçeteler)', () => {
     expect(dosyaApi).toMatch(/uretimEmirleri\(params\)\s*\{[\s\S]*?\/exports\/uretim-emirleri/)
-    expect(dosyaApi).toMatch(/uretimReceteler\(\)\s*\{[\s\S]*?\/exports\/uretim-receteler/)
+    expect(dosyaApi).toMatch(/uretimReceteler\(params\)\s*\{[\s\S]*?\/exports\/uretim-receteler/)
     expect(uretim).toMatch(/excelAPI\.uretimEmirleri\(/)
     expect(uretim).toMatch(/excelAPI\.uretimReceteler\(/)
     expect(uretim).toMatch(/uretim\.excelIndirildi/)

@@ -76,6 +76,10 @@ public class UretimEmri {
     @Column(name = "depo_id")
     private Long depoId;
 
+    /** Üretim hattı / iş merkezi. */
+    @Column(name = "hat_id")
+    private Long hatId;
+
     @Column(name = "hammadde_maliyeti", precision = 19, scale = 2)
     @Builder.Default
     private BigDecimal hammaddeMaliyeti = BigDecimal.ZERO;

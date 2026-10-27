@@ -162,7 +162,7 @@ class ExcelExportControllerTest {
 
     @Test
     void uretimEmirleri_excelDoner() throws Exception {
-        when(uretimService.filtreliEmirler(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(uretimService.filtreliEmirler(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(new PageImpl<>(List.of(com.raspel.erp.dto.envanter.UretimEmriDTO.builder()
                         .id(1L).urunAd("Masa").durum("TASLAK").build())));
         when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
@@ -174,13 +174,29 @@ class ExcelExportControllerTest {
 
     @Test
     void uretimReceteler_excelDoner() throws Exception {
-        when(uretimService.receteler(any()))
+        when(uretimService.recetelerFiltreli(any(), any(), any()))
                 .thenReturn(List.of(com.raspel.erp.dto.envanter.ReceteDTO.builder()
                         .id(1L).ad("Masa Reçetesi").urunAd("Masa").build()));
         when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
 
         mockMvc.perform(get("/api/exports/uretim-receteler").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void uretimReceteler_excelAramaVeAktiflikParametreleriniIletir() throws Exception {
+        when(uretimService.recetelerFiltreli(1L, "masa", true))
+                .thenReturn(List.of(com.raspel.erp.dto.envanter.ReceteDTO.builder()
+                        .id(2L).ad("Masa Reçetesi").urunAd("Masa").aktif(true).build()));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/uretim-receteler")
+                        .requestAttr("sirketId", 1L)
+                        .param("q", "masa")
+                        .param("aktif", "true"))
+                .andExpect(status().isOk());
+
+        org.mockito.Mockito.verify(uretimService).recetelerFiltreli(1L, "masa", true);
     }
 
     @Test

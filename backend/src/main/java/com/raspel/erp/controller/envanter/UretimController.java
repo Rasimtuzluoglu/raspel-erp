@@ -85,6 +85,7 @@ public class UretimController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String durum,
             @RequestParam(required = false) String oncelik,
+            @RequestParam(required = false) Long hatId,
             @RequestParam(required = false) Boolean geciken,
             @RequestParam(required = false) Boolean buAy,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
@@ -92,7 +93,7 @@ public class UretimController {
             @PageableDefault(size = 25, sort = "olusturmaTarihi", direction = Sort.Direction.DESC) Pageable pageable,
             HttpServletRequest request) {
         return ResponseEntity.ok(uretimService.filtreliEmirler(
-                sirket(request), q, durum, oncelik, geciken, buAy, baslangic, bitis, pageable));
+                sirket(request), q, durum, oncelik, hatId, geciken, buAy, baslangic, bitis, pageable));
     }
 
     @PostMapping("/emirler")
@@ -105,6 +106,14 @@ public class UretimController {
     @Operation(summary = "Üretim emrini başlat (TASLAK -> URETIMDE)")
     public ResponseEntity<UretimEmriDTO> baslat(@PathVariable Long id, HttpServletRequest request) {
         return ResponseEntity.ok(uretimService.emirBaslat(id, sirket(request), kullanici(request)));
+    }
+
+    @PutMapping("/emirler/{id}/hat")
+    @Operation(summary = "Üretim emrini hatta ata", description = "hatId boş gönderilirse atama kaldırılır")
+    public ResponseEntity<UretimEmriDTO> hatAta(@PathVariable Long id,
+                                                @RequestParam(required = false) Long hatId,
+                                                HttpServletRequest request) {
+        return ResponseEntity.ok(uretimService.emirHatAta(id, hatId, sirket(request), kullanici(request)));
     }
 
     @PostMapping("/emirler/{id}/tamamla")
@@ -158,6 +167,26 @@ public class UretimController {
     @Operation(summary = "Üretim KPI özeti")
     public ResponseEntity<UretimOzetDTO> ozet(HttpServletRequest request) {
         return ResponseEntity.ok(uretimService.ozet(sirket(request)));
+    }
+
+    @GetMapping("/analiz")
+    @Operation(summary = "Dönemsel üretim analizi",
+            description = "Tamamlanmış emirler üzerinden üretim/fire/maliyet özeti, ürün kırılımı ve aylık seyir")
+    public ResponseEntity<com.raspel.erp.dto.envanter.UretimAnalizDTO> analiz(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis,
+            HttpServletRequest request) {
+        return ResponseEntity.ok(uretimService.analiz(sirket(request), baslangic, bitis));
+    }
+
+    @GetMapping("/takvim")
+    @Operation(summary = "Üretim takvimi (Gantt)",
+            description = "Planlanan tarih aralığıyla kesişen iptal edilmemiş emirleri döndürür")
+    public ResponseEntity<List<UretimEmriDTO>> takvim(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis,
+            HttpServletRequest request) {
+        return ResponseEntity.ok(uretimService.takvim(sirket(request), baslangic, bitis));
     }
 
     record IptalIstek(String aciklama) {}

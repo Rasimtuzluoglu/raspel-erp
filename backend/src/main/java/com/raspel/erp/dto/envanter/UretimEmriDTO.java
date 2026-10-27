@@ -36,9 +36,19 @@ public class UretimEmriDTO {
     private String sorumluPersonelAd;
     private Long depoId;
     private String depoAd;
+    private Long hatId;
+    private String hatAd;
     private BigDecimal hammaddeMaliyeti;
     private BigDecimal iscilikMaliyeti;
     private BigDecimal toplamMaliyet;
     private String notlar;
     private boolean gecikti;
+    /** Gerçekleşen fire oranı: fire / (üretilen + fire) * 100. */
+    private BigDecimal fireOrani;
+    /** Birim maliyet: toplam maliyet / üretilen miktar. */
+    private BigDecimal birimMaliyet;
+    /** Gerçekleşen süre (saat); başlama ve tamamlanma varsa. */
+    private BigDecimal sureSaat;
+    /** Planlanan bitişin üzerinden geçen gün sayısı (gecikmişse). */
+    private long gecikmeGun;
 }

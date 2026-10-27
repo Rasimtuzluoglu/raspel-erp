@@ -9,6 +9,7 @@ import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.envanter.StokHareket;
 import com.raspel.erp.entity.envanter.UretimEmri;
 import com.raspel.erp.entity.envanter.UretimEmriLog;
+import com.raspel.erp.entity.envanter.UretimHat;
 import com.raspel.erp.entity.ticaret.SiparisKalem;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.exception.ResourceNotFoundException;
@@ -18,6 +19,7 @@ import com.raspel.erp.repository.envanter.StokHareketRepository;
 import com.raspel.erp.repository.envanter.StokRepository;
 import com.raspel.erp.repository.envanter.UretimEmriLogRepository;
 import com.raspel.erp.repository.envanter.UretimEmriRepository;
+import com.raspel.erp.repository.envanter.UretimHatRepository;
 import com.raspel.erp.repository.ticaret.SiparisKalemRepository;
 import com.raspel.erp.repository.ticaret.SiparisRepository;
 import com.raspel.erp.service.ticaret.SatinalmaTalepService;
@@ -44,6 +46,7 @@ public class UretimService {
     private final ReceteRepository receteRepository;
     private final ReceteKalemRepository receteKalemRepository;
     private final UretimEmriRepository uretimEmriRepository;
+    private final UretimHatRepository uretimHatRepository;
     private final UretimEmriLogRepository uretimEmriLogRepository;
     private final StokRepository stokRepository;
     private final StokHareketRepository stokHareketRepository;
@@ -73,6 +76,20 @@ public class UretimService {
         return receteRepository.findBySirketIdOrderByAd(sirketId).stream()
                 .map(this::receteDTO)
                 .collect(Collectors.toList());
+    }
+
+    /** Reçeteleri ad/mamul araması ve aktiflik durumuna göre süzer (liste ve Excel için). */
+    @Transactional(readOnly = true)
+    public List<ReceteDTO> recetelerFiltreli(Long sirketId, String q, Boolean aktif) {
+        java.util.Locale tr = new java.util.Locale("tr", "TR");
+        String arama = q != null ? q.trim().toLowerCase(tr) : "";
+        return receteler(sirketId).stream()
+                .filter(r -> aktif == null
+                        || (aktif ? !Boolean.FALSE.equals(r.getAktif()) : Boolean.FALSE.equals(r.getAktif())))
+                .filter(r -> arama.isEmpty()
+                        || (r.getAd() != null && r.getAd().toLowerCase(tr).contains(arama))
+                        || (r.getUrunAd() != null && r.getUrunAd().toLowerCase(tr).contains(arama)))
+                .toList();
     }
 
     @Transactional
@@ -170,14 +187,14 @@ public class UretimService {
      */
     @Transactional(readOnly = true)
     public org.springframework.data.domain.Page<UretimEmriDTO> filtreliEmirler(
-            Long sirketId, String q, String durum, String oncelik, Boolean geciken, Boolean buAy,
+            Long sirketId, String q, String durum, String oncelik, Long hatId, Boolean geciken, Boolean buAy,
             LocalDate baslangic, LocalDate bitis,
             org.springframework.data.domain.Pageable pageable) {
         String qq = com.raspel.erp.util.AramaTemizleyici.like(q);
         String dd = (durum == null || durum.isBlank()) ? null : durum.trim();
         String oo = (oncelik == null || oncelik.isBlank()) ? null : oncelik.trim();
         LocalDateTime ayBaslangic = LocalDate.now().withDayOfMonth(1).atStartOfDay();
-        return uretimEmriRepository.filtreliGetir(sirketId, qq, dd, oo,
+        return uretimEmriRepository.filtreliGetir(sirketId, qq, dd, oo, hatId,
                 Boolean.TRUE.equals(geciken), Boolean.TRUE.equals(buAy), ayBaslangic,
                 baslangic, bitis, LocalDate.now(), pageable)
                 .map(this::emriDTO);
@@ -202,6 +219,7 @@ public class UretimService {
                 .planlananBitis(dto.getPlanlananBitis())
                 .sorumluPersonelId(dto.getSorumluPersonelId())
                 .depoId(dto.getDepoId())
+                .hatId(hatDogrula(dto.getHatId(), sirketId))
                 .aciklama(dto.getAciklama())
                 .notlar(dto.getNotlar())
                 .fireMiktar(BigDecimal.ZERO)
@@ -213,9 +231,22 @@ public class UretimService {
         return emriDTO(e);
     }
 
+    /** Emri bir üretim hattına atar veya atamayı kaldırır (hatId null). */
     @Transactional
-    public UretimEmriDTO emirBaslat(Long id, Long sirketId, Long kullaniciId) {
+    public UretimEmriDTO emirHatAta(Long id, Long hatId, Long sirketId, Long kullaniciId) {
         UretimEmri e = emirGetir(id, sirketId);
+        if (UretimEmri.Durum.TAMAMLANDI.name().equals(e.getDurum())
+                || UretimEmri.Durum.IPTAL.name().equals(e.getDurum())) {
+            throw new BusinessException("Tamamlanmış veya iptal edilmiş emre hat atanamaz");
+        }
+        e.setHatId(hatDogrula(hatId, sirketId));
+        uretimEmriRepository.save(e);
+        logYaz(e.getId(), e.getDurum(), e.getDurum(), kullaniciId, "Hat ataması güncellendi");
+        return emriDTO(e);
+    }
+
+    @Transactional
+    public UretimEmriDTO emirBaslat(Long id, Long sirketId, Long kullaniciId) {        UretimEmri e = emirGetir(id, sirketId);
         if (!UretimEmri.Durum.TASLAK.name().equals(e.getDurum())) {
             throw new BusinessException("Yalnızca taslak emir başlatılabilir (durum: " + e.getDurum() + ")");
         }
@@ -538,8 +569,123 @@ public class UretimService {
                 .build();
     }
 
-    // ---------- Yardımcılar ----------
+    // ---------- Analiz ----------
 
+    /**
+     * Yönetim odaklı dönem analizi: toplam üretim/fire/maliyet, ürün bazlı
+     * kırılım ve aylık seyir. Tamamlanmış emirler üzerinden hesaplanır.
+     */
+    @Transactional(readOnly = true)
+    public UretimAnalizDTO analiz(Long sirketId, LocalDate baslangic, LocalDate bitis) {
+        LocalDate bit = bitis != null ? bitis : LocalDate.now();
+        LocalDate bas = baslangic != null ? baslangic : bit.minusMonths(11).withDayOfMonth(1);
+        if (bas.isAfter(bit)) {
+            LocalDate gecici = bas;
+            bas = bit;
+            bit = gecici;
+        }
+        List<UretimEmri> emirler = uretimEmriRepository
+                .tamamlananlarAralikta(sirketId, bas.atStartOfDay(), bit.plusDays(1).atStartOfDay());
+
+        BigDecimal toplamUretilen = BigDecimal.ZERO;
+        BigDecimal toplamFire = BigDecimal.ZERO;
+        BigDecimal toplamMaliyet = BigDecimal.ZERO;
+        BigDecimal toplamSure = BigDecimal.ZERO;
+        long sureSayisi = 0;
+
+        java.util.Map<Long, List<UretimEmri>> uruneGore = new java.util.LinkedHashMap<>();
+        java.util.Map<YearMonth, BigDecimal[]> ayaGore = new java.util.TreeMap<>();
+
+        for (UretimEmri e : emirler) {
+            BigDecimal uretilen = sifir(e.getUretilenMiktar());
+            BigDecimal fire = sifir(e.getFireMiktar());
+            BigDecimal maliyet = sifir(e.getToplamMaliyet());
+            toplamUretilen = toplamUretilen.add(uretilen);
+            toplamFire = toplamFire.add(fire);
+            toplamMaliyet = toplamMaliyet.add(maliyet);
+            if (e.getBaslamaTarihi() != null && e.getTamamlanmaTarihi() != null) {
+                toplamSure = toplamSure.add(BigDecimal.valueOf(
+                        Duration.between(e.getBaslamaTarihi(), e.getTamamlanmaTarihi()).toMinutes() / 60.0));
+                sureSayisi++;
+            }
+            uruneGore.computeIfAbsent(e.getUrunId(), k -> new ArrayList<>()).add(e);
+            if (e.getTamamlanmaTarihi() != null) {
+                YearMonth ay = YearMonth.from(e.getTamamlanmaTarihi());
+                BigDecimal[] d = ayaGore.computeIfAbsent(ay, k -> new BigDecimal[]{
+                        BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO});
+                d[0] = d[0].add(uretilen);
+                d[1] = d[1].add(fire);
+                d[2] = d[2].add(maliyet);
+            }
+        }
+
+        List<UretimAnalizUrunDTO> urunler = uruneGore.entrySet().stream()
+                .map(giris -> {
+                    BigDecimal uretilen = BigDecimal.ZERO;
+                    BigDecimal fire = BigDecimal.ZERO;
+                    BigDecimal maliyet = BigDecimal.ZERO;
+                    for (UretimEmri e : giris.getValue()) {
+                        uretilen = uretilen.add(sifir(e.getUretilenMiktar()));
+                        fire = fire.add(sifir(e.getFireMiktar()));
+                        maliyet = maliyet.add(sifir(e.getToplamMaliyet()));
+                    }
+                    return UretimAnalizUrunDTO.builder()
+                            .urunId(giris.getKey())
+                            .urunAd(stokAd(giris.getKey()))
+                            .emirSayisi(giris.getValue().size())
+                            .uretilen(olcek(uretilen))
+                            .fire(olcek(fire))
+                            .fireOrani(fireOrani(fire, uretilen))
+                            .toplamMaliyet(olcek(maliyet))
+                            .birimMaliyet(birimMaliyet(maliyet, uretilen))
+                            .build();
+                })
+                .sorted((a, b) -> b.getToplamMaliyet().compareTo(a.getToplamMaliyet()))
+                .toList();
+
+        List<UretimAnalizTrendDTO> trend = ayaGore.entrySet().stream()
+                .map(giris -> UretimAnalizTrendDTO.builder()
+                        .donem(giris.getKey().toString())
+                        .uretilen(olcek(giris.getValue()[0]))
+                        .fire(olcek(giris.getValue()[1]))
+                        .maliyet(olcek(giris.getValue()[2]))
+                        .build())
+                .toList();
+
+        BigDecimal ortalamaSure = sureSayisi > 0
+                ? toplamSure.divide(BigDecimal.valueOf(sureSayisi), 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
+        return UretimAnalizDTO.builder()
+                .toplamUretilen(olcek(toplamUretilen))
+                .toplamFire(olcek(toplamFire))
+                .fireOrani(fireOrani(toplamFire, toplamUretilen))
+                .toplamMaliyet(olcek(toplamMaliyet))
+                .birimMaliyet(birimMaliyet(toplamMaliyet, toplamUretilen))
+                .ortalamaSureSaat(ortalamaSure)
+                .tamamlananEmir(emirler.size())
+                .urunler(urunler)
+                .trend(trend)
+                .build();
+    }
+
+    /** Takvim/Gantt görünümü: planlanan tarih aralığıyla kesişen emirler. */
+    @Transactional(readOnly = true)
+    public List<UretimEmriDTO> takvim(Long sirketId, LocalDate baslangic, LocalDate bitis) {
+        LocalDate bugun = LocalDate.now();
+        LocalDate bas = baslangic != null ? baslangic : bugun.withDayOfMonth(1);
+        LocalDate bit = bitis != null ? bitis : bugun.withDayOfMonth(bugun.lengthOfMonth());
+        if (bas.isAfter(bit)) {
+            LocalDate gecici = bas;
+            bas = bit;
+            bit = gecici;
+        }
+        return uretimEmriRepository.takvimAralikta(sirketId, bas, bit).stream()
+                .map(this::emriDTO)
+                .toList();
+    }
+
+    // ---------- Yardımcılar ----------
     private UretimEmri emirGetir(Long id, Long sirketId) {
         UretimEmri e = uretimEmriRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Üretim Emri", id));
@@ -592,6 +738,27 @@ public class UretimService {
                 && e.getPlanlananBitis().isBefore(LocalDate.now())
                 && !UretimEmri.Durum.TAMAMLANDI.name().equals(e.getDurum())
                 && !UretimEmri.Durum.IPTAL.name().equals(e.getDurum());
+        long gecikmeGun = gecikti
+                ? java.time.temporal.ChronoUnit.DAYS.between(e.getPlanlananBitis(), LocalDate.now())
+                : 0;
+        BigDecimal fireOrani = null;
+        BigDecimal uretilen = e.getUretilenMiktar();
+        BigDecimal fire = e.getFireMiktar();
+        if (uretilen != null && fire != null) {
+            BigDecimal toplam = uretilen.add(fire);
+            if (toplam.compareTo(BigDecimal.ZERO) > 0) {
+                fireOrani = fire.multiply(new BigDecimal("100")).divide(toplam, 2, java.math.RoundingMode.HALF_UP);
+            }
+        }
+        BigDecimal birimMaliyet = null;
+        if (e.getToplamMaliyet() != null && uretilen != null && uretilen.compareTo(BigDecimal.ZERO) > 0) {
+            birimMaliyet = e.getToplamMaliyet().divide(uretilen, 2, java.math.RoundingMode.HALF_UP);
+        }
+        BigDecimal sureSaat = null;
+        if (e.getBaslamaTarihi() != null && e.getTamamlanmaTarihi() != null) {
+            long dakika = Duration.between(e.getBaslamaTarihi(), e.getTamamlanmaTarihi()).toMinutes();
+            sureSaat = BigDecimal.valueOf(dakika / 60.0).setScale(2, java.math.RoundingMode.HALF_UP);
+        }
         return UretimEmriDTO.builder()
                 .id(e.getId()).sirketId(e.getSirketId()).siparisId(e.getSiparisId())
                 .urunId(e.getUrunId()).urunAd(stokAd(e.getUrunId())).miktar(e.getMiktar()).durum(e.getDurum())
@@ -601,14 +768,56 @@ public class UretimService {
                 .baslamaTarihi(e.getBaslamaTarihi()).oncelik(e.getOncelik())
                 .uretilenMiktar(e.getUretilenMiktar()).fireMiktar(e.getFireMiktar())
                 .sorumluPersonelId(e.getSorumluPersonelId()).depoId(e.getDepoId())
+                .hatId(e.getHatId()).hatAd(hatAd(e.getHatId()))
                 .hammaddeMaliyeti(e.getHammaddeMaliyeti()).iscilikMaliyeti(e.getIscilikMaliyeti())
                 .toplamMaliyet(e.getToplamMaliyet()).notlar(e.getNotlar())
                 .gecikti(gecikti)
+                .fireOrani(fireOrani)
+                .birimMaliyet(birimMaliyet)
+                .sureSaat(sureSaat)
+                .gecikmeGun(gecikmeGun)
                 .build();
+    }
+
+    private static BigDecimal sifir(BigDecimal v) {
+        return v != null ? v : BigDecimal.ZERO;
+    }
+
+    private static BigDecimal olcek(BigDecimal v) {
+        return sifir(v).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private static BigDecimal fireOrani(BigDecimal fire, BigDecimal uretilen) {
+        BigDecimal toplam = sifir(uretilen).add(sifir(fire));
+        return toplam.compareTo(BigDecimal.ZERO) > 0
+                ? sifir(fire).multiply(YUZ).divide(toplam, 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+    }
+
+    private static BigDecimal birimMaliyet(BigDecimal maliyet, BigDecimal uretilen) {
+        return sifir(uretilen).compareTo(BigDecimal.ZERO) > 0
+                ? sifir(maliyet).divide(uretilen, 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
     }
 
     private String stokAd(Long stokId) {
         if (stokId == null) return null;
         return stokRepository.findById(stokId).map(Stok::getAd).orElse(null);
+    }
+
+    private String hatAd(Long hatId) {
+        if (hatId == null) return null;
+        return uretimHatRepository.findById(hatId).map(UretimHat::getAd).orElse(null);
+    }
+
+    /** Hattın şirkete ait ve aktif olduğunu doğrular; null ise atama kaldırılır. */
+    private Long hatDogrula(Long hatId, Long sirketId) {
+        if (hatId == null) return null;
+        UretimHat hat = uretimHatRepository.findByIdAndSirketId(hatId, sirketId)
+                .orElseThrow(() -> new BusinessException("Üretim hattı bulunamadı"));
+        if (Boolean.FALSE.equals(hat.getAktif())) {
+            throw new BusinessException("Pasif hatta emir atanamaz");
+        }
+        return hat.getId();
     }
 }

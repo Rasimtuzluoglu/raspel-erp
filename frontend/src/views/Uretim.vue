@@ -24,7 +24,23 @@
     </PageHeader>
 
     <!-- KPI -->
-    <div class="kpi-satiri">
+    <div
+      v-if="kpiIskelet"
+      class="kpi-satiri"
+      :aria-busy="true"
+    >
+      <div
+        v-for="i in 6"
+        :key="i"
+        class="kpi-iskelet"
+      >
+        <SkeletonLoader height="86px" />
+      </div>
+    </div>
+    <div
+      v-else
+      class="kpi-satiri"
+    >
       <KpiKart
         :baslik="t('uretim.kpiTaslak')"
         :deger="ozet.taslak"
@@ -113,6 +129,7 @@
             <InputIcon class="pi pi-search" />
             <InputText
               v-model="emirQ"
+              :aria-label="t('uretim.aramaPlaceholder')"
               :placeholder="t('uretim.aramaPlaceholder')"
               @input="emirFiltreDegisti"
             />
@@ -124,6 +141,7 @@
             option-value="deger"
             show-clear
             class="filtre-select"
+            :aria-label="t('common.status')"
             :placeholder="t('common.status')"
             @change="emirFiltreDegisti"
           />
@@ -134,7 +152,19 @@
             option-value="deger"
             show-clear
             class="filtre-select"
+            :aria-label="t('uretim.oncelik')"
             :placeholder="t('uretim.oncelik')"
+            @change="emirFiltreDegisti"
+          />
+          <Dropdown
+            v-model="emirHat"
+            :options="hatlar"
+            option-label="ad"
+            option-value="id"
+            show-clear
+            class="filtre-select"
+            :aria-label="t('uretim.hat')"
+            :placeholder="t('uretim.hat')"
             @change="emirFiltreDegisti"
           />
           <DatePicker
@@ -143,6 +173,7 @@
             show-icon
             :manual-input="false"
             class="filtre-tarih"
+            :aria-label="t('uretim.baslangicTarihi')"
             :placeholder="t('uretim.baslangicTarihi')"
             @date-select="emirFiltreDegisti"
           />
@@ -152,6 +183,7 @@
             show-icon
             :manual-input="false"
             class="filtre-tarih"
+            :aria-label="t('uretim.bitisTarihi')"
             :placeholder="t('uretim.bitisTarihi')"
             @date-select="emirFiltreDegisti"
           />
@@ -173,20 +205,40 @@
           />
         </div>
 
-        <div class="emir-cipler">
+        <div
+          class="emir-cipler"
+          role="group"
+          :aria-label="t('uretim.hizliFiltre')"
+        >
           <button
             v-for="c in emirCipleri"
             :key="c.deger"
             type="button"
             class="emir-cip"
             :class="{ aktif: aktifCip === c.deger }"
+            :aria-pressed="aktifCip === c.deger"
             @click="emirCipUygula(c.deger)"
           >
             <i :class="c.ikon" /> {{ c.ad }}
           </button>
         </div>
 
+        <p
+          class="sr-only"
+          aria-live="polite"
+        >
+          {{ emirDuyuru }}
+        </p>
+
+        <SkeletonLoader
+          v-if="emirYukleniyor && !emirSayfa.length"
+          class="tablo-iskelet"
+          :count="6"
+          height="44px"
+        />
+
         <AppDataTable
+          v-else
           :value="emirSayfa"
           lazy
           :total-records="emirToplam"
@@ -210,6 +262,23 @@
             :header="t('uretim.mamul')"
             sortable
           />
+          <Column
+            field="hatAd"
+            :header="t('uretim.hat')"
+            style="width: 130px"
+          >
+            <template #body="{ data }">
+              <Tag
+                v-if="data.hatAd"
+                :value="data.hatAd"
+                severity="secondary"
+              />
+              <span
+                v-else
+                class="muted"
+              >-</span>
+            </template>
+          </Column>
           <Column
             field="miktar"
             :header="t('uretim.miktar')"
@@ -303,7 +372,10 @@
             v-if="emirYukleniyor"
             class="mobil-bos"
           >
-            {{ t('common.loading') }}
+            <SkeletonLoader
+              :count="3"
+              height="96px"
+            />
           </div>
           <EmptyState
             v-else-if="!emirSayfa.length"
@@ -336,6 +408,7 @@
               />
             </div>
             <div class="emk-satir">
+              <span>{{ t('uretim.hat') }}: <strong>{{ e.hatAd || '-' }}</strong></span>
               <span>{{ t('uretim.miktar') }}: <strong>{{ e.miktar }}</strong></span>
               <span>{{ t('uretim.maliyet') }}: <strong>{{ Number(e.toplamMaliyet) > 0 ? para(e.toplamMaliyet) : '-' }}</strong></span>
             </div>
@@ -356,6 +429,14 @@
       <!-- REÇETELER -->
       <TabPanel :header="t('uretim.recetelerTab')">
         <div class="emir-arac">
+          <IconField class="filtre-arama">
+            <InputIcon class="pi pi-search" />
+            <InputText
+              v-model="receteQ"
+              :aria-label="t('uretim.receteAra')"
+              :placeholder="t('uretim.receteAra')"
+            />
+          </IconField>
           <Dropdown
             v-model="receteDurum"
             :options="receteDurumSecenekleri"
@@ -363,6 +444,7 @@
             option-value="deger"
             show-clear
             class="filtre-select"
+            :aria-label="t('common.status')"
             :placeholder="t('common.status')"
           />
           <span class="arac-bosluk" />
@@ -381,7 +463,14 @@
             @click="receteDialogAc(null)"
           />
         </div>
+        <SkeletonLoader
+          v-if="yukleniyor && !receteler.length"
+          class="tablo-iskelet"
+          :count="5"
+          height="44px"
+        />
         <AppDataTable
+          v-else
           :value="filtreliReceteler"
           striped-rows
           arama-aktif
@@ -635,6 +724,382 @@
           </div>
         </div>
       </TabPanel>
+
+      <!-- HATLAR -->
+      <TabPanel :header="t('uretim.hatlarTab')">
+        <div class="emir-arac">
+          <div class="gorev-ozet-baslik hat-baslik">
+            <i class="pi pi-sitemap" /> {{ t('uretim.hatlar') }} ({{ hatlar.length }})
+          </div>
+          <span class="arac-bosluk" />
+          <Button
+            :label="t('uretim.yeniHat')"
+            icon="pi pi-plus"
+            class="p-button-sm"
+            @click="hatDialogAc(null)"
+          />
+        </div>
+
+        <EmptyState
+          v-if="!hatlar.length"
+          icon="pi pi-sitemap"
+          :message="t('uretim.hatYok')"
+          :action-label="t('uretim.yeniHat')"
+          action-icon="pi pi-plus"
+          @action="hatDialogAc(null)"
+        />
+
+        <div
+          v-else
+          class="hat-kartlari"
+        >
+          <div
+            v-for="h in hatlar"
+            :key="h.id"
+            class="hat-kart"
+            :class="{ pasif: !h.aktif }"
+          >
+            <div class="hat-ust">
+              <strong class="hat-ad">{{ h.ad }}</strong>
+              <Tag
+                :value="h.aktif ? t('uretim.aktif') : t('uretim.pasif')"
+                :severity="h.aktif ? 'success' : 'secondary'"
+              />
+              <SatirEylemleri
+                :baslik="h.ad"
+                :gorunur="{ duzenle: true, sil: true }"
+                @duzenle="hatDialogAc(h)"
+                @sil="hatSil(h)"
+              />
+            </div>
+            <p
+              v-if="h.aciklama"
+              class="hat-aciklama"
+            >
+              {{ h.aciklama }}
+            </p>
+            <div class="hat-doluluk-baslik">
+              <span>{{ t('uretim.hatDoluluk') }}</span>
+              <strong>{{ h.dolulukYuzde }}%</strong>
+            </div>
+            <div
+              class="hat-doluluk"
+              role="progressbar"
+              :aria-valuenow="h.dolulukYuzde"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              :aria-label="`${h.ad} ${t('uretim.hatDoluluk')}`"
+            >
+              <div
+                class="hat-doluluk-dolu"
+                :class="{ dolu: h.dolulukYuzde >= 90 }"
+                :style="{ width: `${h.dolulukYuzde}%` }"
+              />
+            </div>
+            <div class="hat-metrikler">
+              <span>
+                <i class="pi pi-cog" />
+                {{ h.aktifEmir }} / {{ h.kapasite }} {{ t('uretim.hatAktifEmir') }}
+              </span>
+              <span :class="{ 'metin-gecikmis': h.gecikenEmir > 0 }">
+                <i class="pi pi-exclamation-triangle" />
+                {{ h.gecikenEmir }} {{ t('uretim.hatGeciken') }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </TabPanel>
+
+      <!-- ANALİZ -->
+      <TabPanel :header="t('uretim.analizTab')">
+        <div class="emir-arac">
+          <DatePicker
+            v-model="analizAralik"
+            selection-mode="range"
+            show-button-bar
+            date-format="dd.mm.yy"
+            class="analiz-tarih"
+            :aria-label="t('uretim.analizDonem')"
+            :placeholder="t('uretim.analizDonem')"
+            @update:model-value="analizYukle"
+          />
+          <Button
+            :label="t('uretim.analizUygula')"
+            icon="pi pi-chart-line"
+            size="small"
+            :loading="analizYukleniyor"
+            @click="analizYukle"
+          />
+          <span class="arac-bosluk" />
+          <Button
+            :label="t('uretim.excel')"
+            icon="pi pi-file-excel"
+            outlined
+            size="small"
+            :loading="emirExcelYukleniyor"
+            @click="analizExcelIndir"
+          />
+        </div>
+
+        <SkeletonLoader
+          v-if="analizYukleniyor && !analiz"
+          class="tablo-iskelet"
+          :count="5"
+          height="60px"
+        />
+
+        <template v-else-if="analiz">
+          <div class="kpi-satiri analiz-kpi">
+            <KpiKart
+              :baslik="t('uretim.toplamUretilen')"
+              :deger="Number(analiz.toplamUretilen) || 0"
+              ikon="pi pi-box"
+              renk="#3b82f6"
+              :para-birimi="false"
+            />
+            <KpiKart
+              :baslik="t('uretim.kpiFireOrani')"
+              :deger="Number(analiz.fireOrani) || 0"
+              ikon="pi pi-exclamation-triangle"
+              renk="#f59e0b"
+              :para-birimi="false"
+            />
+            <KpiKart
+              :baslik="t('uretim.toplamMaliyet')"
+              :deger="analiz.toplamMaliyet"
+              ikon="pi pi-wallet"
+              renk="#10b981"
+            />
+            <KpiKart
+              :baslik="t('uretim.birimMaliyet')"
+              :deger="analiz.birimMaliyet"
+              ikon="pi pi-tag"
+              renk="#8b5cf6"
+            />
+          </div>
+
+          <div class="analiz-kart">
+            <h3>{{ t('uretim.analizTrend') }}</h3>
+            <p
+              v-if="!analiz.trend || !analiz.trend.length"
+              class="muted"
+            >
+              {{ t('uretim.analizYok') }}
+            </p>
+            <div
+              v-else
+              class="trend-liste"
+            >
+              <div
+                v-for="tr in analiz.trend"
+                :key="tr.donem"
+                class="trend-satir"
+              >
+                <span class="trend-donem">{{ donemEtiket(tr.donem) }}</span>
+                <div class="trend-bar">
+                  <div
+                    class="trend-dolu uretim"
+                    :style="{ width: `${barYuzde(tr.uretilen)}%` }"
+                  />
+                  <div
+                    class="trend-dolu fire"
+                    :style="{ width: `${barYuzde(tr.fire)}%` }"
+                  />
+                </div>
+                <span class="trend-deger">
+                  {{ formatMiktar(tr.uretilen) }} /
+                  <span class="metin-gecikmis">{{ formatMiktar(tr.fire) }}</span>
+                </span>
+                <span class="trend-maliyet">{{ para(tr.maliyet) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="analiz-kart">
+            <h3>{{ t('uretim.analizUrunBazli') }}</h3>
+            <AppDataTable
+              :value="analiz.urunler || []"
+              striped-rows
+              gorunum-anahtari="uretim-analiz"
+              :empty-message="t('uretim.analizYok')"
+            >
+              <Column
+                field="urunAd"
+                :header="t('uretim.mamul')"
+                sortable
+              />
+              <Column
+                field="emirSayisi"
+                :header="t('uretim.emirSayisi')"
+                style="width: 100px"
+                sortable
+              />
+              <Column
+                field="uretilen"
+                :header="t('uretim.uretilen')"
+                style="width: 130px"
+                sortable
+              >
+                <template #body="{ data }">
+                  {{ formatMiktar(data.uretilen) }}
+                </template>
+              </Column>
+              <Column
+                field="fire"
+                :header="t('uretim.fire')"
+                style="width: 100px"
+              >
+                <template #body="{ data }">
+                  {{ formatMiktar(data.fire) }}
+                </template>
+              </Column>
+              <Column
+                field="fireOrani"
+                :header="t('uretim.fireOrani')"
+                style="width: 110px"
+              >
+                <template #body="{ data }">
+                  {{ Number(data.fireOrani) || 0 }}%
+                </template>
+              </Column>
+              <Column
+                field="toplamMaliyet"
+                :header="t('uretim.toplamMaliyet')"
+                style="width: 140px"
+                sortable
+              >
+                <template #body="{ data }">
+                  {{ para(data.toplamMaliyet) }}
+                </template>
+              </Column>
+              <Column
+                field="birimMaliyet"
+                :header="t('uretim.birimMaliyet')"
+                style="width: 130px"
+              >
+                <template #body="{ data }">
+                  {{ para(data.birimMaliyet) }}
+                </template>
+              </Column>
+            </AppDataTable>
+          </div>
+        </template>
+
+        <EmptyState
+          v-else
+          icon="pi pi-chart-line"
+          :message="t('uretim.analizYok')"
+        />
+      </TabPanel>
+
+      <!-- TAKVİM / GANTT -->
+      <TabPanel :header="t('uretim.takvimTab')">
+        <div class="emir-arac">
+          <div class="ay-gezinme">
+            <Button
+              icon="pi pi-chevron-left"
+              :aria-label="t('uretim.oncekiAy')"
+              class="p-button-text p-button-sm"
+              @click="takvimAyDegistir(-1)"
+            />
+            <span class="takvim-ay">{{ takvimEtiket }}</span>
+            <Button
+              icon="pi pi-chevron-right"
+              :aria-label="t('uretim.sonrakiAy')"
+              class="p-button-text p-button-sm"
+              @click="takvimAyDegistir(1)"
+            />
+            <Button
+              :label="t('uretim.bugun')"
+              class="p-button-sm p-button-outlined"
+              @click="takvimBugun"
+            />
+          </div>
+          <span class="arac-bosluk" />
+          <div
+            class="takvim-lejant"
+            role="group"
+            :aria-label="t('uretim.takvimLejant')"
+          >
+            <span class="lejant"><i class="lejant-nokta taslak" />{{ t('uretim.taslak') }}</span>
+            <span class="lejant"><i class="lejant-nokta uretimde" />{{ t('uretim.uretimde') }}</span>
+            <span class="lejant"><i class="lejant-nokta tamamlandi" />{{ t('uretim.tamamlandi') }}</span>
+          </div>
+        </div>
+
+        <SkeletonLoader
+          v-if="takvimYukleniyor && !takvim.length"
+          class="tablo-iskelet"
+          :count="5"
+          height="44px"
+        />
+
+        <EmptyState
+          v-else-if="!takvimSatirlari.length"
+          icon="pi pi-calendar"
+          :message="t('uretim.takvimYok')"
+        />
+
+        <div
+          v-else
+          class="gantt"
+          role="list"
+          :aria-label="t('uretim.takvimTab')"
+        >
+          <div
+            class="gantt-baslik"
+            aria-hidden="true"
+          >
+            <span class="gantt-etiket-bos" />
+            <div
+              class="gantt-gunler"
+              :style="{ gridTemplateColumns: `repeat(${takvimGunSayisi}, minmax(20px, 1fr))` }"
+            >
+              <span
+                v-for="g in takvimGunleri"
+                :key="g"
+              >{{ g }}</span>
+            </div>
+          </div>
+          <div
+            v-for="satir in takvimSatirlari"
+            :key="satir.emir.id"
+            class="gantt-satir"
+            role="listitem"
+          >
+            <button
+              type="button"
+              class="gantt-etiket"
+              :title="`#${satir.emir.id} ${satir.emir.urunAd || ''}`"
+              @click="detayAc(satir.emir)"
+            >
+              <strong>#{{ satir.emir.id }} · {{ satir.emir.urunAd }}</strong>
+              <small>{{ satir.emir.hatAd || t('uretim.hatsiz') }} · {{ durumAdi(satir.emir.durum) }}</small>
+            </button>
+            <div
+              class="gantt-izgara"
+              :style="{ gridTemplateColumns: `repeat(${takvimGunSayisi}, minmax(20px, 1fr))` }"
+            >
+              <span
+                v-for="g in takvimGunleri"
+                :key="g"
+                class="gantt-gun-cizgi"
+              />
+              <button
+                type="button"
+                class="gantt-cubuk"
+                :class="durumSinif(satir.emir.durum)"
+                :style="{ left: `${satir.bar.left}%`, width: `${satir.bar.width}%` }"
+                :aria-label="ganttAria(satir)"
+                :title="ganttAria(satir)"
+                @click="detayAc(satir.emir)"
+              >
+                {{ satir.bar.gunSayisi }}g
+              </button>
+            </div>
+          </div>
+        </div>
+      </TabPanel>
     </TabView>
 
     <!-- Yeni Emir Dialog -->
@@ -699,6 +1164,18 @@
               :manual-input="false"
             />
           </div>
+        </div>
+        <div class="field">
+          <label>{{ t('uretim.hat') }}</label>
+          <Dropdown
+            v-model="emirForm.hatId"
+            :options="aktifHatSecenekleri"
+            option-label="ad"
+            option-value="id"
+            show-clear
+            class="w-full"
+            :placeholder="t('uretim.hatSecin')"
+          />
         </div>
         <div class="field">
           <label>{{ t('uretim.aciklama') }}</label>
@@ -832,6 +1309,101 @@
     </Dialog>
 
     <!-- Detay / Geçmiş Drawer -->
+    <!-- Hat Yönetimi Dialog -->
+    <Dialog
+      v-model:visible="hatDialog"
+      :header="hatForm.id ? t('uretim.hatDuzenle') : t('uretim.yeniHat')"
+      modal
+      :style="{ width: '420px' }"
+      :breakpoints="{ '575px': '92vw' }"
+    >
+      <div class="form">
+        <div class="field">
+          <label>{{ t('uretim.hatAd') }}</label>
+          <InputText
+            v-model="hatForm.ad"
+            class="w-full"
+            :placeholder="t('uretim.hatAdPlaceholder')"
+          />
+        </div>
+        <div class="field">
+          <label>{{ t('uretim.hatKapasite') }}</label>
+          <InputNumber
+            v-model="hatForm.kapasite"
+            :min="1"
+            :max="9999"
+            class="w-full"
+          />
+          <small class="muted">{{ t('uretim.hatKapasiteIpucu') }}</small>
+        </div>
+        <div class="field">
+          <label>{{ t('uretim.aciklama') }}</label>
+          <Textarea
+            v-model="hatForm.aciklama"
+            rows="2"
+            auto-resize
+            class="w-full"
+          />
+        </div>
+        <div class="field field-inline">
+          <label>{{ t('uretim.hatAktif') }}</label>
+          <ToggleSwitch v-model="hatForm.aktif" />
+        </div>
+      </div>
+      <template #footer>
+        <Button
+          :label="t('common.cancel')"
+          class="p-button-text"
+          @click="hatDialog = false"
+        />
+        <Button
+          :label="t('common.save')"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="hatKaydet"
+        />
+      </template>
+    </Dialog>
+
+    <!-- Hat Ata Dialog -->
+    <Dialog
+      v-model:visible="hatAtaDialog"
+      :header="t('uretim.hatAta')"
+      modal
+      :style="{ width: '380px' }"
+      :breakpoints="{ '575px': '92vw' }"
+    >
+      <p
+        v-if="seciliEmir"
+        class="hat-ata-ozet"
+      >
+        #{{ seciliEmir.id }} · {{ seciliEmir.urunAd }}
+      </p>
+      <Dropdown
+        v-model="hatAtaSecim"
+        :options="aktifHatSecenekleri"
+        option-label="ad"
+        option-value="id"
+        show-clear
+        class="w-full"
+        :placeholder="t('uretim.hatSecin')"
+      />
+      <small class="muted">{{ t('uretim.hatAtaIpucu') }}</small>
+      <template #footer>
+        <Button
+          :label="t('common.cancel')"
+          class="p-button-text"
+          @click="hatAtaDialog = false"
+        />
+        <Button
+          :label="t('common.save')"
+          icon="pi pi-check"
+          :loading="kaydediliyor"
+          @click="hatAtaKaydet"
+        />
+      </template>
+    </Dialog>
+
     <UretimEmriDetayDrawer
       v-model:visible="detayDrawer"
       :emir="seciliEmir"
@@ -998,7 +1570,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { uretimAPI, stokAPI, excelAPI } from '../api/index.js'
 import KpiKart from '../components/KpiKart.vue'
@@ -1010,7 +1582,7 @@ import { useI18n } from 'vue-i18n'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const receteler = ref([])
 const stoklar = ref([])
@@ -1018,6 +1590,26 @@ const ozet = ref({})
 const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
 const ihtiyacYukleniyor = ref(false)
+const ozetYuklendi = ref(false)
+
+// ---- Hafıza: son sekme + emir filtreleri ----
+const SEKME_ANAHTAR = 'raspel_uretim_tab'
+const FILTRE_ANAHTAR = 'raspel_uretim_emir_filtre'
+
+const isoToDate = (s) => {
+  if (!s) return null
+  const [y, m, d] = String(s).slice(0, 10).split('-').map(Number)
+  if (!y || !m || !d) return null
+  return new Date(y, m - 1, d)
+}
+
+const kayitliFiltre = (() => {
+  try {
+    return JSON.parse(localStorage.getItem(FILTRE_ANAHTAR) || '{}') || {}
+  } catch {
+    return {}
+  }
+})()
 
 // Emirler listesi (sunucu taraflı filtre + sayfalama).
 const emirSayfa = ref([])
@@ -1028,19 +1620,51 @@ const emirSirala = ref('olusturmaTarihi,desc')
 const emirYukleniyor = ref(false)
 const emirExcelYukleniyor = ref(false)
 
-const emirQ = ref('')
-const emirDurum = ref(null)
-const emirOncelik = ref(null)
-const emirGeciken = ref(false)
-const emirBuAy = ref(false)
-const emirBaslangic = ref(null)
-const emirBitis = ref(null)
+const emirQ = ref(kayitliFiltre.q || '')
+const emirDurum = ref(kayitliFiltre.durum || null)
+const emirOncelik = ref(kayitliFiltre.oncelik || null)
+const emirGeciken = ref(!!kayitliFiltre.geciken)
+const emirBuAy = ref(!!kayitliFiltre.buAy)
+const emirBaslangic = ref(isoToDate(kayitliFiltre.baslangic))
+const emirBitis = ref(isoToDate(kayitliFiltre.bitis))
 let emirAramaZaman = null
 
 const receteDurum = ref(null)
+const receteQ = ref('')
 const receteExcelYukleniyor = ref(false)
 
-const aktifSekme = ref(0)
+const hatlar = ref([])
+const emirHat = ref(kayitliFiltre.hatId || null)
+const hatDialog = ref(false)
+const hatForm = ref(bosHatForm())
+const hatAtaDialog = ref(false)
+const hatAtaSecim = ref(null)
+
+const analiz = ref(null)
+const analizYukleniyor = ref(false)
+const analizYuklendi = ref(false)
+const analizAralik = ref(varsayilanAnalizAralik())
+
+const takvim = ref([])
+const takvimYukleniyor = ref(false)
+const takvimYuklendi = ref(false)
+const takvimAy = ref(new Date(new Date().getFullYear(), new Date().getMonth(), 1))
+
+function varsayilanAnalizAralik() {
+  const bugun = new Date()
+  return [new Date(bugun.getFullYear(), bugun.getMonth() - 11, 1), bugun]
+}
+
+const aktifSekme = ref(Number(localStorage.getItem(SEKME_ANAHTAR)) || 0)
+watch(aktifSekme, (v) => {
+  try {
+    localStorage.setItem(SEKME_ANAHTAR, String(v))
+  } catch {
+    /* depolama kapalı olabilir */
+  }
+  if (v === 5 && !analizYuklendi.value) analizYukle()
+  if (v === 6) takvimYukle()
+})
 
 const emirDialog = ref(false)
 const tamamlaDialog = ref(false)
@@ -1061,7 +1685,10 @@ const receteForm = ref(bosReceteForm())
 const planForm = ref({ urunId: null, miktar: null })
 
 function bosEmirForm() {
-  return { urunId: null, miktar: null, oncelik: 'NORMAL', planlananBaslangic: null, planlananBitis: null, aciklama: '' }
+  return { urunId: null, miktar: null, oncelik: 'NORMAL', planlananBaslangic: null, planlananBitis: null, hatId: null, aciklama: '' }
+}
+function bosHatForm() {
+  return { id: null, ad: '', aciklama: '', kapasite: 5, aktif: true }
 }
 function bosTamamlaForm() {
   return { uretilenMiktar: null, fireMiktar: 0, iscilikMaliyeti: 0, aciklama: '' }
@@ -1088,11 +1715,32 @@ const receteDurumSecenekleri = computed(() => [
   { deger: 'PASIF', etiket: t('uretim.pasif') }
 ])
 
-// Reçeteler küçük veri seti: istemci tarafı filtre yeterli.
+const aktifHatSecenekleri = computed(() => hatlar.value.filter((h) => h.aktif !== false))
+
+// Reçeteler küçük veri seti: istemci tarafı arama + aktiflik filtresi yeterli.
+const receteAktifParam = () => {
+  if (receteDurum.value === 'AKTIF') return true
+  if (receteDurum.value === 'PASIF') return false
+  return null
+}
+
+const receteParams = () => {
+  const p = {}
+  if (receteQ.value.trim()) p.q = receteQ.value.trim()
+  const aktif = receteAktifParam()
+  if (aktif !== null) p.aktif = aktif
+  return p
+}
+
 const filtreliReceteler = computed(() => {
-  if (receteDurum.value === 'AKTIF') return receteler.value.filter((r) => r.aktif !== false)
-  if (receteDurum.value === 'PASIF') return receteler.value.filter((r) => r.aktif === false)
+  const q = receteQ.value.trim().toLocaleLowerCase('tr')
   return receteler.value
+    .filter((r) => {
+      if (receteDurum.value === 'AKTIF') return r.aktif !== false
+      if (receteDurum.value === 'PASIF') return r.aktif === false
+      return true
+    })
+    .filter((r) => !q || `${r.ad || ''} ${r.urunAd || ''}`.toLocaleLowerCase('tr').includes(q))
 })
 
 const emirFiltreVar = computed(
@@ -1100,10 +1748,44 @@ const emirFiltreVar = computed(
     !!emirQ.value?.trim() ||
     !!emirDurum.value ||
     !!emirOncelik.value ||
+    !!emirHat.value ||
     emirGeciken.value ||
     emirBuAy.value ||
     !!emirBaslangic.value ||
     !!emirBitis.value
+)
+
+const kpiIskelet = computed(() => yukleniyor.value && !ozetYuklendi.value)
+
+// Ekran okuyucular için liste sonucu duyurusu.
+const emirDuyuru = computed(() =>
+  emirYukleniyor.value
+    ? ''
+    : t('uretim.emirDuyuru', { gorunen: emirSayfa.value.length, toplam: emirToplam.value })
+)
+
+// Filtreler kalıcı: sayfa yenilense de son görünüm korunur.
+watch(
+  [emirQ, emirDurum, emirOncelik, emirHat, emirGeciken, emirBuAy, emirBaslangic, emirBitis],
+  () => {
+    try {
+      localStorage.setItem(
+        FILTRE_ANAHTAR,
+        JSON.stringify({
+          q: emirQ.value || '',
+          durum: emirDurum.value || null,
+          oncelik: emirOncelik.value || null,
+          hatId: emirHat.value || null,
+          geciken: emirGeciken.value,
+          buAy: emirBuAy.value,
+          baslangic: tarihIso(emirBaslangic.value),
+          bitis: tarihIso(emirBitis.value)
+        })
+      )
+    } catch {
+      /* depolama kapalı olabilir */
+    }
+  }
 )
 
 // Hızlı filtre çipleri (sunucu taraflı).
@@ -1161,14 +1843,17 @@ const oncelikSeverity = (o) => ({ DUSUK: 'secondary', NORMAL: 'info', YUKSEK: 'w
 const yukle = async () => {
   yukleniyor.value = true
   try {
-    const [r, o, s] = await Promise.all([
+    const [r, o, s, h] = await Promise.all([
       uretimAPI.receteler(),
       uretimAPI.ozet(),
-      stokAPI.getAll({ size: 500 })
+      stokAPI.getAll({ size: 500 }),
+      uretimAPI.hatlar()
     ])
     receteler.value = r.data || []
     ozet.value = o.data || {}
+    ozetYuklendi.value = true
     stoklar.value = unwrapList(s)
+    hatlar.value = h.data || []
   } catch {
     toastBildirim.hata(t('uretim.hataYukleme'))
   } finally {
@@ -1183,6 +1868,7 @@ const emirParams = () => {
   if (emirQ.value?.trim()) p.q = emirQ.value.trim()
   if (emirDurum.value) p.durum = emirDurum.value
   if (emirOncelik.value) p.oncelik = emirOncelik.value
+  if (emirHat.value) p.hatId = emirHat.value
   if (emirGeciken.value) p.geciken = true
   if (emirBuAy.value) p.buAy = true
   if (emirBaslangic.value) p.baslangic = tarihIso(emirBaslangic.value)
@@ -1215,6 +1901,7 @@ const emirFiltreTemizle = () => {
   emirQ.value = ''
   emirDurum.value = null
   emirOncelik.value = null
+  emirHat.value = null
   emirGeciken.value = false
   emirBuAy.value = false
   emirBaslangic.value = null
@@ -1301,6 +1988,7 @@ const emirAksiyonlari = (e) => {
       islem: () => satinalmaOnay(e)
     })
     items.push({ etiket: t('uretim.iptalEt'), ikon: 'pi pi-times', sinif: 'eylem-sil', islem: () => iptalDialogAc(e) })
+    items.push({ etiket: t('uretim.hatAta'), ikon: 'pi pi-sitemap', islem: () => hatAtaDialogAc(e) })
   }
   items.push({ etiket: t('uretim.detay'), ikon: 'pi pi-search', islem: () => detayAc(e) })
   items.push({ etiket: t('uretim.gecmis'), ikon: 'pi pi-history', islem: () => detayAc(e) })
@@ -1546,10 +2234,9 @@ const receteSil = (r) => {
   })
 }
 
-const receteExcelIndir = async () => {
-  receteExcelYukleniyor.value = true
+const receteExcelIndir = async () => {  receteExcelYukleniyor.value = true
   try {
-    const res = await excelAPI.uretimReceteler()
+    const res = await excelAPI.uretimReceteler(receteParams())
     const url = window.URL.createObjectURL(
       new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     )
@@ -1565,6 +2252,220 @@ const receteExcelIndir = async () => {
     toastBildirim.hata(t('uretim.excelHata'))
   } finally {
     receteExcelYukleniyor.value = false
+  }
+}
+
+// ---- Üretim hatları (iş merkezleri) ----
+const hatDialogAc = (h) => {
+  hatForm.value = h
+    ? {
+        id: h.id,
+        ad: h.ad || '',
+        aciklama: h.aciklama || '',
+        kapasite: h.kapasite || 5,
+        aktif: h.aktif !== false
+      }
+    : bosHatForm()
+  hatDialog.value = true
+}
+
+const hatKaydet = async () => {
+  if (!hatForm.value.ad?.trim()) {
+    toastBildirim.uyari(t('uretim.hatAdZorunlu'))
+    return
+  }
+  kaydediliyor.value = true
+  try {
+    const govde = {
+      ad: hatForm.value.ad.trim(),
+      aciklama: hatForm.value.aciklama,
+      kapasite: hatForm.value.kapasite,
+      aktif: hatForm.value.aktif
+    }
+    if (hatForm.value.id) await uretimAPI.hatGuncelle(hatForm.value.id, govde)
+    else await uretimAPI.hatOlustur(govde)
+    toastBildirim.basarili(t('uretim.hatKaydedildi'))
+    hatDialog.value = false
+    await yukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('uretim.hatKaydedilemedi'))
+  } finally {
+    kaydediliyor.value = false
+  }
+}
+
+const hatSil = (h) => {
+  confirm.require({
+    message: t('uretim.hatSilOnay', { ad: h.ad }),
+    header: t('uretim.title'),
+    icon: 'pi pi-exclamation-triangle',
+    accept: async () => {
+      try {
+        await uretimAPI.hatSil(h.id)
+        toastBildirim.basarili(t('uretim.hatSilindi'))
+        await yukle()
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || t('uretim.hatSilinemedi'))
+      }
+    }
+  })
+}
+
+const hatAtaDialogAc = (e) => {
+  seciliEmir.value = e
+  hatAtaSecim.value = e.hatId || null
+  hatAtaDialog.value = true
+}
+
+const hatAtaKaydet = async () => {
+  kaydediliyor.value = true
+  try {
+    await uretimAPI.emirHatAta(seciliEmir.value.id, hatAtaSecim.value || null)
+    toastBildirim.basarili(t('uretim.hatAtandi'))
+    hatAtaDialog.value = false
+    await yukle()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('uretim.hatAtanamadi'))
+  } finally {
+    kaydediliyor.value = false
+  }
+}
+
+const analizMax = computed(() => {
+  const degerler = (analiz.value?.trend || []).map((x) => Number(x.uretilen) || 0)
+  return Math.max(1, ...degerler)
+})
+const barYuzde = (v) => Math.min(100, Math.round(((Number(v) || 0) / analizMax.value) * 100))
+const donemEtiket = (donem) => {
+  if (!donem) return '-'
+  const [y, m] = String(donem).split('-').map(Number)
+  if (!y || !m) return donem
+  return new Date(y, m - 1, 1).toLocaleDateString(locale.value === 'en' ? 'en-US' : 'tr-TR', {
+    month: 'short',
+    year: 'numeric'
+  })
+}
+
+// ---- Takvim / Gantt ----
+const tarihYerel = (v) => {
+  if (!v) return null
+  const [y, m, d] = String(v).slice(0, 10).split('-').map(Number)
+  if (!y || !m || !d) return null
+  return new Date(y, m - 1, d)
+}
+const takvimGunSayisi = computed(
+  () => new Date(takvimAy.value.getFullYear(), takvimAy.value.getMonth() + 1, 0).getDate()
+)
+const takvimGunleri = computed(() => Array.from({ length: takvimGunSayisi.value }, (_, i) => i + 1))
+const takvimEtiket = computed(() =>
+  takvimAy.value.toLocaleDateString(locale.value === 'en' ? 'en-US' : 'tr-TR', {
+    month: 'long',
+    year: 'numeric'
+  })
+)
+const takvimAyBas = computed(() => new Date(takvimAy.value.getFullYear(), takvimAy.value.getMonth(), 1))
+const takvimAyBit = computed(
+  () => new Date(takvimAy.value.getFullYear(), takvimAy.value.getMonth(), takvimGunSayisi.value)
+)
+const cubukHesapla = (e) => {
+  const bas0 = tarihYerel(e.planlananBaslangic) || tarihYerel(e.planlananBitis)
+  const bit0 = tarihYerel(e.planlananBitis) || bas0
+  if (!bas0 || !bit0) return null
+  const bas = bas0 < takvimAyBas.value ? takvimAyBas.value : bas0
+  const bit = bit0 > takvimAyBit.value ? takvimAyBit.value : bit0
+  if (bas > bit) return null
+  const gun = takvimGunSayisi.value
+  return {
+    left: ((bas.getDate() - 1) / gun) * 100,
+    width: ((bit.getDate() - bas.getDate() + 1) / gun) * 100,
+    gunSayisi: Math.round((bit - bas) / 86400000) + 1
+  }
+}
+const takvimSatirlari = computed(() =>
+  takvim.value
+    .map((emir) => ({ emir, bar: cubukHesapla(emir) }))
+    .filter((x) => x.bar)
+)
+const ganttAria = (satir) =>
+  t('uretim.ganttAria', {
+    id: satir.emir.id,
+    urun: satir.emir.urunAd || '-',
+    baslangic: tarih(satir.emir.planlananBaslangic) || '-',
+    bitis: tarih(satir.emir.planlananBitis) || '-',
+    durum: durumAdi(satir.emir.durum)
+  })
+const durumSinif = (d) =>
+  ({ TASLAK: 'taslak', URETIMDE: 'uretimde', TAMAMLANDI: 'tamamlandi', IPTAL: 'iptal' })[d] || 'taslak'
+
+const takvimYukle = async () => {
+  takvimYukleniyor.value = true
+  try {
+    const r = await uretimAPI.takvim({
+      baslangic: tarihIso(takvimAyBas.value),
+      bitis: tarihIso(takvimAyBit.value)
+    })
+    takvim.value = r.data || []
+    takvimYuklendi.value = true
+  } catch (err) {
+    takvim.value = []
+    toastBildirim.hata(err?.response?.data?.message || t('uretim.takvimYuklenemedi'))
+  } finally {
+    takvimYukleniyor.value = false
+  }
+}
+
+const takvimAyDegistir = (delta) => {
+  takvimAy.value = new Date(takvimAy.value.getFullYear(), takvimAy.value.getMonth() + delta, 1)
+  takvimYukle()
+}
+
+const takvimBugun = () => {
+  const bugun = new Date()
+  takvimAy.value = new Date(bugun.getFullYear(), bugun.getMonth(), 1)
+  takvimYukle()
+}
+
+const analizYukle = async () => {
+  analizYukleniyor.value = true
+  try {
+    const p = {}
+    const [b, s] = analizAralik.value || []
+    if (b) p.baslangic = tarihIso(b)
+    if (s) p.bitis = tarihIso(s)
+    const r = await uretimAPI.analiz(p)
+    analiz.value = r.data
+    analizYuklendi.value = true
+  } catch (err) {
+    analiz.value = null
+    toastBildirim.hata(err?.response?.data?.message || t('uretim.analizYuklenemedi'))
+  } finally {
+    analizYukleniyor.value = false
+  }
+}
+
+const analizExcelIndir = async () => {
+  emirExcelYukleniyor.value = true
+  try {
+    const p = {}
+    const [b, s] = analizAralik.value || []
+    if (b) p.baslangic = tarihIso(b)
+    if (s) p.bitis = tarihIso(s)
+    const res = await excelAPI.uretimEmirleri(p)
+    const url = window.URL.createObjectURL(
+      new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    )
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `uretim-analiz-${new Date().toISOString().slice(0, 10)}.xlsx`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+    toastBildirim.basarili(t('uretim.excelIndirildi'))
+  } catch {
+    toastBildirim.hata(t('uretim.excelHata'))
+  } finally {
+    emirExcelYukleniyor.value = false
   }
 }
 
@@ -1602,7 +2503,11 @@ const tarihIso = (d) => {
   return `${date.getFullYear()}-${ay}-${gun}`
 }
 
-onMounted(yukle)
+onMounted(() => {
+  yukle()
+  if (aktifSekme.value === 5) analizYukle()
+  if (aktifSekme.value === 6) takvimYukle()
+})
 </script>
 
 <style scoped>
@@ -1610,6 +2515,25 @@ onMounted(yukle)
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.tablo-iskelet {
+  padding: 4px 0;
+}
+.kpi-iskelet {
+  min-width: 0;
 }
 
 .kpi-satiri {
@@ -1887,6 +2811,309 @@ onMounted(yukle)
 .muted {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+/* ---- Üretim hatları ---- */
+.hat-baslik {
+  margin: 0;
+}
+.hat-kartlari {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.hat-kart {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+  transition: border-color var(--dur-base, 0.2s) var(--ease-standard, ease);
+}
+.hat-kart:hover {
+  border-color: var(--accent-border);
+}
+.hat-kart.pasif {
+  opacity: 0.65;
+}
+.hat-ust {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hat-ad {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+.hat-aciklama {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hat-doluluk-baslik {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.hat-doluluk {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-muted);
+  overflow: hidden;
+}
+.hat-doluluk-dolu {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width var(--dur-base, 0.2s) var(--ease-standard, ease);
+}
+.hat-doluluk-dolu.dolu {
+  background: var(--danger, #ef4444);
+}
+.hat-metrikler {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.hat-metrikler i {
+  font-size: 11px;
+  margin-right: 2px;
+}
+.hat-ata-ozet {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.field-inline {
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.metin-gecikmis {
+  color: var(--danger, #ef4444);
+  font-weight: 600;
+}
+
+/* ---- Takvim / Gantt ---- */
+.takvim-ay {
+  font-weight: 700;
+  min-width: 130px;
+  text-align: center;
+  text-transform: capitalize;
+}
+.ay-gezinme {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.takvim-lejant {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.lejant {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.lejant-nokta {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  display: inline-block;
+}
+.lejant-nokta.taslak {
+  background: #64748b;
+}
+.lejant-nokta.uretimde {
+  background: #3b82f6;
+}
+.lejant-nokta.tamamlandi {
+  background: #10b981;
+}
+.gantt {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+  overflow: auto;
+}
+.gantt-baslik,
+.gantt-satir {
+  display: grid;
+  grid-template-columns: 200px minmax(620px, 1fr);
+  align-items: center;
+  min-width: 820px;
+}
+.gantt-baslik {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.gantt-gunler {
+  display: grid;
+}
+.gantt-gunler span {
+  text-align: center;
+  padding: 4px 0;
+}
+.gantt-satir {
+  border-bottom: 1px solid var(--border);
+}
+.gantt-satir:last-child {
+  border-bottom: none;
+}
+.gantt-etiket {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.gantt-etiket strong {
+  font-size: 12px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gantt-etiket small {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+.gantt-izgara {
+  position: relative;
+  display: grid;
+  height: 40px;
+}
+.gantt-gun-cizgi {
+  border-right: 1px dashed var(--border);
+  height: 100%;
+}
+.gantt-cubuk {
+  position: absolute;
+  top: 8px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-align: left;
+}
+.gantt-cubuk.taslak {
+  background: #64748b;
+}
+.gantt-cubuk.uretimde {
+  background: #3b82f6;
+}
+.gantt-cubuk.tamamlandi {
+  background: #10b981;
+}
+.gantt-cubuk.iptal {
+  background: #ef4444;
+}
+.gantt-cubuk:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---- Analiz ---- */
+.analiz-tarih {
+  min-width: 240px;
+}
+.analiz-kpi {
+  margin-top: 12px;
+}
+.analiz-kart {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  margin-top: 12px;
+}
+.analiz-kart h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+.trend-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.trend-satir {
+  display: grid;
+  grid-template-columns: 90px minmax(120px, 1fr) 150px 130px;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+.trend-donem {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.trend-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--bg-muted);
+  overflow: hidden;
+  gap: 2px;
+}
+.trend-dolu {
+  height: 100%;
+  border-radius: 999px;
+}
+.trend-dolu.uretim {
+  background: var(--accent);
+}
+.trend-dolu.fire {
+  background: #ef4444;
+}
+.trend-deger,
+.trend-maliyet {
+  color: var(--text-secondary);
+  white-space: nowrap;
+  text-align: right;
+}
+@media (max-width: 768px) {
+  .trend-satir {
+    grid-template-columns: 70px 1fr;
+  }
+  .trend-deger,
+  .trend-maliyet {
+    display: none;
+  }
 }
 
 .kalem-satir {

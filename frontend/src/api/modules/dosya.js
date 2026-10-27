@@ -114,8 +114,8 @@ export const excelAPI = {
   uretimEmirleri(params) {
     return apiClient.get('/exports/uretim-emirleri', { params, responseType: 'blob' })
   },
-  uretimReceteler() {
-    return apiClient.get('/exports/uretim-receteler', { responseType: 'blob' })
+  uretimReceteler(params) {
+    return apiClient.get('/exports/uretim-receteler', { params, responseType: 'blob' })
   },
   gorunum360StokKar(params) {
     return apiClient.get('/exports/gorunum360-stok-kar', { params, responseType: 'blob' })

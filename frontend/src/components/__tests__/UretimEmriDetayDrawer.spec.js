@@ -6,58 +6,77 @@ import UretimEmriDetayDrawer from '../UretimEmriDetayDrawer.vue'
 const stubs = {
   Drawer: {
     props: ['visible', 'header'],
-    template: '<div class="drawer-stub"><slot /><slot name="footer" /></div>'
+    template: '<div class="drawer"><div class="baslik">{{ header }}</div><slot /><slot name="footer" /></div>'
   },
-  Tag: { props: ['value', 'severity'], template: '<span class="tag-stub">{{ value }}</span>' },
-  Button: { props: ['label'], template: '<button>{{ label }}</button>' }
+  Tag: { props: ['value'], template: '<span class="tag">{{ value }}</span>' },
+  Button: { props: ['label'], template: '<button class="btn">{{ label }}</button>' },
+  SkeletonLoader: { template: '<div class="skeleton-stub" />' }
 }
 
 const emir = {
   id: 7,
   urunAd: 'Masa',
-  durum: 'URETIMDE',
+  miktar: 10,
+  durum: 'TAMAMLANDI',
   oncelik: 'YUKSEK',
-  miktar: 5,
-  uretilenMiktar: null,
-  fireMiktar: 0,
-  hammaddeMaliyeti: 0,
-  iscilikMaliyeti: 0,
-  toplamMaliyet: 1500,
+  uretilenMiktar: 9,
+  fireMiktar: 1,
+  hammaddeMaliyeti: 90,
+  iscilikMaliyeti: 90,
+  toplamMaliyet: 180,
+  birimMaliyet: 20,
+  fireOrani: 10,
+  sureSaat: 4.5,
+  gecikti: true,
+  gecikmeGun: 3,
   planlananBaslangic: '2026-09-01',
-  planlananBitis: '2026-09-10',
-  gecikti: true
+  planlananBitis: '2026-09-02'
 }
-const gecmis = [{ id: 1, yeniDurum: 'URETIMDE', aciklama: 'Basladi', olusturmaTarihi: '2026-09-02T10:00:00' }]
 
-describe('UretimEmriDetayDrawer.vue', () => {
-  it('emir bilgilerini, gecikme uyarisini ve gecmisi gosterir', () => {
-    const wrapper = mount(UretimEmriDetayDrawer, {
-      props: { visible: true, emir, gecmis },
-      global: { stubs, plugins: [i18n] }
-    })
-    const metin = wrapper.text()
-    expect(metin).toContain('Masa')
-    expect(metin).toContain('Basladi')
-    expect(wrapper.find('.zaman-cizelgesi').exists()).toBe(true)
-    expect(wrapper.find('.gecikme-uyari').exists()).toBe(true)
+const kur = (props = {}) =>
+  mount(UretimEmriDetayDrawer, {
+    props: { visible: true, emir, gecmis: [], ...props },
+    global: { plugins: [i18n], stubs }
   })
 
-  it('tamamla aksiyonunu yayar', async () => {
-    const wrapper = mount(UretimEmriDetayDrawer, {
-      props: { visible: true, emir, gecmis },
-      global: { stubs, plugins: [i18n] }
-    })
-    const tamamla = wrapper.findAll('button').find((b) => b.text().includes('Tamamla'))
-    expect(tamamla).toBeTruthy()
-    await tamamla.trigger('click')
-    expect(wrapper.emitted('tamamla')).toBeTruthy()
+describe('UretimEmriDetayDrawer', () => {
+  it('maliyet kırılımı ve hesaplanan alanları gösterir', () => {
+    const w = kur()
+    const metin = w.text()
+    expect(metin).toContain('Birim Maliyet')
+    expect(metin).toContain('Gerçekleşen Fire Oranı')
+    expect(metin).toContain('10%')
+    expect(metin).toContain('Gerçekleşen Süre')
+    expect(metin).toContain('4.5')
+    expect(metin).toContain('Gecikme')
+    expect(metin).toContain('3 gün')
+    expect(w.find('.metin-gecikmis').exists()).toBe(true)
   })
 
-  it('gecmis yoksa bos durum gosterir', () => {
-    const wrapper = mount(UretimEmriDetayDrawer, {
-      props: { visible: true, emir, gecmis: [] },
-      global: { stubs, plugins: [i18n] }
-    })
-    expect(wrapper.find('.zaman-cizelgesi').exists()).toBe(false)
+  it('geçmiş adımlarını duruma göre renklendirir', () => {
+    const gecmis = [
+      { id: 1, yeniDurum: 'TASLAK', olusturmaTarihi: '2026-09-01T08:00:00' },
+      { id: 2, yeniDurum: 'URETIMDE', olusturmaTarihi: '2026-09-01T09:00:00' },
+      { id: 3, yeniDurum: 'IPTAL', olusturmaTarihi: '2026-09-01T10:00:00' }
+    ]
+    const w = kur({ gecmis })
+    expect(w.findAll('.zc-adim.taslak')).toHaveLength(1)
+    expect(w.findAll('.zc-adim.uretimde')).toHaveLength(1)
+    expect(w.findAll('.zc-adim.iptal')).toHaveLength(1)
+    expect(w.findAll('.zc-nokta').length).toBe(3)
+  })
+
+  it('geçmiş yüklenirken iskelet gösterir', () => {
+    const w = kur({ gecmisYukleniyor: true })
+    expect(w.find('.gecmis-yukleniyor[aria-busy="true"]').exists()).toBe(true)
+    expect(w.find('.skeleton-stub').exists()).toBe(true)
+  })
+
+  it('duruma göre aksiyon düğmeleri sunar', () => {
+    const w = kur({ emir: { ...emir, durum: 'TASLAK' } })
+    const metin = w.text()
+    expect(metin).toContain('Başlat')
+    expect(metin).toContain('Tamamla')
+    expect(metin).toContain('İptal Et')
   })
 })

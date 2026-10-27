@@ -3,7 +3,8 @@
     :visible="visible"
     position="right"
     :header="emir ? `${t('uretim.title')} #${emir.id}` : t('uretim.emirDetay')"
-    :style="{ width: '520px', maxWidth: '96vw' }"
+    :style="{ width: '520px' }"
+    :breakpoints="{ '575px': '92vw' }"
     @update:visible="$emit('update:visible', $event)"
   >
     <div
@@ -33,6 +34,10 @@
         <div class="detay-alan">
           <span class="detay-etiket">{{ t('uretim.miktar') }}</span>
           <span>{{ emir.miktar }}</span>
+        </div>
+        <div class="detay-alan">
+          <span class="detay-etiket">{{ t('uretim.hat') }}</span>
+          <span>{{ emir.hatAd || '-' }}</span>
         </div>
         <div class="detay-alan">
           <span class="detay-etiket">{{ t('uretim.uretilen') }}</span>
@@ -81,6 +86,25 @@
           <span class="detay-etiket">{{ t('uretim.toplamMaliyet') }}</span>
           <strong>{{ para(emir.toplamMaliyet) }}</strong>
         </div>
+        <div class="detay-alan">
+          <span class="detay-etiket">{{ t('uretim.birimMaliyet') }}</span>
+          <span>{{ emir.birimMaliyet != null ? para(emir.birimMaliyet) : '-' }}</span>
+        </div>
+        <div class="detay-alan">
+          <span class="detay-etiket">{{ t('uretim.gerceklesenFireOrani') }}</span>
+          <span>{{ emir.fireOrani != null ? `${emir.fireOrani}%` : '-' }}</span>
+        </div>
+        <div class="detay-alan">
+          <span class="detay-etiket">{{ t('uretim.gerceklesenSure') }}</span>
+          <span>{{ emir.sureSaat != null ? `${emir.sureSaat} ${t('uretim.saat')}` : '-' }}</span>
+        </div>
+        <div
+          v-if="emir.gecikti && emir.gecikmeGun > 0"
+          class="detay-alan"
+        >
+          <span class="detay-etiket">{{ t('uretim.gecikme') }}</span>
+          <strong class="metin-gecikmis">{{ emir.gecikmeGun }} {{ t('uretim.gun') }}</strong>
+        </div>
       </div>
 
       <div
@@ -94,8 +118,12 @@
       <div
         v-if="gecmisYukleniyor"
         class="gecmis-yukleniyor"
+        :aria-busy="true"
       >
-        <i class="pi pi-spin pi-spinner" /> {{ t('common.loading') }}
+        <SkeletonLoader
+          :count="3"
+          height="52px"
+        />
       </div>
       <ol
         v-else-if="gecmis.length"
@@ -104,10 +132,11 @@
         <li
           v-for="log in gecmis"
           :key="log.id"
-          class="zc-adim tamam"
+          class="zc-adim"
+          :class="durumSinif(log.yeniDurum)"
         >
           <span class="zc-nokta">
-            <i class="pi pi-check" />
+            <i :class="durumIkon(log.yeniDurum)" />
           </span>
           <div class="zc-icerik">
             <div class="zc-baslik">
@@ -188,6 +217,13 @@ const oncelikAdi = (o) =>
   '-'
 
 const oncelikSeverity = (o) => ({ DUSUK: 'secondary', NORMAL: 'info', YUKSEK: 'warn' })[o] || 'secondary'
+
+const durumSinif = (d) =>
+  ({ TASLAK: 'taslak', URETIMDE: 'uretimde', TAMAMLANDI: 'tamam', IPTAL: 'iptal' })[d] || 'tamam'
+
+const durumIkon = (d) =>
+  ({ TASLAK: 'pi pi-file-edit', URETIMDE: 'pi pi-cog', TAMAMLANDI: 'pi pi-check', IPTAL: 'pi pi-times' })[d] ||
+  'pi pi-check'
 </script>
 
 <style scoped>
@@ -283,6 +319,24 @@ h4 {
   color: var(--success, #10b981);
   flex-shrink: 0;
   z-index: 1;
+}
+.zc-adim.taslak .zc-nokta {
+  background: var(--bg-muted);
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+.zc-adim.uretimde .zc-nokta {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+.zc-adim.iptal .zc-nokta {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+.metin-gecikmis {
+  color: var(--danger, #ef4444);
 }
 .zc-icerik {
   display: flex;

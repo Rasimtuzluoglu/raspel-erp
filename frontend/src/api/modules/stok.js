@@ -246,6 +246,21 @@ export const uretimAPI = {
   emirGecmis(id) {
     return apiClient.get(`/uretim/emirler/${id}/gecmis`)
   },
+  emirHatAta(id, hatId) {
+    return apiClient.put(`/uretim/emirler/${id}/hat`, null, { params: { hatId } })
+  },
+  hatlar() {
+    return apiClient.get('/uretim/hatlar')
+  },
+  hatOlustur(data) {
+    return apiClient.post('/uretim/hatlar', data)
+  },
+  hatGuncelle(id, data) {
+    return apiClient.put(`/uretim/hatlar/${id}`, data)
+  },
+  hatSil(id) {
+    return apiClient.delete(`/uretim/hatlar/${id}`)
+  },
   satinalmaTalebi(id) {
     return apiClient.post(`/uretim/emirler/${id}/satinalma-talebi`)
   },
@@ -257,6 +272,12 @@ export const uretimAPI = {
   },
   ozet() {
     return apiClient.get('/uretim/ozet')
+  },
+  analiz(params = {}) {
+    return apiClient.get('/uretim/analiz', { params })
+  },
+  takvim(params = {}) {
+    return apiClient.get('/uretim/takvim', { params })
   }
 }
 

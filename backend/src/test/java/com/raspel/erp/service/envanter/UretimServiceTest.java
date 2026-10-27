@@ -22,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,6 +36,7 @@ class UretimServiceTest {
     @Mock private ReceteRepository receteRepository;
     @Mock private ReceteKalemRepository receteKalemRepository;
     @Mock private UretimEmriRepository uretimEmriRepository;
+    @Mock private com.raspel.erp.repository.envanter.UretimHatRepository uretimHatRepository;
     @Mock private com.raspel.erp.repository.envanter.UretimEmriLogRepository uretimEmriLogRepository;
     @Mock private StokRepository stokRepository;
     @Mock private StokHareketRepository stokHareketRepository;
@@ -238,12 +240,12 @@ class UretimServiceTest {
         UretimEmri e = UretimEmri.builder().id(1L).sirketId(1L).urunId(10L)
                 .miktar(BigDecimal.ONE).durum("TASLAK").oncelik("YUKSEK").build();
         var pageable = org.springframework.data.domain.PageRequest.of(0, 25);
-        when(uretimEmriRepository.filtreliGetir(eq(1L), isNull(), eq("TASLAK"), eq("YUKSEK"),
+        when(uretimEmriRepository.filtreliGetir(eq(1L), isNull(), eq("TASLAK"), eq("YUKSEK"), isNull(),
                 eq(true), eq(false), any(), isNull(), isNull(), any(), eq(pageable)))
                 .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(e)));
         when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Masa", "0")));
 
-        var sonuc = uretimService.filtreliEmirler(1L, "  ", "TASLAK", "YUKSEK", true, false, null, null, pageable);
+        var sonuc = uretimService.filtreliEmirler(1L, "  ", "TASLAK", "YUKSEK", null, true, false, null, null, pageable);
 
         assertEquals(1, sonuc.getTotalElements());
         assertEquals("Masa", sonuc.getContent().get(0).getUrunAd());
@@ -254,10 +256,10 @@ class UretimServiceTest {
     void filtreliEmirler_kisaAramaHicEslesmeyenDeseneCevrilir() {
         var pageable = org.springframework.data.domain.PageRequest.of(0, 25);
         when(uretimEmriRepository.filtreliGetir(eq(1L), eq(com.raspel.erp.util.AramaTemizleyici.like("a")),
-                isNull(), isNull(), eq(false), eq(false), any(), isNull(), isNull(), any(), eq(pageable)))
+                isNull(), isNull(), isNull(), eq(false), eq(false), any(), isNull(), isNull(), any(), eq(pageable)))
                 .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of()));
 
-        var sonuc = uretimService.filtreliEmirler(1L, "a", null, null, null, null, null, null, pageable);
+        var sonuc = uretimService.filtreliEmirler(1L, "a", null, null, null, null, null, null, null, pageable);
 
         assertTrue(sonuc.isEmpty());
     }
@@ -283,5 +285,152 @@ class UretimServiceTest {
 
         // Baz 2 -> 4/2 = 2 katsayi; tuketim 3 * 2 = 6; mevcut 100 -> 94
         assertEquals(0, hammadde.getMiktar().compareTo(new BigDecimal("94")));
+    }
+
+    @Test
+    void uretimEmirleri_fireOraniBirimMaliyetVeSureHesaplar() {
+        UretimEmri emri = UretimEmri.builder()
+                .id(1L).sirketId(1L).urunId(10L).miktar(new BigDecimal("10"))
+                .durum("TAMAMLANDI")
+                .uretilenMiktar(new BigDecimal("9"))
+                .fireMiktar(new BigDecimal("1"))
+                .hammaddeMaliyeti(new BigDecimal("90"))
+                .iscilikMaliyeti(new BigDecimal("90"))
+                .toplamMaliyet(new BigDecimal("180"))
+                .baslamaTarihi(java.time.LocalDateTime.of(2026, 9, 1, 8, 0))
+                .tamamlanmaTarihi(java.time.LocalDateTime.of(2026, 9, 1, 12, 30))
+                .build();
+        when(uretimEmriRepository.findBySirketIdOrderByOlusturmaTarihiDesc(1L)).thenReturn(List.of(emri));
+        when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Masa", "0")));
+
+        UretimEmriDTO dto = uretimService.uretimEmirleri(1L).get(0);
+
+        assertEquals(0, dto.getFireOrani().compareTo(new BigDecimal("10.00")));
+        assertEquals(0, dto.getBirimMaliyet().compareTo(new BigDecimal("20.00")));
+        assertEquals(0, dto.getSureSaat().compareTo(new BigDecimal("4.50")));
+        assertEquals(0L, dto.getGecikmeGun());
+    }
+
+    @Test
+    void recetelerFiltreli_aramaVeAktiflikUygular() {
+        Recete aktif = Recete.builder().id(1L).sirketId(1L).ad("Masa Reçetesi").urunId(10L).aktif(true).build();
+        Recete pasif = Recete.builder().id(2L).sirketId(1L).ad("Sandalye Reçetesi").urunId(11L).aktif(false).build();
+        when(receteRepository.findBySirketIdOrderByAd(1L)).thenReturn(List.of(aktif, pasif));
+        when(receteKalemRepository.findByReceteId(anyLong())).thenReturn(List.of());
+        when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Masa", "0")));
+        when(stokRepository.findById(11L)).thenReturn(Optional.of(stok(11L, "Sandalye", "0")));
+
+        assertEquals(1, uretimService.recetelerFiltreli(1L, "masa", null).size());
+        assertEquals(1, uretimService.recetelerFiltreli(1L, "MASA", true).size());
+        assertEquals(1, uretimService.recetelerFiltreli(1L, null, true).size());
+        assertEquals(1, uretimService.recetelerFiltreli(1L, null, false).size());
+        assertEquals(2, uretimService.recetelerFiltreli(1L, null, null).size());
+        assertTrue(uretimService.recetelerFiltreli(1L, "yok", true).isEmpty());
+    }
+
+    @Test
+    void emirHatAta_hatAtarVeAdiDoner() {
+        UretimEmri emri = UretimEmri.builder().id(4L).sirketId(1L).urunId(10L)
+                .miktar(BigDecimal.ONE).durum("TASLAK").build();
+        com.raspel.erp.entity.envanter.UretimHat hat = com.raspel.erp.entity.envanter.UretimHat.builder()
+                .id(5L).sirketId(1L).ad("Hat A").aktif(true).build();
+        when(uretimEmriRepository.findById(4L)).thenReturn(Optional.of(emri));
+        when(uretimHatRepository.findByIdAndSirketId(5L, 1L)).thenReturn(Optional.of(hat));
+        when(uretimEmriRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(uretimHatRepository.findById(5L)).thenReturn(Optional.of(hat));
+        when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Masa", "0")));
+
+        UretimEmriDTO dto = uretimService.emirHatAta(4L, 5L, 1L, 7L);
+
+        assertEquals(5L, dto.getHatId());
+        assertEquals("Hat A", dto.getHatAd());
+        assertEquals(5L, emri.getHatId());
+    }
+
+    @Test
+    void emirHatAta_pasifHatReddedilir() {
+        UretimEmri emri = UretimEmri.builder().id(4L).sirketId(1L).urunId(10L)
+                .miktar(BigDecimal.ONE).durum("TASLAK").build();
+        com.raspel.erp.entity.envanter.UretimHat hat = com.raspel.erp.entity.envanter.UretimHat.builder()
+                .id(5L).sirketId(1L).ad("Hat A").aktif(false).build();
+        when(uretimEmriRepository.findById(4L)).thenReturn(Optional.of(emri));
+        when(uretimHatRepository.findByIdAndSirketId(5L, 1L)).thenReturn(Optional.of(hat));
+
+        assertThrows(BusinessException.class, () -> uretimService.emirHatAta(4L, 5L, 1L, 7L));
+    }
+
+    @Test
+    void analiz_urunKirilimiVeTrendiHesaplar() {
+        LocalDate bugun = LocalDate.now();
+        UretimEmri e1 = UretimEmri.builder()
+                .id(1L).sirketId(1L).urunId(10L).miktar(new BigDecimal("10")).durum("TAMAMLANDI")
+                .uretilenMiktar(new BigDecimal("9")).fireMiktar(new BigDecimal("1"))
+                .toplamMaliyet(new BigDecimal("180"))
+                .baslamaTarihi(bugun.minusDays(1).atTime(8, 0))
+                .tamamlanmaTarihi(bugun.atTime(12, 30))
+                .build();
+        UretimEmri e2 = UretimEmri.builder()
+                .id(2L).sirketId(1L).urunId(10L).miktar(new BigDecimal("5")).durum("TAMAMLANDI")
+                .uretilenMiktar(new BigDecimal("5")).fireMiktar(BigDecimal.ZERO)
+                .toplamMaliyet(new BigDecimal("100"))
+                .tamamlanmaTarihi(bugun.atTime(15, 0))
+                .build();
+        when(uretimEmriRepository.tamamlananlarAralikta(eq(1L), any(), any()))
+                .thenReturn(List.of(e1, e2));
+        when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Masa", "0")));
+
+        var analiz = uretimService.analiz(1L, bugun.minusMonths(1), bugun);
+
+        assertEquals(2L, analiz.getTamamlananEmir());
+        assertEquals(0, analiz.getToplamUretilen().compareTo(new BigDecimal("14.00")));
+        assertEquals(0, analiz.getToplamFire().compareTo(new BigDecimal("1.00")));
+        assertEquals(0, analiz.getFireOrani().compareTo(new BigDecimal("6.67")));
+        assertEquals(0, analiz.getToplamMaliyet().compareTo(new BigDecimal("280.00")));
+        assertEquals(0, analiz.getBirimMaliyet().compareTo(new BigDecimal("20.00")));
+        assertEquals(1, analiz.getUrunler().size());
+        assertEquals("Masa", analiz.getUrunler().get(0).getUrunAd());
+        assertEquals(2L, analiz.getUrunler().get(0).getEmirSayisi());
+        assertEquals(1, analiz.getTrend().size());
+    }
+
+    @Test
+    void analiz_tersTarihleriDuzeltirVeBosDonemdeSifirDoner() {
+        LocalDate bugun = LocalDate.now();
+        when(uretimEmriRepository.tamamlananlarAralikta(eq(1L), any(), any())).thenReturn(List.of());
+
+        var analiz = uretimService.analiz(1L, bugun, bugun.minusDays(5));
+
+        assertEquals(0L, analiz.getTamamlananEmir());
+        assertEquals(0, analiz.getToplamMaliyet().compareTo(BigDecimal.ZERO));
+        assertTrue(analiz.getUrunler().isEmpty());
+        assertTrue(analiz.getTrend().isEmpty());
+    }
+
+    @Test
+    void takvim_planlananAraliktakiEmirleriDoner() {
+        LocalDate bas = LocalDate.of(2026, 9, 1);
+        LocalDate bit = LocalDate.of(2026, 9, 30);
+        UretimEmri emri = UretimEmri.builder()
+                .id(1L).sirketId(1L).urunId(10L).miktar(BigDecimal.ONE).durum("URETIMDE")
+                .planlananBaslangic(LocalDate.of(2026, 9, 3))
+                .planlananBitis(LocalDate.of(2026, 9, 8))
+                .build();
+        when(uretimEmriRepository.takvimAralikta(1L, bas, bit)).thenReturn(List.of(emri));
+        when(stokRepository.findById(10L)).thenReturn(Optional.of(stok(10L, "Masa", "0")));
+
+        var liste = uretimService.takvim(1L, bas, bit);
+
+        assertEquals(1, liste.size());
+        assertEquals("Masa", liste.get(0).getUrunAd());
+    }
+
+    @Test
+    void takvim_tersTarihleriDuzeltir() {
+        LocalDate bugun = LocalDate.now();
+        when(uretimEmriRepository.takvimAralikta(eq(1L), eq(bugun.minusDays(5)), eq(bugun)))
+                .thenReturn(List.of());
+
+        assertTrue(uretimService.takvim(1L, bugun, bugun.minusDays(5)).isEmpty());
+        verify(uretimEmriRepository).takvimAralikta(1L, bugun.minusDays(5), bugun);
     }
 }

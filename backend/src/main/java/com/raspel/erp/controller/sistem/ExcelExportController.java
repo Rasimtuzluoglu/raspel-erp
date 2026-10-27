@@ -535,18 +535,20 @@ public class ExcelExportController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String durum,
             @RequestParam(required = false) String oncelik,
+            @RequestParam(required = false) Long hatId,
             @RequestParam(required = false) Boolean geciken,
             @RequestParam(required = false) Boolean buAy,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        var page = uretimService.filtreliEmirler(sirketId, q, durum, oncelik, geciken, buAy, baslangic, bitis,
+        var page = uretimService.filtreliEmirler(sirketId, q, durum, oncelik, hatId, geciken, buAy, baslangic, bitis,
                 PageRequest.of(0, MAX_EXPORT_ROWS, org.springframework.data.domain.Sort.by(
                         org.springframework.data.domain.Sort.Direction.DESC, "olusturmaTarihi")));
         List<Map<String, Object>> rows = page.getContent().stream().map(e -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", e.getId());
             m.put("Mamul", e.getUrunAd());
+            m.put("Hat", e.getHatAd());
             m.put("Miktar", e.getMiktar());
             m.put("Durum", e.getDurum());
             m.put("Öncelik", e.getOncelik());
@@ -558,15 +560,18 @@ public class ExcelExportController {
             m.put("Oluşturma", e.getOlusturmaTarihi());
             return m;
         }).toList();
-        return excel("UretimEmirleri", new String[]{"ID", "Mamul", "Miktar", "Durum", "Öncelik",
+        return excel("UretimEmirleri", new String[]{"ID", "Mamul", "Hat", "Miktar", "Durum", "Öncelik",
                 "Planlanan Başlangıç", "Planlanan Bitiş", "Üretilen", "Fire", "Toplam Maliyet", "Oluşturma"}, rows);
     }
 
     @GetMapping("/uretim-receteler")
-    @Operation(summary = "Üretim reçetelerini Excel dışa aktar", description = "Reçeteleri (ürün ağacı) Excel (.xlsx) olarak dışa aktarır.")
-    public ResponseEntity<byte[]> uretimReceteler(HttpServletRequest request) {
+    @Operation(summary = "Üretim reçetelerini Excel dışa aktar", description = "Reçeteleri (ürün ağacı) arama/aktiflik filtresiyle Excel (.xlsx) olarak dışa aktarır.")
+    public ResponseEntity<byte[]> uretimReceteler(
+            HttpServletRequest request,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Boolean aktif) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        var list = uretimService.receteler(sirketId);
+        var list = uretimService.recetelerFiltreli(sirketId, q, aktif);
         List<Map<String, Object>> rows = list.stream().map(r -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("ID", r.getId());
