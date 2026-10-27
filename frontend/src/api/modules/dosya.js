@@ -87,6 +87,9 @@ export const excelAPI = {
   taksitler(params) {
     return apiClient.get('/exports/taksitler', { params, responseType: 'blob' })
   },
+  ajanda(params) {
+    return apiClient.get('/exports/ajanda', { params, responseType: 'blob' })
+  },
   bankalar() {
     return apiClient.get('/exports/bankalar', { responseType: 'blob' })
   },

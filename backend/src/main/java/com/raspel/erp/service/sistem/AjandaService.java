@@ -42,6 +42,7 @@ public class AjandaService {
                     .tarih(tarih).tip("GOREV")
                     .baslik(g.getAd())
                     .aciklama("Durum: " + g.getDurum() + (g.getAtanan() != null ? " · Atanan: " + g.getAtanan() : ""))
+                    .kaynakId(g.getId()).kaynakTip("PROJE_GOREVI")
                     .build());
         }
 
@@ -55,6 +56,7 @@ public class AjandaService {
                     .baslik("Fatura #" + f.getFaturaNumarasi())
                     .aciklama((f.getCariHesap() != null ? f.getCariHesap().getAd() + " · " : "")
                             + "Kalan: " + (f.getKalanTutar() != null ? f.getKalanTutar() : "0"))
+                    .kaynakId(f.getId()).kaynakTip("FATURA").kaynakNo(f.getFaturaNumarasi())
                     .build());
         }
 
@@ -72,6 +74,7 @@ public class AjandaService {
                         .tarih(g.getBitisTarihi()).tip("KISISEL_GOREV")
                         .baslik(g.getBaslik())
                         .aciklama(aciklama)
+                        .kaynakId(g.getId()).kaynakTip("KISISEL_GOREV")
                         .build());
             }
             // Kişisel hatırlatıcılar
@@ -84,12 +87,49 @@ public class AjandaService {
                         .tarih(tarih).tip("HATIRLATICI")
                         .baslik(h.getBaslik())
                         .aciklama("Hatırlatıcı · " + (h.getHatirlatmaZamani() != null ? h.getHatirlatmaZamani().toLocalTime().toString().substring(0, 5) : ""))
+                        .kaynakId(h.getId()).kaynakTip("HATIRLATICI")
                         .build());
             }
         }
 
         olaylar.sort(Comparator.comparing(AjandaOlayDTO::getTarih));
         return olaylar;
+    }
+
+    /** Önümüzdeki N gün içindeki tüm ajanda olayları. */
+    @Transactional(readOnly = true)
+    public List<AjandaOlayDTO> yaklasan(Long sirketId, Long kullaniciId, int gun) {
+        LocalDate bugun = LocalDate.now();
+        return olaylar(sirketId, bugun, bugun.plusDays(Math.max(0, gun)), kullaniciId);
+    }
+
+    /** Ajanda KPI özeti: bugünkü olay, bu ay vade, bekleyen/gecikmiş görev. */
+    @Transactional(readOnly = true)
+    public com.raspel.erp.dto.sistem.AjandaOzetDTO ozet(Long sirketId, Long kullaniciId) {
+        if (sirketId == null) {
+            return com.raspel.erp.dto.sistem.AjandaOzetDTO.builder()
+                    .buAyVadeToplam(java.math.BigDecimal.ZERO)
+                    .build();
+        }
+        LocalDate bugun = LocalDate.now();
+        LocalDate ayBas = bugun.withDayOfMonth(1);
+        LocalDate ayBit = bugun.withDayOfMonth(bugun.lengthOfMonth());
+
+        long bugunOlay = olaylar(sirketId, bugun, bugun, kullaniciId).size();
+        java.math.BigDecimal buAyVade = faturaRepository.toplamKalanVadeAraliginda(
+                sirketId, Fatura.FaturaDurum.KESILDI, List.of("ODENDI", "IPTAL"), ayBas, ayBit);
+        long bekleyen = kullaniciId == null ? 0
+                : ajandaGorevRepository.countByKullaniciIdAndDurum(kullaniciId, "BEKLIYOR");
+        long gecikmis = kullaniciId == null ? 0
+                : ajandaGorevRepository.countByKullaniciIdAndDurumAndBitisTarihiBefore(
+                        kullaniciId, "BEKLIYOR", bugun);
+
+        return com.raspel.erp.dto.sistem.AjandaOzetDTO.builder()
+                .bugunOlay(bugunOlay)
+                .buAyVadeToplam(buAyVade != null ? buAyVade : java.math.BigDecimal.ZERO)
+                .bekleyenGorev(bekleyen)
+                .gecikmisGorev(gecikmis)
+                .build();
     }
 
     private String oncelikAdi(String oncelik) {

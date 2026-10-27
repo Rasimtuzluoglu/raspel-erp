@@ -12,4 +12,10 @@ public interface AjandaGorevRepository extends JpaRepository<AjandaGorev, Long> 
     List<AjandaGorev> findByKullaniciIdOrderByBitisTarihiAsc(Long kullaniciId);
     List<AjandaGorev> findByKullaniciIdAndBitisTarihiBetweenOrderByBitisTarihiAsc(
             Long kullaniciId, LocalDate baslangic, LocalDate bitis);
+
+    /** KPI: kullanıcının belirli durumdaki görev sayısı. */
+    long countByKullaniciIdAndDurum(Long kullaniciId, String durum);
+
+    /** KPI: bitiş tarihi geçmiş, hâlâ bekleyen görev sayısı. */
+    long countByKullaniciIdAndDurumAndBitisTarihiBefore(Long kullaniciId, String durum, LocalDate tarih);
 }

@@ -52,6 +52,7 @@ public class ExcelExportController {
     private final com.raspel.erp.service.ik.VardiyaService vardiyaService;
     private final com.raspel.erp.service.finans.MasrafService masrafService;
     private final com.raspel.erp.service.finans.TaksitService taksitService;
+    private final com.raspel.erp.service.sistem.AjandaService ajandaService;
     private final BankaService bankaService;
     private final KasaService kasaService;
     private final AuditLogService auditLogService;
@@ -339,6 +340,33 @@ public class ExcelExportController {
             return satir;
         }).toList();
         return excel("Taksitler", new String[]{"ID", "Vade", "Cari", "Kurum", "Taksit", "Tutar", "Durum", "Ödeme Tarihi", "Plan"}, rows);
+    }
+
+    @GetMapping("/ajanda")
+    @Operation(summary = "Ajanda olaylarını Excel dışa aktar",
+            description = "Önümüzdeki N gün içindeki vade, proje görevi, kişisel görev ve hatırlatıcıları Excel (.xlsx) olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'RAPOR_EXPORT')")
+    public ResponseEntity<byte[]> ajanda(
+            HttpServletRequest req,
+            @RequestParam(defaultValue = "30") int gun,
+            @RequestParam(required = false) String tip) {
+        Long sirketId = (Long) req.getAttribute("sirketId");
+        Long kullaniciId = (Long) req.getAttribute("kullaniciId");
+        var list = ajandaService.yaklasan(sirketId, kullaniciId, gun);
+        if (tip != null && !tip.isBlank()) {
+            list = list.stream().filter(o -> tip.equals(o.getTip())).toList();
+        }
+        var rows = list.stream().map(o -> {
+            Map<String, Object> satir = new LinkedHashMap<>();
+            satir.put("Tarih", o.getTarih());
+            satir.put("Tip", o.getTip());
+            satir.put("Başlık", o.getBaslik());
+            satir.put("Açıklama", o.getAciklama());
+            satir.put("Kaynak", o.getKaynakTip());
+            satir.put("Kaynak No", o.getKaynakNo());
+            return satir;
+        }).toList();
+        return excel("Ajanda", new String[]{"Tarih", "Tip", "Başlık", "Açıklama", "Kaynak", "Kaynak No"}, rows);
     }
 
     @GetMapping("/bankalar")

@@ -48,6 +48,37 @@ class AjandaControllerTest {
     }
 
     @Test
+    void yaklasan_bugundenItibarenNgunDoner() throws Exception {
+        when(ajandaService.yaklasan(1L, 7L, 30)).thenReturn(List.of(
+                AjandaOlayDTO.builder().tarih(LocalDate.now()).tip("VADE").baslik("Vade")
+                        .kaynakId(9L).kaynakTip("FATURA").kaynakNo("FTR-9").build()));
+
+        mockMvc.perform(get("/api/ajanda/yaklasan")
+                        .requestAttr("sirketId", 1L)
+                        .requestAttr("kullaniciId", 7L)
+                        .param("gun", "30"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].tip").value("VADE"))
+                .andExpect(jsonPath("$[0].kaynakTip").value("FATURA"))
+                .andExpect(jsonPath("$[0].kaynakNo").value("FTR-9"));
+    }
+
+    @Test
+    void ozet_donar() throws Exception {
+        when(ajandaService.ozet(1L, 7L)).thenReturn(com.raspel.erp.dto.sistem.AjandaOzetDTO.builder()
+                .bugunOlay(3).buAyVadeToplam(new java.math.BigDecimal("2500"))
+                .bekleyenGorev(4).gecikmisGorev(2).build());
+
+        mockMvc.perform(get("/api/ajanda/ozet")
+                        .requestAttr("sirketId", 1L)
+                        .requestAttr("kullaniciId", 7L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.bugunOlay").value(3))
+                .andExpect(jsonPath("$.bekleyenGorev").value(4))
+                .andExpect(jsonPath("$.gecikmisGorev").value(2));
+    }
+
+    @Test
     void hatirlatici_gorevSecilmeden_olusturulabilir() throws Exception {
         // gorevId opsiyoneldir (bagimsiz hatirlatici); @NotNull kaldirildi.
         when(ajandaService.hatirlaticiOlustur(any(), any(), any())).thenReturn(

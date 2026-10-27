@@ -95,6 +95,8 @@ class ExcelExportControllerTest {
     private com.raspel.erp.service.sistem.IpWhitelistService ipWhitelistService;
     @MockBean
     private com.raspel.erp.service.sube.SubeService subeService;
+    @MockBean
+    private com.raspel.erp.service.sistem.AjandaService ajandaService;
 
     @Test
     void cariHesaplar_excelDoner() throws Exception {
@@ -285,6 +287,32 @@ class ExcelExportControllerTest {
         mockMvc.perform(get("/api/exports/taksitler").requestAttr("sirketId", 1L).param("durum", "BEKLEMEDE"))
                 .andExpect(status().isOk())
                 .andExpect(content().bytes(new byte[]{1, 2, 3}));
+    }
+
+    @Test
+    void ajanda_excelDoner_veTipFiltresiUygular() throws Exception {
+        when(ajandaService.yaklasan(any(), any(), any(Integer.class)))
+                .thenReturn(List.of(
+                        com.raspel.erp.dto.sistem.AjandaOlayDTO.builder()
+                                .tarih(java.time.LocalDate.now()).tip("VADE").baslik("Fatura vadesi")
+                                .kaynakTip("FATURA").kaynakNo("FTR-1").build(),
+                        com.raspel.erp.dto.sistem.AjandaOlayDTO.builder()
+                                .tarih(java.time.LocalDate.now()).tip("KISISEL_GOREV").baslik("Görev")
+                                .kaynakTip("KISISEL_GOREV").build()));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/ajanda")
+                        .requestAttr("sirketId", 1L)
+                        .requestAttr("kullaniciId", 7L)
+                        .param("gun", "30")
+                        .param("tip", "VADE"))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(new byte[]{1, 2, 3}));
+
+        org.mockito.Mockito.verify(excelService).export(
+                org.mockito.ArgumentMatchers.eq("Ajanda"),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.argThat(l -> l != null && l.size() == 1));
     }
 
     @Test

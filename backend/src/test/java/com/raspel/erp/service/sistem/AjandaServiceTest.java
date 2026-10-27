@@ -26,6 +26,10 @@ class AjandaServiceTest {
     private GorevRepository gorevRepository;
     @Mock
     private FaturaRepository faturaRepository;
+    @Mock
+    private com.raspel.erp.repository.sistem.AjandaGorevRepository ajandaGorevRepository;
+    @Mock
+    private com.raspel.erp.repository.sistem.AjandaHatirlaticiRepository ajandaHatirlaticiRepository;
 
     @InjectMocks
     private AjandaService ajandaService;
@@ -54,6 +58,24 @@ class AjandaServiceTest {
         assertEquals("VADE", olaylar.get(1).getTip());
         assertEquals("GOREV", olaylar.get(2).getTip());
         assertTrue(olaylar.get(0).getTarih().isBefore(olaylar.get(2).getTarih()));
+        // Çapraz gezinme için kaynak bilgisi doldurulmalı
+        assertEquals("FATURA", olaylar.get(1).getKaynakTip());
+        assertEquals("FTR-1-2026-000001", olaylar.get(1).getKaynakNo());
+        assertEquals("PROJE_GOREVI", olaylar.get(0).getKaynakTip());
+        assertEquals(2L, olaylar.get(0).getKaynakId());
+    }
+
+    @Test
+    void yaklasan_bugundenItibarenOlaylariDoner() {
+        LocalDate bugun = LocalDate.now();
+        when(gorevRepository.sirketGorevleri(1L, bugun, bugun.plusDays(10))).thenReturn(List.of());
+        when(faturaRepository.findVadesiYaklasan(eq(1L), any(), any(), eq(bugun), eq(bugun.plusDays(10)), any()))
+                .thenReturn(List.of());
+
+        List<AjandaOlayDTO> olaylar = ajandaService.yaklasan(1L, null, 10);
+
+        assertTrue(olaylar.isEmpty());
+        org.mockito.Mockito.verify(gorevRepository).sirketGorevleri(1L, bugun, bugun.plusDays(10));
     }
 
     @Test
@@ -80,5 +102,38 @@ class AjandaServiceTest {
 
         assertEquals(1, olaylar.size());
         assertEquals(bas, olaylar.get(0).getTarih());
+    }
+
+    @Test
+    void ozet_kpiDegerleriniDoner() {
+        LocalDate bugun = LocalDate.now();
+        when(gorevRepository.sirketGorevleri(1L, bugun, bugun)).thenReturn(List.of());
+        when(faturaRepository.findVadesiYaklasan(eq(1L), any(), any(), eq(bugun), eq(bugun), any()))
+                .thenReturn(List.of());
+        when(ajandaGorevRepository.findByKullaniciIdAndBitisTarihiBetweenOrderByBitisTarihiAsc(7L, bugun, bugun))
+                .thenReturn(List.of());
+        when(ajandaHatirlaticiRepository.findByKullaniciIdOrderByHatirlatmaZamaniAsc(7L))
+                .thenReturn(List.of());
+        when(faturaRepository.toplamKalanVadeAraliginda(eq(1L), any(), any(), any(), any()))
+                .thenReturn(new java.math.BigDecimal("2500.00"));
+        when(ajandaGorevRepository.countByKullaniciIdAndDurum(7L, "BEKLIYOR")).thenReturn(4L);
+        when(ajandaGorevRepository.countByKullaniciIdAndDurumAndBitisTarihiBefore(eq(7L), eq("BEKLIYOR"), any()))
+                .thenReturn(2L);
+
+        var ozet = ajandaService.ozet(1L, 7L);
+
+        assertEquals(0L, ozet.getBugunOlay());
+        assertEquals(new java.math.BigDecimal("2500.00"), ozet.getBuAyVadeToplam());
+        assertEquals(4L, ozet.getBekleyenGorev());
+        assertEquals(2L, ozet.getGecikmisGorev());
+    }
+
+    @Test
+    void ozet_sirketYoksaSifir() {
+        var ozet = ajandaService.ozet(null, 7L);
+        assertEquals(0L, ozet.getBugunOlay());
+        assertEquals(java.math.BigDecimal.ZERO, ozet.getBuAyVadeToplam());
+        assertEquals(0L, ozet.getBekleyenGorev());
+        assertEquals(0L, ozet.getGecikmisGorev());
     }
 }

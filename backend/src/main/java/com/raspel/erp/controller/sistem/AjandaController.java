@@ -38,6 +38,25 @@ public class AjandaController {
         return ResponseEntity.ok(ajandaService.olaylar(sirketId, baslangic, bitis, kullaniciId));
     }
 
+    @GetMapping("/ozet")
+    @Operation(summary = "Ajanda KPI özeti",
+            description = "Bugünkü olay sayısı, bu ay vadesi gelen fatura kalan tutarı, bekleyen ve gecikmiş kişisel görev sayısı")
+    public ResponseEntity<com.raspel.erp.dto.sistem.AjandaOzetDTO> ozet(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(ajandaService.ozet(sirketId, kullaniciId));
+    }
+
+    @GetMapping("/yaklasan")
+    @Operation(summary = "Yaklaşan ajanda olayları", description = "Bugünden itibaren N gün içindeki tüm olaylar (vade, görev, hatırlatıcı)")
+    public ResponseEntity<List<AjandaOlayDTO>> yaklasan(
+            HttpServletRequest request,
+            @RequestParam(defaultValue = "30") int gun) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(ajandaService.yaklasan(sirketId, kullaniciId, gun));
+    }
+
     // ---------- Kişisel Görevler ----------
 
     @GetMapping("/tasks")

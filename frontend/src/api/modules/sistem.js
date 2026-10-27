@@ -161,6 +161,12 @@ export const ajandaAPI = {
   olaylar(params) {
     return apiClient.get('/ajanda', { params })
   },
+  ozet() {
+    return apiClient.get('/ajanda/ozet')
+  },
+  yaklasan(gun) {
+    return apiClient.get('/ajanda/yaklasan', { params: { gun } })
+  },
   gorevler() {
     return apiClient.get('/ajanda/tasks')
   },
