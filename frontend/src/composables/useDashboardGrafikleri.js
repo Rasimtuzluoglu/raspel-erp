@@ -21,27 +21,10 @@ export function useDashboardGrafikleri(kaynak, { nakitGun } = {}) {
 
   const paraTick = (v) => formatCurrency(v)
 
-  // Bar/line veri setleri icin dikey/yatay degrade yardimcilari. Chart alani
-  // henuz olusmadiysa duz renk doner (Chart.js ilk cizimde tekrar cagirir).
-  const dikeyGradyan = (ctx, ust, alt) => {
-    const { chart } = ctx
-    const { ctx: c, chartArea } = chart
-    if (!chartArea) return ust
-    const g = c.createLinearGradient(0, chartArea.bottom, 0, chartArea.top)
-    g.addColorStop(0, alt)
-    g.addColorStop(1, ust)
-    return g
-  }
-
-  const yatayGradyan = (ctx, sol, sag) => {
-    const { chart } = ctx
-    const { ctx: c, chartArea } = chart
-    if (!chartArea) return sol
-    const g = c.createLinearGradient(chartArea.left, 0, chartArea.right, 0)
-    g.addColorStop(0, sol)
-    g.addColorStop(1, sag)
-    return g
-  }
+  // "Sessiz kurumsal" grafik dili: degrade yok, duz/mat renkler. Yardimcilar
+  // hâlâ iki renk alir (geriye uyum) ama yalnizca ilk (ust/sol) rengi dondurur.
+  const dikeyGradyan = (_ctx, ust) => ust
+  const yatayGradyan = (_ctx, sol) => sol
 
   const eksenler = computed(() => ({
     x: { ticks: { color: palet.value.metin }, grid: { display: false } },

@@ -301,8 +301,8 @@ const karSinifi = computed(() => {
   flex-direction: column;
   gap: 6px;
   min-width: 0;
-  min-height: 118px;
-  padding: 14px 16px;
+  min-height: 116px;
+  padding: 16px 18px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--bg-card);

@@ -88,7 +88,7 @@ const linkEtiketi = computed(() => props.linkMetin || t('dashboard.detayaGit'))
   gap: 10px;
   margin: 0;
   min-width: 0;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
   color: var(--text-primary);
