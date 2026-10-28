@@ -58,6 +58,7 @@ export {
   aiConfigAPI,
   apiTokenAPI,
   churnAPI,
+  onaylarAPI,
   onayAyariAPI,
   adresDefteriAPI,
   onaySayilariAPI,

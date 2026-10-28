@@ -428,6 +428,7 @@ const tumMenuler = [
       { path: '/ajanda', labelKey: 'nav.ajanda', icon: 'pi pi-calendar', grupKey: '' },
       { path: '/iletisim', labelKey: 'nav.iletisim', icon: 'pi pi-envelope', grupKey: '' },
   { path: '/onaylar', labelKey: 'nav.onaylar', icon: 'pi pi-check-circle', grupKey: '' },
+  { path: '/onay-ayarlari', labelKey: 'nav.onayAyarlari', icon: 'pi pi-sliders-h', grupKey: '' },
   { path: '/belgeler', labelKey: 'nav.belgeler', icon: 'pi pi-folder-open', grupKey: '' },
   { path: '/sistem-durum', labelKey: 'nav.sistemDurum', icon: 'pi pi-server', grupKey: '', admin: true },
   { path: '/muhasebe', labelKey: 'nav.muhasebe', icon: 'pi pi-book', permission: 'FINANS_READ', grupKey: 'nav.finans', gelismis: true },

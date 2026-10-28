@@ -167,6 +167,9 @@ export const excelAPI = {
   },
   cekSenet(params) {
     return apiClient.get('/exports/cek-senet', { params, responseType: 'blob' })
+  },
+  onaylar(params) {
+    return apiClient.get('/exports/onaylar', { params, responseType: 'blob' })
   }
 }
 

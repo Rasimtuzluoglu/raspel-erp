@@ -471,6 +471,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/onay-ayarlari',
+    name: 'OnayAyarlari',
+    component: () => import('../views/OnayAyarlari.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/belgeler',
     name: 'Belgeler',
     component: () => import('../views/Belgeler.vue'),
@@ -560,6 +566,7 @@ const ROTA_BASLIK_ANAHTARLARI = {
   '/ajanda': 'nav.ajanda',
   '/iletisim': 'nav.iletisim',
   '/onaylar': 'nav.onaylar',
+  '/onay-ayarlari': 'nav.onayAyarlari',
   '/belgeler': 'nav.belgeler',
   '/sistem-durum': 'nav.sistemDurum',
   '/muhasebe': 'nav.muhasebe',

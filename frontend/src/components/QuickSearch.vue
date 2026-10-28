@@ -287,6 +287,7 @@ const komutlar = computed(() => [
   { etiket: t('nav.sohbet'), icon: 'pi pi-comments', route: '/sohbet' },
   { etiket: t('nav.ajanda'), icon: 'pi pi-calendar', route: '/ajanda' },
   { etiket: t('nav.onaylar'), icon: 'pi pi-check-circle', route: '/onaylar' },
+  { etiket: t('nav.onayAyarlari'), icon: 'pi pi-sliders-h', route: '/onay-ayarlari' },
   { etiket: t('nav.belgeler'), icon: 'pi pi-folder-open', route: '/belgeler' }
 ])
 

@@ -250,6 +250,27 @@ export const churnAPI = {
   }
 }
 
+// Birlesik onay merkezi. Turler: IZIN / MASRAF / SATINALMA / SIPARIS.
+// `bekleyen` tur bos oldugunda tur basina ilk 100 kaydi birlestirir ve
+// sayfalamayi yok sayar; tur doluyken sunucu sayfalamasi kullanilir.
+export const onaylarAPI = {
+  ozet() {
+    return apiClient.get('/onaylar/ozet')
+  },
+  bekleyen(params) {
+    return apiClient.get('/onaylar/bekleyen', { params })
+  },
+  karar(data) {
+    return apiClient.post('/onaylar/karar', data)
+  },
+  toplu(data) {
+    return apiClient.post('/onaylar/toplu', data)
+  },
+  gecmis(params) {
+    return apiClient.get('/onaylar/gecmis', { params })
+  }
+}
+
 export const onayAyariAPI = {
   listele() {
     return apiClient.get('/onay-ayarlari')
