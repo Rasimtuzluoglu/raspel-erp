@@ -40,6 +40,7 @@ class StokServiceBarkodTest {
     @Mock private StokSeriRepository stokSeriRepository;
     @Mock private MaliyetService maliyetService;
     @Mock private BarkodUretService barkodUretService;
+    @Mock private com.raspel.erp.service.sistem.KategoriService kategoriService;
 
     @InjectMocks private StokService stokService;
 

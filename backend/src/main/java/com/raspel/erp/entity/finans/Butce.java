@@ -35,6 +35,10 @@ public class Butce {
     @Column(length = 100)
     private String kategori;
 
+    /** Kategori registry bağlantısı (kapsam BUTCE). */
+    @Column(name = "kategori_id")
+    private Long kategoriId;
+
     @Column(name = "sirket_id", nullable = false)
     private Long sirketId;
 

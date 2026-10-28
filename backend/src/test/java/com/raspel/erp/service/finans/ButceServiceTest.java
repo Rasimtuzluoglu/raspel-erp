@@ -31,6 +31,7 @@ class ButceServiceTest {
     @Mock private com.raspel.erp.repository.finans.HareketRepository hareketRepository;
     @Mock private com.raspel.erp.service.sistem.AuditLogService auditLogService;
     @Mock private TenantChecker tenantChecker;
+    @Mock private com.raspel.erp.service.sistem.KategoriService kategoriService;
     @InjectMocks private ButceService butceService;
 
     private Butce ornekButce(Long id) {
@@ -360,5 +361,64 @@ class ButceServiceTest {
 
         assertEquals(1, liste.size());
         assertEquals("OLUSTUR", liste.get(0).getIslem());
+    }
+
+    @Test
+    void olustur_kategoriRegistrydenCozulurVeIdYazilir() {
+        com.raspel.erp.entity.sistem.Kategori registry = com.raspel.erp.entity.sistem.Kategori.builder()
+                .id(21L).sirketId(1L).ad("PAZARLAMA")
+                .kapsam(com.raspel.erp.entity.sistem.KategoriKapsam.BUTCE).build();
+        when(kategoriService.resolve(1L, com.raspel.erp.entity.sistem.KategoriKapsam.BUTCE, "Pazarlama"))
+                .thenReturn(registry);
+        when(butceRepository.save(any(Butce.class))).thenAnswer(inv -> {
+            Butce b = inv.getArgument(0);
+            b.setId(1L);
+            return b;
+        });
+
+        var sonuc = butceService.olustur(ButceDTO.builder().ad("2026 Pazarlama").yil(2026).ay(3)
+                .tutar(new BigDecimal("1000")).tur("GIDER").kategori("Pazarlama").build(), 1L);
+
+        assertEquals(21L, sonuc.getKategoriId());
+        assertEquals("PAZARLAMA", sonuc.getKategori());
+    }
+
+    @Test
+    void guncelle_kategoriRegistrydenCozulur() {
+        Butce butce = ornekButce(1L);
+        when(butceRepository.findById(1L)).thenReturn(Optional.of(butce));
+        when(butceRepository.save(any(Butce.class))).thenAnswer(inv -> inv.getArgument(0));
+        com.raspel.erp.entity.sistem.Kategori registry = com.raspel.erp.entity.sistem.Kategori.builder()
+                .id(22L).sirketId(1L).ad("KIRA")
+                .kapsam(com.raspel.erp.entity.sistem.KategoriKapsam.BUTCE).build();
+        when(kategoriService.resolve(eq(1L), eq(com.raspel.erp.entity.sistem.KategoriKapsam.BUTCE), anyString()))
+                .thenReturn(registry);
+
+        var sonuc = butceService.guncelle(1L, ButceDTO.builder().kategori("Kira").build());
+
+        assertEquals(22L, sonuc.getKategoriId());
+        assertEquals("KIRA", sonuc.getKategori());
+    }
+
+    @Test
+    void kopyala_kategoriRegistryyeBaglanir() {
+        Butce kaynak = Butce.builder().id(1L).sirketId(1L).yil(2025).ay(1).tur("GIDER")
+                .kategori("Pazarlama").ad("2025 Pazarlama").tutar(new BigDecimal("100")).build();
+        when(butceRepository.findBySirketIdAndYilAndTurOrderByKategoriAscAyAsc(1L, 2025, "GIDER"))
+                .thenReturn(List.of(kaynak));
+        when(butceRepository.findBySirketIdAndYilAndTurOrderByKategoriAscAyAsc(1L, 2026, "GIDER"))
+                .thenReturn(List.of());
+        com.raspel.erp.entity.sistem.Kategori registry = com.raspel.erp.entity.sistem.Kategori.builder()
+                .id(23L).sirketId(1L).ad("PAZARLAMA")
+                .kapsam(com.raspel.erp.entity.sistem.KategoriKapsam.BUTCE).build();
+        when(kategoriService.resolve(1L, com.raspel.erp.entity.sistem.KategoriKapsam.BUTCE, "Pazarlama"))
+                .thenReturn(registry);
+
+        butceService.kopyala(1L, 2025, 2026, "GIDER");
+
+        var captor = org.mockito.ArgumentCaptor.forClass(Butce.class);
+        verify(butceRepository).save(captor.capture());
+        assertEquals(23L, captor.getValue().getKategoriId());
+        assertEquals("PAZARLAMA", captor.getValue().getKategori());
     }
 }

@@ -18,7 +18,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import com.raspel.erp.entity.sistem.GelirGiderKategori;
+import com.raspel.erp.entity.sistem.Kategori;
+import com.raspel.erp.entity.sistem.KategoriKapsam;
 import com.raspel.erp.entity.finans.Banka;
 import com.raspel.erp.entity.finans.BankaHareketi;
 import com.raspel.erp.entity.finans.Hareket;
@@ -258,9 +259,21 @@ public class KasaService {
         if ("GIDER".equals(dto.getTur())) tutar = tutar.negate();
         kasa.setBakiye(kasa.getBakiye().add(tutar));
 
-        GelirGiderKategori kategori = null;
+        Kategori kategori = null;
         if (dto.getKategoriId() != null) {
-            kategori = kategoriRepository.findById(dto.getKategoriId()).orElse(null);
+            kategori = kategoriRepository.findById(dto.getKategoriId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Kategori", dto.getKategoriId()));
+            tenantChecker.check(kategori.getSirketId(), "Kategori");
+            if (!Boolean.TRUE.equals(kategori.getAktif())) {
+                throw new BusinessException("Pasif kategori seçilemez: " + kategori.getAd()
+                        + ". Önce kategoriyi aktifleştirin.");
+            }
+            KategoriKapsam beklenen = "GELIR".equals(dto.getTur())
+                    ? KategoriKapsam.KASA_GELIR : KategoriKapsam.KASA_GIDER;
+            if (kategori.getKapsam() != beklenen) {
+                throw new BusinessException("Kategori türü hareket türüyle uyumlu değil: "
+                        + kategori.getAd() + " (" + kategori.getKapsam() + ")");
+            }
         }
 
         KasaHareket hareket = KasaHareket.builder()

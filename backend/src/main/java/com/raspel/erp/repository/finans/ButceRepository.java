@@ -4,6 +4,7 @@ import com.raspel.erp.entity.finans.Butce;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -81,4 +82,23 @@ public interface ButceRepository extends JpaRepository<Butce, Long> {
     List<Butce> findBySirketIdAndYilOrderByKategoriAscAyAsc(Long sirketId, Integer yil);
 
     List<Butce> findBySirketIdAndYilAndTurOrderByKategoriAscAyAsc(Long sirketId, Integer yil, String tur);
+
+    // ---------- Kategori registry entegrasyonu ----------
+
+    long countByKategoriId(Long kategoriId);
+
+    @Query("SELECT b.kategoriId, COUNT(b) FROM Butce b "
+            + "WHERE b.sirketId = :sirketId AND b.kategoriId IS NOT NULL GROUP BY b.kategoriId")
+    List<Object[]> kategoriKullanimSayilari(@Param("sirketId") Long sirketId);
+
+    @Modifying(flushAutomatically = true)
+    @Query("UPDATE Butce b SET b.kategori = :ad WHERE b.kategoriId = :kategoriId")
+    int kategoriAdGuncelle(@Param("kategoriId") Long kategoriId, @Param("ad") String ad);
+
+    @Modifying(flushAutomatically = true)
+    @Query("UPDATE Butce b SET b.kategoriId = :hedefId, b.kategori = :hedefAd "
+            + "WHERE b.kategoriId = :kaynakId")
+    int kategoriBirlestir(@Param("kaynakId") Long kaynakId,
+                          @Param("hedefId") Long hedefId,
+                          @Param("hedefAd") String hedefAd);
 }

@@ -30,6 +30,10 @@ public class Masraf {
     @Column(length = 100)
     private String kategori;
 
+    /** Kategori registry bağlantısı (kapsam MASRAF). */
+    @Column(name = "kategori_id")
+    private Long kategoriId;
+
     @Column(name = "cari_hesap_id")
     private Long cariHesapId;
 

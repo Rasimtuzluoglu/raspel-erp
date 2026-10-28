@@ -23,6 +23,8 @@ public class MasrafDTO {
     private BigDecimal tutar;
     private String aciklama;
     private String kategori;
+    /** Kategori registry bağlantısı (kapsam MASRAF). */
+    private Long kategoriId;
     private Long cariHesapId;
     private String belgeNo;
     /** KDV oranı (%); tutar KDV dahil kabul edilir. */

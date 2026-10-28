@@ -37,6 +37,10 @@ public class IskontoKurali {
     @Column(length = 100)
     private String kategori;
 
+    /** Kategori registry bağlantısı (kapsam STOK). */
+    @Column(name = "kategori_id")
+    private Long kategoriId;
+
     @Column(name = "min_adet", precision = 19, scale = 4)
     private BigDecimal minAdet;
 

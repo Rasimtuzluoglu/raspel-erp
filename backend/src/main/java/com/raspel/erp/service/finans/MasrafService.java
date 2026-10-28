@@ -49,6 +49,7 @@ public class MasrafService {
     private final com.raspel.erp.service.sistem.DonemService donemService;
     private final com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
     private final com.raspel.erp.repository.finans.CariHesapRepository cariHesapRepository;
+    private final com.raspel.erp.service.sistem.KategoriService kategoriService;
 
     @Transactional(readOnly = true)
     public Page<MasrafDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -115,6 +116,10 @@ public class MasrafService {
         BigDecimal kdvOrani = dto.getKdvOrani() != null ? dto.getKdvOrani() : BigDecimal.ZERO;
         var satir = com.raspel.erp.util.FaturaTutar.satir(dto.getTutar(), BigDecimal.ONE, BigDecimal.ZERO, kdvOrani);
 
+        // Kategori registry'de get-or-create edilir (MASRAF, adlar büyük harf).
+        com.raspel.erp.entity.sistem.Kategori kategori = kategoriService.resolve(
+                sirketId, com.raspel.erp.entity.sistem.KategoriKapsam.MASRAF, dto.getKategori());
+
         Masraf masraf = Masraf.builder()
                 .tarih(tarih)
                 .tutar(dto.getTutar())
@@ -122,7 +127,8 @@ public class MasrafService {
                 .kdvOrani(kdvOrani)
                 .kdvTutar(satir.kdv())
                 .aciklama(dto.getAciklama())
-                .kategori(dto.getKategori().trim().toUpperCase(Locale.ROOT))
+                .kategori(kategori != null ? kategori.getAd() : dto.getKategori().trim().toUpperCase(Locale.ROOT))
+                .kategoriId(kategori != null ? kategori.getId() : null)
                 .cariHesapId(dto.getCariHesapId())
                 .belgeNo(dto.getBelgeNo())
                 .odemeYontemi(normalizeOdemeYontemi(dto.getOdemeYontemi()))
@@ -162,7 +168,10 @@ public class MasrafService {
         if (dto.getTarih() != null) masraf.setTarih(dto.getTarih());
         if (dto.getTutar() != null) masraf.setTutar(dto.getTutar());
         if (dto.getAciklama() != null) masraf.setAciklama(dto.getAciklama());
-        masraf.setKategori(yeniKategori.trim().toUpperCase(Locale.ROOT));
+        com.raspel.erp.entity.sistem.Kategori kategori = kategoriService.resolve(
+                masraf.getSirketId(), com.raspel.erp.entity.sistem.KategoriKapsam.MASRAF, yeniKategori);
+        masraf.setKategori(kategori != null ? kategori.getAd() : yeniKategori.trim().toUpperCase(Locale.ROOT));
+        masraf.setKategoriId(kategori != null ? kategori.getId() : null);
         if (dto.getCariHesapId() != null) masraf.setCariHesapId(dto.getCariHesapId());
         if (dto.getBelgeNo() != null) masraf.setBelgeNo(dto.getBelgeNo());
         masraf.setOdemeYontemi(normalizeOdemeYontemi(yeniOdeme));
@@ -307,6 +316,7 @@ public class MasrafService {
         return MasrafDTO.builder()
                 .id(m.getId()).tarih(m.getTarih()).tutar(m.getTutar())
                 .aciklama(m.getAciklama()).kategori(m.getKategori())
+                .kategoriId(m.getKategoriId())
                 .cariHesapId(m.getCariHesapId()).belgeNo(m.getBelgeNo())
                 .kdvOrani(m.getKdvOrani()).kdvTutar(m.getKdvTutar()).matrah(m.getMatrah())
                 .odemeYontemi(m.getOdemeYontemi()).kasaId(m.getKasaId()).bankaId(m.getBankaId())

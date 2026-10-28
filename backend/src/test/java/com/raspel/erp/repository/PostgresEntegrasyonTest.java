@@ -140,8 +140,100 @@ class PostgresEntegrasyonTest {
     }
 
     @Test
-    void veriButunluguFkVeNotNullKisitlariVar() {
-        Integer fkSayisi = jdbc.queryForObject(
+    void v173KategoriRegistryTablosuVeIndeksleriOlusur() {
+        // Kolonlar (id, sirket_id, kapsam, ad, ust_kategori_id, renk, ikon, sira,
+        // aktif, aciklama, olusturma_tarihi, guncelleme_tarihi = 12)
+        Integer kolonSayisi = jdbc.queryForObject(
+                "SELECT count(*) FROM information_schema.columns " +
+                        "WHERE table_schema = 'sistem' AND table_name = 'kategori'",
+                Integer.class);
+        assertEquals(12, kolonSayisi);
+
+        // Fonksiyonel unique index + sıralama + self-FK indeksi
+        Integer indeksSayisi = jdbc.queryForObject(
+                "SELECT count(*) FROM pg_indexes WHERE schemaname = 'sistem' AND tablename = 'kategori' " +
+                        "AND indexname IN ('uk_kategori_sirket_kapsam_ad', " +
+                        "'idx_kategori_sirket_kapsam_aktif_sira', 'idx_kategori_ust')",
+                Integer.class);
+        assertEquals(3, indeksSayisi);
+
+        // Bağlantı kolonları ve indeksleri
+        Integer kategoriIdKolonu = jdbc.queryForObject(
+                "SELECT count(*) FROM information_schema.columns WHERE column_name = 'kategori_id' AND (" +
+                        "(table_schema='stok' AND table_name='stok') OR " +
+                        "(table_schema='finans' AND table_name='masraf') OR " +
+                        "(table_schema='finans' AND table_name='butce') OR " +
+                        "(table_schema='ticaret' AND table_name='iskonto_kurali') OR " +
+                        "(table_schema='muhasebe' AND table_name='kasa_hareket'))",
+                Integer.class);
+        assertEquals(5, kategoriIdKolonu);
+
+        Integer kategoriIdIndeksi = jdbc.queryForObject(
+                "SELECT count(*) FROM pg_indexes WHERE indexname IN ('idx_stok_kategori_id', " +
+                        "'idx_masraf_kategori_id', 'idx_butce_kategori_id', 'idx_iskonto_kurali_kategori_id')",
+                Integer.class);
+        assertEquals(4, kategoriIdIndeksi);
+
+        // Eski tablo düşürülmüş olmalı (id'ler yeni tabloya taşındı).
+        String eskiTablo = jdbc.queryForObject(
+                "SELECT COALESCE(to_regclass('sistem.gelir_gider_kategori')::text, 'YOK')", String.class);
+        assertEquals("YOK", eskiTablo);
+    }
+
+    @Test
+    void v173KapsamEslemesiVeAdNormalizasyonu() {
+        Long sirket = sirketOlustur("Kategori Registry Firma");
+
+        jdbc.update("INSERT INTO sistem.kategori (sirket_id, kapsam, ad) VALUES (?, 'MASRAF', ?)",
+                sirket, "KIRA GIDERI");
+        jdbc.update("INSERT INTO sistem.kategori (sirket_id, kapsam, ad) VALUES (?, 'KASA_GELIR', ?)",
+                sirket, "Satış");
+
+        // Aynı sirket + kapsam + lower(ad) tekrarında unique index devreye girer.
+        assertThrows(org.springframework.dao.DataIntegrityViolationException.class, () ->
+                jdbc.update("INSERT INTO sistem.kategori (sirket_id, kapsam, ad) VALUES (?, 'MASRAF', ?)",
+                        sirket, "kira gideri"));
+
+        // Farklı kapsamda aynı ad serbesttir.
+        jdbc.update("INSERT INTO sistem.kategori (sirket_id, kapsam, ad) VALUES (?, 'BUTCE', ?)",
+                sirket, "KIRA GIDERI");
+
+        Integer masraf = jdbc.queryForObject(
+                "SELECT count(*) FROM sistem.kategori WHERE sirket_id = ? AND kapsam = 'MASRAF'",
+                Integer.class, sirket);
+        assertEquals(1, masraf);
+
+        // Geçersiz kapsam reddedilir (CHECK kısıtı).
+        assertThrows(org.springframework.dao.DataIntegrityViolationException.class, () ->
+                jdbc.update("INSERT INTO sistem.kategori (sirket_id, kapsam, ad) VALUES (?, 'YOK', 'X')", sirket));
+
+        // Self-FK: üst kategori bağlanabilir, 2 seviye servis guard'ı ile korunur.
+        Long ustId = jdbc.queryForObject(
+                "SELECT id FROM sistem.kategori WHERE sirket_id = ? AND kapsam = 'MASRAF'",
+                Long.class, sirket);
+        jdbc.update("INSERT INTO sistem.kategori (sirket_id, kapsam, ad, ust_kategori_id) " +
+                "VALUES (?, 'MASRAF', 'KIRA ALT', ?)", sirket, ustId);
+        Integer alt = jdbc.queryForObject(
+                "SELECT count(*) FROM sistem.kategori WHERE ust_kategori_id = ?", Integer.class, ustId);
+        assertEquals(1, alt);
+
+        jdbc.update("DELETE FROM sistem.kategori WHERE sirket_id = ?", sirket);
+    }
+
+    @Test
+    void v173SequenceBackfillSonrasiHizalanir() {
+        Long sirket = sirketOlustur("Kategori Sequence Firma");
+        // Backfill'den sonra sequence max(id)'den devam etmeli (id çakışması olmamalı).
+        Long mevcutMax = jdbc.queryForObject("SELECT COALESCE(MAX(id), 0) FROM sistem.kategori", Long.class);
+        Long yeniId = jdbc.queryForObject(
+                "INSERT INTO sistem.kategori (sirket_id, kapsam, ad) " +
+                        "VALUES (?, 'STOK', 'SEQUENCE TESTI') RETURNING id", Long.class, sirket);
+        assertTrue(yeniId > mevcutMax, "Yeni id mevcut max'tan büyük olmalı: " + yeniId + " > " + mevcutMax);
+        jdbc.update("DELETE FROM sistem.kategori WHERE id = ?", yeniId);
+    }
+
+    @Test
+    void veriButunluguFkVeNotNullKisitlariVar() {        Integer fkSayisi = jdbc.queryForObject(
                 "SELECT count(*) FROM pg_constraint WHERE contype = 'f' AND conname IN (" +
                         "'fk_fatura_cari','fk_fatura_sirket','fk_banka_hareketi_kaynak_fatura'," +
                         "'fk_kasa_hareket_fatura','fk_taksit_fatura','fk_siparis_cari','fk_irsaliye_cari'," +

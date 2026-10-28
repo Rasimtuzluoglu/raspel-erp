@@ -16,6 +16,8 @@ public class ButceDTO {
     private BigDecimal tutar;
     private String tur;
     private String kategori;
+    /** Kategori registry bağlantısı (kapsam BUTCE). */
+    private Long kategoriId;
     private Long sirketId;
     private String aciklama;
     private LocalDateTime olusturmaTarihi;

@@ -43,6 +43,7 @@ public class ButceService {
     private final HareketRepository hareketRepository;
     private final TenantChecker tenantChecker;
     private final com.raspel.erp.service.sistem.AuditLogService auditLogService;
+    private final com.raspel.erp.service.sistem.KategoriService kategoriService;
 
     @Transactional(readOnly = true)
     public Page<ButceDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -142,13 +143,16 @@ public class ButceService {
                 atlanan++;
                 continue;
             }
+            com.raspel.erp.entity.sistem.Kategori kategori = kategoriService.resolve(
+                    sirketId, com.raspel.erp.entity.sistem.KategoriKapsam.BUTCE, b.getKategori());
             butceRepository.save(Butce.builder()
                     .ad(b.getAd())
                     .yil(hedefYil)
                     .ay(b.getAy())
                     .tutar(b.getTutar())
                     .tur(b.getTur())
-                    .kategori(b.getKategori())
+                    .kategori(kategori != null ? kategori.getAd() : b.getKategori())
+                    .kategoriId(kategori != null ? kategori.getId() : b.getKategoriId())
                     .sirketId(sirketId)
                     .aciklama("Kopya: " + kaynakYil + (b.getAciklama() != null ? " · " + b.getAciklama() : ""))
                     .durum("TASLAK")
@@ -330,13 +334,16 @@ public class ButceService {
 
     @CacheEvict(value = "lookup", allEntries = true)
     public ButceDTO olustur(ButceDTO dto, Long sirketId) {
+        com.raspel.erp.entity.sistem.Kategori kategori = kategoriService.resolve(
+                sirketId, com.raspel.erp.entity.sistem.KategoriKapsam.BUTCE, dto.getKategori());
         Butce butce = Butce.builder()
                 .ad(dto.getAd())
                 .yil(dto.getYil())
                 .ay(dto.getAy())
                 .tutar(dto.getTutar())
                 .tur(dto.getTur())
-                .kategori(dto.getKategori())
+                .kategori(kategori != null ? kategori.getAd() : dto.getKategori())
+                .kategoriId(kategori != null ? kategori.getId() : null)
                 .sirketId(sirketId)
                 .aciklama(dto.getAciklama())
                 .durum("TASLAK")
@@ -355,7 +362,12 @@ public class ButceService {
         if (dto.getAy() != null) butce.setAy(dto.getAy());
         if (dto.getTutar() != null) butce.setTutar(dto.getTutar());
         if (dto.getTur() != null) butce.setTur(dto.getTur());
-        if (dto.getKategori() != null) butce.setKategori(dto.getKategori());
+        if (dto.getKategori() != null) {
+            com.raspel.erp.entity.sistem.Kategori kategori = kategoriService.resolve(
+                    butce.getSirketId(), com.raspel.erp.entity.sistem.KategoriKapsam.BUTCE, dto.getKategori());
+            butce.setKategori(kategori != null ? kategori.getAd() : dto.getKategori());
+            butce.setKategoriId(kategori != null ? kategori.getId() : null);
+        }
         if (dto.getAciklama() != null) butce.setAciklama(dto.getAciklama());
         butce.setRevizyon((butce.getRevizyon() != null ? butce.getRevizyon() : 1) + 1);
         // Onaylı/reddedilmiş bütçe değişirse yeniden onaya düşer.
@@ -470,6 +482,7 @@ public class ButceService {
         return ButceDTO.builder()
                 .id(b.getId()).ad(b.getAd()).yil(b.getYil()).ay(b.getAy())
                 .tutar(b.getTutar()).tur(b.getTur()).kategori(b.getKategori())
+                .kategoriId(b.getKategoriId())
                 .sirketId(b.getSirketId()).aciklama(b.getAciklama())
                 .olusturmaTarihi(b.getOlusturmaTarihi())
                 .durum(b.getDurum())

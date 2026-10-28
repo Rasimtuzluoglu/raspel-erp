@@ -59,6 +59,10 @@ public class Stok {
     @Column(length = 100)
     private String kategori;
 
+    /** Kategori registry bağlantısı (kapsam STOK). Legacy {@code kategori} alanı senkron tutulur. */
+    @Column(name = "kategori_id")
+    private Long kategoriId;
+
     @Column(length = 500)
     private String aciklama;
 

@@ -28,6 +28,7 @@ class IskontoMotoruServiceTest {
 
     @Mock private IskontoKuraliRepository iskontoKuraliRepository;
     @Mock private TenantChecker tenantChecker;
+    @Mock private com.raspel.erp.service.sistem.KategoriService kategoriService;
     @InjectMocks private IskontoMotoruService service;
 
     private IskontoKurali kural(Long id, Long stokId, BigDecimal minAdet, BigDecimal maxAdet,
@@ -132,5 +133,39 @@ class IskontoMotoruServiceTest {
         when(iskontoKuraliRepository.findById(1L)).thenReturn(Optional.of(kural(1L, null, null, null, BigDecimal.ONE, 100)));
         service.sil(1L);
         verify(iskontoKuraliRepository).delete(any(IskontoKurali.class));
+    }
+
+    @Test
+    void olustur_kategoriRegistrydenCozulur() {
+        com.raspel.erp.entity.sistem.Kategori registry = com.raspel.erp.entity.sistem.Kategori.builder()
+                .id(31L).sirketId(1L).ad("Elektronik")
+                .kapsam(com.raspel.erp.entity.sistem.KategoriKapsam.STOK).build();
+        when(kategoriService.resolve(1L, com.raspel.erp.entity.sistem.KategoriKapsam.STOK, "Elektronik"))
+                .thenReturn(registry);
+        when(iskontoKuraliRepository.save(any(IskontoKurali.class))).thenAnswer(i -> i.getArgument(0));
+
+        IskontoKuraliDTO dto = IskontoKuraliDTO.builder().sirketId(1L).ad("Kademeli")
+                .kategori("Elektronik").iskontoOrani(new BigDecimal("10")).build();
+        var sonuc = service.olustur(dto);
+
+        assertEquals(31L, sonuc.getKategoriId());
+        assertEquals("Elektronik", sonuc.getKategori());
+    }
+
+    @Test
+    void guncelle_kategoriRegistrydenCozulur() {
+        IskontoKurali mevcut = kural(1L, null, null, null, BigDecimal.TEN, 100);
+        when(iskontoKuraliRepository.findById(1L)).thenReturn(Optional.of(mevcut));
+        when(iskontoKuraliRepository.save(any(IskontoKurali.class))).thenAnswer(i -> i.getArgument(0));
+        com.raspel.erp.entity.sistem.Kategori registry = com.raspel.erp.entity.sistem.Kategori.builder()
+                .id(32L).sirketId(1L).ad("Gida")
+                .kapsam(com.raspel.erp.entity.sistem.KategoriKapsam.STOK).build();
+        when(kategoriService.resolve(1L, com.raspel.erp.entity.sistem.KategoriKapsam.STOK, "Gida"))
+                .thenReturn(registry);
+
+        var sonuc = service.guncelle(1L, IskontoKuraliDTO.builder().kategori("Gida").build());
+
+        assertEquals(32L, sonuc.getKategoriId());
+        assertEquals("Gida", sonuc.getKategori());
     }
 }

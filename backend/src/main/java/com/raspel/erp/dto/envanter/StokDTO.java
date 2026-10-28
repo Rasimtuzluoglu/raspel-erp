@@ -28,6 +28,8 @@ public class StokDTO {
     private String marka;
     private BigDecimal agirlik;
     private String kategori;
+    /** Kategori registry bağlantısı (kapsam STOK). */
+    private Long kategoriId;
     private String aciklama;
     private String fotoUrl;
     /** Küçük (thumbnail) görsel adresi; liste/kart görünümleri bunu kullanır. */
@@ -75,6 +77,8 @@ public class StokDTO {
     public void setAgirlik(BigDecimal agirlik) { this.agirlik = agirlik; }
     public String getKategori() { return kategori; }
     public void setKategori(String kategori) { this.kategori = kategori; }
+    public Long getKategoriId() { return kategoriId; }
+    public void setKategoriId(Long kategoriId) { this.kategoriId = kategoriId; }
     public String getAciklama() { return aciklama; }
     public void setAciklama(String aciklama) { this.aciklama = aciklama; }
     public String getFotoUrl() { return fotoUrl; }

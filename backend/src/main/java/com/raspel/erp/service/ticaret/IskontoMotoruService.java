@@ -31,6 +31,7 @@ public class IskontoMotoruService {
 
     private final IskontoKuraliRepository iskontoKuraliRepository;
     private final TenantChecker tenantChecker;
+    private final com.raspel.erp.service.sistem.KategoriService kategoriService;
 
     @Transactional(readOnly = true)
     public Page<IskontoKuraliDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -52,12 +53,15 @@ public class IskontoMotoruService {
         if (dto.getSirketId() == null) throw new BusinessException("Şirket bilgisi zorunludur");
         tenantChecker.checkSirketId(dto.getSirketId(), "İskonto Kuralı");
         kuralDogrula(dto);
+        com.raspel.erp.entity.sistem.Kategori kategori = kategoriService.resolve(
+                dto.getSirketId(), com.raspel.erp.entity.sistem.KategoriKapsam.STOK, dto.getKategori());
         IskontoKurali k = IskontoKurali.builder()
                 .sirketId(dto.getSirketId())
                 .ad(dto.getAd())
                 .stokId(dto.getStokId())
                 .cariHesapId(dto.getCariHesapId())
-                .kategori(dto.getKategori())
+                .kategori(kategori != null ? kategori.getAd() : dto.getKategori())
+                .kategoriId(kategori != null ? kategori.getId() : null)
                 .minAdet(dto.getMinAdet())
                 .maxAdet(dto.getMaxAdet())
                 .iskontoOrani(dto.getIskontoOrani())
@@ -77,7 +81,12 @@ public class IskontoMotoruService {
         if (dto.getAd() != null) k.setAd(dto.getAd());
         if (dto.getStokId() != null) k.setStokId(dto.getStokId());
         if (dto.getCariHesapId() != null) k.setCariHesapId(dto.getCariHesapId());
-        if (dto.getKategori() != null) k.setKategori(dto.getKategori());
+        if (dto.getKategori() != null) {
+            com.raspel.erp.entity.sistem.Kategori kategori = kategoriService.resolve(
+                    k.getSirketId(), com.raspel.erp.entity.sistem.KategoriKapsam.STOK, dto.getKategori());
+            k.setKategori(kategori != null ? kategori.getAd() : dto.getKategori());
+            k.setKategoriId(kategori != null ? kategori.getId() : null);
+        }
         if (dto.getMinAdet() != null) k.setMinAdet(dto.getMinAdet());
         if (dto.getMaxAdet() != null) k.setMaxAdet(dto.getMaxAdet());
         if (dto.getIskontoOrani() != null) k.setIskontoOrani(dto.getIskontoOrani());
@@ -158,6 +167,7 @@ public class IskontoMotoruService {
         return IskontoKuraliDTO.builder()
                 .id(k.getId()).sirketId(k.getSirketId()).ad(k.getAd())
                 .stokId(k.getStokId()).cariHesapId(k.getCariHesapId()).kategori(k.getKategori())
+                .kategoriId(k.getKategoriId())
                 .minAdet(k.getMinAdet()).maxAdet(k.getMaxAdet())
                 .iskontoOrani(k.getIskontoOrani()).oncelik(k.getOncelik())
                 .gecerliBaslangic(k.getGecerliBaslangic()).gecerliBitis(k.getGecerliBitis())

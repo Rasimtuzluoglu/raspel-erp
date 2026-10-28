@@ -49,6 +49,7 @@ class StokServiceTest {
     @Mock private com.raspel.erp.repository.envanter.StokSeriRepository stokSeriRepository;
     @Mock private com.raspel.erp.service.envanter.MaliyetService maliyetService;
     @Mock private com.raspel.erp.service.envanter.BarkodUretService barkodUretService;
+    @Mock private com.raspel.erp.service.sistem.KategoriService kategoriService;
     @InjectMocks private StokService stokService;
 
     private Stok createStok(Long id) {
@@ -137,6 +138,44 @@ class StokServiceTest {
         when(stokRepository.save(any(Stok.class))).thenReturn(existing);
         var result = stokService.guncelle(1L, dto);
         assertEquals("Guncel Urun", result.getAd());
+    }
+
+    @Test
+    void olustur_kategoriRegistrydenCozulurVeKategoriIdYazilir() {
+        com.raspel.erp.entity.sistem.Kategori registry = com.raspel.erp.entity.sistem.Kategori.builder()
+                .id(11L).sirketId(1L).ad("Elektronik")
+                .kapsam(com.raspel.erp.entity.sistem.KategoriKapsam.STOK).build();
+        when(kategoriService.resolve(1L, com.raspel.erp.entity.sistem.KategoriKapsam.STOK, "elektronik"))
+                .thenReturn(registry);
+        when(barkodUretService.ean13Uret(1L)).thenReturn("8690000000005");
+        when(stokRepository.save(any(Stok.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        StokDTO dto = StokDTO.builder().stokKodu("STK-REG").ad("Telefon").birim("Adet")
+                .fiyat(BigDecimal.valueOf(10)).kategori("elektronik").build();
+        var result = stokService.olustur(dto, 1L);
+
+        assertEquals(11L, result.getKategoriId());
+        assertEquals("Elektronik", result.getKategori());
+    }
+
+    @Test
+    void guncelle_kategoriRegistrydenCozulur() {
+        Stok existing = createStok(1L);
+        existing.setSirketId(1L);
+        when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(existing));
+        when(stokRepository.save(any(Stok.class))).thenAnswer(inv -> inv.getArgument(0));
+        com.raspel.erp.entity.sistem.Kategori registry = com.raspel.erp.entity.sistem.Kategori.builder()
+                .id(12L).sirketId(1L).ad("Gida")
+                .kapsam(com.raspel.erp.entity.sistem.KategoriKapsam.STOK).build();
+        when(kategoriService.resolve(1L, com.raspel.erp.entity.sistem.KategoriKapsam.STOK, "Gida"))
+                .thenReturn(registry);
+
+        StokDTO dto = StokDTO.builder().ad("Un").birim("KG").kategori("Gida")
+                .fiyat(BigDecimal.TEN).build();
+        var result = stokService.guncelle(1L, dto);
+
+        assertEquals(12L, result.getKategoriId());
+        assertEquals("Gida", result.getKategori());
     }
 
     @Test

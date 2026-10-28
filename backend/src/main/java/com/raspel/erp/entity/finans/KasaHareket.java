@@ -5,7 +5,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import com.raspel.erp.entity.sistem.GelirGiderKategori;
+import com.raspel.erp.entity.sistem.Kategori;
 
 @Entity
 @Table(name = "kasa_hareket", schema = "muhasebe")
@@ -35,9 +35,10 @@ public class KasaHareket {
     @Column(length = 500)
     private String aciklama;
 
+    /** Kategori registry'si (kapsam: KASA_GELIR / KASA_GIDER). */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kategori_id")
-    private GelirGiderKategori kategori;
+    private Kategori kategori;
 
     /** Kaynak fatura (satış tahsilatı izlenebilirliği ve iptal ters kaydı için). */
     @Column(name = "fatura_id")

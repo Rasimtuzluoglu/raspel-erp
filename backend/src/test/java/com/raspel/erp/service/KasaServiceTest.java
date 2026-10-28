@@ -360,4 +360,73 @@ class KasaServiceTest {
         assertEquals(0, ozet.getToplamBakiye().compareTo(BigDecimal.ZERO));
         verifyNoInteractions(kasaRepository);
     }
+
+    // ---------- Kategori registry entegrasyonu ----------
+
+    private com.raspel.erp.entity.sistem.Kategori kategori(Long id, String ad,
+                                                          com.raspel.erp.entity.sistem.KategoriKapsam kapsam,
+                                                          boolean aktif) {
+        return com.raspel.erp.entity.sistem.Kategori.builder()
+                .id(id).sirketId(1L).ad(ad).kapsam(kapsam).aktif(aktif).build();
+    }
+
+    private KasaHareketDTO kategoriDto(String tur, Long kategoriId) {
+        return KasaHareketDTO.builder().kasaId(1L).tur(tur)
+                .tutar(BigDecimal.valueOf(1000)).hareketTarihi(LocalDate.now())
+                .kategoriId(kategoriId).build();
+    }
+
+    @Test
+    void hareketEkle_gecerliKategoriBaglanir() {
+        Kasa kasa = createKasa(1L);
+        when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kasa));
+        com.raspel.erp.entity.sistem.Kategori kategori = kategori(5L, "Satış",
+                com.raspel.erp.entity.sistem.KategoriKapsam.KASA_GELIR, true);
+        when(kategoriRepository.findById(5L)).thenReturn(Optional.of(kategori));
+        when(kasaHareketRepository.save(any(KasaHareket.class))).thenAnswer(inv -> {
+            KasaHareket h = inv.getArgument(0);
+            h.setId(1L);
+            return h;
+        });
+
+        var sonuc = kasaService.hareketEkle(kategoriDto("GELIR", 5L));
+
+        assertEquals(5L, sonuc.getKategoriId());
+        assertEquals("Satış", sonuc.getKategoriAd());
+    }
+
+    @Test
+    void hareketEkle_pasifKategoriReddedilir() {
+        Kasa kasa = createKasa(1L);
+        when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kasa));
+        when(kategoriRepository.findById(5L)).thenReturn(Optional.of(kategori(5L, "Eski",
+                com.raspel.erp.entity.sistem.KategoriKapsam.KASA_GELIR, false)));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> kasaService.hareketEkle(kategoriDto("GELIR", 5L)));
+        verify(kasaHareketRepository, never()).save(any());
+    }
+
+    @Test
+    void hareketEkle_turUyumsuzKategoriReddedilir() {
+        Kasa kasa = createKasa(1L);
+        when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kasa));
+        // GELIR hareketine GIDER kapsamlı kategori bağlanamaz.
+        when(kategoriRepository.findById(5L)).thenReturn(Optional.of(kategori(5L, "Maaş",
+                com.raspel.erp.entity.sistem.KategoriKapsam.KASA_GIDER, true)));
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> kasaService.hareketEkle(kategoriDto("GELIR", 5L)));
+        verify(kasaHareketRepository, never()).save(any());
+    }
+
+    @Test
+    void hareketEkle_olmayanKategoriHataFirlatir() {
+        Kasa kasa = createKasa(1L);
+        when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kasa));
+        when(kategoriRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(com.raspel.erp.exception.ResourceNotFoundException.class,
+                () -> kasaService.hareketEkle(kategoriDto("GELIR", 99L)));
+    }
 }

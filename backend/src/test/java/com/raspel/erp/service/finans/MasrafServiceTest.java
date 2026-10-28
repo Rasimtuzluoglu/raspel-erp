@@ -37,6 +37,7 @@ class MasrafServiceTest {
     @Mock private com.raspel.erp.service.sistem.DonemService donemService;
     @Mock private com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
     @Mock private com.raspel.erp.repository.finans.CariHesapRepository cariHesapRepository;
+    @Mock private com.raspel.erp.service.sistem.KategoriService kategoriService;
     @InjectMocks private MasrafService masrafService;
 
     private Masraf ornekMasraf(Long id) {
@@ -219,5 +220,44 @@ class MasrafServiceTest {
                 .kategori("OFIS").cariHesapId(9L).build();
         assertThrows(ResourceNotFoundException.class, () -> masrafService.olustur(dto, 1L));
         verify(masrafRepository, never()).save(any(Masraf.class));
+    }
+
+    @Test
+    void olustur_kategoriRegistrydenCozulurVeLegacyAdSenkronlanir() {
+        com.raspel.erp.entity.sistem.Kategori registry = com.raspel.erp.entity.sistem.Kategori.builder()
+                .id(42L).sirketId(1L).ad("ARAC")
+                .kapsam(com.raspel.erp.entity.sistem.KategoriKapsam.MASRAF).build();
+        when(kategoriService.resolve(1L, com.raspel.erp.entity.sistem.KategoriKapsam.MASRAF, "Araç"))
+                .thenReturn(registry);
+        when(masrafRepository.save(any(Masraf.class))).thenAnswer(inv -> {
+            Masraf m = inv.getArgument(0);
+            m.setId(1L);
+            return m;
+        });
+
+        MasrafDTO dto = MasrafDTO.builder().tarih(LocalDate.now())
+                .tutar(new BigDecimal("100")).kategori("Araç").build();
+        var sonuc = masrafService.olustur(dto, 1L);
+
+        assertEquals(42L, sonuc.getKategoriId());
+        // Legacy kolon registry adıyla (büyük harf) senkron tutulur.
+        assertEquals("ARAC", sonuc.getKategori());
+    }
+
+    @Test
+    void guncelle_kategoriRegistrydenCozulur() {
+        Masraf masraf = ornekMasraf(1L);
+        when(masrafRepository.findById(1L)).thenReturn(Optional.of(masraf));
+        when(masrafRepository.save(any(Masraf.class))).thenAnswer(inv -> inv.getArgument(0));
+        com.raspel.erp.entity.sistem.Kategori registry = com.raspel.erp.entity.sistem.Kategori.builder()
+                .id(43L).sirketId(1L).ad("KIRA")
+                .kapsam(com.raspel.erp.entity.sistem.KategoriKapsam.MASRAF).build();
+        when(kategoriService.resolve(eq(1L), eq(com.raspel.erp.entity.sistem.KategoriKapsam.MASRAF), anyString()))
+                .thenReturn(registry);
+
+        var sonuc = masrafService.guncelle(1L, MasrafDTO.builder().kategori("Kira").build());
+
+        assertEquals(43L, sonuc.getKategoriId());
+        assertEquals("KIRA", sonuc.getKategori());
     }
 }

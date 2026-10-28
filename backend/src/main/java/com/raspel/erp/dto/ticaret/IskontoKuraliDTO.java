@@ -23,6 +23,9 @@ public class IskontoKuraliDTO {
     private Long cariHesapId;
     private String kategori;
 
+    /** Kategori registry bağlantısı (kapsam STOK). */
+    private Long kategoriId;
+
     @DecimalMin(value = "0", message = "Minimum adet negatif olamaz")
     private BigDecimal minAdet;
 

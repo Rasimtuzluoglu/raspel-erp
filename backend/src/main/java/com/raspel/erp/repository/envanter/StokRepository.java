@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -151,4 +152,26 @@ public interface StokRepository extends JpaRepository<Stok, Long> {
             + "FROM Stok s WHERE s.sirketId = :sirketId AND s.marka IS NOT NULL "
             + "GROUP BY s.marka ORDER BY s.marka ASC")
     List<Object[]> markaDagilimi(@Param("sirketId") Long sirketId);
+
+    // ---------- Kategori registry entegrasyonu ----------
+
+    long countByKategoriId(Long kategoriId);
+
+    /** Kategori başına ürün sayısı (tek sorgu; ağaç kullanım sayıları için). */
+    @Query("SELECT s.kategoriId, COUNT(s) FROM Stok s "
+            + "WHERE s.sirketId = :sirketId AND s.kategoriId IS NOT NULL GROUP BY s.kategoriId")
+    List<Object[]> kategoriKullanimSayilari(@Param("sirketId") Long sirketId);
+
+    /** Kategori yeniden adlandırıldığında legacy string kolon senkronlanır. */
+    @Modifying(flushAutomatically = true)
+    @Query("UPDATE Stok s SET s.kategori = :ad WHERE s.kategoriId = :kategoriId")
+    int kategoriAdGuncelle(@Param("kategoriId") Long kategoriId, @Param("ad") String ad);
+
+    /** Birleştirme: kaynağa bağlı tüm stoklar hedefe taşınır. */
+    @Modifying(flushAutomatically = true)
+    @Query("UPDATE Stok s SET s.kategoriId = :hedefId, s.kategori = :hedefAd "
+            + "WHERE s.kategoriId = :kaynakId")
+    int kategoriBirlestir(@Param("kaynakId") Long kaynakId,
+                          @Param("hedefId") Long hedefId,
+                          @Param("hedefAd") String hedefAd);
 }

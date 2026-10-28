@@ -4,6 +4,7 @@ import com.raspel.erp.entity.finans.Masraf;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -52,4 +53,23 @@ public interface MasrafRepository extends JpaRepository<Masraf, Long> {
             @Param("bitis") LocalDate bitis,
             @Param("q") String q,
             Pageable pageable);
+
+    // ---------- Kategori registry entegrasyonu ----------
+
+    long countByKategoriId(Long kategoriId);
+
+    @Query("SELECT m.kategoriId, COUNT(m) FROM Masraf m "
+            + "WHERE m.sirketId = :sirketId AND m.kategoriId IS NOT NULL GROUP BY m.kategoriId")
+    List<Object[]> kategoriKullanimSayilari(@Param("sirketId") Long sirketId);
+
+    @Modifying(flushAutomatically = true)
+    @Query("UPDATE Masraf m SET m.kategori = :ad WHERE m.kategoriId = :kategoriId")
+    int kategoriAdGuncelle(@Param("kategoriId") Long kategoriId, @Param("ad") String ad);
+
+    @Modifying(flushAutomatically = true)
+    @Query("UPDATE Masraf m SET m.kategoriId = :hedefId, m.kategori = :hedefAd "
+            + "WHERE m.kategoriId = :kaynakId")
+    int kategoriBirlestir(@Param("kaynakId") Long kaynakId,
+                          @Param("hedefId") Long hedefId,
+                          @Param("hedefAd") String hedefAd);
 }

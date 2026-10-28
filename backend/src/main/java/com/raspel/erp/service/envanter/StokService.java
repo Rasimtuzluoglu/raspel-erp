@@ -59,6 +59,7 @@ public class StokService {
     private final com.raspel.erp.repository.envanter.StokSeriRepository stokSeriRepository;
     private final com.raspel.erp.service.envanter.MaliyetService maliyetService;
     private final BarkodUretService barkodUretService;
+    private final com.raspel.erp.service.sistem.KategoriService kategoriService;
 
     // ---------- OZET (KPI) ----------
 
@@ -342,12 +343,17 @@ public class StokService {
         String barkod = normalizeBarkod(dto.getBarkod());
         // Barkod opsiyonel; bos birakilirsa sirket ici EAN-13 otomatik uretilir.
         if (barkod == null) barkod = barkodUretService.ean13Uret(sirketId);
+        // Kategori adi registry'de get-or-create edilir; legacy ad senkron tutulur.
+        com.raspel.erp.entity.sistem.Kategori kategori = kategoriService.resolve(
+                sirketId, com.raspel.erp.entity.sistem.KategoriKapsam.STOK, dto.getKategori());
         Stok s = Stok.builder().stokKodu(stokKodu).ad(dto.getAd())
                 .birim(dto.getBirim()).fiyat(dto.getFiyat()).satisFiyati(dto.getSatisFiyati())
                 .miktar(dto.getMiktar() != null ? dto.getMiktar() : BigDecimal.ZERO)
                 .minMiktar(dto.getMinMiktar()).kdvOrani(dto.getKdvOrani()).stokGrubu(dto.getStokGrubu())
                 .barkod(barkod).rafNo(dto.getRafNo()).marka(dto.getMarka())
-                .agirlik(dto.getAgirlik()).kategori(dto.getKategori())
+                .agirlik(dto.getAgirlik())
+                .kategori(kategori != null ? kategori.getAd() : dto.getKategori())
+                .kategoriId(kategori != null ? kategori.getId() : null)
                 .aciklama(dto.getAciklama()).fotoUrl(dto.getFotoUrl()).fotoThumbUrl(dto.getFotoThumbUrl()).birim2(dto.getBirim2())
                 .cevrimKatsayisi(dto.getCevrimKatsayisi()).tedarikciId(dto.getTedarikciId())
                 .tedarikciStokKodu(dto.getTedarikciStokKodu()).tedarikciFiyat(dto.getTedarikciFiyat())
@@ -369,12 +375,16 @@ public class StokService {
                         barkod = barkodUretService.ean13Uret(sirketId, uretilenler);
                         uretilenler.add(barkod);
                     }
+                    com.raspel.erp.entity.sistem.Kategori kategori = kategoriService.resolve(
+                            sirketId, com.raspel.erp.entity.sistem.KategoriKapsam.STOK, dto.getKategori());
                     return Stok.builder().stokKodu(normalizeStokKodu(dto.getStokKodu())).ad(dto.getAd())
                             .birim(dto.getBirim()).fiyat(dto.getFiyat()).satisFiyati(dto.getSatisFiyati())
                             .miktar(dto.getMiktar() != null ? dto.getMiktar() : BigDecimal.ZERO)
                             .minMiktar(dto.getMinMiktar()).kdvOrani(dto.getKdvOrani()).stokGrubu(dto.getStokGrubu())
                             .barkod(barkod).rafNo(dto.getRafNo()).marka(dto.getMarka())
-                            .agirlik(dto.getAgirlik()).kategori(dto.getKategori())
+                            .agirlik(dto.getAgirlik())
+                            .kategori(kategori != null ? kategori.getAd() : dto.getKategori())
+                            .kategoriId(kategori != null ? kategori.getId() : null)
                             .aciklama(dto.getAciklama()).birim2(dto.getBirim2())
                             .cevrimKatsayisi(dto.getCevrimKatsayisi()).tedarikciId(dto.getTedarikciId())
                             .tedarikciStokKodu(dto.getTedarikciStokKodu()).tedarikciFiyat(dto.getTedarikciFiyat())
@@ -427,7 +437,11 @@ public class StokService {
         s.setMinMiktar(dto.getMinMiktar()); s.setKdvOrani(dto.getKdvOrani());
         s.setStokGrubu(dto.getStokGrubu()); s.setBarkod(normalizeBarkod(dto.getBarkod()));
         s.setRafNo(dto.getRafNo()); s.setMarka(dto.getMarka());
-        s.setAgirlik(dto.getAgirlik()); s.setKategori(dto.getKategori());
+        s.setAgirlik(dto.getAgirlik());
+        com.raspel.erp.entity.sistem.Kategori kategori = kategoriService.resolve(
+                s.getSirketId(), com.raspel.erp.entity.sistem.KategoriKapsam.STOK, dto.getKategori());
+        s.setKategori(kategori != null ? kategori.getAd() : dto.getKategori());
+        s.setKategoriId(kategori != null ? kategori.getId() : null);
         s.setAciklama(dto.getAciklama());
         if (dto.getFotoUrl() != null) s.setFotoUrl(dto.getFotoUrl());
         if (dto.getFotoThumbUrl() != null) s.setFotoThumbUrl(dto.getFotoThumbUrl());
@@ -868,6 +882,7 @@ public class StokService {
                 .miktar(s.getMiktar()).minMiktar(s.getMinMiktar()).kdvOrani(s.getKdvOrani())
                 .stokGrubu(s.getStokGrubu()).barkod(s.getBarkod()).rafNo(s.getRafNo())
                 .marka(s.getMarka()).agirlik(s.getAgirlik()).kategori(s.getKategori())
+                .kategoriId(s.getKategoriId())
                 .aciklama(s.getAciklama()).fotoUrl(s.getFotoUrl()).fotoThumbUrl(s.getFotoThumbUrl()).birim2(s.getBirim2())
                 .cevrimKatsayisi(s.getCevrimKatsayisi()).tedarikciId(s.getTedarikciId())
                 .tedarikciAd(s.getTedarikciId() != null ? tedarikciAdlari.get(s.getTedarikciId()) : null)
