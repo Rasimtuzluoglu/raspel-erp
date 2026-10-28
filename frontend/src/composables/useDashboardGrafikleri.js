@@ -129,7 +129,14 @@ export function useDashboardGrafikleri(kaynak, { nakitGun } = {}) {
       ...temelOpsiyonlar.value.plugins,
       tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}` } }
     },
-    scales: eksenler.value
+    scales: {
+      x: {
+        ...eksenler.value.x,
+        // Dar ekranda 30 etiket ust uste binmesin: en fazla 8 okunabilir etiket.
+        ticks: { ...eksenler.value.x.ticks, maxTicksLimit: 8, autoSkip: true, maxRotation: 0 }
+      },
+      y: eksenler.value.y
+    }
   }))
 
   const ayAnahtari = (tarih) =>
