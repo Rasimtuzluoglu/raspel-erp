@@ -260,6 +260,11 @@ watch([ctrl_k, cmd_k], ([ctrl, cmd]) => {
   }
 })
 
+// Anasayfadaki "Ara / komut" butonu bu olayi yayar; Ctrl+K davranisi korunur.
+const hizliAraDinleyici = () => {
+  if (authStore.isLoggedIn) quickSearchVisible.value = true
+}
+
 // Esc tusu ile acik olan tum araclari kapatir
 watch(escape, (v) => {
   if (v) {
@@ -312,6 +317,7 @@ onMounted(() => {
   window.addEventListener('api-error', handleApiError)
   window.addEventListener('keydown', handleGlobalShortcuts)
   window.addEventListener('storage', kuyrukDepoDinleyici)
+  window.addEventListener('raspel:hizli-ara', hizliAraDinleyici)
   // Giris oncesi kuyrukta bekleyen satis olabilir (onceki oturumdan); sayaci tazele.
   kuyrukYenile()
 })
@@ -320,6 +326,7 @@ onUnmounted(() => {
   window.removeEventListener('api-error', handleApiError)
   window.removeEventListener('keydown', handleGlobalShortcuts)
   window.removeEventListener('storage', kuyrukDepoDinleyici)
+  window.removeEventListener('raspel:hizli-ara', hizliAraDinleyici)
 })
 
 const sirketRenkPaletleri = [

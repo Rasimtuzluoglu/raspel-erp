@@ -1,8 +1,32 @@
 import { apiClient } from '../client.js'
 
+// Anasayfa (dashboard) uclari.
+// NOT: Mevcut `getData()` legacy tek-uç sozlesmesini korur; yeni anasayfa
+// parcali uclari kullanir (ozet -> gorevler/icgoruler -> grafikler/akis).
 export const dashboardAPI = {
   getData() {
     return apiClient.get('/dashboard')
+  },
+  ozet() {
+    return apiClient.get('/dashboard/ozet')
+  },
+  gorevler() {
+    return apiClient.get('/dashboard/gorevler')
+  },
+  grafikler() {
+    return apiClient.get('/dashboard/grafikler')
+  },
+  akis(params) {
+    return apiClient.get('/dashboard/akis', { params })
+  },
+  icgoruler() {
+    return apiClient.get('/dashboard/icgoruler')
+  },
+  tercihGetir() {
+    return apiClient.get('/dashboard/tercihler')
+  },
+  tercihKaydet(data) {
+    return apiClient.put('/dashboard/tercihler', data)
   }
 }
 
