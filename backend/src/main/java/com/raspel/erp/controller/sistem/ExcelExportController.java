@@ -73,6 +73,7 @@ public class ExcelExportController {
     private final com.raspel.erp.service.sube.SubeService subeService;
     private final com.raspel.erp.service.finans.TahsilatService tahsilatService;
     private final com.raspel.erp.service.finans.CekSenetService cekSenetService;
+    private final com.raspel.erp.service.sistem.OnayService onayService;
 
     @GetMapping("/kdv-beyanname")
     @Operation(summary = "KDV beyannamesini Excel dışa aktar",
@@ -1096,6 +1097,34 @@ public class ExcelExportController {
         return excel("CekSenet", new String[]{"ID", "Tür", "Çek/Senet No", "Cari", "Banka", "Şube",
                 "Vade", "Tutar", "Durum", "Fatura No", "Ciro Cari", "Ciro Tarihi", "Teminat Tarihi",
                 "Teminat Açıklaması", "Protesto Tarihi", "Açıklama"}, rows);
+    }
+
+    @GetMapping("/onaylar")
+    @Operation(summary = "Bekleyen onayları Excel dışa aktar",
+            description = "Birleşik onay ekranındaki bekleyen izin, masraf, satınalma ve sipariş kayıtlarını "
+                    + "(tür/arama filtreleriyle) Excel (.xlsx) olarak dışa aktarır")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
+    public ResponseEntity<byte[]> onaylar(
+            HttpServletRequest request,
+            @RequestParam(required = false) String tur,
+            @RequestParam(required = false) String q) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        var list = onayService.excel(sirketId, tur, q);
+        List<Map<String, Object>> rows = list.stream().map(o -> {
+            Map<String, Object> satir = new LinkedHashMap<>();
+            satir.put("Tür", o.getTur());
+            satir.put("Kayıt No", o.getKaynakId());
+            satir.put("Başlık", o.getBaslik());
+            satir.put("Alt Başlık", o.getAltBaslik());
+            satir.put("Tutar", o.getTutar());
+            satir.put("Tarih", o.getTarih());
+            satir.put("Oluşturma", o.getOlusturmaTarihi());
+            satir.put("Durum", o.getDurum());
+            satir.put("Açıklama", o.getAciklama());
+            return satir;
+        }).toList();
+        return excel("Onaylar", new String[]{"Tür", "Kayıt No", "Başlık", "Alt Başlık", "Tutar",
+                "Tarih", "Oluşturma", "Durum", "Açıklama"}, rows);
     }
 
     private ResponseEntity<byte[]> excel(String name, String[] cols, List<Map<String, Object>> rows) {

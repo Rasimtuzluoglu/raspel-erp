@@ -106,6 +106,8 @@ class ExcelExportControllerTest {
     private com.raspel.erp.service.finans.TahsilatService tahsilatService;
     @MockBean
     private com.raspel.erp.service.finans.CekSenetService cekSenetService;
+    @MockBean
+    private com.raspel.erp.service.sistem.OnayService onayService;
 
     @Test
     void cariHesaplar_excelDoner() throws Exception {
@@ -134,6 +136,36 @@ class ExcelExportControllerTest {
                 org.mockito.ArgumentMatchers.eq("Test"),
                 org.mockito.ArgumentMatchers.any(),
                 org.mockito.ArgumentMatchers.argThat(l -> l != null && l.size() == 10001));
+    }
+
+    @Test
+    void onaylar_excelDoner_veTumKolonlariYazar() throws Exception {
+        when(onayService.excel(1L, "IZIN", "ayşe"))
+                .thenReturn(List.of(com.raspel.erp.dto.sistem.OnayBekleyenDTO.builder()
+                        .tur("IZIN").kaynakId(5L).baslik("Ayşe Kaya").altBaslik("YILLIK")
+                        .tarih(java.time.LocalDate.now()).durum("BEKLEMEDE")
+                        .olusturmaTarihi(java.time.LocalDateTime.now())
+                        .aciklama("Yıllık izin").build()));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{7, 8, 9});
+
+        mockMvc.perform(get("/api/exports/onaylar")
+                        .requestAttr("sirketId", 1L)
+                        .param("tur", "IZIN")
+                        .param("q", "ayşe")
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                                .user("admin").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(new byte[]{7, 8, 9}));
+
+        org.mockito.Mockito.verify(onayService).excel(1L, "IZIN", "ayşe");
+        org.mockito.Mockito.verify(excelService).export(
+                org.mockito.ArgumentMatchers.eq("Onaylar"),
+                org.mockito.ArgumentMatchers.argThat(cols -> cols != null && cols.length == 9
+                        && "Tür".equals(cols[0]) && "Açıklama".equals(cols[8])),
+                org.mockito.ArgumentMatchers.argThat(l -> l != null && l.size() == 1
+                        && "IZIN".equals(l.get(0).get("Tür"))
+                        && "Ayşe Kaya".equals(l.get(0).get("Başlık"))
+                        && "BEKLEMEDE".equals(l.get(0).get("Durum"))));
     }
 
     @Test

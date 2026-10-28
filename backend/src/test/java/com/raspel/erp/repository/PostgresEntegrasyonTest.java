@@ -108,6 +108,37 @@ class PostgresEntegrasyonTest {
         assertTrue(postgres.isRunning());
     }
 
+    /** V172: birleşik onay karar tablosu, indeksleri ve varsayılanları. */
+    @Test
+    void v172OnayKararTablosuVeIndeksleriOlusur() {
+        Integer kolonSayisi = jdbc.queryForObject(
+                "SELECT count(*) FROM information_schema.columns " +
+                        "WHERE table_schema = 'sistem' AND table_name = 'onay_karar'",
+                Integer.class);
+        assertEquals(11, kolonSayisi);
+
+        Integer indeksSayisi = jdbc.queryForObject(
+                "SELECT count(*) FROM pg_indexes WHERE schemaname = 'sistem' AND tablename = 'onay_karar' " +
+                        "AND indexname IN ('idx_onay_karar_sirket_tarih', 'idx_onay_karar_tur_kaynak')",
+                Integer.class);
+        assertEquals(2, indeksSayisi);
+
+        jdbc.update("DELETE FROM sistem.onay_karar WHERE sirket_id = 987654");
+        jdbc.update("INSERT INTO sistem.onay_karar (sirket_id, tur, kaynak_id, karar, gerekce) " +
+                        "VALUES (?, ?, ?, ?, ?)",
+                987654L, "IZIN", 5L, "ONAY", "entegrasyon testi");
+        Integer kayitSayisi = jdbc.queryForObject(
+                "SELECT count(*) FROM sistem.onay_karar WHERE sirket_id = 987654", Integer.class);
+        assertEquals(1, kayitSayisi);
+
+        // olusturma_tarihi varsayılanı (NOW()) uygulanmış olmalı.
+        Integer tarihDolu = jdbc.queryForObject(
+                "SELECT count(*) FROM sistem.onay_karar WHERE sirket_id = 987654 " +
+                        "AND olusturma_tarihi IS NOT NULL", Integer.class);
+        assertEquals(1, tarihDolu);
+        jdbc.update("DELETE FROM sistem.onay_karar WHERE sirket_id = 987654");
+    }
+
     @Test
     void veriButunluguFkVeNotNullKisitlariVar() {
         Integer fkSayisi = jdbc.queryForObject(

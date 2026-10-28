@@ -39,6 +39,23 @@ public interface PersonelIzinRepository extends JpaRepository<PersonelIzin, Long
             @Param("q") String q,
             Pageable pageable);
 
+    /**
+     * Birleşik onay ekranı: bekleyen izinler (şirket + durum) ve isteğe bağlı
+     * arama (personel adı, izin türü, açıklama). {@code q} ham terim değil,
+     * {@link com.raspel.erp.util.AramaTemizleyici#like(String)} desenidir.
+     */
+    @Query("SELECT i FROM PersonelIzin i JOIN Personel p ON i.personelId = p.id " +
+            "WHERE p.sirketId = :sirketId AND i.durum = :durum " +
+            "AND (:q IS NULL OR (" +
+            "     LOWER(CONCAT(COALESCE(p.ad,''), ' ', COALESCE(p.soyad,''))) LIKE :q ESCAPE '\\' " +
+            "     OR LOWER(i.izinTuru) LIKE :q ESCAPE '\\' " +
+            "     OR LOWER(COALESCE(i.aciklama,'')) LIKE :q ESCAPE '\\'))")
+    Page<PersonelIzin> onayBekleyenler(
+            @Param("sirketId") Long sirketId,
+            @Param("durum") String durum,
+            @Param("q") String q,
+            Pageable pageable);
+
     @Query("SELECT COUNT(i) FROM PersonelIzin i JOIN Personel p ON i.personelId = p.id WHERE i.durum = :durum AND p.sirketId = :sirketId")
     long countByDurumAndSirketId(String durum, Long sirketId);
 

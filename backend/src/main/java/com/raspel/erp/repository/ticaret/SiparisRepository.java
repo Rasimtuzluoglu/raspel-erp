@@ -50,6 +50,22 @@ public interface SiparisRepository extends JpaRepository<Siparis, Long> {
                                 @Param("bugun") LocalDate bugun,
                                 Pageable pageable);
 
+    /**
+     * Birleşik onay ekranı: bekleyen siparişler (şirket + durum kümesi).
+     * Arama; sipariş no, cari adı ve açıklamada yapılır. {@code q} ham terim
+     * değil, {@link com.raspel.erp.util.AramaTemizleyici#like(String)} desenidir.
+     */
+    @Query("SELECT s FROM Siparis s LEFT JOIN CariHesap c ON s.cariHesapId = c.id " +
+           "WHERE s.sirketId = :sirketId AND s.durum IN :durumlar " +
+           "AND (:q IS NULL OR (" +
+           "     LOWER(COALESCE(s.siparisNo,'')) LIKE :q ESCAPE '\\' " +
+           "     OR LOWER(COALESCE(c.ad,'')) LIKE :q ESCAPE '\\' " +
+           "     OR LOWER(COALESCE(s.aciklama,'')) LIKE :q ESCAPE '\\'))")
+    Page<Siparis> onayBekleyenler(@Param("sirketId") Long sirketId,
+                                  @Param("durumlar") java.util.Collection<String> durumlar,
+                                  @Param("q") String q,
+                                  Pageable pageable);
+
     @Query("SELECT DISTINCT s.driverAd FROM Siparis s WHERE s.sirketId = :sirketId " +
            "AND s.driverAd IS NOT NULL AND s.driverAd <> '' ORDER BY s.driverAd")
     List<String> findDistinctDriverAd(@Param("sirketId") Long sirketId);
