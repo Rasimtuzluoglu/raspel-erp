@@ -86,4 +86,15 @@ describe('DashboardGorevMerkezi', () => {
     const wrapper = mountEt({ gorevler: [{ ...gorevler[1], baslik: '' }] })
     expect(wrapper.text()).toContain(i18n.global.t('dashboard.gorevTuruVadesiGecen'))
   })
+
+  it('vade kayıtlarını her zaman /tahsilat satırı olarak bağlar', () => {
+    const wrapper = mountEt({
+      gorevler: [{ ...gorevler[1], tur: 'VADESI_YAKLASAN', route: '/baska-yer' }]
+    })
+    const satir = wrapper.find('[data-test="gorev-VADESI_YAKLASAN"]')
+    expect(satir.attributes('href')).toBe('/tahsilat')
+    // Tahsilat linki satırın kendisidir; ayrı liste/kart yok.
+    expect(wrapper.findAll('.gorev-kart')).toHaveLength(1)
+    expect(satir.find('.gorev-link').text()).toContain(i18n.global.t('dashboard.gorevTahsilatLink'))
+  })
 })

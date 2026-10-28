@@ -1,33 +1,34 @@
 <template>
   <div
-    class="kpi-grid"
+    class="pano-kpi"
     data-test="kpi-grid"
+    data-widget="kpi"
   >
     <template v-if="yukleniyor && !kpi">
       <div
         v-for="i in 4"
-        :key="`kpi-skeleton-${i}`"
-        class="bento bento--skeleton"
+        :key="`kpi-iskelet-${i}`"
+        class="kpi-hucre kpi-hucre--iskelet"
         aria-hidden="true"
       >
-        <span class="iskelet iskelet--kisa" />
-        <span class="iskelet iskelet--buyuk" />
-        <span class="iskelet iskelet--uzun" />
+        <span class="kpi-iskelet kpi-iskelet--kisa" />
+        <span class="kpi-iskelet kpi-iskelet--buyuk" />
+        <span class="kpi-iskelet kpi-iskelet--uzun" />
       </div>
     </template>
 
     <template v-else>
       <!-- Likidite -->
       <article
-        class="bento bento--likidite"
+        class="kpi-hucre kpi-hucre--likidite"
         data-test="kpi-likidite"
       >
-        <header class="bento-ust">
-          <span class="bento-ikon"><i
+        <header class="kpi-ust">
+          <span class="kpi-ikon"><i
             class="pi pi-wallet"
             aria-hidden="true"
           /></span>
-          <span class="bento-etiket">{{ t('dashboard.kpiLikidite') }}</span>
+          <span class="kpi-etiket">{{ t('dashboard.kpiLikidite') }}</span>
           <span
             v-if="trendVar"
             class="delta"
@@ -40,16 +41,16 @@
             {{ Math.abs(trendYuzde).toFixed(1) }}%
           </span>
         </header>
-        <p class="bento-deger gizli-veri">
+        <p class="kpi-deger gizli-veri">
           {{ formatCurrency(likidite.deger || 0) }}
         </p>
         <SparkLine
           v-if="sparkline.length > 1"
           :veriler="sparkline"
           renk="#10b981"
-          :yukseklik="36"
+          :yukseklik="30"
         />
-        <footer class="bento-alt">
+        <footer class="kpi-alt">
           <span>{{ t('dashboard.kpiKasa') }} <strong>{{ formatCurrency(likidite.kasa || 0) }}</strong></span>
           <span>{{ t('dashboard.kpiBanka') }} <strong>{{ formatCurrency(likidite.banka || 0) }}</strong></span>
         </footer>
@@ -58,48 +59,48 @@
       <!-- Net cari -->
       <router-link
         to="/cari-hesaplar"
-        class="bento bento--cari"
+        class="kpi-hucre kpi-hucre--cari"
         data-test="kpi-net-cari"
       >
-        <header class="bento-ust">
-          <span class="bento-ikon"><i
+        <header class="kpi-ust">
+          <span class="kpi-ikon"><i
             class="pi pi-users"
             aria-hidden="true"
           /></span>
-          <span class="bento-etiket">{{ t('dashboard.kpiNetCari') }}</span>
+          <span class="kpi-etiket">{{ t('dashboard.kpiNetCari') }}</span>
           <i
-            class="pi pi-arrow-right bento-git"
+            class="pi pi-arrow-right kpi-git"
             aria-hidden="true"
           />
         </header>
-        <p class="bento-deger gizli-veri">
+        <p class="kpi-deger gizli-veri">
           {{ formatCurrency(netCari.deger || 0) }}
         </p>
-        <footer class="bento-alt bento-alt--cift">
-          <span class="bento-alacak">{{ t('dashboard.kpiAlacak') }} <strong>{{ formatCurrency(netCari.alacak || 0) }}</strong></span>
-          <span class="bento-borc">{{ t('dashboard.kpiBorc') }} <strong>{{ formatCurrency(netCari.borc || 0) }}</strong></span>
+        <footer class="kpi-alt kpi-alt--cift">
+          <span class="kpi-alacak">{{ t('dashboard.kpiAlacak') }} <strong>{{ formatCurrency(netCari.alacak || 0) }}</strong></span>
+          <span class="kpi-borc">{{ t('dashboard.kpiBorc') }} <strong>{{ formatCurrency(netCari.borc || 0) }}</strong></span>
         </footer>
       </router-link>
 
       <!-- Aylık ciro + hedef halkası -->
       <router-link
         to="/raporlar"
-        class="bento bento--ciro"
+        class="kpi-hucre kpi-hucre--ciro"
         data-test="kpi-ciro"
       >
-        <header class="bento-ust">
-          <span class="bento-ikon"><i
+        <header class="kpi-ust">
+          <span class="kpi-ikon"><i
             class="pi pi-chart-bar"
             aria-hidden="true"
           /></span>
-          <span class="bento-etiket">{{ t('dashboard.kpiCiro') }}</span>
+          <span class="kpi-etiket">{{ t('dashboard.kpiCiro') }}</span>
           <i
-            class="pi pi-arrow-right bento-git"
+            class="pi pi-arrow-right kpi-git"
             aria-hidden="true"
           />
         </header>
-        <div class="bento-govde">
-          <p class="bento-deger gizli-veri">
+        <div class="kpi-govde">
+          <p class="kpi-deger gizli-veri">
             {{ formatCurrency(ciro.deger || 0) }}
           </p>
           <svg
@@ -123,29 +124,29 @@
             />
           </svg>
         </div>
-        <footer class="bento-alt">
+        <footer class="kpi-alt">
           <span>{{ t('dashboard.kpiHedef') }} <strong>{{ formatCurrency(ciro.hedef || 0) }}</strong></span>
           <span>%{{ ciroYuzde }}</span>
         </footer>
       </router-link>
 
-      <!-- Aylık kâr -->
+      <!-- Aylık kâr + kâr hedefi -->
       <router-link
         to="/raporlar"
-        class="bento bento--kar"
+        class="kpi-hucre kpi-hucre--kar"
         data-test="kpi-kar"
       >
-        <header class="bento-ust">
-          <span class="bento-ikon"><i
+        <header class="kpi-ust">
+          <span class="kpi-ikon"><i
             class="pi pi-chart-line"
             aria-hidden="true"
           /></span>
-          <span class="bento-etiket">{{ t('dashboard.kpiKar') }}</span>
+          <span class="kpi-etiket">{{ t('dashboard.kpiKar') }}</span>
           <span class="delta delta--marj">{{ t('dashboard.kpiMarj') }} %{{ marj }}</span>
         </header>
         <p
-          class="bento-deger gizli-veri"
-          :class="(kar.deger || 0) >= 0 ? 'bento-deger--artis' : 'bento-deger--azalis'"
+          class="kpi-deger gizli-veri"
+          :class="(kar.deger || 0) >= 0 ? 'kpi-deger--artis' : 'kpi-deger--azalis'"
         >
           {{ formatCurrency(kar.deger || 0) }}
         </p>
@@ -155,7 +156,7 @@
             :style="{ width: `${karYuzde}%` }"
           />
         </div>
-        <footer class="bento-alt">
+        <footer class="kpi-alt">
           <span>{{ t('dashboard.kpiHedef') }} <strong>{{ formatCurrency(kar.hedef || 0) }}</strong></span>
           <span>%{{ karYuzde }}</span>
         </footer>
@@ -210,73 +211,60 @@ const karYuzde = computed(() => {
 </script>
 
 <style scoped>
-.kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-.bento {
-  position: relative;
+/*
+ * KPI hucreleri kart degildir: cerceve/arka plan/golge/yaricap yoktur.
+ * Ayiricilar `dashboard.css` icindeki `.pano-kpi` kurallarindan gelir.
+ */
+.kpi-hucre {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  background:
-    linear-gradient(180deg, rgba(148, 163, 184, 0.06), rgba(148, 163, 184, 0) 60%),
-    var(--bg-card);
-  box-shadow: var(--elev-1, 0 2px 10px rgba(0, 0, 0, 0.25));
+  gap: 6px;
+  padding: 16px 24px;
+  min-width: 0;
   color: inherit;
   text-decoration: none;
-  min-width: 0;
-  transition:
-    transform var(--dur-base, 0.2s) var(--ease-standard, ease),
-    border-color var(--dur-base, 0.2s) var(--ease-standard, ease),
-    box-shadow var(--dur-base, 0.2s) var(--ease-standard, ease);
+  transition: background var(--dur-base, 0.2s) var(--ease-standard, ease);
 }
-a.bento:hover {
-  transform: translateY(-3px);
-  border-color: var(--accent-border);
-  box-shadow: var(--elev-2, 0 8px 24px rgba(0, 0, 0, 0.35));
+.kpi-hucre:hover {
+  background: var(--bg-muted);
 }
-a.bento:focus-visible {
+a.kpi-hucre:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
-.bento-ust {
+.kpi-ust {
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
 }
-.bento-ikon {
+.kpi-ikon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  font-size: 14px;
+  width: 26px;
+  height: 26px;
+  border-radius: 10px;
+  font-size: 12.5px;
   flex-shrink: 0;
 }
-.bento--likidite .bento-ikon {
+.kpi-hucre--likidite .kpi-ikon {
   background: var(--success-soft);
   color: var(--success);
 }
-.bento--cari .bento-ikon {
+.kpi-hucre--cari .kpi-ikon {
   background: var(--accent-soft);
   color: var(--accent);
 }
-.bento--ciro .bento-ikon {
+.kpi-hucre--ciro .kpi-ikon {
   background: rgba(59, 130, 246, 0.16);
   color: #60a5fa;
 }
-.bento--kar .bento-ikon {
+.kpi-hucre--kar .kpi-ikon {
   background: rgba(139, 92, 246, 0.16);
   color: #a78bfa;
 }
-.bento-etiket {
+.kpi-etiket {
   flex: 1;
   min-width: 0;
   font-size: 12.5px;
@@ -286,7 +274,7 @@ a.bento:focus-visible {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.bento-git {
+.kpi-git {
   font-size: 11px;
   color: var(--text-muted);
 }
@@ -312,51 +300,55 @@ a.bento:focus-visible {
   color: var(--text-secondary);
   background: var(--bg-muted);
 }
-.bento-deger {
+.kpi-deger {
   margin: 0;
-  font-size: 1.45rem;
+  font-size: 1.4rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.bento-deger--artis {
+.kpi-deger--artis {
   color: var(--success);
 }
-.bento-deger--azalis {
+.kpi-deger--azalis {
   color: var(--danger);
 }
-.bento-alt {
+.kpi-alt {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  margin-top: auto;
   font-size: 11.5px;
   color: var(--text-secondary);
   flex-wrap: wrap;
 }
-.bento-alt strong {
+.kpi-alt strong {
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
-.bento-alt--cift {
+.kpi-alt--cift {
   gap: 12px;
 }
-.bento-alacak strong {
+.kpi-alacak strong {
   color: var(--success);
 }
-.bento-borc strong {
+.kpi-borc strong {
   color: var(--danger);
 }
-.bento-govde {
+.kpi-govde {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
 }
 .halka {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
   transform: rotate(-90deg);
 }
@@ -373,7 +365,7 @@ a.bento:focus-visible {
   transition: stroke-dasharray 0.4s ease;
 }
 .kar-cubuk {
-  height: 6px;
+  height: 5px;
   border-radius: 999px;
   background: var(--bg-muted);
   overflow: hidden;
@@ -384,27 +376,28 @@ a.bento:focus-visible {
   background: linear-gradient(90deg, #7c3aed, #a78bfa);
   transition: width 0.4s ease;
 }
-.bento--skeleton {
-  min-height: 128px;
-  gap: 12px;
+.kpi-hucre--iskelet {
+  min-height: 118px;
+  gap: 10px;
+  justify-content: center;
 }
-.iskelet {
+.kpi-iskelet {
   display: block;
-  border-radius: 8px;
+  border-radius: 7px;
   background: var(--bg-muted);
   animation: iskeletParlama 1.4s ease infinite;
 }
-.iskelet--kisa {
+.kpi-iskelet--kisa {
   width: 42%;
-  height: 12px;
+  height: 11px;
 }
-.iskelet--buyuk {
+.kpi-iskelet--buyuk {
   width: 68%;
-  height: 26px;
+  height: 24px;
 }
-.iskelet--uzun {
+.kpi-iskelet--uzun {
   width: 100%;
-  height: 12px;
+  height: 11px;
 }
 @keyframes iskeletParlama {
   0% {
@@ -418,24 +411,35 @@ a.bento:focus-visible {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .bento,
-  a.bento:hover,
+  .kpi-hucre,
   .halka-dolu,
   .kar-cubuk-dolu,
-  .iskelet {
+  .kpi-iskelet {
     transition: none;
-    transform: none;
     animation: none;
   }
 }
-@media (max-width: 1100px) {
-  .kpi-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 1080px) {
+  .kpi-hucre {
+    padding: 14px 18px;
+  }
+  .kpi-deger {
+    font-size: 1.25rem;
   }
 }
-@media (max-width: 620px) {
-  .kpi-grid {
-    grid-template-columns: 1fr;
+@media (max-width: 600px) {
+  .kpi-hucre {
+    padding: 12px 16px;
+    gap: 5px;
+  }
+  .kpi-etiket {
+    font-size: 11.5px;
+  }
+  .kpi-deger {
+    font-size: 1.05rem;
+  }
+  .delta--marj {
+    display: none;
   }
 }
 </style>

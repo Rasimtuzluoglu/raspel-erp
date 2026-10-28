@@ -75,44 +75,58 @@ const islemler = computed(() => {
 </script>
 
 <style scoped>
+/*
+ * Sag rayda 2 kolonlu kompakt ikon izgarasi: kart cercevesi yok,
+ * her kisayol ikon cipi + etiketten olusur.
+ */
 .hizli-islemler {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
 }
 .islem-karti {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 44px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--bg-muted);
+  min-height: 38px;
+  padding: 6px 8px;
+  margin: 0 -8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  text-align: left;
   text-decoration: none;
   cursor: pointer;
-  transition:
-    transform var(--dur-base, 0.2s) var(--ease-standard, ease),
-    border-color var(--dur-base, 0.2s) var(--ease-standard, ease),
-    background var(--dur-base, 0.2s) var(--ease-standard, ease);
+  min-width: 0;
+  transition: background var(--dur-base, 0.2s) var(--ease-standard, ease);
 }
 .islem-karti:hover {
-  transform: translateY(-2px);
-  border-color: var(--accent-border);
-  background: var(--accent-soft);
+  background: var(--bg-card);
 }
 .islem-karti:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline-offset: -2px;
+}
+.islem-karti span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .islem-karti i {
-  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 10px;
+  font-size: 13px;
+  flex-shrink: 0;
+  background: color-mix(in srgb, currentcolor 14%, transparent);
 }
 .islem-karti--ara {
-  border-style: dashed;
   color: var(--accent);
 }
 .islem-karti--kokpit i {
@@ -143,15 +157,8 @@ const islemler = computed(() => {
   color: #d97706;
 }
 @media (prefers-reduced-motion: reduce) {
-  .islem-karti,
-  .islem-karti:hover {
+  .islem-karti {
     transition: none;
-    transform: none;
-  }
-}
-@media (max-width: 560px) {
-  .hizli-islemler {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 </style>

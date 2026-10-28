@@ -50,8 +50,8 @@
         class="gorev-satir"
       >
         <component
-          :is="g.route ? 'router-link' : 'div'"
-          :to="g.route || undefined"
+          :is="gorevRoute(g) ? 'router-link' : 'div'"
+          :to="gorevRoute(g) || undefined"
           class="gorev-kart"
           :class="oncelikSinifi(g.oncelik)"
           :data-test="`gorev-${g.tur}`"
@@ -80,10 +80,15 @@
             >{{ formatCurrency(g.tutar) }}</span>
           </span>
           <span
-            class="gorev-oncelik"
-            :style="{ width: `${Math.min(100, Number(g.oncelik) || 0)}%` }"
-            aria-hidden="true"
-          />
+            v-if="vadeMi(g)"
+            class="gorev-link"
+          >
+            {{ t('dashboard.gorevTahsilatLink') }}
+            <i
+              class="pi pi-arrow-right"
+              aria-hidden="true"
+            />
+          </span>
         </component>
       </li>
     </ul>
@@ -114,6 +119,13 @@ const GOREV_TUR_ANAHTARLARI = {
   BEKLEYEN_TESLIMAT: 'dashboard.gorevTuruBekleyenTeslimat'
 }
 
+const VADE_TURLERI = ['VADESI_GECEN', 'VADESI_YAKLASAN']
+
+const vadeMi = (g) => VADE_TURLERI.includes(g?.tur)
+
+// Vade kayitlari her zaman tahsilat ekranina gider (adet + tutar + link).
+const gorevRoute = (g) => (vadeMi(g) ? '/tahsilat' : g.route || null)
+
 const gorevBasligi = (g) => {
   const anahtar = GOREV_TUR_ANAHTARLARI[g.tur]
   if (g.baslik) return g.baslik
@@ -136,8 +148,12 @@ const siraliGorevler = computed(() =>
 </script>
 
 <style scoped>
+/*
+ * Gorev satirlari kart degil, panonun icinde duz satirlardir: cerceve/golge
+ * yok; satirlar arasinda 1px ayirici, hover'da hafif zemin.
+ */
 .gorev-merkezi {
-  min-height: 160px;
+  min-width: 0;
 }
 .gorev-liste {
   list-style: none;
@@ -145,44 +161,40 @@ const siraliGorevler = computed(() =>
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 .gorev-satir {
   min-width: 0;
 }
+.gorev-satir + .gorev-satir {
+  border-top: 1px solid var(--border);
+}
 .gorev-kart {
-  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--bg-card);
+  gap: 12px;
+  margin: 0 -8px;
+  padding: 10px 8px;
+  border-radius: 10px;
   color: inherit;
   text-decoration: none;
-  overflow: hidden;
   min-height: 56px;
-  transition:
-    border-color var(--dur-base, 0.2s) var(--ease-standard, ease),
-    transform var(--dur-base, 0.2s) var(--ease-standard, ease);
+  transition: background var(--dur-base, 0.2s) var(--ease-standard, ease);
 }
 a.gorev-kart:hover {
-  transform: translateY(-1px);
-  border-color: var(--accent-border);
+  background: var(--bg-muted);
 }
 a.gorev-kart:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 .gorev-ikon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 10px;
-  font-size: 15px;
+  font-size: 14px;
   flex-shrink: 0;
 }
 .gorev-icerik {
@@ -234,30 +246,24 @@ a.gorev-kart:focus-visible {
 .gorev-kart--bilgi .gorev-adet {
   color: var(--accent);
 }
-.gorev-oncelik {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  height: 2px;
-  opacity: 0.6;
+.gorev-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent);
 }
-.gorev-kart--kritik .gorev-oncelik {
-  background: var(--danger);
-}
-.gorev-kart--uyari .gorev-oncelik {
-  background: var(--warning);
-}
-.gorev-kart--bilgi .gorev-oncelik {
-  background: var(--accent);
+.gorev-link i {
+  font-size: 9px;
 }
 .gorev-durum {
   display: flex;
   align-items: center;
   gap: 8px;
   margin: 0;
-  padding: 18px 12px;
-  border-radius: 12px;
-  border: 1px dashed var(--border);
+  padding: 10px 0;
   color: var(--text-muted);
   font-size: 13px;
 }
@@ -276,9 +282,10 @@ a.gorev-kart:focus-visible {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
+  padding: 8px 0;
+}
+.gorev-iskelet-satir + .gorev-iskelet-satir {
+  border-top: 1px solid var(--border);
 }
 .iskelet {
   display: block;
@@ -287,14 +294,14 @@ a.gorev-kart:focus-visible {
   animation: iskeletParlama 1.4s ease infinite;
 }
 .iskelet--daire {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 10px;
   flex-shrink: 0;
 }
 .iskelet--metin {
   flex: 1;
-  height: 14px;
+  height: 13px;
 }
 @keyframes iskeletParlama {
   0% {
@@ -309,11 +316,19 @@ a.gorev-kart:focus-visible {
 }
 @media (prefers-reduced-motion: reduce) {
   .gorev-kart,
-  a.gorev-kart:hover,
   .iskelet {
     transition: none;
-    transform: none;
     animation: none;
+  }
+}
+@media (max-width: 600px) {
+  .gorev-kart {
+    gap: 10px;
+    margin: 0;
+    padding: 10px 0;
+  }
+  .gorev-link {
+    display: none;
   }
 }
 </style>

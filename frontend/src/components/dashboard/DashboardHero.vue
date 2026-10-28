@@ -178,20 +178,22 @@ const bugunKartlari = computed(() => [
 </script>
 
 <style scoped>
+/*
+ * Hero, panonun ust bandidir: kendi cercevesi/golgesi/yaricapi yoktur.
+ * Alt cizgi panonun geri kalanindan ayirir; gradyan hafif tutulur.
+ */
 .dashboard-hero {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  margin-bottom: 18px;
-  padding: 16px 20px;
-  border-radius: 18px;
-  border: 1px solid var(--border);
+  padding: 22px 24px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
   background:
-    radial-gradient(900px 220px at 0% 0%, var(--accent-soft-strong), transparent 60%),
-    radial-gradient(700px 240px at 100% 0%, rgba(139, 92, 246, 0.16), transparent 62%),
-    var(--bg-card);
-  box-shadow: var(--shadow);
+    radial-gradient(900px 240px at 0% 0%, var(--accent-soft), transparent 62%),
+    radial-gradient(700px 240px at 100% 0%, rgba(139, 92, 246, 0.08), transparent 64%);
   overflow: hidden;
 }
 .hero-ust {
@@ -352,18 +354,21 @@ const bugunKartlari = computed(() => [
 .bugun-seridi {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 0;
 }
 .bugun-kart {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--bg-card) 70%, transparent);
-  border: 1px solid var(--border);
+  padding: 2px 0 2px 14px;
+  border-left: 1px solid var(--border);
+  background: transparent;
   min-width: 0;
   flex-wrap: wrap;
+}
+.bugun-kart:first-child {
+  padding-left: 0;
+  border-left: 0;
 }
 .bugun-ikon {
   display: inline-flex;
@@ -371,7 +376,7 @@ const bugunKartlari = computed(() => [
   justify-content: center;
   width: 30px;
   height: 30px;
-  border-radius: 9px;
+  border-radius: 10px;
   font-size: 14px;
   flex-shrink: 0;
 }
@@ -441,11 +446,31 @@ const bugunKartlari = computed(() => [
   }
   .bugun-seridi {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 0;
+  }
+  .bugun-kart {
+    padding-left: 14px;
+    border-left: 1px solid var(--border);
+  }
+  .bugun-kart:nth-child(odd) {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+@media (max-width: 600px) {
+  .dashboard-hero {
+    padding: 18px 16px;
   }
 }
 @media (max-width: 560px) {
   .bugun-seridi {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .bugun-kart,
+  .bugun-kart:nth-child(odd) {
+    padding-left: 0;
+    border-left: 0;
   }
   .hero-buton--ara .hero-buton-metin {
     display: none;

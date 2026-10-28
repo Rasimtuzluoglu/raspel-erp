@@ -100,8 +100,12 @@ const seviyeEtiketi = (seviye) => {
 </script>
 
 <style scoped>
+/*
+ * Icgoru listesi rayda kompakt bir listedir: kart cercevesi yok, satirlar
+ * arasinda 1px ayirici ve hover'da hafif zemin vardir.
+ */
 .icgoru-karti {
-  min-height: 120px;
+  min-width: 0;
 }
 .icgoru-liste {
   list-style: none;
@@ -109,36 +113,27 @@ const seviyeEtiketi = (seviye) => {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+}
+.icgoru-liste li + li {
+  border-top: 1px solid var(--border);
 }
 .icgoru-satir {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  border-left-width: 3px;
-  background: var(--bg-card);
+  margin: 0 -8px;
+  padding: 9px 8px;
+  border-radius: 10px;
   color: inherit;
   text-decoration: none;
-  transition: border-color var(--dur-base, 0.2s) var(--ease-standard, ease);
+  transition: background var(--dur-base, 0.2s) var(--ease-standard, ease);
 }
 a.icgoru-satir:hover {
-  border-color: var(--accent-border);
+  background: var(--bg-card);
 }
 a.icgoru-satir:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-.icgoru-satir--bilgi {
-  border-left-color: var(--accent);
-}
-.icgoru-satir--uyari {
-  border-left-color: var(--warning);
-}
-.icgoru-satir--kritik {
-  border-left-color: var(--danger);
+  outline-offset: -2px;
 }
 .icgoru-ikon {
   display: inline-flex;
@@ -146,7 +141,7 @@ a.icgoru-satir:focus-visible {
   justify-content: center;
   width: 26px;
   height: 26px;
-  border-radius: 8px;
+  border-radius: 10px;
   flex-shrink: 0;
   font-size: 13px;
 }
@@ -196,9 +191,7 @@ a.icgoru-satir:focus-visible {
   align-items: center;
   gap: 8px;
   margin: 0;
-  padding: 18px 12px;
-  border-radius: 12px;
-  border: 1px dashed var(--border);
+  padding: 8px 0;
   color: var(--text-muted);
   font-size: 13px;
 }
@@ -209,8 +202,8 @@ a.icgoru-satir:focus-visible {
 }
 .iskelet {
   display: block;
-  height: 46px;
-  border-radius: 12px;
+  height: 42px;
+  border-radius: 10px;
   background: var(--bg-muted);
   animation: iskeletParlama 1.4s ease infinite;
 }

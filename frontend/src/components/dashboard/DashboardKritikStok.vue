@@ -4,179 +4,207 @@
     data-test="kritik-stok"
   >
     <div
-      v-if="yukleniyor && !stok"
+      v-if="(yukleniyor || yerelYukleniyor) && !satirlar.length"
       class="kritik-iskelet"
       aria-hidden="true"
     >
-      <span class="iskelet iskelet--buyuk" />
-      <span class="iskelet iskelet--kucuk" />
+      <span
+        v-for="i in 3"
+        :key="`kritik-iskelet-${i}`"
+        class="iskelet"
+      />
     </div>
 
     <template v-else>
+      <ul
+        v-if="satirlar.length"
+        class="kritik-liste"
+      >
+        <li
+          v-for="(s, index) in satirlar"
+          :key="s.id ?? s.stokKodu ?? `${index}`"
+        >
+          <router-link
+            to="/stoklar?kritik=1"
+            class="kritik-satir"
+          >
+            <span class="kritik-ad">{{ s.ad || s.stokKodu }}</span>
+            <span class="kritik-miktar gizli-veri">
+              {{ t('dashboard.kritikStokMiktarMin', { miktar: sayi(s.miktar), min: sayi(s.minMiktar) }) }}
+            </span>
+          </router-link>
+        </li>
+      </ul>
+
+      <p
+        v-else
+        class="kritik-bos"
+      >
+        <i
+          class="pi pi-check-circle"
+          aria-hidden="true"
+        />
+        {{ kritikAdet > 0 ? t('dashboard.kritikStokSayisi', { n: kritikAdet }) : t('dashboard.kritikStokYok') }}
+      </p>
+
       <router-link
         to="/stoklar?kritik=1"
-        class="kritik-kart"
-        :class="{ 'kritik-kart--uyari': kritikAdet > 0 }"
+        class="kritik-tumu"
       >
-        <span class="kritik-ikon">
-          <i
-            class="pi pi-exclamation-triangle"
-            aria-hidden="true"
-          />
-        </span>
-        <span class="kritik-icerik">
-          <span class="kritik-baslik">{{ t('dashboard.kritikStokUyarilari') }}</span>
-          <strong class="kritik-deger">{{ kritikAdet }}</strong>
-          <span class="kritik-alt">{{ t('dashboard.kritikStokSayisi', { n: kritikAdet }) }}</span>
-        </span>
+        {{ t('dashboard.tumunuGor') }}
         <i
-          class="pi pi-arrow-right kritik-git"
+          class="pi pi-arrow-right"
           aria-hidden="true"
         />
       </router-link>
-
-      <div class="kritik-ozet">
-        <div class="kritik-chip">
-          <span class="kritik-chip-etiket">{{ t('dashboard.kritikStokCesit') }}</span>
-          <strong>{{ cesit }}</strong>
-        </div>
-        <div class="kritik-chip">
-          <span class="kritik-chip-etiket">{{ t('dashboard.kritikStokDegeri') }}</span>
-          <strong class="gizli-veri">{{ formatCurrency(deger) }}</strong>
-        </div>
-      </div>
     </template>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { formatCurrency } from '../../utils/format.js'
+import { stokAPI } from '../../api/index.js'
 
 const props = defineProps({
+  // Ozet stok blogu: kritik adedi ve toplam stok degeri.
   stok: { type: Object, default: null },
+  // Ust bilesen liste verirse istek atilmaz (test/senkron kullanim).
+  stoklar: { type: Array, default: null },
   yukleniyor: { type: Boolean, default: false }
 })
 
 const { t } = useI18n()
 
-const cesit = computed(() => Number(props.stok?.cesit) || 0)
-const deger = computed(() => Number(props.stok?.deger) || 0)
+const yerelVeri = ref([])
+const yerelYukleniyor = ref(false)
+
 const kritikAdet = computed(() => Number(props.stok?.kritikAdet) || 0)
+
+// En fazla 4 satir; detayi icin "tumunu gor" baglantisi vardir.
+const satirlar = computed(() => {
+  const liste = props.stoklar || yerelVeri.value
+  return Array.isArray(liste) ? liste.slice(0, 4) : []
+})
+
+const sayi = (deger) => Number(deger || 0).toLocaleString('tr-TR')
+
+onMounted(async () => {
+  if (props.stoklar || !stokAPI?.kritik) return
+  yerelYukleniyor.value = true
+  try {
+    const cevap = await stokAPI.kritik()
+    yerelVeri.value = Array.isArray(cevap?.data) ? cevap.data : []
+  } catch {
+    // Ozet sayaci yedek olarak kalir; bolum bos durum gosterir.
+    yerelVeri.value = []
+  } finally {
+    yerelYukleniyor.value = false
+  }
+})
 </script>
 
 <style scoped>
+/*
+ * Ray icinde kompakt satirlar: kart cercevesi yok, satirlar 1px ayiricili.
+ */
 .kritik-stok {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  min-width: 0;
 }
-.kritik-kart {
+.kritik-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.kritik-liste li + li {
+  border-top: 1px solid var(--border);
+}
+.kritik-satir {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--bg-card);
+  margin: 0 -8px;
+  padding: 8px;
+  border-radius: 10px;
+  min-width: 0;
   color: inherit;
   text-decoration: none;
-  transition: border-color var(--dur-base, 0.2s) var(--ease-standard, ease);
+  transition: background var(--dur-base, 0.2s) var(--ease-standard, ease);
 }
-.kritik-kart--uyari {
-  border-color: var(--danger-border);
-  background: linear-gradient(180deg, var(--danger-soft), transparent 70%), var(--bg-card);
+.kritik-satir:hover {
+  background: var(--bg-card);
 }
-.kritik-kart:hover {
-  border-color: var(--accent-border);
-}
-.kritik-kart:focus-visible {
+.kritik-satir:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
-.kritik-ikon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--danger-soft);
-  color: var(--danger);
-  font-size: 16px;
-  flex-shrink: 0;
-}
-.kritik-icerik {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-  flex: 1;
-}
-.kritik-baslik {
-  font-size: 12px;
+.kritik-ad {
+  font-size: 12.5px;
   font-weight: 600;
-  color: var(--text-secondary);
-}
-.kritik-deger {
-  font-size: 20px;
-  font-weight: 800;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
-  color: var(--danger);
-}
-.kritik-alt {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-.kritik-git {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-.kritik-ozet {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-.kritik-chip {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: var(--bg-muted);
-  min-width: 0;
-}
-.kritik-chip-etiket {
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-.kritik-chip strong {
-  font-size: 13px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
   color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+}
+.kritik-miktar {
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--danger);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.kritik-bos {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 6px 0;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+.kritik-bos i {
+  color: var(--success);
+}
+.kritik-tumu {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  margin-top: 10px;
+  padding: 2px 0;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+.kritik-tumu:hover {
+  color: var(--accent-hover);
+}
+.kritik-tumu:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.kritik-tumu i {
+  font-size: 9px;
 }
 .kritik-iskelet {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 .iskelet {
   display: block;
-  border-radius: 12px;
-  background: var(--bg-muted);
+  height: 20px;
+  border-radius: 7px;
+  background: var(--bg-card);
   animation: iskeletParlama 1.4s ease infinite;
-}
-.iskelet--buyuk {
-  height: 64px;
-}
-.iskelet--kucuk {
-  height: 40px;
 }
 @keyframes iskeletParlama {
   0% {
@@ -190,7 +218,9 @@ const kritikAdet = computed(() => Number(props.stok?.kritikAdet) || 0)
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .kritik-satir,
   .iskelet {
+    transition: none;
     animation: none;
   }
 }

@@ -258,9 +258,7 @@ a.akis-icerik:focus-visible {
   align-items: center;
   gap: 8px;
   margin: 0;
-  padding: 18px 12px;
-  border-radius: 12px;
-  border: 1px dashed var(--border);
+  padding: 10px 0;
   color: var(--text-muted);
   font-size: 13px;
 }

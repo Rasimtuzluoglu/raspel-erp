@@ -1,7 +1,7 @@
 <template>
   <section
     class="dw"
-    :class="[`dw--${boyut}`, { 'dw--duzen': duzenModu, 'dw--surukleniyor': surukleniyor }]"
+    :class="{ 'dw--duzen': duzenModu, 'dw--surukleniyor': surukleniyor }"
     :draggable="duzenModu"
     :data-widget="anahtar"
     @dragstart="suruklemeyeBasla"
@@ -52,15 +52,6 @@
         </button>
         <button
           type="button"
-          class="dw-buton dw-buton--boyut"
-          :aria-label="`${etiket} — ${t('dashboard.widgetBoyut')}`"
-          :title="t('dashboard.widgetBoyut')"
-          @click="emit('boyut')"
-        >
-          {{ boyut === 2 ? t('dashboard.widgetBoyut2') : t('dashboard.widgetBoyut1') }}
-        </button>
-        <button
-          type="button"
           class="dw-buton dw-buton--gizle"
           :aria-label="`${etiket} — ${t('dashboard.widgetGizle')}`"
           :title="t('dashboard.widgetGizle')"
@@ -86,13 +77,12 @@ import { useI18n } from 'vue-i18n'
 const props = defineProps({
   anahtar: { type: String, required: true },
   etiket: { type: String, default: '' },
-  boyut: { type: Number, default: 1 },
   duzenModu: { type: Boolean, default: false },
   sira: { type: Number, default: 0 },
   uzunluk: { type: Number, default: 1 }
 })
 
-const emit = defineEmits(['yukari', 'asagi', 'boyut', 'gizle', 'surukle-baslat', 'birak'])
+const emit = defineEmits(['yukari', 'asagi', 'gizle', 'surukle-baslat', 'birak'])
 
 const { t } = useI18n()
 
@@ -128,17 +118,22 @@ const birakildi = () => {
 </script>
 
 <style scoped>
+/*
+ * Normal modda widget bir cerceve CIZMEZ: bolum, panonun icinde duz bir
+ * bolumdur (cerceve/arka plan/golge/yaricap yok). Yalnizca duzen modunda
+ * kesikli cerceve + arac cubugu gorunur.
+ */
 .dw {
-  grid-column: span 6;
   min-width: 0;
-}
-.dw--2 {
-  grid-column: span 12;
 }
 .dw--duzen {
   outline: 1px dashed var(--border);
-  outline-offset: 4px;
-  border-radius: 16px;
+  outline-offset: -1px;
+}
+.dw--duzen:hover,
+.dw--duzen:focus-within {
+  outline-color: var(--accent-border);
+  background: color-mix(in srgb, var(--accent-soft) 40%, transparent);
 }
 .dw--surukleniyor {
   opacity: 0.55;
@@ -147,7 +142,7 @@ const birakildi = () => {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
+  margin: 12px 24px 0;
   padding: 4px 8px;
   border-radius: 10px;
   background: var(--bg-muted);
@@ -158,8 +153,8 @@ const birakildi = () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 7px;
   color: var(--text-muted);
   cursor: grab;
@@ -188,8 +183,8 @@ const birakildi = () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 32px;
-  height: 32px;
+  min-width: 30px;
+  height: 30px;
   padding: 0 8px;
   border-radius: 8px;
   border: 1px solid var(--border);
@@ -215,21 +210,9 @@ const birakildi = () => {
   color: var(--danger);
   border-color: var(--danger-border);
 }
-@media (max-width: 1100px) {
-  .dw {
-    grid-column: span 3;
-  }
-  .dw--2 {
-    grid-column: span 6;
-  }
-}
-@media (max-width: 760px) {
-  .dw,
-  .dw--2 {
-    grid-column: auto;
-  }
-  .dw--duzen {
-    outline-offset: 2px;
+@media (max-width: 600px) {
+  .dw-arac {
+    margin: 12px 16px 0;
   }
 }
 </style>

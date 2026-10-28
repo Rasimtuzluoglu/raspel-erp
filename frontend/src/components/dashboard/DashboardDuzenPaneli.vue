@@ -19,62 +19,71 @@
       </div>
     </header>
 
-    <ul class="duzen-liste">
-      <li
-        v-for="(w, index) in widgetlar"
-        :key="w.key"
-        class="duzen-satir"
-        :class="{ 'duzen-satir--gizli': !w.gorunur }"
-        :data-widget="w.key"
-      >
-        <label class="duzen-gorunur">
-          <input
-            type="checkbox"
-            :checked="w.gorunur"
-            :aria-label="`${w.etiket} — ${t('dashboard.duzenGorunur')}`"
-            @change="degistir(w.key, 'gorunur', $event.target.checked)"
+    <div
+      v-for="grup in gruplar"
+      :key="grup.bolge"
+      class="duzen-grup"
+      :data-bolge="grup.bolge"
+    >
+      <h3 class="duzen-grup-baslik">
+        {{ grup.etiket }}
+      </h3>
+      <ul class="duzen-liste">
+        <li
+          v-for="(w, index) in grup.widgetlar"
+          :key="w.key"
+          class="duzen-satir"
+          :class="{ 'duzen-satir--gizli': !w.gorunur, 'duzen-satir--sabit': w.sabit }"
+          :data-widget="w.key"
+        >
+          <label class="duzen-gorunur">
+            <input
+              type="checkbox"
+              :checked="w.gorunur"
+              :aria-label="`${w.etiket} — ${t('dashboard.duzenGorunur')}`"
+              @change="degistir(w.key, 'gorunur', $event.target.checked)"
+            >
+            <span class="duzen-etiket">{{ w.etiket }}</span>
+          </label>
+          <span
+            v-if="w.sabit"
+            class="duzen-sabit"
+            :title="t('dashboard.widgetSabit')"
+          >{{ t('dashboard.sabit') }}</span>
+          <div
+            v-else
+            class="duzen-eylemler"
           >
-          <span class="duzen-etiket">{{ w.etiket }}</span>
-        </label>
-        <div class="duzen-eylemler">
-          <button
-            type="button"
-            class="duzen-buton"
-            :disabled="index === 0"
-            :aria-label="`${w.etiket} — ${t('dashboard.widgetYukari')}`"
-            :title="t('dashboard.widgetYukari')"
-            @click="emit('tasi', { key: w.key, yon: -1 })"
-          >
-            <i
-              class="pi pi-arrow-up"
-              aria-hidden="true"
-            />
-          </button>
-          <button
-            type="button"
-            class="duzen-buton"
-            :disabled="index === widgetlar.length - 1"
-            :aria-label="`${w.etiket} — ${t('dashboard.widgetAsagi')}`"
-            :title="t('dashboard.widgetAsagi')"
-            @click="emit('tasi', { key: w.key, yon: 1 })"
-          >
-            <i
-              class="pi pi-arrow-down"
-              aria-hidden="true"
-            />
-          </button>
-          <button
-            type="button"
-            class="duzen-buton duzen-buton--boyut"
-            :aria-label="`${w.etiket} — ${t('dashboard.widgetBoyut')}`"
-            :title="t('dashboard.widgetBoyut')"
-            @click="degistir(w.key, 'boyut', w.boyut === 2 ? 1 : 2)"
-          >
-            {{ w.boyut === 2 ? t('dashboard.widgetBoyut2') : t('dashboard.widgetBoyut1') }}
-          </button>
-        </div>
-      </li>
-    </ul>
+            <button
+              type="button"
+              class="duzen-buton"
+              :disabled="!tasinabilir(grup.widgetlar, index, -1)"
+              :aria-label="`${w.etiket} — ${t('dashboard.widgetYukari')}`"
+              :title="t('dashboard.widgetYukari')"
+              @click="emit('tasi', { key: w.key, yon: -1 })"
+            >
+              <i
+                class="pi pi-arrow-up"
+                aria-hidden="true"
+              />
+            </button>
+            <button
+              type="button"
+              class="duzen-buton"
+              :disabled="!tasinabilir(grup.widgetlar, index, 1)"
+              :aria-label="`${w.etiket} — ${t('dashboard.widgetAsagi')}`"
+              :title="t('dashboard.widgetAsagi')"
+              @click="emit('tasi', { key: w.key, yon: 1 })"
+            >
+              <i
+                class="pi pi-arrow-down"
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+        </li>
+      </ul>
+    </div>
 
     <footer class="duzen-alt-bolum">
       <button
@@ -114,9 +123,11 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-defineProps({
+const props = defineProps({
+  /** [{ key, etiket, gorunur, bolge: 'ana'|'ray', sabit }] */
   widgetlar: { type: Array, default: () => [] },
   kaydediliyor: { type: Boolean, default: false }
 })
@@ -125,24 +136,46 @@ const emit = defineEmits(['degistir', 'tasi', 'sifirla', 'kaydet', 'iptal'])
 
 const { t } = useI18n()
 
+const gruplar = computed(() =>
+  [
+    { bolge: 'ana', etiket: t('dashboard.anaIcerik') },
+    { bolge: 'ray', etiket: t('dashboard.sagRay') }
+  ]
+    .map((grup) => ({
+      ...grup,
+      widgetlar: props.widgetlar.filter((w) => (w.bolge === 'ray' ? 'ray' : 'ana') === grup.bolge)
+    }))
+    .filter((grup) => grup.widgetlar.length > 0)
+)
+
 const degistir = (key, alan, deger) => {
   emit('degistir', { key, alan, deger })
+}
+
+/** Ayni grup icinde, sabit satirlari atlayarak tasinabilecek komsu var mi? */
+const tasinabilir = (liste, index, yon) => {
+  const adim = yon < 0 ? -1 : 1
+  let i = index + adim
+  while (i >= 0 && i < liste.length) {
+    if (!liste[i].sabit) return true
+    i += adim
+  }
+  return false
 }
 </script>
 
 <style scoped>
+/*
+ * Duzen paneli panonun icinde bir banttir (kendi golgesi/yaricapi yok);
+ * iki grup halinde ana icerik ve sag ray bolumlerini listeler.
+ */
 .duzen-paneli {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  border: 1px solid var(--accent-border);
-  background:
-    linear-gradient(180deg, var(--accent-soft), transparent 65%),
-    var(--bg-card);
-  box-shadow: var(--shadow);
+  gap: 14px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-muted);
 }
 .duzen-ust {
   display: flex;
@@ -168,6 +201,19 @@ const degistir = (key, alan, deger) => {
   font-size: 12px;
   color: var(--text-secondary);
 }
+.duzen-grup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.duzen-grup-baslik {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
 .duzen-liste {
   list-style: none;
   margin: 0;
@@ -190,6 +236,10 @@ const degistir = (key, alan, deger) => {
 .duzen-satir--gizli {
   opacity: 0.6;
 }
+.duzen-satir--sabit {
+  background: transparent;
+  border-style: dashed;
+}
 .duzen-gorunur {
   display: flex;
   align-items: center;
@@ -209,6 +259,17 @@ const degistir = (key, alan, deger) => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.duzen-sabit {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bg-muted);
+  color: var(--text-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
 }
 .duzen-eylemler {
   display: flex;
@@ -260,7 +321,7 @@ const degistir = (key, alan, deger) => {
   padding: 0 14px;
   border-radius: 9px;
   border: 1px solid var(--border);
-  background: var(--bg-muted);
+  background: var(--bg-card);
   color: var(--text-secondary);
   font-size: 12.5px;
   font-weight: 700;
@@ -301,6 +362,11 @@ const degistir = (key, alan, deger) => {
   .duzen-eylem {
     flex: 1;
     justify-content: center;
+  }
+}
+@media (max-width: 600px) {
+  .duzen-paneli {
+    padding: 14px 16px;
   }
 }
 </style>
