@@ -245,6 +245,19 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
                           @Param("bugun") java.time.LocalDate bugun);
 
     /**
+     * Vadesi yaklaşan fatura sayısı (vade tarihi iki tarih arasında, kalan
+     * tutarı olan). Sayfa yüklemeden yalnızca sayaç için kullanılır.
+     */
+    @Query("SELECT COUNT(f) FROM Fatura f WHERE f.sirketId = :sirketId AND f.durum = :durum " +
+            "AND f.odemeDurumu NOT IN :odemeDurumlari AND f.kalanTutar > 0 " +
+            "AND f.vadeTarihi BETWEEN :baslangic AND :bitis")
+    long countVadesiYaklasan(@Param("sirketId") Long sirketId,
+                             @Param("durum") Fatura.FaturaDurum durum,
+                             @Param("odemeDurumlari") java.util.List<String> odemeDurumlari,
+                             @Param("baslangic") java.time.LocalDate baslangic,
+                             @Param("bitis") java.time.LocalDate bitis);
+
+    /**
      * Tahsilat merkezi için ödenmemiş (kalan tutarı olan) faturalar.
      */
     @Query("SELECT f FROM Fatura f WHERE f.sirketId = :sirketId AND f.tur = :tur " +

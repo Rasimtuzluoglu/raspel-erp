@@ -17,6 +17,12 @@ public interface PersonelMasrafTalepRepository extends JpaRepository<PersonelMas
     List<PersonelMasrafTalep> findByKullaniciIdOrderByTarihDesc(Long kullaniciId);
     long countBySirketIdAndDurum(Long sirketId, String durum);
 
+    /** Bekleyen masraf/avans taleplerinin toplam tutarı (görev kartı). */
+    @Query("SELECT COALESCE(SUM(t.tutar), 0) FROM PersonelMasrafTalep t " +
+            "WHERE t.sirketId = :sirketId AND t.durum = :durum")
+    java.math.BigDecimal sumTutarBySirketIdAndDurum(@Param("sirketId") Long sirketId,
+                                                    @Param("durum") String durum);
+
     /**
      * Birleşik onay ekranı: bekleyen masraf/avans talepleri (şirket + durum).
      * {@code q} ham terim değil,

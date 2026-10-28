@@ -233,6 +233,43 @@ class PostgresEntegrasyonTest {
     }
 
     @Test
+    void v174DashboardTercihTablosuVeIndeksleriOlusur() {
+        // Kolonlar: id, kullanici_id, sirket_id, duzen, guncelleme_tarihi = 5
+        Integer kolonSayisi = jdbc.queryForObject(
+                "SELECT count(*) FROM information_schema.columns " +
+                        "WHERE table_schema = 'sistem' AND table_name = 'dashboard_tercih'",
+                Integer.class);
+        assertEquals(5, kolonSayisi);
+
+        // Unique (kullanici_id) + sirket indeksi
+        Integer indeksSayisi = jdbc.queryForObject(
+                "SELECT count(*) FROM pg_indexes WHERE schemaname = 'sistem' AND tablename = 'dashboard_tercih' " +
+                        "AND indexname IN ('uk_dashboard_tercih_kullanici', 'idx_dashboard_tercih_sirket')",
+                Integer.class);
+        assertEquals(2, indeksSayisi);
+
+        jdbc.update("DELETE FROM sistem.dashboard_tercih WHERE kullanici_id = 987654");
+        jdbc.update("INSERT INTO sistem.dashboard_tercih (kullanici_id, sirket_id, duzen) VALUES (?, ?, ?)",
+                987654L, 987654L, "{\"versiyon\":1,\"sira\":[]}");
+        Integer kayitSayisi = jdbc.queryForObject(
+                "SELECT count(*) FROM sistem.dashboard_tercih WHERE kullanici_id = 987654", Integer.class);
+        assertEquals(1, kayitSayisi);
+
+        // guncelleme_tarihi varsayılanı (NOW()) uygulanmış olmalı.
+        Integer tarihDolu = jdbc.queryForObject(
+                "SELECT count(*) FROM sistem.dashboard_tercih WHERE kullanici_id = 987654 " +
+                        "AND guncelleme_tarihi IS NOT NULL", Integer.class);
+        assertEquals(1, tarihDolu);
+
+        // kullanici_id UNIQUE: aynı kullanıcı için ikinci satır reddedilir.
+        assertThrows(org.springframework.dao.DataIntegrityViolationException.class, () ->
+                jdbc.update("INSERT INTO sistem.dashboard_tercih (kullanici_id, sirket_id, duzen) VALUES (?, ?, ?)",
+                        987654L, 987655L, "{}"));
+
+        jdbc.update("DELETE FROM sistem.dashboard_tercih WHERE kullanici_id = 987654");
+    }
+
+    @Test
     void veriButunluguFkVeNotNullKisitlariVar() {        Integer fkSayisi = jdbc.queryForObject(
                 "SELECT count(*) FROM pg_constraint WHERE contype = 'f' AND conname IN (" +
                         "'fk_fatura_cari','fk_fatura_sirket','fk_banka_hareketi_kaynak_fatura'," +

@@ -20,6 +20,12 @@ import java.time.LocalDateTime;
 @Repository
 public interface OnayKararRepository extends JpaRepository<OnayKarar, Long> {
 
+    /**
+     * Anasayfa canlı akışı: şirketin son kararları (en yeni önce).
+     * Sayfalama ile sınırlanır; tüm geçmiş yüklenmez.
+     */
+    java.util.List<OnayKarar> findBySirketIdOrderByOlusturmaTarihiDesc(Long sirketId, Pageable pageable);
+
     @Query("SELECT k FROM OnayKarar k WHERE k.sirketId = :sirketId " +
             "AND (:tur IS NULL OR k.tur = :tur) " +
             "AND (:karar IS NULL OR k.karar = :karar) " +

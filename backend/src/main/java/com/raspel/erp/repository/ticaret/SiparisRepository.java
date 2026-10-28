@@ -74,4 +74,13 @@ public interface SiparisRepository extends JpaRepository<Siparis, Long> {
 
     /** KPI özeti: şirketin toplam sipariş sayısı. */
     long countBySirketId(Long sirketId);
+
+    /**
+     * Bekleyen siparişlerin toplam tutarı (görev merkezi kartı için tek
+     * sorgu; liste yüklenmez).
+     */
+    @Query("SELECT COALESCE(SUM(s.genelToplam), 0) FROM Siparis s " +
+           "WHERE s.sirketId = :sirketId AND s.durum IN :durumlar")
+    java.math.BigDecimal sumTutarBySirketIdAndDurumIn(@Param("sirketId") Long sirketId,
+                                                      @Param("durumlar") java.util.Collection<String> durumlar);
 }

@@ -48,6 +48,13 @@ public interface TeslimatRepository extends JpaRepository<Teslimat, Long> {
 
     long countBySirketIdAndDurum(Long sirketId, String durum);
 
+    /**
+     * Bugün teslim edilmesi beklenen (henüz tamamlanmamış) teslimat sayısı.
+     * Anasayfa "bugün" şeridinde kullanılır.
+     */
+    long countBySirketIdAndBeklenenTeslimTarihiAndDurumNotIn(
+            Long sirketId, LocalDate beklenenTeslimTarihi, java.util.Collection<String> durumlar);
+
     @Query("SELECT COUNT(t) FROM Teslimat t WHERE t.sirketId = :sirketId " +
            "AND t.beklenenTeslimTarihi IS NOT NULL AND t.beklenenTeslimTarihi < :tarih " +
            "AND t.durum NOT IN ('TESLIM_EDILDI', 'IPTAL')")
