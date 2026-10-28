@@ -200,14 +200,38 @@ export const dovizAPI = {
 }
 
 export const tahsilatAPI = {
-  ozet() {
-    return apiClient.get('/tahsilat')
+  ozet(params = {}) {
+    return apiClient.get('/tahsilat', { params })
+  },
+  /** Yaşlandırma listesi + global özet; q/aralik/sadeceGecikmis/minTutar destekli. */
+  filtreliOzet(params = {}) {
+    return apiClient.get('/tahsilat', { params })
   },
   hatirlat(cariId) {
     return apiClient.post(`/tahsilat/${cariId}/hatirlat`)
   },
-  gecmis(params) {
+  gecmis(params = {}) {
     return apiClient.get('/tahsilat/gecmis', { params })
+  },
+  /** İşlem bazlı geçmiş: Page<TahsilatIslemDTO>. */
+  gecmisFiltreli(params = {}) {
+    return apiClient.get('/tahsilat/gecmis', { params })
+  },
+  /** İşlem iptali; gerekçe zorunlu (min 3 karakter). */
+  iptal(islemId, gerekce) {
+    return apiClient.post(`/tahsilat/islem/${islemId}/iptal`, { gerekce })
+  },
+  /** Hedef/gerçekleşme + 6 aylık trend. */
+  performans(params = {}) {
+    return apiClient.get('/tahsilat/performans', { params })
+  },
+  /** Aylık hedef upsert (ADMIN/MUHASEBE). */
+  hedefKaydet(data) {
+    return apiClient.put('/tahsilat/hedef', data)
+  },
+  /** Seçili carilere toplu e-posta hatırlatması. */
+  topluHatirlat(cariIds) {
+    return apiClient.post('/tahsilat/toplu-hatirlat', { cariIds })
   },
   gir(data, idempotencyKey) {
     // data: { cariId, tutar, odemeYontemi, taksitKurum, taksitTutar, taksitId, posTerminaliId, komisyonTutar, valorTarihi, aciklama, hareketTarihi }

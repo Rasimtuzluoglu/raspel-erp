@@ -158,6 +158,12 @@ export const excelAPI = {
   },
   subeler(params) {
     return apiClient.get('/exports/subeler', { params, responseType: 'blob' })
+  },
+  tahsilatGecmis(params) {
+    return apiClient.get('/exports/tahsilat-gecmis', { params, responseType: 'blob' })
+  },
+  tahsilatYaslandirma(params) {
+    return apiClient.get('/exports/tahsilat-yaslandirma', { params, responseType: 'blob' })
   }
 }
 
