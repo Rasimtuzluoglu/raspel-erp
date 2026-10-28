@@ -10,7 +10,7 @@ import { formatCurrency } from '../utils/format.js'
  * Renkler `useChartTema` paletinden gelir; koyu/acik tema degisince eksen,
  * izgara ve lejant renkleri de uyum saglar.
  */
-export function useDashboardGrafikleri(kaynak) {
+export function useDashboardGrafikleri(kaynak, { nakitGun } = {}) {
   const { t } = useI18n()
   const { palet, lejant } = useChartTema()
 
@@ -66,12 +66,36 @@ export function useDashboardGrafikleri(kaynak) {
     plugins: { legend: lejant() }
   }))
 
-  // 30 gunluk nakit akisi (alan grafik)
+  const gunAnahtari = (tarih) =>
+    `${tarih.getFullYear()}-${String(tarih.getMonth() + 1).padStart(2, '0')}-${String(tarih.getDate()).padStart(2, '0')}`
+  const gunEtiketi = (tarih) =>
+    `${String(tarih.getDate()).padStart(2, '0')}.${String(tarih.getMonth() + 1).padStart(2, '0')}`
+
+  /**
+   * 30 gunluk nakit akisi (alan grafik). Backend yalnizca hareket olan
+   * gunleri dondurur; grafikteki zaman ekseni kopuk olmasin diye son N gun
+   * sifir degerleriyle tamamlanir. Hic hareket yoksa bos doner.
+   */
   const gunlukNakitAkisi = computed(() => {
-    const gunler = Array.isArray(veri.value.gunlukNakitAkisi) ? veri.value.gunlukNakitAkisi : []
-    if (!gunler.length) return { labels: [], datasets: [] }
+    const tumGunler = Array.isArray(veri.value.gunlukNakitAkisi) ? veri.value.gunlukNakitAkisi : []
+    const istenen = nakitGun && 'value' in nakitGun ? Number(nakitGun.value) : Number(nakitGun)
+    const gunSayisi = Number.isFinite(istenen) && istenen > 0 ? Math.floor(istenen) : 30
+    if (!tumGunler.length) return { labels: [], datasets: [] }
+
+    const harita = new Map(tumGunler.map((g) => [String(g.gun || ''), g]))
+    const gunler = []
+    const bugun = new Date()
+    for (let i = gunSayisi - 1; i >= 0; i -= 1) {
+      const tarih = new Date(bugun.getFullYear(), bugun.getMonth(), bugun.getDate() - i)
+      const kayit = harita.get(gunAnahtari(tarih)) || {}
+      gunler.push({
+        etiket: gunEtiketi(tarih),
+        gelir: Number(kayit.gelir) || 0,
+        gider: Number(kayit.gider) || 0
+      })
+    }
     return {
-      labels: gunler.map((g) => String(g.gun || '').slice(5)),
+      labels: gunler.map((g) => g.etiket),
       datasets: [
         {
           label: t('dashboard.etiketGelir'),
@@ -99,18 +123,50 @@ export function useDashboardGrafikleri(kaynak) {
     }
   })
 
-  const gunlukNakitAkisiOpsiyonlari = computed(() => ({ ...temelOpsiyonlar.value, scales: eksenler.value }))
+  const gunlukNakitAkisiOpsiyonlari = computed(() => ({
+    ...temelOpsiyonlar.value,
+    plugins: {
+      ...temelOpsiyonlar.value.plugins,
+      tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}` } }
+    },
+    scales: eksenler.value
+  }))
 
-  // 12 aylik gelir/gider (bar) + net (line)
+  const ayAnahtari = (tarih) =>
+    `${tarih.getFullYear()}-${String(tarih.getMonth() + 1).padStart(2, '0')}`
+  const ayEtiketi = (anahtar) => {
+    const [yil, ay] = String(anahtar).split('-')
+    return `${ay}/${yil.slice(2)}`
+  }
+
+  /**
+   * 12 aylik gelir/gider (bar) + net (line). Backend yalnizca hareket olan
+   * aylari dondurur; seri son 12 aya tamamlanir ki tek aylik veri bile
+   * zaman ekseninde dogru yerde gorunsun.
+   */
   const aylikGelirGider = computed(() => {
     const aylar = Array.isArray(veri.value.aylikGelirGider) ? veri.value.aylikGelirGider : []
     if (!aylar.length) return { labels: [], datasets: [] }
+
+    const harita = new Map(aylar.map((a) => [String(a.ay || ''), a]))
+    const seri = []
+    const bugun = new Date()
+    for (let i = 11; i >= 0; i -= 1) {
+      const tarih = new Date(bugun.getFullYear(), bugun.getMonth() - i, 1)
+      const anahtar = ayAnahtari(tarih)
+      const kayit = harita.get(anahtar) || {}
+      seri.push({
+        ay: anahtar,
+        gelir: Number(kayit.gelir) || 0,
+        gider: Number(kayit.gider) || 0
+      })
+    }
     return {
-      labels: aylar.map((a) => a.ay),
+      labels: seri.map((a) => ayEtiketi(a.ay)),
       datasets: [
         {
           label: t('dashboard.etiketGelir'),
-          data: aylar.map((a) => Number(a.gelir) || 0),
+          data: seri.map((a) => a.gelir),
           backgroundColor: (ctx) => dikeyGradyan(ctx, '#34d399', 'rgba(16, 185, 129, 0.25)'),
           hoverBackgroundColor: '#6ee7b7',
           borderRadius: 8,
@@ -118,7 +174,7 @@ export function useDashboardGrafikleri(kaynak) {
         },
         {
           label: t('dashboard.etiketGider'),
-          data: aylar.map((a) => Number(a.gider) || 0),
+          data: seri.map((a) => a.gider),
           backgroundColor: (ctx) => dikeyGradyan(ctx, '#fb7185', 'rgba(244, 63, 94, 0.25)'),
           hoverBackgroundColor: '#fda4af',
           borderRadius: 8,
@@ -127,7 +183,7 @@ export function useDashboardGrafikleri(kaynak) {
         {
           type: 'line',
           label: t('dashboard.net'),
-          data: aylar.map((a) => (Number(a.gelir) || 0) - (Number(a.gider) || 0)),
+          data: seri.map((a) => a.gelir - a.gider),
           borderColor: '#a78bfa',
           backgroundColor: '#a78bfa',
           borderWidth: 2.5,
@@ -139,7 +195,14 @@ export function useDashboardGrafikleri(kaynak) {
     }
   })
 
-  const aylikGelirGiderOpsiyonlari = computed(() => ({ ...temelOpsiyonlar.value, scales: eksenler.value }))
+  const aylikGelirGiderOpsiyonlari = computed(() => ({
+    ...temelOpsiyonlar.value,
+    plugins: {
+      ...temelOpsiyonlar.value.plugins,
+      tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}` } }
+    },
+    scales: eksenler.value
+  }))
 
   const RENKLER = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#84cc16']
 
@@ -162,7 +225,7 @@ export function useDashboardGrafikleri(kaynak) {
 
   // En cok satan urunler (yatay bar)
   const enCokSatanlar = computed(() => {
-    const urunler = Array.isArray(veri.value.enCokSatanlar) ? veri.value.enCokSatanlar.slice(0, 7) : []
+    const urunler = Array.isArray(veri.value.enCokSatanlar) ? veri.value.enCokSatanlar.slice(0, 5) : []
     if (!urunler.length) return { labels: [], datasets: [] }
     return {
       labels: urunler.map((u) => u.stokAd || u.stokKodu || ''),

@@ -35,7 +35,14 @@ vi.mock('../../stores/authStore.js', () => ({
 
 vi.mock('../../stores/dovizStore.js', () => ({
   useDovizStore: () => ({
-    kurlar: [{ kod: 'USD', satisFiyati: 47.4 }],
+    kurlar: [
+      { kod: 'USD', satisFiyati: 47.4 },
+      { kod: 'EUR', satisFiyati: 51.3 },
+      { kod: 'GBP', satisFiyati: 60.55 },
+      { kod: 'SAR', satisFiyati: 12.65 },
+      { kod: 'GAU', satisFiyati: 4230 },
+      { kod: 'BTC', satisFiyati: 0 }
+    ],
     loading: false,
     kurlariYukle: vi.fn().mockResolvedValue([])
   })
@@ -112,15 +119,25 @@ const gorevVerisi = [
   }
 ]
 
+// Grafik son 30 gunu bugune gore tamamlar; mock tarihleri de bugune gore
+// uretilir ki 7 gunluk dilimde veri kalsin.
+const gunlukNakit = Array.from({ length: 12 }, (_, i) => {
+  const bugun = new Date()
+  const tarih = new Date(bugun.getFullYear(), bugun.getMonth(), bugun.getDate() - (11 - i))
+  const gun = `${tarih.getFullYear()}-${String(tarih.getMonth() + 1).padStart(2, '0')}-${String(tarih.getDate()).padStart(2, '0')}`
+  return {
+    gun,
+    gelir: i === 0 ? 0 : 10 + i,
+    gider: i === 0 ? 0 : 5 + i
+  }
+})
+
 const grafikVerisi = {
   aylikGelirGider: [
-    { ay: 'Eyl', gelir: 100, gider: 60 },
-    { ay: 'Eki', gelir: 120, gider: 70 }
+    { ay: '2026-09', gelir: 100, gider: 60 },
+    { ay: '2026-10', gelir: 120, gider: 70 }
   ],
-  gunlukNakitAkisi: [
-    { gun: '2026-10-01', gelir: 10, gider: 5 },
-    { gun: '2026-10-02', gelir: 12, gider: 7 }
-  ],
+  gunlukNakitAkisi: gunlukNakit,
   enCokSatanlar: [{ stokAd: 'Kalem A', stokKodu: 'KA', satisMiktari: 5 }],
   kategoriSatislari: [{ kategori: 'Kırtasiye', tutar: 900 }],
   alacakYaslandirma: [{ aralik: '0-30', tutar: 500 }],
@@ -129,22 +146,22 @@ const grafikVerisi = {
   kasaBanka: { kasa: 1000, banka: 4000 }
 }
 
-const akisVerisi = [
-  {
-    tur: 'TAHSILAT',
-    baslik: 'Tahsilat alındı',
-    aciklama: 'ABC Ltd.',
-    tutar: 5000,
-    tarih: new Date().toISOString(),
-    route: '/hareketler',
-    ikon: null,
-    renk: null
-  }
-]
+const akisVerisi = Array.from({ length: 7 }, (_, i) => ({
+  tur: 'TAHSILAT',
+  baslik: `Tahsilat ${i + 1}`,
+  aciklama: 'ABC Ltd.',
+  tutar: 5000,
+  tarih: new Date().toISOString(),
+  route: '/hareketler',
+  ikon: null,
+  renk: null
+}))
 
 const icgoruVerisi = [
   { seviye: 'KRITIK', baslik: 'Geciken alacak arttı', mesaj: '30 günü aşan alacak var.', route: '/tahsilat', ikon: null },
-  { seviye: 'WARN', baslik: 'Kritik stok', mesaj: '3 ürün minimumun altında.', route: '/stoklar', ikon: null }
+  { seviye: 'WARN', baslik: 'Kritik stok', mesaj: '3 ürün minimumun altında.', route: '/stoklar', ikon: null },
+  { seviye: 'INFO', baslik: 'Nakit akışı', mesaj: 'Bu hafta pozitif.', route: '/kasa', ikon: null },
+  { seviye: 'INFO', baslik: 'Dördüncü', mesaj: 'Gösterilmez.', route: '/kasa', ikon: null }
 ]
 
 const kritikStokVerisi = [
@@ -163,15 +180,11 @@ const mountEt = () =>
     }
   })
 
-const anaSira = (wrapper) =>
-  wrapper.findAll('.pano-ana [data-widget]').map((w) => w.attributes('data-widget'))
-
-const raySira = (wrapper) =>
-  wrapper.findAll('.pano-ray [data-widget]').map((w) => w.attributes('data-widget'))
+const gridSira = (wrapper) =>
+  wrapper.findAll('.db-grid > [data-widget]').map((w) => w.attributes('data-widget'))
 
 const duzenModuAc = async (wrapper) => {
-  const duzenle = wrapper.find('.hero-buton[aria-pressed="false"]')
-  await duzenle.trigger('click')
+  await wrapper.find('.ust-buton[aria-pressed="false"]').trigger('click')
   await nextTick()
 }
 
@@ -179,179 +192,355 @@ const tercihMockla = (duzen) => {
   dashboardAPI.tercihGetir.mockResolvedValue({ data: { duzen } })
 }
 
-describe('Dashboard.vue — tek pano yüzeyi', () => {
+const varsayilanMocklar = () => {
+  dashboardAPI.getData.mockResolvedValue({ data: {} })
+  dashboardAPI.ozet.mockResolvedValue({ data: ozetVerisi })
+  dashboardAPI.gorevler.mockResolvedValue({ data: gorevVerisi })
+  dashboardAPI.grafikler.mockResolvedValue({ data: grafikVerisi })
+  dashboardAPI.akis.mockResolvedValue({ data: akisVerisi })
+  dashboardAPI.icgoruler.mockResolvedValue({ data: icgoruVerisi })
+  dashboardAPI.tercihGetir.mockResolvedValue({ data: { duzen: null } })
+  dashboardAPI.tercihKaydet.mockResolvedValue({ data: { duzen: null } })
+  stokAPI.kritik.mockResolvedValue({ data: kritikStokVerisi })
+}
+
+describe('Dashboard.vue — kompakt ERP yerleşimi', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     localStorage.clear()
     authMock.kullanici.role = 'ADMIN'
     authMock.isAdmin = true
     authMock.isSaha = false
-    dashboardAPI.getData.mockResolvedValue({ data: {} })
-    dashboardAPI.ozet.mockResolvedValue({ data: ozetVerisi })
-    dashboardAPI.gorevler.mockResolvedValue({ data: gorevVerisi })
-    dashboardAPI.grafikler.mockResolvedValue({ data: grafikVerisi })
-    dashboardAPI.akis.mockResolvedValue({ data: akisVerisi })
-    dashboardAPI.icgoruler.mockResolvedValue({ data: icgoruVerisi })
-    dashboardAPI.tercihGetir.mockResolvedValue({ data: { duzen: null } })
-    dashboardAPI.tercihKaydet.mockResolvedValue({ data: { duzen: null } })
-    stokAPI.kritik.mockResolvedValue({ data: kritikStokVerisi })
+    varsayilanMocklar()
   })
 
   afterEach(() => {
     vi.clearAllMocks()
   })
 
-  it('tek bir .pano yüzeyi ve üst band olarak hero render eder', async () => {
+  it('sade bir üst bar kullanır: selamlama + şirket/tarih, dev saat ve ticker yok', async () => {
     const wrapper = mountEt()
     await flushPromises()
 
-    const panolar = wrapper.findAll('.pano')
-    expect(panolar).toHaveLength(1)
+    const ust = wrapper.find('.ust-bar')
+    expect(ust.exists()).toBe(true)
+    expect(ust.text()).toContain('Ayşe Yılmaz')
+    expect(ust.text()).toContain('RasPel A.Ş.')
+    expect(ust.text()).toContain('2026')
+    expect(ust.text()).toContain(i18n.global.t('dashboard.canli'))
+    expect(ust.find('.ust-buton--ara').exists()).toBe(true)
+    expect(ust.text()).toContain('Ctrl K')
 
-    const hero = wrapper.find('.pano > .dashboard-hero')
-    expect(hero.exists()).toBe(true)
-    expect(hero.text()).toContain('Ayşe Yılmaz')
-    expect(hero.text()).toContain('RasPel A.Ş.')
-    expect(hero.text()).toContain(i18n.global.t('dashboard.canli'))
-    expect(wrapper.findAll('[data-test="hero-bugun"]')).toHaveLength(4)
-    expect(hero.text()).toContain('15.000,00')
-    // Hero kendi çerçevesini/gölgesini çizmez; pano bandıdır.
-    expect(hero.classes()).not.toContain('pano')
+    // Eski tek pano yüzeyi, hero ve saat bileşeni kaldırıldı.
+    expect(wrapper.find('.pano').exists()).toBe(false)
+    expect(wrapper.find('.dashboard-hero').exists()).toBe(false)
+    expect(wrapper.find('.hero-saat').exists()).toBe(false)
+    expect(wrapper.find('[data-test="hero-bugun"]').exists()).toBe(false)
     wrapper.unmount()
   })
 
-  it('KPI bandını 4 hücre olarak, ayrı kart çerçevesi olmadan render eder', async () => {
+  it('piyasa şeridinde en fazla 4 para birimi gösterir', async () => {
+    const wrapper = mountEt()
+    await flushPromises()
+
+    const serit = wrapper.find('[data-test="piyasa-seridi"]')
+    expect(serit.exists()).toBe(true)
+    const kalemler = serit.findAll('.piyasa-kalem')
+    expect(kalemler).toHaveLength(4)
+    expect(kalemler.map((k) => k.find('.piyasa-kod').text())).toEqual(['USD', 'EUR', 'GBP', 'BTC'])
+    // BTC kuru 0 olduğu için "—" gösterilir (yapay değer üretilmez).
+    expect(kalemler[3].text()).toContain('—')
+    expect(serit.text()).not.toContain('SAR')
+    wrapper.unmount()
+  })
+
+  it('KPI alanını 5 ayrı kart olarak render eder', async () => {
     const wrapper = mountEt()
     await flushPromises()
 
     const kpi = wrapper.find('[data-test="kpi-grid"]')
-    expect(kpi.classes()).toContain('pano-kpi')
-    expect(kpi.element.children).toHaveLength(4)
-    expect(kpi.find('.bento').exists()).toBe(false)
+    expect(kpi.exists()).toBe(true)
+    expect(wrapper.findAll('.kpi-kart')).toHaveLength(5)
 
-    expect(wrapper.find('[data-test="kpi-likidite"]').text()).toContain('120.000,00')
-    expect(wrapper.find('[data-test="kpi-likidite"]').text()).toContain('4.2%')
-    expect(wrapper.find('[data-test="kpi-net-cari"]').text()).toContain('90.000,00')
-    expect(wrapper.find('[data-test="kpi-ciro"]').text()).toContain('60')
-    // Ciro hedefi ve kâr hedefi KPI hücrelerinde kalır.
-    expect(wrapper.find('[data-test="kpi-ciro"]').text()).toContain('500.000,00')
-    expect(wrapper.find('[data-test="kpi-kar"]').text()).toContain('100.000,00')
+    expect(wrapper.find('[data-test="kpi-deger-likidite"]').text()).toContain('120.000,00')
+    expect(wrapper.find('[data-test="kpi-deger-likidite"]').text()).toContain('20.000,00')
+    expect(wrapper.find('[data-test="kpi-deger-alacak"]').text()).toContain('90.000,00')
+    expect(wrapper.find('[data-test="kpi-deger-borc"]').text()).toContain('40.000,00')
+    expect(wrapper.find('[data-test="kpi-deger-ciro"]').text()).toContain('300.000,00')
+    expect(wrapper.find('[data-test="kpi-deger-kar"]').text()).toContain('+')
+    expect(wrapper.find('[data-test="kpi-deger-kar"]').text()).toContain('80.000,00')
+    expect(wrapper.find('[data-test="kpi-ciro"]').text()).toContain('%60')
     expect(wrapper.find('[data-test="kpi-kar"]').text()).toContain('26.6')
+    // Likidite kartinda yuzde "trend" yoktur; son 7 gun sparkline'i gosterilir.
+    expect(wrapper.find('[data-test="kpi-likidite"] .kpi-spark').exists()).toBe(true)
+    expect(wrapper.find('[data-test="kpi-likidite"] .kpi-delta').exists()).toBe(false)
     wrapper.unmount()
   })
 
-  it('gövdeyi ana içerik + sağ ray olarak kurar', async () => {
+  it('bugün şeridini KPI kartlarının hemen altında 4 hücre olarak render eder', async () => {
     const wrapper = mountEt()
     await flushPromises()
 
-    expect(wrapper.find('.pano-govde').exists()).toBe(true)
-    expect(anaSira(wrapper)).toEqual([
+    const serit = wrapper.find('[data-test="bugun-seridi"]')
+    expect(serit.exists()).toBe(true)
+    expect(serit.element.children).toHaveLength(4)
+    expect(serit.text()).toContain('15.000,00')
+    expect(serit.text()).toContain('4.000,00')
+
+    // Şerit KPI'lardan sonra, ana izgaradan önce gelir.
+    const kpi = wrapper.find('[data-test="kpi-grid"]')
+    const grid = wrapper.find('.db-grid')
+    expect(serit.element.compareDocumentPosition(kpi.element)).toBe(Node.DOCUMENT_POSITION_PRECEDING)
+    expect(serit.element.compareDocumentPosition(grid.element)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    wrapper.unmount()
+  })
+
+  it('ana ızgarayı 12 kolon ve sabit span sınıflarıyla kurar', async () => {
+    const wrapper = mountEt()
+    await flushPromises()
+
+    expect(wrapper.find('.db-grid').exists()).toBe(true)
+    expect(gridSira(wrapper)).toEqual([
       'gorevler',
+      'icgoruler',
       'nakitAkisi',
+      'hizliIslemler',
       'aylikGelirGider',
+      'kritikStok',
       'kategoriSatislari',
       'enCokSatanlar',
       'akis'
     ])
-    expect(raySira(wrapper)).toEqual(['icgoruler', 'hizliIslemler', 'kritikStok'])
-    expect(wrapper.find('.pano-ray').text()).toContain(i18n.global.t('dashboard.icgoruler'))
+
+    expect(wrapper.find('.db-grid [data-widget="gorevler"]').classes()).toContain('db-kart-alan--8')
+    expect(wrapper.find('.db-grid [data-widget="icgoruler"]').classes()).toContain('db-kart-alan--4')
+    expect(wrapper.find('.db-grid [data-widget="nakitAkisi"]').classes()).toContain('db-kart-alan--8')
+    expect(wrapper.find('.db-grid [data-widget="akis"]').classes()).toContain('db-kart-alan--4')
     wrapper.unmount()
   })
 
-  it('görev merkezi ana içeriğin ilk bölümüdür ve vadeler görev satırıdır', async () => {
+  it('görev satırlarında boş kolon yoktur ve aksiyon bağlantıları doğrudur', async () => {
     const wrapper = mountEt()
     await flushPromises()
 
     const gorev = wrapper.find('[data-test="gorev-merkezi"]')
-    expect(gorev.exists()).toBe(true)
-    expect(gorev.findAll('.gorev-kart')).toHaveLength(3)
-    expect(gorev.find('.gorev-kart--kritik').text()).toContain('Vadesi geçen alacak')
+    expect(gorev.findAll('.gorev-satir')).toHaveLength(3)
 
-    // Vadeler ayrı liste/kart değil; görev satırı olarak /tahsilat'a gider.
-    expect(wrapper.find('[data-test="vade-takibi"]').exists()).toBe(false)
     const gecen = wrapper.find('[data-test="gorev-VADESI_GECEN"]')
-    expect(gecen.attributes('href')).toBe('/tahsilat')
+    expect(gecen.element.children).toHaveLength(4)
+    expect(gecen.find('.gorev-eylem').attributes('href')).toBe('/tahsilat')
+    expect(gecen.find('.gorev-eylem').text()).toContain(i18n.global.t('dashboard.gorevTahsilatLink'))
     expect(gecen.text()).toContain('12.500,00')
-    expect(wrapper.find('[data-test="gorev-VADESI_YAKLASAN"]').attributes('href')).toBe('/tahsilat')
 
-    // Kaldırılan widget'lar hiçbir yerde çizilmez.
-    expect(wrapper.find('[data-widget="hedefler"]').exists()).toBe(false)
-    expect(wrapper.find('[data-widget="vade"]').exists()).toBe(false)
-    expect(wrapper.find('[data-test="hedefler"]').exists()).toBe(false)
+    const onay = wrapper.find('[data-test="gorev-ONAY_IZIN"]')
+    expect(onay.find('.gorev-eylem').attributes('href')).toBe('/onaylar?tur=IZIN')
     wrapper.unmount()
   })
 
-  it('nakit akışı bölümünün altında 3 kompakt projeksiyon çipi gösterir', async () => {
+  it('nakit akışı verisi varken 200px grafik + gerçekleşen etiketi gösterir', async () => {
+    const wrapper = mountEt()
+    await flushPromises()
+
+    const kart = wrapper.find('[data-widget="nakitAkisi"]')
+    expect(kart.find('[data-test="nakit-grafik"]').exists()).toBe(true)
+    expect(kart.find('.stub-line').exists()).toBe(true)
+    expect(kart.text()).toContain(i18n.global.t('dashboard.nakitGerceklesen'))
+    expect(kart.find('[data-test="nakit-bos"]').exists()).toBe(false)
+
+    const stil = kart.find('[data-test="nakit-grafik"]').attributes('style') || ''
+    expect(stil).toContain('200px')
+    // Projeksiyon çipleri "Tahmini" etiketiyle grafiğin altındadır.
+    const cipler = kart.findAll('[data-test="nakit-projeksiyon-cip"]')
+    expect(cipler).toHaveLength(3)
+    expect(cipler[0].text()).toContain(i18n.global.t('dashboard.tahmini'))
+    expect(cipler[0].text()).toContain('30 gün')
+    expect(cipler[2].text()).toContain('90 gün')
+    wrapper.unmount()
+  })
+
+  it('nakit akışı boşsa grafik çizmez, kompakt boş durum gösterir', async () => {
+    dashboardAPI.grafikler.mockResolvedValue({
+      data: { ...grafikVerisi, gunlukNakitAkisi: [] }
+    })
+    const wrapper = mountEt()
+    await flushPromises()
+
+    const kart = wrapper.find('[data-widget="nakitAkisi"]')
+    expect(kart.find('.stub-line').exists()).toBe(false)
+    expect(kart.find('[data-test="nakit-grafik"]').exists()).toBe(false)
+    const bos = kart.find('[data-test="nakit-bos"]')
+    expect(bos.exists()).toBe(true)
+    expect(bos.text()).toContain(i18n.global.t('dashboard.nakitBosBaslik'))
+    expect(bos.text()).toContain(i18n.global.t('dashboard.nakitBosAlt'))
+    expect(bos.find('a').attributes('href')).toBe('/kasa')
+    // Kompakt boş durum 120px'lik alanda kalır (200px grafik alanı yok).
+    expect(bos.attributes('style') || '').not.toContain('200px')
+    // Tahmini projeksiyon yine de gösterilebilir.
+    expect(kart.findAll('[data-test="nakit-projeksiyon-cip"]')).toHaveLength(3)
+    wrapper.unmount()
+  })
+
+  it('nakit akışında 7/30 gün geçişi veriyi dilimler', async () => {
+    const wrapper = mountEt()
+    await flushPromises()
+
+    const nakitKart = wrapper.find('[data-widget="nakitAkisi"]')
+    const otuz = nakitKart.findComponent({ name: 'Line' }).props('data')
+    expect(otuz.labels).toHaveLength(30)
+
+    await wrapper.find('[data-test="nakit-segment-7"]').trigger('click')
+    await nextTick()
+
+    const yedi = wrapper.find('[data-widget="nakitAkisi"]').findComponent({ name: 'Line' }).props('data')
+    expect(yedi.labels).toHaveLength(7)
+    expect(wrapper.find('[data-test="nakit-segment-7"]').classes()).toContain('nakit-segment-buton--aktif')
+    wrapper.unmount()
+  })
+
+  it('projeksiyon çiplerini her zaman "Tahmini" etiketiyle gösterir', async () => {
     const wrapper = mountEt()
     await flushPromises()
 
     const projeksiyon = wrapper.find('[data-test="nakit-projeksiyon"]')
     expect(projeksiyon.exists()).toBe(true)
-    const cipler = projeksiyon.findAll('[data-test="nakit-projeksiyon-cip"]')
-    expect(cipler).toHaveLength(3)
-    expect(cipler[0].text()).toContain('30 gün')
-    expect(cipler[2].text()).toContain('90 gün')
-    // Çipler nakit akışı bölümünün içindedir (ayrı panel yok).
-    expect(wrapper.find('[data-widget="nakitAkisi"]').text()).toContain(
-      i18n.global.t('dashboard.hedefNakitProjeksiyon')
-    )
+    expect(projeksiyon.text()).toContain(i18n.global.t('dashboard.hedefNakitProjeksiyon'))
+    expect(projeksiyon.findAll('[data-test="nakit-projeksiyon-cip"]')).toHaveLength(3)
+    expect(projeksiyon.findAll('.nakit-cip-tahmini').every((e) => e.text() === i18n.global.t('dashboard.tahmini'))).toBe(true)
     wrapper.unmount()
   })
 
-  it('sağ ray bölümlerini kompakt biçimde render eder', async () => {
+  it('grafik kartlarını ve drill-down bağlantılarını render eder', async () => {
     const wrapper = mountEt()
     await flushPromises()
 
-    const icgoru = wrapper.find('[data-test="icgoru-karti"]')
-    expect(icgoru.findAll('.icgoru-satir')).toHaveLength(2)
-    expect(icgoru.find('.icgoru-satir--kritik').exists()).toBe(true)
-    // Kendi kart çerçevesi yok.
-    expect(icgoru.find('.icgoru-satir').classes()).not.toContain('icgoru-kart')
+    expect(wrapper.findAll('[data-test="grafik-karti"]')).toHaveLength(3)
+    expect(wrapper.find('[data-widget="nakitAkisi"] [data-test="nakit-karti"]').exists()).toBe(true)
+    expect(wrapper.find('[data-widget="aylikGelirGider"]').text()).toContain(
+      i18n.global.t('dashboard.grafikAylikGelirGider')
+    )
+    expect(wrapper.find('[data-widget="aylikGelirGider"] a[href="/raporlar"]').exists()).toBe(true)
+    expect(wrapper.find('[data-widget="kategoriSatislari"] .stub-doughnut').exists()).toBe(true)
+    expect(wrapper.find('[data-widget="enCokSatanlar"] .stub-bar').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('içgörüleri en fazla 3 satır olarak gösterir', async () => {
+    const wrapper = mountEt()
+    await flushPromises()
+
+    const kart = wrapper.find('[data-widget="icgoruler"]')
+    expect(kart.findAll('.icgoru-satir')).toHaveLength(3)
+    expect(kart.text()).not.toContain('Dördüncü')
+    expect(kart.find('.icgoru-satir--kritik').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('hızlı işlemler yalnız mevcut rotaları 3x3 izgarada sunar', async () => {
+    const wrapper = mountEt()
+    await flushPromises()
 
     const hizli = wrapper.find('[data-test="hizli-islemler"]')
-    expect(hizli.exists()).toBe(true)
-
-    const kritik = wrapper.find('[data-test="kritik-stok"]')
-    expect(kritik.findAll('.kritik-satir')).toHaveLength(4)
-    expect(kritik.text()).toContain('Kalem A')
-    expect(kritik.text()).toContain(i18n.global.t('dashboard.tumunuGor'))
+    const baglantilar = hizli.findAll('a').map((a) => a.attributes('href'))
+    expect(baglantilar).toEqual([
+      '/teklifler',
+      '/faturalar',
+      '/hizli-satis',
+      '/cari-hesaplar',
+      '/hareketler',
+      '/kasa',
+      '/stoklar',
+      '/yonetici-kokpiti'
+    ])
+    expect(hizli.findAll('.islem-karti')).toHaveLength(9)
+    expect(hizli.find('.islem-karti--ara').exists()).toBe(true)
     wrapper.unmount()
   })
 
-  it('ana grafik kartlarını ve drill-down bağlantılarını render eder', async () => {
+  it('hızlı işlemlerde yönetici kokpiti yalnız ADMIN için görünür', async () => {
+    authMock.isAdmin = false
     const wrapper = mountEt()
     await flushPromises()
 
-    const kartlar = wrapper.findAll('[data-test="grafik-karti"]')
-    expect(kartlar).toHaveLength(4)
-    expect(wrapper.text()).toContain(i18n.global.t('dashboard.grafikNakitAkisi'))
-    expect(wrapper.text()).toContain(i18n.global.t('dashboard.grafikAylikGelirGider'))
-
-    expect(kartlar[0].find('a').attributes('href')).toBe('/kasa')
-    expect(kartlar[1].find('a').attributes('href')).toBe('/raporlar')
-    expect(kartlar[2].find('a').attributes('href')).toBe('/raporlar')
-    expect(kartlar[3].find('a').attributes('href')).toBe('/stoklar')
+    const hizli = wrapper.find('[data-test="hizli-islemler"]')
+    expect(hizli.find('a[href="/yonetici-kokpiti"]').exists()).toBe(false)
+    expect(hizli.findAll('a')).toHaveLength(7)
     wrapper.unmount()
   })
 
-  it('canlı akışı ve hızlı işlemleri render eder', async () => {
-    const dinleyici = vi.fn()
-    window.addEventListener('raspel:hizli-ara', dinleyici)
+  it('canlı akışta son 5 olayı gösterir', async () => {
     const wrapper = mountEt()
     await flushPromises()
 
     const akis = wrapper.find('[data-test="canli-akis"]')
-    expect(akis.exists()).toBe(true)
-    expect(akis.findAll('.akis-satir')).toHaveLength(1)
-    expect(akis.text()).toContain('Tahsilat alındı')
+    expect(akis.findAll('.akis-satir')).toHaveLength(5)
+    expect(akis.text()).toContain('Tahsilat 1')
+    expect(akis.text()).not.toContain('Tahsilat 6')
+    wrapper.unmount()
+  })
 
-    const hizli = wrapper.find('[data-test="hizli-islemler"]')
-    const kisayollar = hizli.findAll('.islem-karti').filter((k) => !k.classes('islem-karti--ara'))
-    expect(kisayollar).toHaveLength(9)
-    expect(hizli.find('.islem-karti--ara').exists()).toBe(true)
-    await hizli.find('.islem-karti--ara').trigger('click')
-    expect(dinleyici).toHaveBeenCalledTimes(1)
-    window.removeEventListener('raspel:hizli-ara', dinleyici)
+  it('kritik stok kartında 4 satır ve başlıkta "Tümünü gör" bağlantısı vardır', async () => {
+    const wrapper = mountEt()
+    await flushPromises()
+
+    const kart = wrapper.find('[data-widget="kritikStok"]')
+    expect(kart.findAll('.kritik-satir')).toHaveLength(4)
+    expect(kart.text()).toContain('Kalem A')
+    const link = kart.find('.db-kart-ust a')
+    expect(link.attributes('href')).toBe('/stoklar?kritik=1')
+    expect(link.text()).toContain(i18n.global.t('dashboard.tumunuGor'))
+    wrapper.unmount()
+  })
+
+  it('null/eksik KPI değerlerinde "—" gösterir, sıfır uydurmaz', async () => {
+    dashboardAPI.ozet.mockResolvedValue({
+      data: {
+        ...ozetVerisi,
+        kpi: {
+          likidite: { deger: null, kasa: null, banka: undefined, trendYuzde: null },
+          netCari: { alacak: null, borc: null },
+          ciro: { deger: null, hedef: null, yuzde: null },
+          kar: { deger: null, hedef: null, marj: null }
+        }
+      }
+    })
+    const wrapper = mountEt()
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="kpi-deger-likidite"]').text()).toBe('—')
+    expect(wrapper.find('[data-test="kpi-deger-alacak"]').text()).toBe('—')
+    expect(wrapper.find('[data-test="kpi-deger-borc"]').text()).toBe('—')
+    expect(wrapper.find('[data-test="kpi-deger-ciro"]').text()).toBe('—')
+    expect(wrapper.find('[data-test="kpi-deger-kar"]').text()).toBe('—')
+    expect(wrapper.findAll('.kpi-hedef-yok')).toHaveLength(2)
+    expect(wrapper.find('[data-test="kpi-likidite"] .kpi-delta').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('boş görev listesinde "Bekleyen iş yok" gösterir', async () => {
+    dashboardAPI.gorevler.mockResolvedValue({ data: [] })
+    const wrapper = mountEt()
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="gorev-merkezi"] .gorev-durum--bos').exists()).toBe(true)
+    expect(wrapper.find('.gorev-durum--bos').text()).toContain(i18n.global.t('dashboard.gorevBos'))
+    wrapper.unmount()
+  })
+
+  it('görev hatasında "Yeniden dene" ile tekrar yükler', async () => {
+    dashboardAPI.gorevler.mockRejectedValueOnce(new Error('kapalı'))
+    const wrapper = mountEt()
+    await flushPromises()
+
+    const hata = wrapper.find('.gorev-durum--hata')
+    expect(hata.exists()).toBe(true)
+    expect(hata.text()).toContain(i18n.global.t('dashboard.gorevHata'))
+
+    const once = dashboardAPI.gorevler.mock.calls.length
+    dashboardAPI.gorevler.mockResolvedValueOnce({ data: gorevVerisi })
+    await hata.find('.gorev-dene').trigger('click')
+    await flushPromises()
+    expect(dashboardAPI.gorevler.mock.calls.length).toBe(once + 1)
+    expect(wrapper.findAll('.gorev-satir')).toHaveLength(3)
     wrapper.unmount()
   })
 
@@ -366,23 +555,13 @@ describe('Dashboard.vue — tek pano yüzeyi', () => {
     const wrapper = mountEt()
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.findAll('.kpi-hucre--iskelet')).toHaveLength(4)
-    expect(wrapper.find('.dashboard-hero .bugun-skeleton').exists()).toBe(true)
+    expect(wrapper.findAll('.kpi-kart--iskelet')).toHaveLength(5)
 
     coz({ data: ozetVerisi })
     await flushPromises()
 
-    expect(wrapper.findAll('.kpi-hucre--iskelet')).toHaveLength(0)
-    expect(wrapper.find('[data-test="kpi-likidite"]').exists()).toBe(true)
-    wrapper.unmount()
-  })
-
-  it('boş görev listesinde boş durum gösterir', async () => {
-    dashboardAPI.gorevler.mockResolvedValue({ data: [] })
-    const wrapper = mountEt()
-    await flushPromises()
-
-    expect(wrapper.find('[data-test="gorev-merkezi"] .gorev-durum--bos').exists()).toBe(true)
+    expect(wrapper.findAll('.kpi-kart--iskelet')).toHaveLength(0)
+    expect(wrapper.find('[data-test="kpi-deger-likidite"]').exists()).toBe(true)
     wrapper.unmount()
   })
 
@@ -396,39 +575,10 @@ describe('Dashboard.vue — tek pano yüzeyi', () => {
 
     const yenile = wrapper.find(`[aria-label="${i18n.global.t('dashboard.yenile')}"]`)
     expect(yenile.exists()).toBe(true)
-    expect(wrapper.find('.hero-buton--ara').attributes('aria-label')).toBe(
+    expect(wrapper.find('.ust-buton--ara').attributes('aria-label')).toBe(
       i18n.global.t('dashboard.heroAra')
     )
-    wrapper.unmount()
-  })
-
-  it('"Tüm analizler" panonun alt bandında açılır', async () => {
-    const wrapper = mountEt()
-    await flushPromises()
-
-    const analiz = wrapper.find('.pano > .pano-analizler')
-    expect(analiz.exists()).toBe(true)
-    expect(wrapper.findAll('[data-test="grafik-karti"]')).toHaveLength(4)
-
-    const buton = wrapper.find('.analiz-baslik')
-    expect(buton.attributes('aria-expanded')).toBe('false')
-    await buton.trigger('click')
-    expect(buton.attributes('aria-expanded')).toBe('true')
-    expect(wrapper.findAll('[data-test="grafik-karti"]')).toHaveLength(10)
-    expect(wrapper.find('a[href="/tahsilat"]').exists()).toBe(true)
-    wrapper.unmount()
-  })
-
-  it('USER rolünde analizler kapalı, ray ve KPI görünür', async () => {
-    authMock.kullanici.role = 'USER'
-    authMock.isAdmin = false
-    const wrapper = mountEt()
-    await flushPromises()
-
-    expect(wrapper.find('[data-widget="kpi"]').exists()).toBe(true)
-    expect(wrapper.find('.analiz-baslik').exists()).toBe(false)
-    expect(raySira(wrapper)).toEqual(['hizliIslemler', 'kritikStok', 'icgoruler'])
-    expect(anaSira(wrapper)).toEqual(['gorevler', 'akis', 'enCokSatanlar', 'nakitAkisi'])
+    expect(wrapper.find('.nakit-segment').attributes('role')).toBe('group')
     wrapper.unmount()
   })
 
@@ -446,107 +596,112 @@ describe('Dashboard.vue — kişiselleştirme', () => {
     localStorage.clear()
     authMock.kullanici.role = 'ADMIN'
     authMock.isAdmin = true
-    dashboardAPI.ozet.mockResolvedValue({ data: ozetVerisi })
-    dashboardAPI.gorevler.mockResolvedValue({ data: gorevVerisi })
-    dashboardAPI.grafikler.mockResolvedValue({ data: grafikVerisi })
-    dashboardAPI.akis.mockResolvedValue({ data: akisVerisi })
-    dashboardAPI.icgoruler.mockResolvedValue({ data: icgoruVerisi })
-    dashboardAPI.tercihGetir.mockResolvedValue({ data: { duzen: null } })
-    dashboardAPI.tercihKaydet.mockResolvedValue({ data: { duzen: null } })
-    stokAPI.kritik.mockResolvedValue({ data: kritikStokVerisi })
+    authMock.isSaha = false
+    varsayilanMocklar()
   })
 
   afterEach(() => {
     vi.clearAllMocks()
   })
 
-  it('düzen paneli iki grup gösterir ve boyut kontrolü yoktur', async () => {
+  it('düzen paneli tek liste gösterir ve boyut kontrolü yoktur', async () => {
     const wrapper = mountEt()
     await flushPromises()
     await duzenModuAc(wrapper)
 
     const panel = wrapper.find('[data-test="duzen-paneli"]')
     expect(panel.exists()).toBe(true)
-    expect(panel.findAll('[data-bolge]')).toHaveLength(2)
-    expect(panel.find('[data-bolge="ana"]').text()).toContain(i18n.global.t('dashboard.anaIcerik'))
-    expect(panel.find('[data-bolge="ray"]').text()).toContain(i18n.global.t('dashboard.sagRay'))
+    expect(panel.findAll('[data-widget]')).toHaveLength(11)
+    expect(panel.find('[data-bolge]').exists()).toBe(false)
     expect(panel.find('.duzen-buton--boyut').exists()).toBe(false)
-    expect(wrapper.find('.dw-buton--boyut').exists()).toBe(false)
-    // kpi sabittir: sıra oku yok.
+    expect(panel.text()).not.toContain('1x')
+    expect(panel.text()).not.toContain('2x')
+    // kpi ve bugunSerit sabittir: sıra oku yok.
     expect(panel.find('[data-widget="kpi"] .duzen-sabit').exists()).toBe(true)
+    expect(panel.find('[data-widget="bugunSerit"] .duzen-sabit').exists()).toBe(true)
     wrapper.unmount()
   })
 
-  it('düzen modunda bölge içi sıralama ve gizleme çalışır', async () => {
+  it('düzen modunda aç/kapa: kesikli çerçeve ve araç çubuğu', async () => {
     const wrapper = mountEt()
     await flushPromises()
     await duzenModuAc(wrapper)
 
-    expect(wrapper.find('.dw--duzen').exists()).toBe(true)
-
-    // ana içerikte ilk bölüm görevler: yukarı devre dışı.
-    const gorevler = wrapper.find('.pano-ana [data-widget="gorevler"]')
-    expect(gorevler.find('[aria-label*="Yukarı"]').attributes('disabled')).toBeDefined()
-
-    // aynı bölge içinde klavye sıralaması: akis bir üst sıraya geçer.
-    const onceki = anaSira(wrapper)
-    await wrapper.find('.pano-ana [data-widget="akis"] [aria-label*="Yukarı"]').trigger('click')
-    await nextTick()
-    expect(anaSira(wrapper).indexOf('akis')).toBe(onceki.indexOf('akis') - 1)
-
-    // sağ rayda gizleme rayı bozmaz.
-    await wrapper.find('.pano-ray [data-widget="icgoruler"] .dw-buton--gizle').trigger('click')
-    expect(wrapper.find('.pano-ray [data-widget="icgoruler"]').exists()).toBe(false)
-    expect(raySira(wrapper)).toEqual(['hizliIslemler', 'kritikStok'])
+    expect(wrapper.find('.db-grid [data-widget="gorevler"]').classes()).toContain('dw--duzen')
+    expect(wrapper.find('.db-grid [data-widget="gorevler"] .dw-arac').exists()).toBe(true)
+    // Sabit bantlar izgarada değildir; taşıma aracı çizmezler.
+    expect(wrapper.find('[data-widget="kpi"] .dw-arac').exists()).toBe(false)
     wrapper.unmount()
   })
 
-  it('sürükle-bırak yalnızca aynı bölge içinde çalışır', async () => {
+  it('düz listede sıralama ve gizleme çalışır', async () => {
+    const wrapper = mountEt()
+    await flushPromises()
+    await duzenModuAc(wrapper)
+
+    expect(gridSira(wrapper)[0]).toBe('gorevler')
+    expect(
+      wrapper.find('.db-grid [data-widget="gorevler"] [aria-label*="Yukarı"]').attributes('disabled')
+    ).toBeDefined()
+
+    await wrapper.find('.db-grid [data-widget="gorevler"] [aria-label*="Aşağı"]').trigger('click')
+    await nextTick()
+    expect(gridSira(wrapper).slice(0, 2)).toEqual(['icgoruler', 'gorevler'])
+
+    await wrapper.find('.db-grid [data-widget="icgoruler"] .dw-buton--gizle').trigger('click')
+    expect(wrapper.find('.db-grid [data-widget="icgoruler"]').exists()).toBe(false)
+    expect(gridSira(wrapper)).not.toContain('icgoruler')
+    wrapper.unmount()
+  })
+
+  it('sürükle-bırak ile düz listede sıralama değişir', async () => {
     const wrapper = mountEt()
     await flushPromises()
     await duzenModuAc(wrapper)
 
     const dataTransfer = { setData: vi.fn(), effectAllowed: '', dropEffect: '' }
-    await wrapper.find('.pano-ana [data-widget="akis"]').trigger('dragstart', { dataTransfer })
-    await wrapper.find('.pano-ana [data-widget="nakitAkisi"]').trigger('drop', { dataTransfer })
+    await wrapper.find('.db-grid [data-widget="akis"]').trigger('dragstart', { dataTransfer })
+    await wrapper.find('.db-grid [data-widget="nakitAkisi"]').trigger('drop', { dataTransfer })
     await nextTick()
-    expect(anaSira(wrapper)[1]).toBe('akis')
-
-    // Bölgeler arası taşıma reddedilir.
-    const ray = raySira(wrapper)
-    await wrapper.find('.pano-ana [data-widget="akis"]').trigger('dragstart', { dataTransfer })
-    await wrapper.find('.pano-ray [data-widget="kritikStok"]').trigger('drop', { dataTransfer })
-    await nextTick()
-    expect(raySira(wrapper)).toEqual(ray)
+    expect(gridSira(wrapper).indexOf('akis')).toBe(gridSira(wrapper).indexOf('nakitAkisi') - 1)
     wrapper.unmount()
   })
 
-  it('kpi taşınamaz (panel oku yok, sürükleme yok sayılır)', async () => {
+  it('sabit bantlar taşınamaz (kpi sürükleme hedefi reddedilir)', async () => {
     const wrapper = mountEt()
     await flushPromises()
     await duzenModuAc(wrapper)
 
-    const kpi = wrapper.find('[data-widget="kpi"]')
-    expect(kpi.find('.dw-arac').exists()).toBe(false)
-
+    const once = gridSira(wrapper)
     const dataTransfer = { setData: vi.fn(), effectAllowed: '', dropEffect: '' }
-    await wrapper.find('.pano-ana [data-widget="akis"]').trigger('dragstart', { dataTransfer })
-    await kpi.trigger('drop', { dataTransfer })
+    await wrapper.find('.db-grid [data-widget="akis"]').trigger('dragstart', { dataTransfer })
+    await wrapper.find('[data-widget="kpi"]').trigger('drop', { dataTransfer })
     await nextTick()
-    expect(anaSira(wrapper)).toContain('akis')
-    expect(wrapper.findAll('.pano > [data-widget]')[0].attributes('data-widget')).toBe('kpi')
+    expect(gridSira(wrapper)).toEqual(once)
     wrapper.unmount()
   })
 
-  it('gizle/göster ve kaydet tercihi boyut alanı olmadan PUT eder', async () => {
+  it('bugunSerit panelden gizlenebilir', async () => {
+    const wrapper = mountEt()
+    await flushPromises()
+    await duzenModuAc(wrapper)
+
+    expect(wrapper.find('[data-test="bugun-seridi"]').exists()).toBe(true)
+    await wrapper
+      .find('[data-test="duzen-paneli"] [data-widget="bugunSerit"] input[type="checkbox"]')
+      .setValue(false)
+    await nextTick()
+    expect(wrapper.find('[data-test="bugun-seridi"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('kaydet tercihi boyut alanı olmadan PUT eder', async () => {
     const wrapper = mountEt()
     await flushPromises()
     await duzenModuAc(wrapper)
 
     await wrapper.find('[data-test="duzen-paneli"] [data-widget="icgoruler"] input[type="checkbox"]').setValue(false)
     await nextTick()
-    expect(wrapper.find('.pano-ray [data-widget="icgoruler"]').exists()).toBe(false)
-
     await wrapper.find('.duzen-eylem--kaydet').trigger('click')
     await flushPromises()
 
@@ -556,6 +711,7 @@ describe('Dashboard.vue — kişiselleştirme', () => {
     expect(gonderilen.duzen.sira.find((w) => w.key === 'icgoruler').gorunur).toBe(false)
     expect(gonderilen.duzen.sira.every((w) => !('boyut' in w))).toBe(true)
     expect(gonderilen.duzen.sira[0].key).toBe('kpi')
+    expect(gonderilen.duzen.sira[1].key).toBe('bugunSerit')
     expect(wrapper.find('[data-test="duzen-paneli"]').exists()).toBe(false)
     expect(wrapper.find('[aria-live="polite"]').text()).toBe(i18n.global.t('dashboard.duzenKaydedildi'))
     wrapper.unmount()
@@ -567,7 +723,7 @@ describe('Dashboard.vue — kişiselleştirme', () => {
     await flushPromises()
     await duzenModuAc(wrapper)
 
-    await wrapper.find('.pano-ray [data-widget="icgoruler"] .dw-buton--gizle').trigger('click')
+    await wrapper.find('.db-grid [data-widget="icgoruler"] .dw-buton--gizle').trigger('click')
     await wrapper.find('.duzen-eylem--kaydet').trigger('click')
     await flushPromises()
 
@@ -585,32 +741,34 @@ describe('Dashboard.vue — kişiselleştirme', () => {
     await flushPromises()
     await duzenModuAc(wrapper)
 
-    await wrapper.find('.pano-ray [data-widget="icgoruler"] .dw-buton--gizle').trigger('click')
-    expect(wrapper.find('.pano-ray [data-widget="icgoruler"]').exists()).toBe(false)
+    await wrapper.find('.db-grid [data-widget="icgoruler"] .dw-buton--gizle').trigger('click')
+    expect(wrapper.find('.db-grid [data-widget="icgoruler"]').exists()).toBe(false)
 
     await wrapper.find('.duzen-eylem--sifirla').trigger('click')
     await nextTick()
-    expect(wrapper.find('.pano-ray [data-widget="icgoruler"]').exists()).toBe(true)
+    expect(wrapper.find('.db-grid [data-widget="icgoruler"]').exists()).toBe(true)
 
-    await wrapper.find('.pano-ray [data-widget="icgoruler"] .dw-buton--gizle').trigger('click')
+    await wrapper.find('.db-grid [data-widget="icgoruler"] .dw-buton--gizle').trigger('click')
     await wrapper.find('.duzen-eylem--iptal').trigger('click')
-    expect(wrapper.find('.pano-ray [data-widget="icgoruler"]').exists()).toBe(true)
+    expect(wrapper.find('.db-grid [data-widget="icgoruler"]').exists()).toBe(true)
     expect(dashboardAPI.tercihKaydet).not.toHaveBeenCalled()
     wrapper.unmount()
   })
 
-  it('backend tercihi varsa onu uygular', async () => {
+  it('backend tercihi varsa sırayı ondan alır', async () => {
     tercihMockla({
       versiyon: 1,
       sira: [
         { key: 'kpi', gorunur: true },
+        { key: 'bugunSerit', gorunur: true },
         { key: 'akis', gorunur: true },
         { key: 'gorevler', gorunur: true }
       ]
     })
     const wrapper = mountEt()
     await flushPromises()
-    expect(anaSira(wrapper)[0]).toBe('akis')
+    expect(gridSira(wrapper)[0]).toBe('akis')
+    expect(wrapper.find('[data-test="bugun-seridi"]').exists()).toBe(true)
     wrapper.unmount()
   })
 
@@ -622,6 +780,7 @@ describe('Dashboard.vue — kişiselleştirme', () => {
           versiyon: 1,
           sira: [
             { key: 'kpi', gorunur: true },
+            { key: 'bugunSerit', gorunur: true },
             { key: 'gorevler', gorunur: true }
           ]
         },
@@ -630,7 +789,7 @@ describe('Dashboard.vue — kişiselleştirme', () => {
     )
     const wrapper = mountEt()
     await flushPromises()
-    expect(anaSira(wrapper)[0]).toBe('gorevler')
+    expect(gridSira(wrapper)[0]).toBe('gorevler')
     wrapper.unmount()
   })
 
@@ -649,7 +808,7 @@ describe('Dashboard.vue — kişiselleştirme', () => {
 
     expect(wrapper.find('[data-widget="hedefler"]').exists()).toBe(false)
     expect(wrapper.find('[data-widget="vade"]').exists()).toBe(false)
-    expect(anaSira(wrapper)[0]).toBe('gorevler')
+    expect(gridSira(wrapper)[0]).toBe('gorevler')
 
     await duzenModuAc(wrapper)
     await wrapper.find('.duzen-eylem--kaydet').trigger('click')

@@ -77,8 +77,9 @@ describe('Faz2 — Global yoğunluk', () => {
   it('dokunma hedefleri yalnız kaba işaretçide', () => {
     expect(appCss).toMatch(/@media \(max-width: 900px\) and \(hover: none\) and \(pointer: coarse\)/)
   })
-  it('pano başlığı (hero) 24px ile hizalı', () => {
-    const hero = oku('components/dashboard/DashboardHero.vue')
-    expect(hero).toMatch(/\.hero-baslik \{[\s\S]*?font-size:\s*24px/)
+  it('pano üst barı sade ve hizalı (hero kaldırıldı)', () => {
+    const ustBar = oku('components/dashboard/DashboardUstBar.vue')
+    expect(ustBar).toMatch(/\.ust-bar \{[\s\S]*?min-height:\s*64px/)
+    expect(ustBar).toMatch(/\.ust-selam \{[\s\S]*?font-size:\s*17px/)
   })
 })

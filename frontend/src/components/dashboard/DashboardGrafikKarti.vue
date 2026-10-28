@@ -1,72 +1,65 @@
 <template>
-  <section
-    class="pano-bolum grafik-karti"
+  <DashboardKart
+    :baslik="baslik"
+    :ikon="ikon"
+    :link-to="linkTo"
+    :link-metin="linkMetin || t('dashboard.detayaGit')"
     data-test="grafik-karti"
   >
-    <header class="pano-bolum-ust">
-      <h2 class="pano-bolum-baslik">
-        <span class="pano-bolum-ikon">
-          <i
-            :class="ikon"
-            aria-hidden="true"
-          />
-        </span>
-        <span class="pano-bolum-baslik-metin">{{ baslik }}</span>
-      </h2>
+    <p
+      v-if="altMetin"
+      class="grafik-alt"
+    >
+      {{ altMetin }}
+    </p>
+
+    <div
+      v-if="yukleniyor"
+      class="grafik-govde"
+      :style="{ height: `${yukseklik}px` }"
+      aria-hidden="true"
+    >
+      <span class="iskelet" />
+    </div>
+
+    <!-- Bos veri: grafik alani cizilmez; kompakt bos durum gosterilir. -->
+    <div
+      v-else-if="bosMu"
+      class="grafik-bos"
+      :style="{ minHeight: `${bosYukseklik}px` }"
+    >
+      <i
+        class="pi pi-chart-bar"
+        aria-hidden="true"
+      />
+      <p class="grafik-bos-metin">
+        {{ bosMesaj || t('dashboard.grafikBos') }}
+      </p>
       <router-link
-        v-if="linkTo"
-        :to="linkTo"
-        class="pano-bolum-link"
-        :aria-label="`${baslik} — ${t('dashboard.detayaGit')}`"
+        v-if="bosLinkTo"
+        :to="bosLinkTo"
+        class="grafik-bos-link"
       >
-        {{ t('dashboard.detayaGit') }}
+        {{ bosLinkMetin }}
         <i
           class="pi pi-arrow-right"
           aria-hidden="true"
         />
       </router-link>
-    </header>
-
-    <div class="pano-bolum-govde">
-      <p
-        v-if="altMetin"
-        class="grafik-alt"
-      >
-        {{ altMetin }}
-      </p>
-
-      <div
-        class="grafik-govde"
-        :style="{ height: `${yukseklik}px` }"
-      >
-        <div
-          v-if="yukleniyor"
-          class="grafik-iskelet"
-          aria-hidden="true"
-        >
-          <span class="iskelet" />
-        </div>
-        <p
-          v-else-if="bosMu"
-          class="grafik-bos"
-        >
-          <i
-            class="pi pi-chart-bar"
-            aria-hidden="true"
-          />
-          {{ bosMesaj || t('dashboard.grafikBos') }}
-        </p>
-        <component
-          :is="grafikBileseni"
-          v-else
-          :data="veri"
-          :options="secenekler"
-        />
-      </div>
-
-      <slot name="alt" />
     </div>
-  </section>
+
+    <div
+      v-else
+      class="grafik-govde"
+      :style="{ height: `${yukseklik}px` }"
+    >
+      <component
+        :is="grafikBileseni"
+        :data="veri"
+        :options="secenekler"
+      />
+    </div>
+  </DashboardKart>
 </template>
 
 <script setup>
@@ -85,6 +78,7 @@ import {
   BarElement,
   Filler
 } from 'chart.js'
+import DashboardKart from './DashboardKart.vue'
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler)
 
@@ -92,13 +86,17 @@ const props = defineProps({
   baslik: { type: String, required: true },
   ikon: { type: String, default: 'pi pi-chart-bar' },
   linkTo: { type: String, default: null },
+  linkMetin: { type: String, default: '' },
   tip: { type: String, default: 'bar' },
   veri: { type: Object, default: null },
   secenekler: { type: Object, default: () => ({}) },
   yukleniyor: { type: Boolean, default: false },
   altMetin: { type: String, default: '' },
   bosMesaj: { type: String, default: '' },
-  yukseklik: { type: Number, default: 260 }
+  bosLinkTo: { type: String, default: null },
+  bosLinkMetin: { type: String, default: '' },
+  yukseklik: { type: Number, default: 240 },
+  bosYukseklik: { type: Number, default: 120 }
 })
 
 const { t } = useI18n()
@@ -115,13 +113,6 @@ const bosMu = computed(
 </script>
 
 <style scoped>
-/*
- * Grafik, panonun icindeki duz bir bolumdur: kart cercevesi/golgesi yoktur.
- * Baslik duzeni `dashboard.css` icindeki `.pano-bolum-*` siniflarindan gelir.
- */
-.grafik-karti {
-  min-width: 0;
-}
 .grafik-alt {
   margin: 0 0 8px;
   font-size: 11.5px;
@@ -130,15 +121,12 @@ const bosMu = computed(
 .grafik-govde {
   position: relative;
   width: 100%;
-  min-height: 120px;
-}
-.grafik-iskelet {
-  position: absolute;
-  inset: 0;
-  display: flex;
+  min-width: 0;
 }
 .iskelet {
-  flex: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
   border-radius: 10px;
   background: var(--bg-muted);
   animation: iskeletParlama 1.4s ease infinite;
@@ -148,16 +136,41 @@ const bosMu = computed(
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  height: 100%;
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 12.5px;
+  gap: 5px;
   text-align: center;
+  padding: 8px 12px;
 }
 .grafik-bos i {
-  font-size: 22px;
-  opacity: 0.6;
+  font-size: 20px;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+.grafik-bos-metin {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.grafik-bos-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  padding: 2px 4px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+.grafik-bos-link:hover {
+  color: var(--accent-hover);
+}
+.grafik-bos-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.grafik-bos-link i {
+  font-size: 9px;
 }
 @keyframes iskeletParlama {
   0% {
@@ -173,11 +186,6 @@ const bosMu = computed(
 @media (prefers-reduced-motion: reduce) {
   .iskelet {
     animation: none;
-  }
-}
-@media (max-width: 760px) {
-  .grafik-govde {
-    max-height: 220px;
   }
 }
 </style>

@@ -3,307 +3,207 @@
     class="dashboard-container"
     :class="{ 'icerik-hazir': hazir }"
   >
-    <div class="pano">
-      <DashboardHero
-        :ozet="dashboardStore.ozet"
-        :kullanici-ad="kullaniciAd"
-        :sirket-ad="sirketAd"
-        :yukleniyor="ozetYukleniyor && !dashboardStore.ozet"
-        :yenileniyor="yenileniyor"
-        :son-guncelleme="sonGuncelleme"
-        :duzen-modu="duzenModu"
-        @yenile="yenile"
-        @ara="aramaAc"
-        @duzenle="duzenModuDegistir"
-      />
+    <DashboardUstBar
+      :kullanici-ad="kullaniciAd"
+      :sirket-ad="sirketAd"
+      :canli="canli"
+      :son-guncelleme="sonGuncelleme"
+      :yenileniyor="yenileniyor"
+      :duzen-modu="duzenModu"
+      @yenile="yenile"
+      @ara="aramaAc"
+      @duzenle="duzenModuDegistir"
+    />
 
-      <p
-        class="sr-only"
-        role="status"
-        aria-live="polite"
-      >
-        {{ duyuru }}
-      </p>
+    <DashboardPiyasaSeridi />
 
-      <DashboardDuzenPaneli
-        v-if="duzenModu"
-        :widgetlar="panelWidgetlari"
-        :kaydediliyor="kaydediliyor"
-        @degistir="panelDegistir"
-        @tasi="panelTasi"
-        @sifirla="duzeniSifirla"
-        @kaydet="duzeniKaydet"
-        @iptal="duzeniIptal"
-      />
+    <p
+      class="sr-only"
+      role="status"
+      aria-live="polite"
+    >
+      {{ duyuru }}
+    </p>
 
-      <div
-        v-if="bosSistem && onboardingGoster && hazir"
-        class="pano-onboarding"
-      >
-        <Onboarding @atla="onboardingAtla" />
-      </div>
+    <DashboardDuzenPaneli
+      v-if="duzenModu"
+      :widgetlar="panelWidgetlari"
+      :kaydediliyor="kaydediliyor"
+      @degistir="panelDegistir"
+      @tasi="panelTasi"
+      @sifirla="duzeniSifirla"
+      @kaydet="duzeniKaydet"
+      @iptal="duzeniIptal"
+    />
 
-      <template v-else>
-        <!-- Ust band: 4 KPI hucreleri (sabit konum, gizlenebilir) -->
-        <DashboardKpiGrid
-          v-if="kpiGorunur"
-          :kpi="dashboardStore.ozet?.kpi"
-          :yukleniyor="ozetYukleniyor"
-        />
-
-        <!-- Govde: ana icerik (sol) + sag ray -->
-        <div
-          class="pano-govde"
-          :class="{ 'pano-govde--tek-kolon': bolgeler.some((b) => !b.widgetlar.length) }"
-        >
-          <template
-            v-for="bolge in bolgeler"
-            :key="bolge.key"
-          >
-            <component
-              :is="bolge.key === 'ray' ? 'aside' : 'div'"
-              v-if="bolge.widgetlar.length"
-              :class="bolge.key === 'ray' ? 'pano-ray' : 'pano-ana'"
-              :role="bolge.key === 'ray' ? null : 'group'"
-              :aria-label="bolge.etiket"
-            >
-              <DashboardWidget
-                v-for="(w, i) in bolge.widgetlar"
-                :key="w.key"
-                :anahtar="w.key"
-                :etiket="widgetEtiketi(w.key)"
-                :duzen-modu="duzenModu"
-                :sira="i"
-                :uzunluk="bolge.widgetlar.length"
-                @yukari="widgetTasiTikla(w.key, -1)"
-                @asagi="widgetTasiTikla(w.key, 1)"
-                @gizle="widgetGizle(w.key)"
-                @surukle-baslat="surukleBaslat"
-                @birak="surukleBirak"
-              >
-                <DashboardBolum
-                  v-if="w.key === 'gorevler'"
-                  :baslik="t('dashboard.gorevMerkezi')"
-                  ikon="pi pi-list-check"
-                >
-                  <DashboardGorevMerkezi
-                    :gorevler="dashboardStore.gorevler"
-                    :yukleniyor="gorevlerYukleniyor"
-                    :hata="gorevlerHata"
-                  />
-                </DashboardBolum>
-
-                <DashboardGrafikKarti
-                  v-else-if="w.key === 'nakitAkisi'"
-                  :baslik="t('dashboard.grafikNakitAkisi')"
-                  ikon="pi pi-chart-line"
-                  link-to="/kasa"
-                  tip="line"
-                  :veri="gunlukNakitAkisi"
-                  :secenekler="gunlukNakitAkisiOpsiyonlari"
-                  :yukleniyor="grafiklerYukleniyor"
-                  :bos-mesaj="t('dashboard.nakitAkisiVerisiYok')"
-                >
-                  <template #alt>
-                    <div
-                      class="nakit-projeksiyon"
-                      data-test="nakit-projeksiyon"
-                    >
-                      <span class="nakit-projeksiyon-baslik">{{ t('dashboard.hedefNakitProjeksiyon') }}</span>
-                      <div class="nakit-projeksiyon-cipler">
-                        <div
-                          v-for="p in projeksiyonlar"
-                          :key="p.etiket"
-                          class="nakit-cip"
-                          :class="{ 'nakit-cip--negatif': p.deger < 0 }"
-                          data-test="nakit-projeksiyon-cip"
-                        >
-                          <span class="nakit-cip-etiket">{{ p.etiket }}</span>
-                          <strong class="nakit-cip-deger gizli-veri">{{ formatCurrency(p.deger) }}</strong>
-                        </div>
-                      </div>
-                    </div>
-                  </template>
-                </DashboardGrafikKarti>
-
-                <DashboardGrafikKarti
-                  v-else-if="w.key === 'aylikGelirGider'"
-                  :baslik="t('dashboard.grafikAylikGelirGider')"
-                  ikon="pi pi-chart-bar"
-                  link-to="/raporlar"
-                  tip="bar"
-                  :veri="aylikGelirGider"
-                  :secenekler="aylikGelirGiderOpsiyonlari"
-                  :yukleniyor="grafiklerYukleniyor"
-                  :bos-mesaj="t('dashboard.gelirGiderVerisiYok')"
-                />
-
-                <DashboardGrafikKarti
-                  v-else-if="w.key === 'kategoriSatislari'"
-                  :baslik="t('dashboard.grafikKategori')"
-                  ikon="pi pi-chart-pie"
-                  link-to="/raporlar"
-                  tip="donut"
-                  :veri="kategoriSatislari"
-                  :secenekler="donutOpsiyonlar"
-                  :yukleniyor="grafiklerYukleniyor"
-                  :yukseklik="230"
-                  :bos-mesaj="t('dashboard.kategoriVerisiYok')"
-                />
-
-                <DashboardGrafikKarti
-                  v-else-if="w.key === 'enCokSatanlar'"
-                  :baslik="t('dashboard.grafikEnCokSatan')"
-                  ikon="pi pi-trophy"
-                  link-to="/stoklar"
-                  tip="bar"
-                  :veri="enCokSatanlar"
-                  :secenekler="enCokSatanlarOpsiyonlari"
-                  :yukleniyor="grafiklerYukleniyor"
-                  :bos-mesaj="t('dashboard.satisVerisiYok')"
-                />
-
-                <DashboardBolum
-                  v-else-if="w.key === 'akis'"
-                  :baslik="t('dashboard.akisBaslik')"
-                  ikon="pi pi-bolt"
-                  link-to="/hareketler"
-                >
-                  <DashboardAkis
-                    :akis="dashboardStore.akis"
-                    :yukleniyor="akisYukleniyor"
-                    :hata="akisHata"
-                    @yenile="sessizAkisYenile"
-                  />
-                </DashboardBolum>
-
-                <DashboardBolum
-                  v-else-if="w.key === 'icgoruler'"
-                  :baslik="t('dashboard.icgoruler')"
-                  ikon="pi pi-sparkles"
-                >
-                  <DashboardIcgoruKarti
-                    :icgoruler="dashboardStore.icgoruler"
-                    :yukleniyor="icgorulerYukleniyor"
-                  />
-                </DashboardBolum>
-
-                <DashboardBolum
-                  v-else-if="w.key === 'hizliIslemler'"
-                  :baslik="t('dashboard.hizliIslemler')"
-                  ikon="pi pi-bolt"
-                >
-                  <DashboardHizliIslemler :is-admin="authStore.isAdmin" />
-                </DashboardBolum>
-
-                <DashboardBolum
-                  v-else-if="w.key === 'kritikStok'"
-                  :baslik="t('dashboard.kritikStokUyarilari')"
-                  ikon="pi pi-exclamation-triangle"
-                >
-                  <DashboardKritikStok
-                    :stok="dashboardStore.ozet?.stok"
-                    :yukleniyor="ozetYukleniyor"
-                  />
-                </DashboardBolum>
-              </DashboardWidget>
-            </component>
-          </template>
-        </div>
-
-        <!-- Panonun alt bandi: tum analizler (acilir) -->
-        <section
-          v-if="analizlerGorunur"
-          class="pano-analizler"
-        >
-          <button
-            type="button"
-            class="analiz-baslik"
-            :aria-expanded="analizlerAcik"
-            aria-controls="dashboard-analiz-icerik"
-            @click="analizlerDegistir"
-          >
-            <i
-              class="pi pi-chart-pie"
-              aria-hidden="true"
-            />
-            <span>{{ t('dashboard.tumAnalizler') }}</span>
-            <i
-              class="pi analiz-ok"
-              :class="analizlerAcik ? 'pi-chevron-up' : 'pi-chevron-down'"
-              aria-hidden="true"
-            />
-          </button>
-
-          <div
-            v-if="analizlerAcik"
-            id="dashboard-analiz-icerik"
-            class="dashboard-analiz-grid"
-          >
-            <DashboardGrafikKarti
-              :baslik="t('dashboard.grafikYaslandirma')"
-              ikon="pi pi-history"
-              link-to="/tahsilat"
-              tip="bar"
-              :veri="alacakYaslandirma"
-              :secenekler="alacakYaslandirmaOpsiyonlari"
-              :yukleniyor="grafiklerYukleniyor"
-              :bos-mesaj="t('dashboard.alacakVerisiYok')"
-            />
-            <DashboardGrafikKarti
-              :baslik="t('dashboard.grafikEnBorclu')"
-              ikon="pi pi-user-minus"
-              link-to="/cari-hesaplar"
-              tip="bar"
-              :veri="enCokBorcCariler"
-              :secenekler="cariOpsiyonlari"
-              :yukleniyor="grafiklerYukleniyor"
-              :bos-mesaj="t('dashboard.borcluCariYok')"
-            />
-            <DashboardGrafikKarti
-              :baslik="t('dashboard.grafikEnAlacakli')"
-              ikon="pi pi-user-plus"
-              link-to="/cari-hesaplar"
-              tip="bar"
-              :veri="enCokAlacakCariler"
-              :secenekler="cariOpsiyonlari"
-              :yukleniyor="grafiklerYukleniyor"
-              :bos-mesaj="t('dashboard.alacakliCariYok')"
-            />
-            <DashboardGrafikKarti
-              :baslik="t('dashboard.grafikKasaBanka')"
-              ikon="pi pi-wallet"
-              tip="donut"
-              :veri="kasaBanka"
-              :secenekler="donutOpsiyonlar"
-              :yukleniyor="grafiklerYukleniyor"
-              :yukseklik="230"
-              :bos-mesaj="t('dashboard.grafikBos')"
-            />
-            <DashboardGrafikKarti
-              :baslik="t('dashboard.grafikPareto')"
-              ikon="pi pi-chart-bar"
-              link-to="/raporlar"
-              tip="bar"
-              :veri="kategoriPareto"
-              :secenekler="kategoriParetoOpsiyonlari"
-              :yukleniyor="grafiklerYukleniyor"
-              :bos-mesaj="t('dashboard.kategoriVerisiYok')"
-            />
-            <DashboardGrafikKarti
-              :baslik="t('dashboard.grafikCiroHedef')"
-              ikon="pi pi-flag"
-              link-to="/raporlar"
-              tip="bar"
-              :veri="ciroHedef"
-              :secenekler="ciroHedefOpsiyonlari"
-              :yukleniyor="grafiklerYukleniyor"
-              :bos-mesaj="t('dashboard.gelirGiderVerisiYok')"
-            />
-          </div>
-        </section>
-      </template>
+    <div
+      v-if="bosSistem && onboardingGoster && hazir"
+      class="dashboard-onboarding"
+    >
+      <Onboarding @atla="onboardingAtla" />
     </div>
+
+    <template v-else>
+      <!-- 1) Sabit ust bant: 5 KPI karti -->
+      <DashboardKpiGrid
+        v-if="kpiGorunur"
+        :kpi="dashboardStore.ozet?.kpi"
+        :yukleniyor="ozetYukleniyor"
+      />
+
+      <!-- 2) Sabit "Bugun" seridi: KPI'larin hemen altinda -->
+      <DashboardBugunSeridi
+        v-if="bugunSeritGorunur"
+        :bugun="dashboardStore.ozet?.bugun"
+        :yukleniyor="ozetYukleniyor"
+      />
+
+      <!-- 3) Ana izgara: 12 kolon, kart genisligi anahtara gore sabit -->
+      <div
+        class="db-grid"
+        role="group"
+        :aria-label="t('dashboard.anaIcerik')"
+      >
+        <DashboardWidget
+          v-for="(w, i) in gridWidgetlari"
+          :key="w.key"
+          :anahtar="w.key"
+          :etiket="widgetEtiketi(w.key)"
+          :duzen-modu="duzenModu"
+          :sira="i"
+          :uzunluk="gridWidgetlari.length"
+          :span="widgetSpan(w.key)"
+          @yukari="widgetTasiTikla(w.key, -1)"
+          @asagi="widgetTasiTikla(w.key, 1)"
+          @gizle="widgetGizle(w.key)"
+          @surukle-baslat="surukleBaslat"
+          @birak="surukleBirak"
+        >
+          <!-- Gorev merkezi -->
+          <DashboardKart
+            v-if="w.key === 'gorevler'"
+            :baslik="t('dashboard.bugunYapilacaklar')"
+            ikon="pi pi-list-check"
+            link-to="/onaylar"
+            :link-metin="t('dashboard.tumunuGor')"
+          >
+            <DashboardGorevMerkezi
+              :gorevler="dashboardStore.gorevler"
+              :yukleniyor="gorevlerYukleniyor"
+              :hata="gorevlerHata"
+              @yenile="gorevleriYenile"
+            />
+          </DashboardKart>
+
+          <!-- Nakit akisi -->
+          <DashboardNakitAkisi
+            v-else-if="w.key === 'nakitAkisi'"
+            v-model:gun="nakitGun"
+            :veri="gunlukNakitAkisi"
+            :secenekler="gunlukNakitAkisiOpsiyonlari"
+            :yukleniyor="grafiklerYukleniyor"
+            :projeksiyonlar="projeksiyonlar"
+          />
+
+          <!-- Icgoruler -->
+          <DashboardKart
+            v-else-if="w.key === 'icgoruler'"
+            :baslik="t('dashboard.icgoruler')"
+            ikon="pi pi-sparkles"
+          >
+            <DashboardIcgoruKarti
+              :icgoruler="dashboardStore.icgoruler"
+              :yukleniyor="icgorulerYukleniyor"
+            />
+          </DashboardKart>
+
+          <!-- Hizli islemler -->
+          <DashboardKart
+            v-else-if="w.key === 'hizliIslemler'"
+            :baslik="t('dashboard.hizliIslemler')"
+            ikon="pi pi-bolt"
+          >
+            <DashboardHizliIslemler :is-admin="authStore.isAdmin" />
+          </DashboardKart>
+
+          <!-- 12 aylik gelir / gider -->
+          <DashboardGrafikKarti
+            v-else-if="w.key === 'aylikGelirGider'"
+            :baslik="t('dashboard.grafikAylikGelirGider')"
+            ikon="pi pi-chart-bar"
+            link-to="/raporlar"
+            :link-metin="t('dashboard.detayaGit')"
+            tip="bar"
+            :veri="aylikGelirGider"
+            :secenekler="aylikGelirGiderOpsiyonlari"
+            :yukleniyor="grafiklerYukleniyor"
+            :yukseklik="240"
+            :bos-mesaj="t('dashboard.gelirGiderVerisiYok')"
+            bos-link-to="/faturalar"
+            :bos-link-metin="t('dashboard.faturaEkle')"
+          />
+
+          <!-- Kritik stok -->
+          <DashboardKart
+            v-else-if="w.key === 'kritikStok'"
+            :baslik="t('dashboard.kritikStokUyarilari')"
+            ikon="pi pi-exclamation-triangle"
+            link-to="/stoklar?kritik=1"
+            :link-metin="t('dashboard.tumunuGor')"
+          >
+            <DashboardKritikStok
+              :yukleniyor="ozetYukleniyor"
+            />
+          </DashboardKart>
+
+          <!-- Kategori satislari (donut) -->
+          <DashboardGrafikKarti
+            v-else-if="w.key === 'kategoriSatislari'"
+            :baslik="t('dashboard.grafikKategori')"
+            ikon="pi pi-chart-pie"
+            link-to="/raporlar"
+            :link-metin="t('dashboard.detayaGit')"
+            tip="donut"
+            :veri="kategoriSatislari"
+            :secenekler="donutOpsiyonlar"
+            :yukleniyor="grafiklerYukleniyor"
+            :yukseklik="180"
+            :bos-mesaj="t('dashboard.kategoriVerisiYok')"
+          />
+
+          <!-- En cok satan urunler -->
+          <DashboardGrafikKarti
+            v-else-if="w.key === 'enCokSatanlar'"
+            :baslik="t('dashboard.grafikEnCokSatan')"
+            ikon="pi pi-trophy"
+            link-to="/stoklar"
+            :link-metin="t('dashboard.detayaGit')"
+            tip="bar"
+            :veri="enCokSatanlar"
+            :secenekler="enCokSatanlarOpsiyonlari"
+            :yukleniyor="grafiklerYukleniyor"
+            :yukseklik="180"
+            :bos-mesaj="t('dashboard.satisVerisiYok')"
+          />
+
+          <!-- Canli akis -->
+          <DashboardKart
+            v-else-if="w.key === 'akis'"
+            :baslik="t('dashboard.akisBaslik')"
+            ikon="pi pi-history"
+            link-to="/hareketler"
+            :link-metin="t('dashboard.tumunuGor')"
+          >
+            <DashboardAkis
+              :akis="dashboardStore.akis"
+              :yukleniyor="akisYukleniyor"
+              :hata="akisHata"
+              @yenile="sessizAkisYenile"
+            />
+          </DashboardKart>
+        </DashboardWidget>
+      </div>
+    </template>
 
     <div
       v-if="authStore.isAdmin && yedekUyarisiGoster"
@@ -335,11 +235,14 @@ import { useDashboardStore } from '../stores/dashboardStore.js'
 import { useDovizStore } from '../stores/dovizStore.js'
 import { useAuthStore } from '../stores/authStore.js'
 import Onboarding from '../components/Onboarding.vue'
-import DashboardHero from '../components/dashboard/DashboardHero.vue'
-import DashboardBolum from '../components/dashboard/DashboardBolum.vue'
+import DashboardUstBar from '../components/dashboard/DashboardUstBar.vue'
+import DashboardPiyasaSeridi from '../components/dashboard/DashboardPiyasaSeridi.vue'
 import DashboardKpiGrid from '../components/dashboard/DashboardKpiGrid.vue'
+import DashboardBugunSeridi from '../components/dashboard/DashboardBugunSeridi.vue'
+import DashboardKart from '../components/dashboard/DashboardKart.vue'
 import DashboardGorevMerkezi from '../components/dashboard/DashboardGorevMerkezi.vue'
 import DashboardIcgoruKarti from '../components/dashboard/DashboardIcgoruKarti.vue'
+import DashboardNakitAkisi from '../components/dashboard/DashboardNakitAkisi.vue'
 import DashboardGrafikKarti from '../components/dashboard/DashboardGrafikKarti.vue'
 import DashboardAkis from '../components/dashboard/DashboardAkis.vue'
 import DashboardKritikStok from '../components/dashboard/DashboardKritikStok.vue'
@@ -347,7 +250,6 @@ import DashboardHizliIslemler from '../components/dashboard/DashboardHizliIsleml
 import DashboardWidget from '../components/dashboard/DashboardWidget.vue'
 import DashboardDuzenPaneli from '../components/dashboard/DashboardDuzenPaneli.vue'
 import { useDashboardGrafikleri } from '../composables/useDashboardGrafikleri.js'
-import { formatCurrency } from '../utils/format.js'
 import {
   DUZEN_VERSIYON,
   SABIT_ANAHTARLARI,
@@ -356,8 +258,8 @@ import {
   duzenNormallestir,
   rolDuzeni,
   widgetBirak,
-  widgetBolgesi,
   widgetGorunurlukDegistir,
+  widgetSpan,
   widgetTasi,
   yerelDuzenOku,
   yerelDuzenYaz
@@ -390,7 +292,6 @@ const panelWidgetlari = computed(() =>
     key: w.key,
     etiket: widgetEtiketi(w.key),
     gorunur: w.gorunur,
-    bolge: widgetBolgesi(w.key),
     sabit: SABIT_ANAHTARLARI.includes(w.key)
   }))
 )
@@ -399,26 +300,12 @@ const aktifDuzen = computed(() => (duzenModu.value ? taslak.value : duzen.value)
 const gorunurWidgetlar = computed(() => aktifDuzen.value.sira.filter((w) => w.gorunur))
 
 const kpiGorunur = computed(() => gorunurWidgetlar.value.some((w) => w.key === 'kpi'))
+const bugunSeritGorunur = computed(() => gorunurWidgetlar.value.some((w) => w.key === 'bugunSerit'))
 
-/**
- * Duz liste -> gorsel bolgeler. Bolge, anahtardan turetilir; `kpi` ust bantta
- * ayrica cizildigi icin bolgelere girmez.
- */
-const bolgeler = computed(() => {
-  const kpiHaric = gorunurWidgetlar.value.filter((w) => w.key !== 'kpi')
-  return [
-    {
-      key: 'ana',
-      etiket: t('dashboard.anaIcerik'),
-      widgetlar: kpiHaric.filter((w) => widgetBolgesi(w.key) === 'ana')
-    },
-    {
-      key: 'ray',
-      etiket: t('dashboard.sagRay'),
-      widgetlar: kpiHaric.filter((w) => widgetBolgesi(w.key) === 'ray')
-    }
-  ]
-})
+// Sabit bantlar (kpi, bugunSerit) izgaraya girmez; kalan kartlar tek izgarada.
+const gridWidgetlari = computed(() =>
+  gorunurWidgetlar.value.filter((w) => !SABIT_ANAHTARLARI.includes(w.key))
+)
 
 const widgetEtiketi = (key) => {
   const anahtar = WIDGET_ETIKET_ANAHTARLARI[key]
@@ -526,7 +413,8 @@ const sonGuncelleme = ref('')
 const duyuru = ref('')
 const onboardingGoster = ref(false)
 const yedekUyarisiGoster = ref(true)
-const analizlerAcik = ref(false)
+// Nakit akisi segmenti (7/30 gun). API her zaman 30 gun doner; istemci dilimler.
+const nakitGun = ref(30)
 
 const kullaniciAd = computed(
   () =>
@@ -536,6 +424,8 @@ const kullaniciAd = computed(
     ''
 )
 const sirketAd = computed(() => authStore.sirketAdi || dashboardStore.ozet?.hero?.sirketAd || '')
+
+const canli = computed(() => dashboardStore.ozet?.hero?.canli !== false)
 
 const ozetYukleniyor = computed(() => dashboardStore.ozetYukleniyor)
 const gorevlerYukleniyor = computed(() => dashboardStore.gorevlerYukleniyor)
@@ -554,24 +444,12 @@ const {
   kategoriSatislari,
   donutOpsiyonlar,
   enCokSatanlar,
-  enCokSatanlarOpsiyonlari,
-  alacakYaslandirma,
-  alacakYaslandirmaOpsiyonlari,
-  enCokBorcCariler,
-  enCokAlacakCariler,
-  cariOpsiyonlari,
-  kasaBanka,
-  kategoriPareto,
-  kategoriParetoOpsiyonlari,
-  ciroHedef,
-  ciroHedefOpsiyonlari
-} = useDashboardGrafikleri(grafikler)
-
-const analizlerGorunur = computed(() => rol.value !== 'USER')
+  enCokSatanlarOpsiyonlari
+} = useDashboardGrafikleri(grafikler, { nakitGun })
 
 /**
- * 30/60/90 gunluk nakit projeksiyonu, Nakit Akisi bolumunun altinda 3 kompakt
- * cip olarak gosterilir (ayri panel yok).
+ * 30/60/90 gunluk tahmini nakit projeksiyonu. Likidite + alacak - borc
+ * uzerinden hesaplanir; "Tahmini" etiketi bilesende zorunlu olarak gosterilir.
  */
 const projeksiyonlar = computed(() => {
   const kpi = dashboardStore.ozet?.kpi
@@ -608,6 +486,8 @@ const guncellemeZamaniGuncelle = () => {
   sonGuncelleme.value = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
 }
 
+const gorevleriYenile = () => dashboardStore.getGorevler()
+
 const yenile = async () => {
   if (yenileniyor.value) return
   yenileniyor.value = true
@@ -615,7 +495,7 @@ const yenile = async () => {
   try {
     // Doviz kurlari ikincil bilgidir; kritik yolu bloklamaz.
     dovizStore?.kurlariYukle?.().catch(() => {})
-    // 1. dalga: hero + KPI + gorev sayaclari
+    // 1. dalga: KPI + bugun seridi + gorev sayaclari
     await dashboardStore.getOzet()
     // 2. dalga: gorev merkezi + icgoruler
     await Promise.all([dashboardStore.getGorevler(), dashboardStore.getIcgoruler()])
@@ -639,10 +519,6 @@ const aramaAc = () => {
   if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
     window.dispatchEvent(new CustomEvent('raspel:hizli-ara'))
   }
-}
-
-const analizlerDegistir = () => {
-  analizlerAcik.value = !analizlerAcik.value
 }
 
 const onboardingAtla = () => {

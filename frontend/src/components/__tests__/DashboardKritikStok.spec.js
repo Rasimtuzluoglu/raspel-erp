@@ -36,22 +36,16 @@ describe('DashboardKritikStok', () => {
     expect(wrapper.text()).not.toContain('Kalem E')
   })
 
-  it('satırlar ve "tümünü gör" bağlantısı kritik stok listesine gider', () => {
+  it('satırlar kritik stok listesine gider', () => {
     const wrapper = mountEt({ stoklar })
     expect(wrapper.find('.kritik-satir').attributes('href')).toBe('/stoklar?kritik=1')
-    const tumu = wrapper.find('.kritik-tumu')
-    expect(tumu.text()).toContain(i18n.global.t('dashboard.tumunuGor'))
-    expect(tumu.attributes('href')).toBe('/stoklar?kritik=1')
+    // "Tümünü gör" bağlantısı kart başlığındadır; bileşen içinde tekrarlanmaz.
+    expect(wrapper.find('.kritik-tumu').exists()).toBe(false)
   })
 
-  it('liste yoksa özet sayacı gösterir', () => {
+  it('liste yoksa "Kritik stok yok" gösterir', () => {
     const wrapper = mountEt({ stoklar: [], stok: { kritikAdet: 3 } })
     expect(wrapper.findAll('.kritik-satir')).toHaveLength(0)
-    expect(wrapper.text()).toContain(i18n.global.t('dashboard.kritikStokSayisi', { n: 3 }))
-  })
-
-  it('kritik ürün yoksa bilgilendirir', () => {
-    const wrapper = mountEt({ stoklar: [], stok: { kritikAdet: 0 } })
     expect(wrapper.text()).toContain(i18n.global.t('dashboard.kritikStokYok'))
   })
 

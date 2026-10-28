@@ -1,257 +1,71 @@
 /* ==========================================================================
-   DASHBOARD — "tek pano yuzeyi" iskeleti
+   DASHBOARD — kart izgarasi
    --------------------------------------------------------------------------
-   Tum anasayfa tek bir `.pano` yuzeyidir: tek cerceve, tek golge, tek yaricap.
-   Bolumler bu yuzeyin bantlaridir; hicbir bolum kendi karti/cercevesi/golgesi
-   olarak cizilmez.
+   Yerlesim (yukaridan asagi):
+     .ust-bar / .piyasa-serit  -> sade ust bar + ince piyasa seridi
+     .kpi-grid                 -> 5 ayri KPI karti
+     .bugun-serit              -> KPI'larin altinda ince ozet serit
+     .db-grid                  -> 12 kolonlu kart izgarasi
 
-   Bantlar (yukaridan asagi):
-     .pano            -> yuzey (20px radius + 1px border + tek golge)
-     .pano-kpi        -> 4 hucreli KPI bandi (dikey ayiricilar)
-     .pano-govde      -> ana icerik + sag ray
-     .pano-analizler  -> katlanir "Tum analizler" bandi
-
-   Dosya `views/Dashboard.vue` icinde <style src> ile GLOBAL olarak yuklenir;
-   tum sinif adlari `pano-` onekiyle isimlendigi icin baska ekranlara sizmaz.
-   Bilesenlerin kendi stilleri `components/dashboard/*` icindedir.
+   Kartlar kendi cercevelerini cizer (`DashboardKart`); izgara aralarinda ek
+   cizgi yoktur, yalnizca 16px bosluk vardir. Dosya `views/Dashboard.vue`
+   icinde <style src> ile GLOBAL yuklenir.
    ========================================================================== */
 
 .dashboard-container {
-  padding: 0;
+  max-width: 1560px;
+  margin: 0 auto;
+  padding: 20px 24px 32px;
   min-width: 0;
 }
 
 /* Veri gelince icerik sert bir sekilde belirmesin; yumusak gecisle gorunur. */
-.dashboard-container.icerik-hazir .pano {
+.dashboard-container.icerik-hazir {
   animation: icerikFade 0.3s ease-out;
 }
 @keyframes icerikFade {
   from {
-    opacity: 0.5;
+    opacity: 0.6;
   }
   to {
     opacity: 1;
   }
 }
 
-/* --- Tek yuzey ----------------------------------------------------------- */
-.pano {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  background: var(--bg-card);
-  box-shadow: var(--shadow);
-  overflow: hidden;
+/* Kartlar arasi dikey ritim */
+.dashboard-container .kpi-grid {
+  margin-bottom: 10px;
+}
+.dashboard-container .bugun-serit {
+  margin-bottom: 18px;
+}
+.dashboard-container .db-grid {
+  margin-top: 2px;
 }
 
-/* --- KPI bandi ----------------------------------------------------------- */
-.pano-kpi {
+/* --- Ana izgara: 12 kolon ------------------------------------------------ */
+.db-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  border-bottom: 1px solid var(--border);
-}
-
-/* Hucre ayiricilari: yalnizca sag kenar cizgisi -> cift cizgi olusmaz. */
-.pano-kpi > *:not(:last-child) {
-  border-right: 1px solid var(--border);
-}
-
-/* --- Govde: ana icerik + sag ray ---------------------------------------- */
-.pano-govde {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  align-items: stretch;
-  min-width: 0;
-}
-.pano-govde--tek-kolon {
-  grid-template-columns: minmax(0, 1fr);
-}
-.pano-ana,
-.pano-ray {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-/* Bolumler arasi tek cizgi; ust bosluk bolumun kendi padding'inden gelir. */
-.pano-ana > * + *,
-.pano-ray > * + * {
-  border-top: 1px solid var(--border);
-}
-.pano-ray {
-  background: var(--bg-muted);
-  border-left: 1px solid var(--border);
-}
-
-/* --- Bolum dili (tum basliklar ayni) ------------------------------------ */
-.pano-bolum {
-  padding: 20px 24px;
-  min-width: 0;
-}
-.pano-ray .pano-bolum {
-  padding: 20px 24px;
-}
-.pano-bolum-ust {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 28px;
-  min-width: 0;
-}
-.pano-bolum-baslik {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0;
-  min-width: 0;
-  font-size: 13.5px;
-  font-weight: 700;
-  line-height: 1.2;
-  color: var(--text-primary);
-}
-.pano-bolum-baslik-metin {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.pano-bolum-ikon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 10px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: 13px;
-}
-.pano-bolum-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: auto;
-  padding: 2px 4px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent);
-  text-decoration: none;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.pano-bolum-link:hover {
-  color: var(--accent-hover);
-}
-.pano-bolum-link:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-.pano-bolum-link i {
-  font-size: 10px;
-}
-.pano-bolum-govde {
-  margin-top: 20px;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
   min-width: 0;
 }
 
-/* --- Nakit projeksiyon cipleri (Nakit Akisi bolumunun altinda) ---------- */
-.nakit-projeksiyon {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
+/* Kart genislikleri anahtara gore sabittir (bkz. utils/dashboardDuzen.js) */
+.db-kart-alan--8 {
+  grid-column: span 8;
 }
-.nakit-projeksiyon-baslik {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-muted);
+.db-kart-alan--4 {
+  grid-column: span 4;
 }
-.nakit-projeksiyon-cipler {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  flex: 1;
-  min-width: 220px;
-}
-.nakit-cip {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: var(--bg-muted);
-  min-width: 0;
-}
-.nakit-cip-etiket {
-  font-size: 11px;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-.nakit-cip-deger {
-  font-size: 12.5px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--success);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.nakit-cip--negatif .nakit-cip-deger {
-  color: var(--danger);
+.db-kart-alan--12 {
+  grid-column: span 12;
 }
 
-/* --- Onboarding bandi ---------------------------------------------------- */
-.pano-onboarding {
-  padding: 20px 24px 24px;
-  border-top: 1px solid var(--border);
-}
-
-/* --- "Tum analizler" bandi ---------------------------------------------- */
-.pano-analizler {
-  border-top: 1px solid var(--border);
-}
-.analiz-baslik {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 48px;
-  padding: 12px 24px;
-  border: 0;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-weight: 700;
-  text-align: left;
-  cursor: pointer;
-}
-.analiz-baslik:hover {
-  color: var(--text-primary);
-  background: var(--bg-muted);
-}
-.analiz-baslik:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-.analiz-baslik i:first-child {
-  color: var(--accent);
-}
-.analiz-ok {
-  margin-left: auto;
-  font-size: 11px;
-}
-.dashboard-analiz-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px 24px;
-  padding: 4px 0 20px;
-  border-top: 1px solid var(--border);
+/* --- Onboarding --------------------------------------------------------- */
+.dashboard-onboarding {
+  margin-top: 16px;
 }
 
 /* Yalnizca ekran okuyucuya gorunen canli duyuru alani */
@@ -267,18 +81,18 @@
   border: 0;
 }
 
-/* --- Yedek hatirlatmasi (pano disinda bagimsiz uyari) -------------------- */
+/* --- Yedek hatirlatmasi (izgara disinda bagimsiz uyari) ------------------- */
 .backup-reminder {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  padding: 12px 20px;
+  padding: 12px 16px;
   margin-top: 16px;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: var(--warning-soft);
+  border: 1px solid var(--warning-border);
   border-radius: 12px;
-  font-size: 14px;
+  font-size: 12.5px;
   color: var(--text-primary);
 }
 .backup-reminder a {
@@ -289,7 +103,8 @@
   margin-left: auto;
   background: none;
   border: none;
-  font-size: 20px;
+  font-size: 18px;
+  line-height: 1;
   cursor: pointer;
   color: var(--text-muted);
 }
@@ -299,59 +114,48 @@
 }
 
 /* --- Duyarli kirilimlar -------------------------------------------------- */
-@media (max-width: 1080px) {
-  .pano-govde {
-    grid-template-columns: minmax(0, 1fr);
+/* 1200 alti: tum kartlar 6 kolon; uc genis kart 12 kolon.
+   `dense` bosluk birakmaz: 12 kolonluk kart araya girdiginde kalan yarim
+   satiri bir sonraki 6 kolonluk kart doldurur. */
+@media (max-width: 1199px) {
+  .db-grid {
+    grid-auto-flow: row dense;
   }
-  .pano-ray {
-    border-left: 0;
-    border-top: 1px solid var(--border);
+  .db-kart-alan--8,
+  .db-kart-alan--4 {
+    grid-column: span 6;
+  }
+  .db-grid > [data-widget="gorevler"],
+  .db-grid > [data-widget="nakitAkisi"],
+  .db-grid > [data-widget="aylikGelirGider"] {
+    grid-column: span 12;
+  }
+}
+
+/* 760 alti: tek kolon. */
+@media (max-width: 759px) {
+  .db-kart-alan--8,
+  .db-kart-alan--4,
+  .db-kart-alan--12,
+  .db-grid > [data-widget] {
+    grid-column: span 12;
   }
 }
 
 @media (max-width: 900px) {
-  /* 4 -> 2x2: dikey ayiricilar yatay/dikey olarak yeniden dagitilir. */
-  .pano-kpi {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .pano-kpi > * {
-    border-right: 0;
-  }
-  .pano-kpi > *:nth-child(odd) {
-    border-right: 1px solid var(--border);
-  }
-  .pano-kpi > *:nth-child(-n + 2) {
-    border-bottom: 1px solid var(--border);
-  }
-}
-
-@media (max-width: 760px) {
-  .dashboard-analiz-grid {
-    grid-template-columns: minmax(0, 1fr);
+  .dashboard-container {
+    padding: 16px 16px 24px;
   }
 }
 
 @media (max-width: 600px) {
-  .pano-bolum,
-  .pano-ray .pano-bolum,
-  .pano-onboarding {
-    padding: 16px;
-  }
-  .analiz-baslik {
-    padding: 12px 16px;
-  }
-  .dashboard-analiz-grid {
-    padding: 0 0 16px;
-    gap: 0;
-  }
-  .nakit-projeksiyon-cipler {
-    grid-template-columns: minmax(0, 1fr);
-    min-width: 100%;
+  .db-grid {
+    gap: 12px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dashboard-container.icerik-hazir .pano {
+  .dashboard-container.icerik-hazir {
     animation: none;
   }
 }

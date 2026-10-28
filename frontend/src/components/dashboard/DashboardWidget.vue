@@ -1,7 +1,10 @@
 <template>
   <section
     class="dw"
-    :class="{ 'dw--duzen': duzenModu, 'dw--surukleniyor': surukleniyor }"
+    :class="[
+      `db-kart-alan--${span}`,
+      { 'dw--duzen': duzenModu, 'dw--surukleniyor': surukleniyor }
+    ]"
     :draggable="duzenModu"
     :data-widget="anahtar"
     @dragstart="suruklemeyeBasla"
@@ -79,7 +82,9 @@ const props = defineProps({
   etiket: { type: String, default: '' },
   duzenModu: { type: Boolean, default: false },
   sira: { type: Number, default: 0 },
-  uzunluk: { type: Number, default: 1 }
+  uzunluk: { type: Number, default: 1 },
+  // 12 kolonlu izgaradaki sabit kart genisligi (4 veya 8).
+  span: { type: Number, default: 4 }
 })
 
 const emit = defineEmits(['yukari', 'asagi', 'gizle', 'surukle-baslat', 'birak'])
@@ -125,15 +130,18 @@ const birakildi = () => {
  */
 .dw {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .dw--duzen {
   outline: 1px dashed var(--border);
-  outline-offset: -1px;
+  outline-offset: 4px;
+  border-radius: 13px;
 }
 .dw--duzen:hover,
 .dw--duzen:focus-within {
   outline-color: var(--accent-border);
-  background: color-mix(in srgb, var(--accent-soft) 40%, transparent);
 }
 .dw--surukleniyor {
   opacity: 0.55;
@@ -141,10 +149,9 @@ const birakildi = () => {
 .dw-arac {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 12px 24px 0;
-  padding: 4px 8px;
-  border-radius: 10px;
+  gap: 6px;
+  padding: 2px 6px;
+  border-radius: 8px;
   background: var(--bg-muted);
   border: 1px solid var(--border);
   flex-wrap: wrap;
@@ -212,7 +219,7 @@ const birakildi = () => {
 }
 @media (max-width: 600px) {
   .dw-arac {
-    margin: 12px 16px 0;
+    padding: 2px 4px;
   }
 }
 </style>

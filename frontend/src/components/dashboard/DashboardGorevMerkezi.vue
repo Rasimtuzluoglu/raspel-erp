@@ -9,7 +9,7 @@
       aria-hidden="true"
     >
       <div
-        v-for="i in 3"
+        v-for="i in 4"
         :key="`gorev-iskelet-${i}`"
         class="gorev-iskelet-satir"
       >
@@ -18,16 +18,25 @@
       </div>
     </div>
 
-    <p
+    <div
       v-else-if="hata"
       class="gorev-durum gorev-durum--hata"
     >
-      <i
-        class="pi pi-exclamation-circle"
-        aria-hidden="true"
-      />
-      {{ t('dashboard.gorevHata') }}
-    </p>
+      <span class="gorev-durum-metin">
+        <i
+          class="pi pi-exclamation-circle"
+          aria-hidden="true"
+        />
+        {{ t('dashboard.gorevHata') }}
+      </span>
+      <button
+        type="button"
+        class="gorev-dene"
+        @click="emit('yenile')"
+      >
+        {{ t('dashboard.gorevYenidenDene') }}
+      </button>
+    </div>
 
     <p
       v-else-if="!siraliGorevler.length"
@@ -48,48 +57,43 @@
         v-for="g in siraliGorevler"
         :key="g.tur"
         class="gorev-satir"
+        :class="oncelikSinifi(g.oncelik)"
+        :data-test="`gorev-${g.tur}`"
       >
-        <component
-          :is="gorevRoute(g) ? 'router-link' : 'div'"
-          :to="gorevRoute(g) || undefined"
-          class="gorev-kart"
-          :class="oncelikSinifi(g.oncelik)"
-          :data-test="`gorev-${g.tur}`"
+        <span
+          class="gorev-ikon"
+          :style="{ background: `${g.renk || '#3b82f6'}22`, color: g.renk || '#3b82f6' }"
         >
+          <i
+            :class="g.ikon || 'pi pi-flag'"
+            aria-hidden="true"
+          />
+        </span>
+        <span class="gorev-icerik">
+          <span class="gorev-baslik">{{ gorevBasligi(g) }}</span>
           <span
-            class="gorev-ikon"
-            :style="{ background: `${g.renk || '#3b82f6'}22`, color: g.renk || '#3b82f6' }"
-          >
-            <i
-              :class="g.ikon || 'pi pi-flag'"
-              aria-hidden="true"
-            />
-          </span>
-          <span class="gorev-icerik">
-            <span class="gorev-baslik">{{ gorevBasligi(g) }}</span>
-            <span
-              v-if="g.aciklama"
-              class="gorev-aciklama"
-            >{{ g.aciklama }}</span>
-          </span>
-          <span class="gorev-sag">
-            <strong class="gorev-adet">{{ g.adet || 0 }}</strong>
-            <span
-              v-if="Number(g.tutar) > 0"
-              class="gorev-tutar gizli-veri"
-            >{{ formatCurrency(g.tutar) }}</span>
-          </span>
+            v-if="g.aciklama"
+            class="gorev-aciklama"
+            :title="g.aciklama"
+          >{{ g.aciklama }}</span>
+        </span>
+        <span class="gorev-sag">
+          <strong class="gorev-adet">{{ g.adet || 0 }}</strong>
           <span
-            v-if="vadeMi(g)"
-            class="gorev-link"
-          >
-            {{ t('dashboard.gorevTahsilatLink') }}
-            <i
-              class="pi pi-arrow-right"
-              aria-hidden="true"
-            />
-          </span>
-        </component>
+            v-if="Number(g.tutar) > 0"
+            class="gorev-tutar gizli-veri"
+          >{{ formatCurrency(g.tutar) }}</span>
+        </span>
+        <router-link
+          :to="aksiyon(g).to"
+          class="gorev-eylem"
+        >
+          {{ aksiyon(g).metin }}
+          <i
+            class="pi pi-arrow-right"
+            aria-hidden="true"
+          />
+        </router-link>
       </li>
     </ul>
   </div>
@@ -106,6 +110,8 @@ const props = defineProps({
   hata: { type: String, default: null }
 })
 
+const emit = defineEmits(['yenile'])
+
 const { t } = useI18n()
 
 const GOREV_TUR_ANAHTARLARI = {
@@ -121,10 +127,12 @@ const GOREV_TUR_ANAHTARLARI = {
 
 const VADE_TURLERI = ['VADESI_GECEN', 'VADESI_YAKLASAN']
 
-const vadeMi = (g) => VADE_TURLERI.includes(g?.tur)
-
-// Vade kayitlari her zaman tahsilat ekranina gider (adet + tutar + link).
-const gorevRoute = (g) => (vadeMi(g) ? '/tahsilat' : g.route || null)
+const ONAY_TURLERI = {
+  ONAY_IZIN: 'IZIN',
+  ONAY_MASRAF: 'MASRAF',
+  ONAY_SATINALMA: 'SATINALMA',
+  ONAY_SIPARIS: 'SIPARIS'
+}
 
 const gorevBasligi = (g) => {
   const anahtar = GOREV_TUR_ANAHTARLARI[g.tur]
@@ -134,23 +142,46 @@ const gorevBasligi = (g) => {
 
 const oncelikSinifi = (oncelik) => {
   const deger = Number(oncelik) || 0
-  if (deger >= 70) return 'gorev-kart--kritik'
-  if (deger >= 40) return 'gorev-kart--uyari'
-  return 'gorev-kart--bilgi'
+  if (deger >= 70) return 'gorev-satir--kritik'
+  if (deger >= 40) return 'gorev-satir--uyari'
+  return 'gorev-satir--bilgi'
+}
+
+/**
+ * Satir aksiyonu: vade -> tahsilat, kritik stok -> stok listesi, teslimat ->
+ * teslimatlar, onaylar -> onaylar (tur filtresiyle), digerleri kendi rotasi.
+ */
+const aksiyon = (g) => {
+  if (VADE_TURLERI.includes(g?.tur)) {
+    return { to: '/tahsilat', metin: t('dashboard.gorevTahsilatLink') }
+  }
+  if (g?.tur === 'KRITIK_STOK') {
+    return { to: '/stoklar?kritik=1', metin: t('dashboard.gorevAksiyonStok') }
+  }
+  if (g?.tur === 'BEKLEYEN_TESLIMAT') {
+    return { to: '/teslimatlar', metin: t('dashboard.gorevAksiyonAc') }
+  }
+  const onay = ONAY_TURLERI[g?.tur]
+  if (onay) {
+    return { to: `/onaylar?tur=${onay}`, metin: t('dashboard.gorevAksiyonAc') }
+  }
+  return { to: g?.route || '/onaylar', metin: t('dashboard.gorevAksiyonAc') }
 }
 
 // Backend oncelik sirali dondurur; istemci de ayni sozlesmeyi garanti eder.
+// En fazla 6 satir: kart bir "bugun" listesidir, tam kayit tablosu degil.
 const siraliGorevler = computed(() =>
   [...props.gorevler]
     .filter((g) => g && (Number(g.adet) || 0) > 0)
     .sort((a, b) => (Number(b.oncelik) || 0) - (Number(a.oncelik) || 0))
+    .slice(0, 6)
 )
 </script>
 
 <style scoped>
 /*
- * Gorev satirlari kart degil, panonun icinde duz satirlardir: cerceve/golge
- * yok; satirlar arasinda 1px ayirici, hover'da hafif zemin.
+ * Tek liste: satirlar duz, sol tarafta bos kolon yok. Her satir dort parcadan
+ * olusur (ikon, icerik, adet/tutar, aksiyon); aralarda 1px ayirici.
  */
 .gorev-merkezi {
   min-width: 0;
@@ -163,29 +194,22 @@ const siraliGorevler = computed(() =>
   flex-direction: column;
 }
 .gorev-satir {
-  min-width: 0;
-}
-.gorev-satir + .gorev-satir {
-  border-top: 1px solid var(--border);
-}
-.gorev-kart {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 0 -8px;
-  padding: 10px 8px;
-  border-radius: 10px;
-  color: inherit;
-  text-decoration: none;
-  min-height: 56px;
+  min-height: 52px;
+  min-width: 0;
+  padding: 5px 6px;
+  border-radius: 8px;
   transition: background var(--dur-base, 0.2s) var(--ease-standard, ease);
 }
-a.gorev-kart:hover {
-  background: var(--bg-muted);
+.gorev-satir + .gorev-satir {
+  border-top: 1px solid var(--border);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
-a.gorev-kart:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
+.gorev-satir:hover {
+  background: var(--bg-muted);
 }
 .gorev-ikon {
   display: inline-flex;
@@ -200,13 +224,13 @@ a.gorev-kart:focus-visible {
 .gorev-icerik {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
   flex: 1;
 }
 .gorev-baslik {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12.5px;
+  font-weight: 600;
   color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -221,13 +245,20 @@ a.gorev-kart:focus-visible {
 }
 .gorev-sag {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
+  align-items: baseline;
+  gap: 8px;
   flex-shrink: 0;
 }
 .gorev-adet {
-  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--bg-muted);
+  font-size: 12px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -237,25 +268,37 @@ a.gorev-kart:focus-visible {
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
-.gorev-kart--kritik .gorev-adet {
+.gorev-satir--kritik .gorev-adet {
   color: var(--danger);
 }
-.gorev-kart--uyari .gorev-adet {
+.gorev-satir--uyari .gorev-adet {
   color: var(--warning);
 }
-.gorev-kart--bilgi .gorev-adet {
+.gorev-satir--bilgi .gorev-adet {
   color: var(--accent);
 }
-.gorev-link {
+.gorev-eylem {
   display: inline-flex;
   align-items: center;
   gap: 3px;
   flex-shrink: 0;
+  padding: 4px 8px;
+  border-radius: 7px;
   font-size: 11.5px;
   font-weight: 600;
   color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
 }
-.gorev-link i {
+.gorev-eylem:hover {
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+.gorev-eylem:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.gorev-eylem i {
   font-size: 9px;
 }
 .gorev-durum {
@@ -263,15 +306,42 @@ a.gorev-kart:focus-visible {
   align-items: center;
   gap: 8px;
   margin: 0;
-  padding: 10px 0;
+  padding: 8px 0;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 12.5px;
+  min-height: 40px;
 }
 .gorev-durum--bos i {
   color: var(--success);
 }
 .gorev-durum--hata {
   color: var(--danger);
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.gorev-durum-metin {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.gorev-dene {
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gorev-dene:hover {
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+.gorev-dene:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .gorev-iskelet {
   display: flex;
@@ -282,7 +352,7 @@ a.gorev-kart:focus-visible {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 0;
+  padding: 6px 0;
 }
 .gorev-iskelet-satir + .gorev-iskelet-satir {
   border-top: 1px solid var(--border);
@@ -315,19 +385,18 @@ a.gorev-kart:focus-visible {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .gorev-kart,
+  .gorev-satir,
   .iskelet {
     transition: none;
     animation: none;
   }
 }
 @media (max-width: 600px) {
-  .gorev-kart {
+  .gorev-satir {
     gap: 10px;
-    margin: 0;
-    padding: 10px 0;
+    padding: 5px 0;
   }
-  .gorev-link {
+  .gorev-tutar {
     display: none;
   }
 }

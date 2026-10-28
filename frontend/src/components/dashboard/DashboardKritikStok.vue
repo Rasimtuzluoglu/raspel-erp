@@ -15,49 +15,36 @@
       />
     </div>
 
-    <template v-else>
-      <ul
-        v-if="satirlar.length"
-        class="kritik-liste"
+    <ul
+      v-else-if="satirlar.length"
+      class="kritik-liste"
+    >
+      <li
+        v-for="(s, index) in satirlar"
+        :key="s.id ?? s.stokKodu ?? `${index}`"
       >
-        <li
-          v-for="(s, index) in satirlar"
-          :key="s.id ?? s.stokKodu ?? `${index}`"
+        <router-link
+          to="/stoklar?kritik=1"
+          class="kritik-satir"
         >
-          <router-link
-            to="/stoklar?kritik=1"
-            class="kritik-satir"
-          >
-            <span class="kritik-ad">{{ s.ad || s.stokKodu }}</span>
-            <span class="kritik-miktar gizli-veri">
-              {{ t('dashboard.kritikStokMiktarMin', { miktar: sayi(s.miktar), min: sayi(s.minMiktar) }) }}
-            </span>
-          </router-link>
-        </li>
-      </ul>
+          <span class="kritik-ad">{{ s.ad || s.stokKodu }}</span>
+          <span class="kritik-miktar gizli-veri">
+            {{ t('dashboard.kritikStokMiktarMin', { miktar: sayi(s.miktar), min: sayi(s.minMiktar) }) }}
+          </span>
+        </router-link>
+      </li>
+    </ul>
 
-      <p
-        v-else
-        class="kritik-bos"
-      >
-        <i
-          class="pi pi-check-circle"
-          aria-hidden="true"
-        />
-        {{ kritikAdet > 0 ? t('dashboard.kritikStokSayisi', { n: kritikAdet }) : t('dashboard.kritikStokYok') }}
-      </p>
-
-      <router-link
-        to="/stoklar?kritik=1"
-        class="kritik-tumu"
-      >
-        {{ t('dashboard.tumunuGor') }}
-        <i
-          class="pi pi-arrow-right"
-          aria-hidden="true"
-        />
-      </router-link>
-    </template>
+    <p
+      v-else
+      class="kritik-bos"
+    >
+      <i
+        class="pi pi-check-circle"
+        aria-hidden="true"
+      />
+      {{ t('dashboard.kritikStokYok') }}
+    </p>
   </div>
 </template>
 
@@ -67,8 +54,6 @@ import { useI18n } from 'vue-i18n'
 import { stokAPI } from '../../api/index.js'
 
 const props = defineProps({
-  // Ozet stok blogu: kritik adedi ve toplam stok degeri.
-  stok: { type: Object, default: null },
   // Ust bilesen liste verirse istek atilmaz (test/senkron kullanim).
   stoklar: { type: Array, default: null },
   yukleniyor: { type: Boolean, default: false }
@@ -79,9 +64,7 @@ const { t } = useI18n()
 const yerelVeri = ref([])
 const yerelYukleniyor = ref(false)
 
-const kritikAdet = computed(() => Number(props.stok?.kritikAdet) || 0)
-
-// En fazla 4 satir; detayi icin "tumunu gor" baglantisi vardir.
+// En fazla 4 satir; detayi icin kart basligindaki "Tumunu gor" baglantisi var.
 const satirlar = computed(() => {
   const liste = props.stoklar || yerelVeri.value
   return Array.isArray(liste) ? liste.slice(0, 4) : []
@@ -96,7 +79,7 @@ onMounted(async () => {
     const cevap = await stokAPI.kritik()
     yerelVeri.value = Array.isArray(cevap?.data) ? cevap.data : []
   } catch {
-    // Ozet sayaci yedek olarak kalir; bolum bos durum gosterir.
+    // Bolum bos durum gosterir; sayfa akisi bozulmaz.
     yerelVeri.value = []
   } finally {
     yerelYukleniyor.value = false
@@ -105,9 +88,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/*
- * Ray icinde kompakt satirlar: kart cercevesi yok, satirlar 1px ayiricili.
- */
 .kritik-stok {
   display: flex;
   flex-direction: column;
@@ -128,20 +108,19 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin: 0 -8px;
-  padding: 8px;
-  border-radius: 10px;
+  padding: 7px 4px;
+  border-radius: 8px;
   min-width: 0;
   color: inherit;
   text-decoration: none;
   transition: background var(--dur-base, 0.2s) var(--ease-standard, ease);
 }
 .kritik-satir:hover {
-  background: var(--bg-card);
+  background: var(--bg-muted);
 }
 .kritik-satir:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: -2px;
+  outline-offset: 2px;
 }
 .kritik-ad {
   font-size: 12.5px;
@@ -171,29 +150,6 @@ onMounted(async () => {
 .kritik-bos i {
   color: var(--success);
 }
-.kritik-tumu {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  align-self: flex-start;
-  margin-top: 10px;
-  padding: 2px 0;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent);
-  text-decoration: none;
-}
-.kritik-tumu:hover {
-  color: var(--accent-hover);
-}
-.kritik-tumu:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-.kritik-tumu i {
-  font-size: 9px;
-}
 .kritik-iskelet {
   display: flex;
   flex-direction: column;
@@ -203,7 +159,7 @@ onMounted(async () => {
   display: block;
   height: 20px;
   border-radius: 7px;
-  background: var(--bg-card);
+  background: var(--bg-muted);
   animation: iskeletParlama 1.4s ease infinite;
 }
 @keyframes iskeletParlama {

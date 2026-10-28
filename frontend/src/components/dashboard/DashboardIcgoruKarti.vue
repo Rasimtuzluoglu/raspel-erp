@@ -52,8 +52,8 @@
             <span
               v-if="i.mesaj"
               class="icgoru-mesaj"
+              :title="i.mesaj"
             >{{ i.mesaj }}</span>
-            <span class="icgoru-seviye">{{ seviyeEtiketi(i.seviye) }}</span>
           </span>
           <i
             v-if="i.route"
@@ -91,19 +91,9 @@ const seviyeIkonu = (seviye) => {
   if (seviye === 'WARN') return 'pi pi-exclamation-triangle'
   return 'pi pi-info-circle'
 }
-
-const seviyeEtiketi = (seviye) => {
-  if (seviye === 'KRITIK') return t('dashboard.icgoruKritik')
-  if (seviye === 'WARN') return t('dashboard.icgoruUyari')
-  return t('dashboard.icgoruBilgi')
-}
 </script>
 
 <style scoped>
-/*
- * Icgoru listesi rayda kompakt bir listedir: kart cercevesi yok, satirlar
- * arasinda 1px ayirici ve hover'da hafif zemin vardir.
- */
 .icgoru-karti {
   min-width: 0;
 }
@@ -119,21 +109,20 @@ const seviyeEtiketi = (seviye) => {
 }
 .icgoru-satir {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
-  margin: 0 -8px;
-  padding: 9px 8px;
-  border-radius: 10px;
+  padding: 7px 4px;
+  border-radius: 8px;
   color: inherit;
   text-decoration: none;
   transition: background var(--dur-base, 0.2s) var(--ease-standard, ease);
 }
 a.icgoru-satir:hover {
-  background: var(--bg-card);
+  background: var(--bg-muted);
 }
 a.icgoru-satir:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: -2px;
+  outline-offset: 2px;
 }
 .icgoru-ikon {
   display: inline-flex;
@@ -141,9 +130,9 @@ a.icgoru-satir:focus-visible {
   justify-content: center;
   width: 26px;
   height: 26px;
-  border-radius: 10px;
+  border-radius: 9px;
   flex-shrink: 0;
-  font-size: 13px;
+  font-size: 12.5px;
 }
 .icgoru-satir--bilgi .icgoru-ikon {
   background: var(--accent-soft);
@@ -160,31 +149,30 @@ a.icgoru-satir:focus-visible {
 .icgoru-icerik {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
   flex: 1;
 }
 .icgoru-baslik {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12.5px;
+  font-weight: 600;
   color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .icgoru-mesaj {
-  font-size: 12px;
-  color: var(--text-secondary);
-  line-height: 1.45;
-}
-.icgoru-seviye {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
+  font-size: 11.5px;
   color: var(--text-muted);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .icgoru-git {
-  font-size: 11px;
+  font-size: 9px;
   color: var(--text-muted);
-  margin-top: 4px;
+  flex-shrink: 0;
 }
 .icgoru-bos {
   display: flex;
@@ -193,7 +181,10 @@ a.icgoru-satir:focus-visible {
   margin: 0;
   padding: 8px 0;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 12.5px;
+}
+.icgoru-bos i {
+  color: var(--success);
 }
 .icgoru-iskelet {
   display: flex;
@@ -202,7 +193,7 @@ a.icgoru-satir:focus-visible {
 }
 .iskelet {
   display: block;
-  height: 42px;
+  height: 40px;
   border-radius: 10px;
   background: var(--bg-muted);
   animation: iskeletParlama 1.4s ease infinite;
@@ -219,7 +210,9 @@ a.icgoru-satir:focus-visible {
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .icgoru-satir,
   .iskelet {
+    transition: none;
     animation: none;
   }
 }

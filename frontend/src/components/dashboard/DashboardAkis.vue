@@ -48,7 +48,7 @@
       class="akis-liste"
     >
       <li
-        v-for="(olay, index) in akis"
+        v-for="(olay, index) in sonOlaylar"
         :key="`${olay.tur}-${olay.tarih}-${index}`"
         class="akis-satir"
         role="article"
@@ -86,7 +86,7 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatCurrency } from '../../utils/format.js'
 
@@ -101,6 +101,9 @@ const props = defineProps({
 const emit = defineEmits(['yenile'])
 
 const { t } = useI18n()
+
+// Kart bir "son olaylar" listesidir: en fazla 5 satir gosterilir.
+const sonOlaylar = computed(() => (Array.isArray(props.akis) ? props.akis.slice(0, 5) : []))
 
 const AKIS_TUR_ANAHTARLARI = {
   ONAY: 'dashboard.akisTurOnay',
@@ -165,7 +168,7 @@ onUnmounted(() => {
 
 <style scoped>
 .canli-akis {
-  min-height: 160px;
+  min-height: 0;
 }
 .akis-liste {
   list-style: none;
@@ -178,13 +181,13 @@ onUnmounted(() => {
   position: relative;
   display: flex;
   gap: 10px;
-  padding: 6px 0;
+  padding: 5px 0;
 }
 .akis-satir:not(:last-child)::after {
   content: '';
   position: absolute;
-  left: 14px;
-  top: 40px;
+  left: 12px;
+  top: 34px;
   bottom: -2px;
   width: 1px;
   background: var(--border);
@@ -193,11 +196,11 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
   flex-shrink: 0;
-  font-size: 13px;
+  font-size: 11.5px;
   z-index: 1;
 }
 .akis-icerik {
@@ -225,8 +228,8 @@ a.akis-icerik:focus-visible {
   min-width: 0;
 }
 .akis-baslik {
-  font-size: 12.5px;
-  font-weight: 700;
+  font-size: 11.5px;
+  font-weight: 600;
   color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -241,14 +244,14 @@ a.akis-icerik:focus-visible {
   flex-shrink: 0;
 }
 .akis-aciklama {
-  font-size: 11.5px;
-  color: var(--text-secondary);
+  font-size: 11px;
+  color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .akis-tutar {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
@@ -281,9 +284,9 @@ a.akis-icerik:focus-visible {
   animation: iskeletParlama 1.4s ease infinite;
 }
 .iskelet--nokta {
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
   flex-shrink: 0;
 }
 .iskelet--metin {

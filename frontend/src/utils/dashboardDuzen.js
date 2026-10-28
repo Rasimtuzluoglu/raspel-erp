@@ -2,11 +2,13 @@
  * Anasayfa widget duzeni (kisisellestirme) yardimcilari.
  *
  * Duzen sozlesmesi: `{ versiyon: 1, sira: [{ key, gorunur: boolean }] }`
- * - Sira duz bir listedir; gorsel yerlesim (ana icerik / sag ray) anahtardan
- *   turetilir (`widgetBolgesi`). Boylece ayni kayit hem tek kolonlu mobilde hem
- *   iki bolgeli masaustunde ayni anlami tasir.
- * - Siralama yalnizca ayni bolge icinde yapilir; bolgeler arasi tasima yoktur.
- * - `kpi` sabittir: gizlenebilir ama tasinamaz (her zaman panonun ust bandi).
+ * - Sira duz bir listedir; tum kartlar tek bir 12 kolonlu izgarada, bu sirayla
+ *   yerlestirilir. Kart genisligi (span) anahtara gore sabittir
+ *   (`WIDGET_SPANLARI`); kullanici yalnizca siralamayi ve gorunurlugu degistirir.
+ * - `kpi` ve `bugunSerit` sabittir: gizlenebilir ama tasinamaz. Bu iki bolum
+ *   izgaranin ustunde ayri bantlar olarak cizilir.
+ * - `boyut` alani yoktur; eski kayitlardaki `boyut`, `hedefler` ve `vade`
+ *   alanlari normallestirme sirasinda temizlenir.
  *
  * Bu modul saf fonksiyonlardir; view ve testler ayni kaynagi kullanir.
  */
@@ -14,29 +16,44 @@
 export const DUZEN_VERSIYON = 1
 export const DUZEN_STORAGE_ANAHTAR = 'raspel_dashboard_duzen'
 
-/** Widget anahtarlari (registry). */
+/** Widget anahtarlari (registry) — cizim sirasinin varsayilani. */
 export const DASHBOARD_WIDGET_ANAHTARLARI = [
   'kpi',
+  'bugunSerit',
   'gorevler',
   'icgoruler',
   'nakitAkisi',
+  'hizliIslemler',
   'aylikGelirGider',
+  'kritikStok',
   'kategoriSatislari',
   'enCokSatanlar',
-  'akis',
-  'kritikStok',
-  'hizliIslemler'
+  'akis'
 ]
 
-/** Sag rayda yasayan bolumler; digerleri ana iceriktedir. */
-export const RAY_ANAHTARLARI = ['icgoruler', 'hizliIslemler', 'kritikStok']
+/** Izgaranin ustunde ayri bant olarak cizilen sabit bolumler. */
+export const SABIT_ANAHTARLARI = ['kpi', 'bugunSerit']
 
-/** Konumu degismeyen bolumler (gizlenebilir, tasinamaz). */
-export const SABIT_ANAHTARLARI = ['kpi']
+/**
+ * Kart genislikleri (12 kolonlu izgara).
+ * Masaustu yerlesimi: 8+4, 8+4, 8+4, 4+4+4.
+ */
+export const WIDGET_SPANLARI = {
+  gorevler: 8,
+  icgoruler: 4,
+  nakitAkisi: 8,
+  hizliIslemler: 4,
+  aylikGelirGider: 8,
+  kritikStok: 4,
+  kategoriSatislari: 4,
+  enCokSatanlar: 4,
+  akis: 4
+}
 
 /** Widget etiketleri icin i18n anahtarlari (dashboard blokunda). */
 export const WIDGET_ETIKET_ANAHTARLARI = {
   kpi: 'dashboard.widgetKpi',
+  bugunSerit: 'dashboard.bugunSeridi',
   gorevler: 'dashboard.widgetGorevler',
   icgoruler: 'dashboard.widgetIcgoruler',
   nakitAkisi: 'dashboard.widgetNakitAkisi',
@@ -48,41 +65,40 @@ export const WIDGET_ETIKET_ANAHTARLARI = {
   hizliIslemler: 'dashboard.widgetHizliIslemler'
 }
 
-/** Widget'in gorsel bolgesi: 'ana' (sol, esnek) veya 'ray' (sag, sabit). */
-export function widgetBolgesi(key) {
-  return RAY_ANAHTARLARI.includes(key) ? 'ray' : 'ana'
+/** Widget'in 12 kolonlu izgaradaki sabit genisligi. */
+export function widgetSpan(key) {
+  return WIDGET_SPANLARI[key] || 4
+}
+
+/** Sabit mi? (gizlenebilir, tasinamaz) */
+export function sabitMi(key) {
+  return SABIT_ANAHTARLARI.includes(key)
 }
 
 /**
- * Rol bazli varsayilan sira. ADMIN tum bolumleri, MUHASEBE finans odakli,
- * USER ise operasyonel bolumleri gorur.
+ * Rol bazli varsayilan sira.
+ *
+ * Yerlesim spec'te sabit oldugu icin tum roller ayni sirayi kullanir; rol
+ * farki yalnizca gorunurluk tercihinde (kullanici bazli duzen) ortaya cikar.
  */
+const VARSAYILAN_SIRA = [
+  'kpi',
+  'bugunSerit',
+  'gorevler',
+  'icgoruler',
+  'nakitAkisi',
+  'hizliIslemler',
+  'aylikGelirGider',
+  'kritikStok',
+  'kategoriSatislari',
+  'enCokSatanlar',
+  'akis'
+]
+
 export const ROL_SIRALARI = {
-  ADMIN: [
-    'kpi',
-    'gorevler',
-    'nakitAkisi',
-    'aylikGelirGider',
-    'kategoriSatislari',
-    'enCokSatanlar',
-    'akis',
-    'icgoruler',
-    'hizliIslemler',
-    'kritikStok'
-  ],
-  MUHASEBE: [
-    'kpi',
-    'gorevler',
-    'nakitAkisi',
-    'aylikGelirGider',
-    'kategoriSatislari',
-    'akis',
-    'icgoruler',
-    'kritikStok',
-    'enCokSatanlar',
-    'hizliIslemler'
-  ],
-  USER: ['kpi', 'gorevler', 'akis', 'hizliIslemler', 'kritikStok', 'enCokSatanlar', 'icgoruler', 'nakitAkisi']
+  ADMIN: [...VARSAYILAN_SIRA],
+  MUHASEBE: [...VARSAYILAN_SIRA],
+  USER: [...VARSAYILAN_SIRA]
 }
 
 export const VARSAYILAN_ROL = 'ADMIN'
@@ -111,7 +127,7 @@ export function duzenGecerliMi(duzen) {
  *
  * - Bilinmeyen/cift kayitlar ve eski `boyut` alani atilir (`hedefler`/`vade`
  *   gibi kaldirilan anahtarlar bu sayede sessizce temizlenir).
- * - `kpi` her zaman basa alinir (sabit ust band).
+ * - `kpi` ve `bugunSerit` her zaman basa alinir (sabit ust bantlar).
  * - Eksik bolumler rol varsayilanindan gizli olarak eklenir; boylece yeni bir
  *   bolum eklendiginde eski tercihler bozulmaz.
  */
@@ -134,11 +150,11 @@ export function duzenNormallestir(duzen, rol = VARSAYILAN_ROL) {
   return { versiyon: DUZEN_VERSIYON, sira: sabitBasa(sira) }
 }
 
-/** Sabit bolumleri listenin basina tasir (kpi ust band). */
+/** Sabit bolumleri (kpi, bugunSerit) listenin basina tasir. */
 function sabitBasa(sira) {
-  const sabit = sira.filter((w) => SABIT_ANAHTARLARI.includes(w.key))
+  const sabitler = SABIT_ANAHTARLARI.map((key) => sira.find((w) => w.key === key)).filter(Boolean)
   const digerleri = sira.filter((w) => !SABIT_ANAHTARLARI.includes(w.key))
-  return [...sabit, ...digerleri]
+  return [...sabitler, ...digerleri]
 }
 
 /** Tek bir widget'in gorunurlugunu degistirir (yeni dizi doner). */
@@ -155,20 +171,18 @@ function tasiIndex(sira, kaynak, hedef) {
 }
 
 /**
- * Widget'i ayni bolge icinde bir adim yukari/asagi tasir.
- * Bolge disina cikilmaz; sabit bolumler tasinmaz.
+ * Widget'i duz listede bir adim yukari/asagi tasir.
+ * Sabit bolumlerin (kpi, bugunSerit) uzerinden atlanir; onlar tasinmaz.
  */
 export function widgetTasi(sira, key, yon) {
-  if (SABIT_ANAHTARLARI.includes(key)) return sira
+  if (sabitMi(key)) return sira
   const mevcut = sira.findIndex((w) => w.key === key)
   if (mevcut === -1) return sira
-  const bolge = widgetBolgesi(key)
   const adim = yon < 0 ? -1 : 1
   let hedef = mevcut + adim
   while (hedef >= 0 && hedef < sira.length) {
     const aday = sira[hedef]
-    // Sabit bolumler (kpi) siralama hedefi olamaz.
-    if (aday && !SABIT_ANAHTARLARI.includes(aday.key) && widgetBolgesi(aday.key) === bolge) break
+    if (aday && !sabitMi(aday.key)) break
     hedef += adim
   }
   if (hedef < 0 || hedef >= sira.length) return sira
@@ -177,12 +191,11 @@ export function widgetTasi(sira, key, yon) {
 
 /**
  * Surukle-birak: `kaynakKey` widget'ini `hedefKey` widget'inin konumuna tasir.
- * Yalnizca ayni bolge icinde ve sabit olmayan bolumler icin calisir.
+ * Sabit bolumler ne tasinir ne de hedef olur.
  */
 export function widgetBirak(sira, kaynakKey, hedefKey) {
   if (!kaynakKey || !hedefKey || kaynakKey === hedefKey) return sira
-  if (SABIT_ANAHTARLARI.includes(kaynakKey) || SABIT_ANAHTARLARI.includes(hedefKey)) return sira
-  if (widgetBolgesi(kaynakKey) !== widgetBolgesi(hedefKey)) return sira
+  if (sabitMi(kaynakKey) || sabitMi(hedefKey)) return sira
   const kaynak = sira.findIndex((w) => w.key === kaynakKey)
   const hedef = sira.findIndex((w) => w.key === hedefKey)
   if (kaynak === -1 || hedef === -1) return sira

@@ -19,71 +19,61 @@
       </div>
     </header>
 
-    <div
-      v-for="grup in gruplar"
-      :key="grup.bolge"
-      class="duzen-grup"
-      :data-bolge="grup.bolge"
-    >
-      <h3 class="duzen-grup-baslik">
-        {{ grup.etiket }}
-      </h3>
-      <ul class="duzen-liste">
-        <li
-          v-for="(w, index) in grup.widgetlar"
-          :key="w.key"
-          class="duzen-satir"
-          :class="{ 'duzen-satir--gizli': !w.gorunur, 'duzen-satir--sabit': w.sabit }"
-          :data-widget="w.key"
-        >
-          <label class="duzen-gorunur">
-            <input
-              type="checkbox"
-              :checked="w.gorunur"
-              :aria-label="`${w.etiket} — ${t('dashboard.duzenGorunur')}`"
-              @change="degistir(w.key, 'gorunur', $event.target.checked)"
-            >
-            <span class="duzen-etiket">{{ w.etiket }}</span>
-          </label>
-          <span
-            v-if="w.sabit"
-            class="duzen-sabit"
-            :title="t('dashboard.widgetSabit')"
-          >{{ t('dashboard.sabit') }}</span>
-          <div
-            v-else
-            class="duzen-eylemler"
+    <ul class="duzen-liste">
+      <li
+        v-for="(w, index) in widgetlar"
+        :key="w.key"
+        class="duzen-satir"
+        :class="{ 'duzen-satir--gizli': !w.gorunur, 'duzen-satir--sabit': w.sabit }"
+        :data-widget="w.key"
+      >
+        <label class="duzen-gorunur">
+          <input
+            type="checkbox"
+            :checked="w.gorunur"
+            :aria-label="`${w.etiket} — ${t('dashboard.duzenGorunur')}`"
+            @change="degistir(w.key, 'gorunur', $event.target.checked)"
           >
-            <button
-              type="button"
-              class="duzen-buton"
-              :disabled="!tasinabilir(grup.widgetlar, index, -1)"
-              :aria-label="`${w.etiket} — ${t('dashboard.widgetYukari')}`"
-              :title="t('dashboard.widgetYukari')"
-              @click="emit('tasi', { key: w.key, yon: -1 })"
-            >
-              <i
-                class="pi pi-arrow-up"
-                aria-hidden="true"
-              />
-            </button>
-            <button
-              type="button"
-              class="duzen-buton"
-              :disabled="!tasinabilir(grup.widgetlar, index, 1)"
-              :aria-label="`${w.etiket} — ${t('dashboard.widgetAsagi')}`"
-              :title="t('dashboard.widgetAsagi')"
-              @click="emit('tasi', { key: w.key, yon: 1 })"
-            >
-              <i
-                class="pi pi-arrow-down"
-                aria-hidden="true"
-              />
-            </button>
-          </div>
-        </li>
-      </ul>
-    </div>
+          <span class="duzen-etiket">{{ w.etiket }}</span>
+        </label>
+        <span
+          v-if="w.sabit"
+          class="duzen-sabit"
+          :title="t('dashboard.widgetSabit')"
+        >{{ t('dashboard.sabit') }}</span>
+        <div
+          v-else
+          class="duzen-eylemler"
+        >
+          <button
+            type="button"
+            class="duzen-buton"
+            :disabled="!tasinabilir(widgetlar, index, -1)"
+            :aria-label="`${w.etiket} — ${t('dashboard.widgetYukari')}`"
+            :title="t('dashboard.widgetYukari')"
+            @click="emit('tasi', { key: w.key, yon: -1 })"
+          >
+            <i
+              class="pi pi-arrow-up"
+              aria-hidden="true"
+            />
+          </button>
+          <button
+            type="button"
+            class="duzen-buton"
+            :disabled="!tasinabilir(widgetlar, index, 1)"
+            :aria-label="`${w.etiket} — ${t('dashboard.widgetAsagi')}`"
+            :title="t('dashboard.widgetAsagi')"
+            @click="emit('tasi', { key: w.key, yon: 1 })"
+          >
+            <i
+              class="pi pi-arrow-down"
+              aria-hidden="true"
+            />
+          </button>
+        </div>
+      </li>
+    </ul>
 
     <footer class="duzen-alt-bolum">
       <button
@@ -123,11 +113,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const props = defineProps({
-  /** [{ key, etiket, gorunur, bolge: 'ana'|'ray', sabit }] */
+defineProps({
+  /** [{ key, etiket, gorunur, sabit }] */
   widgetlar: { type: Array, default: () => [] },
   kaydediliyor: { type: Boolean, default: false }
 })
@@ -136,23 +125,11 @@ const emit = defineEmits(['degistir', 'tasi', 'sifirla', 'kaydet', 'iptal'])
 
 const { t } = useI18n()
 
-const gruplar = computed(() =>
-  [
-    { bolge: 'ana', etiket: t('dashboard.anaIcerik') },
-    { bolge: 'ray', etiket: t('dashboard.sagRay') }
-  ]
-    .map((grup) => ({
-      ...grup,
-      widgetlar: props.widgetlar.filter((w) => (w.bolge === 'ray' ? 'ray' : 'ana') === grup.bolge)
-    }))
-    .filter((grup) => grup.widgetlar.length > 0)
-)
-
 const degistir = (key, alan, deger) => {
   emit('degistir', { key, alan, deger })
 }
 
-/** Ayni grup icinde, sabit satirlari atlayarak tasinabilecek komsu var mi? */
+/** Sabit satirlari atlayarak tasinabilecek komsu var mi? */
 const tasinabilir = (liste, index, yon) => {
   const adim = yon < 0 ? -1 : 1
   let i = index + adim
@@ -166,15 +143,17 @@ const tasinabilir = (liste, index, yon) => {
 
 <style scoped>
 /*
- * Duzen paneli panonun icinde bir banttir (kendi golgesi/yaricapi yok);
- * iki grup halinde ana icerik ve sag ray bolumlerini listeler.
+ * Duzen paneli kartlarin ustunde bir banttir: tek liste, satir basina
+ * gorunurluk + sira oklari. Kart boyutu kontrolu yoktur.
  */
 .duzen-paneli {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--border);
+  gap: 12px;
+  padding: 14px 16px;
+  margin: 8px 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
   background: var(--bg-muted);
 }
 .duzen-ust {
@@ -189,7 +168,7 @@ const tasinabilir = (liste, index, yon) => {
   align-items: center;
   gap: 8px;
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   color: var(--text-primary);
 }
@@ -198,21 +177,8 @@ const tasinabilir = (liste, index, yon) => {
 }
 .duzen-alt {
   margin: 2px 0 0;
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-secondary);
-}
-.duzen-grup {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.duzen-grup-baslik {
-  margin: 0;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--text-muted);
 }
 .duzen-liste {
   list-style: none;
@@ -228,7 +194,7 @@ const tasinabilir = (liste, index, yon) => {
   justify-content: space-between;
   gap: 8px;
   padding: 6px 10px;
-  border-radius: 10px;
+  border-radius: 9px;
   border: 1px solid var(--border);
   background: var(--bg-card);
   min-width: 0;
@@ -317,7 +283,7 @@ const tasinabilir = (liste, index, yon) => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 38px;
+  min-height: 36px;
   padding: 0 14px;
   border-radius: 9px;
   border: 1px solid var(--border);
@@ -366,7 +332,7 @@ const tasinabilir = (liste, index, yon) => {
 }
 @media (max-width: 600px) {
   .duzen-paneli {
-    padding: 14px 16px;
+    padding: 12px;
   }
 }
 </style>
