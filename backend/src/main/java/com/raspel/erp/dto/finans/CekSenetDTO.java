@@ -5,7 +5,7 @@ import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import com.raspel.erp.entity.sube.Sube;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -34,4 +34,26 @@ public class CekSenetDTO {
     private String aciklama;
     private Long sirketId;
     private LocalDateTime olusturmaTarihi;
+
+    // --- Tahsil bağları (iptal ters kaydı için) ---
+    private Long tahsilatHareketId;
+    private Long kasaHareketId;
+    private Long bankaHareketiId;
+
+    // --- Ciro / teminat / protesto ---
+    private Long ciroCariId;
+    private String ciroCariAd;
+    private LocalDateTime ciroTarihi;
+    private String ciroNotu;
+    private LocalDateTime teminatTarihi;
+    private String teminatAciklama;
+    private LocalDateTime protestoTarihi;
+
+    // --- Liste/detay zenginleştirme ---
+    private String faturaNo;
+    private String kasaAd;
+    private String bankaAd;
+
+    /** Detayda dönen durum geçmişi (zaman çizelgesi). */
+    private List<CekSenetDurumLogDTO> gecmis;
 }

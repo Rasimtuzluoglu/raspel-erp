@@ -72,6 +72,7 @@ public class ExcelExportController {
     private final com.raspel.erp.service.sistem.IpWhitelistService ipWhitelistService;
     private final com.raspel.erp.service.sube.SubeService subeService;
     private final com.raspel.erp.service.finans.TahsilatService tahsilatService;
+    private final com.raspel.erp.service.finans.CekSenetService cekSenetService;
 
     @GetMapping("/kdv-beyanname")
     @Operation(summary = "KDV beyannamesini Excel dışa aktar",
@@ -1050,6 +1051,51 @@ public class ExcelExportController {
         }
         return excel("TahsilatYaslandirma", new String[]{"Cari", "Telefon", "E-posta",
                 "Fatura No", "Vade", "Kalan Tutar", "Gecikme (Gün)", "Yaş Aralığı"}, rows);
+    }
+
+    @GetMapping("/cek-senet")
+    @Operation(summary = "Çek/senetleri Excel dışa aktar",
+            description = "Filtrelenen çek/senetleri (durum, vade, ciro, teminat, tahsil bilgileriyle) Excel (.xlsx) olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FINANS_EXPORT') or @yetkiKontrol.kontrol(authentication, 'RAPOR_EXPORT')")
+    public ResponseEntity<byte[]> cekSenet(
+            HttpServletRequest request,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String tur,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) Long cariId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis,
+            @RequestParam(required = false) String vadeAralik,
+            @RequestParam(required = false) java.math.BigDecimal minTutar,
+            @RequestParam(required = false) Boolean protesto) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        var page = cekSenetService.filtreli(sirketId, q, tur, durum, cariId, baslangic, bitis, vadeAralik,
+                minTutar, protesto, PageRequest.of(0, MAX_EXPORT_ROWS,
+                        org.springframework.data.domain.Sort.by(
+                                org.springframework.data.domain.Sort.Direction.ASC, "vadeTarihi")));
+        List<Map<String, Object>> rows = page.getContent().stream().map(c -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("ID", c.getId());
+            m.put("Tür", "SENET".equals(c.getTur()) ? "Senet" : "Çek");
+            m.put("Çek/Senet No", c.getCekNo());
+            m.put("Cari", c.getCariHesapAdi());
+            m.put("Banka", c.getBankaAdi());
+            m.put("Şube", c.getSube());
+            m.put("Vade", c.getVadeTarihi());
+            m.put("Tutar", c.getTutar());
+            m.put("Durum", c.getDurum());
+            m.put("Fatura No", c.getFaturaNo());
+            m.put("Ciro Cari", c.getCiroCariAd());
+            m.put("Ciro Tarihi", c.getCiroTarihi());
+            m.put("Teminat Tarihi", c.getTeminatTarihi());
+            m.put("Teminat Açıklaması", c.getTeminatAciklama());
+            m.put("Protesto Tarihi", c.getProtestoTarihi());
+            m.put("Açıklama", c.getAciklama());
+            return m;
+        }).toList();
+        return excel("CekSenet", new String[]{"ID", "Tür", "Çek/Senet No", "Cari", "Banka", "Şube",
+                "Vade", "Tutar", "Durum", "Fatura No", "Ciro Cari", "Ciro Tarihi", "Teminat Tarihi",
+                "Teminat Açıklaması", "Protesto Tarihi", "Açıklama"}, rows);
     }
 
     private ResponseEntity<byte[]> excel(String name, String[] cols, List<Map<String, Object>> rows) {

@@ -104,6 +104,8 @@ class ExcelExportControllerTest {
     private com.raspel.erp.service.finans.ButceService butceService;
     @MockBean
     private com.raspel.erp.service.finans.TahsilatService tahsilatService;
+    @MockBean
+    private com.raspel.erp.service.finans.CekSenetService cekSenetService;
 
     @Test
     void cariHesaplar_excelDoner() throws Exception {
@@ -144,6 +146,26 @@ class ExcelExportControllerTest {
         org.junit.jupiter.api.Assertions.assertFalse(sonuc.contains("\n"));
         org.junit.jupiter.api.Assertions.assertFalse(sonuc.contains(";"));
         org.junit.jupiter.api.Assertions.assertFalse(sonuc.contains("/"));
+    }
+
+    @Test
+    void cekSenet_excelDoner() throws Exception {
+        when(cekSenetService.filtreli(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new PageImpl<>(List.of(com.raspel.erp.dto.finans.CekSenetDTO.builder()
+                        .id(1L).tur("CEK").cekNo("123").cariHesapAdi("Musteri")
+                        .vadeTarihi(java.time.LocalDate.now())
+                        .tutar(java.math.BigDecimal.TEN).durum("PORTFOY").build())));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{4, 5, 6});
+
+        mockMvc.perform(get("/api/exports/cek-senet").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(new byte[]{4, 5, 6}));
+
+        org.mockito.Mockito.verify(excelService).export(
+                org.mockito.ArgumentMatchers.eq("CekSenet"),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.argThat(l -> l != null && l.size() == 1
+                        && "PORTFOY".equals(l.get(0).get("Durum"))));
     }
 
     @Test

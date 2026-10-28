@@ -56,6 +56,38 @@ public class CekSenet {
     @Column(length = 500)
     private String aciklama;
 
+    /** Tahsilde oluşan cari hareket; tahsil iptalinde ters kayıt için saklanır. */
+    @Column(name = "tahsilat_hareket_id")
+    private Long tahsilatHareketId;
+
+    /** Tahsilde oluşan kasa hareketi. */
+    @Column(name = "kasa_hareket_id")
+    private Long kasaHareketId;
+
+    /** Tahsilde oluşan banka hareketi. */
+    @Column(name = "banka_hareketi_id")
+    private Long bankaHareketiId;
+
+    /** Ciro edilen cari (finansal hareket oluşmaz; belge takibi). */
+    @Column(name = "ciro_cari_id")
+    private Long ciroCariId;
+
+    @Column(name = "ciro_tarihi")
+    private LocalDateTime ciroTarihi;
+
+    @Column(name = "ciro_notu", length = 500)
+    private String ciroNotu;
+
+    @Column(name = "teminat_tarihi")
+    private LocalDateTime teminatTarihi;
+
+    /** Banka/üçüncü taraf teminat açıklaması. */
+    @Column(name = "teminat_aciklama", length = 500)
+    private String teminatAciklama;
+
+    @Column(name = "protesto_tarihi")
+    private LocalDateTime protestoTarihi;
+
     @Column(name = "sirket_id")
     private Long sirketId;
 
