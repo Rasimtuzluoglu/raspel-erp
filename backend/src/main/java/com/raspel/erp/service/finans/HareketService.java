@@ -205,6 +205,7 @@ public class HareketService {
                 .komisyonTutar(dto.getKomisyonTutar())
                 .valorTarihi(dto.getValorTarihi())
                 .faturaId(bagliFaturaId)
+                .tahsilatIslemId(dto.getTahsilatIslemId())
                 .sirketId(sirketId)
                 .build();
         
@@ -475,6 +476,7 @@ public class HareketService {
                 .komisyonTutar(hareket.getKomisyonTutar())
                 .valorTarihi(hareket.getValorTarihi())
                 .faturaId(hareket.getFaturaId())
+                .tahsilatIslemId(hareket.getTahsilatIslemId())
                 .acilis(hareket.getAcilis())
                 .olusturmaTarihi(hareket.getOlusturmaTarihi())
                 .build();

@@ -87,6 +87,14 @@ public class Hareket {
     @Column(name = "sirket_id")
     private Long sirketId;
 
+    /**
+     * Bağlı olduğu tahsilat işlemi (batch). Bir tahsilat girişinde oluşan
+     * tüm TAHSILAT satırları aynı işlem id'sini taşır; legacy kayıtlarda
+     * tek satırlık işlem oluşturulur.
+     */
+    @Column(name = "tahsilat_islem_id")
+    private Long tahsilatIslemId;
+
     /** Soft iptal bayrağı (Faz 2.6). true ise kayıt sorgularda görünmez. */
     @Column(nullable = false)
     @Builder.Default

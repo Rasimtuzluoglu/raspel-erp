@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -101,6 +102,8 @@ class ExcelExportControllerTest {
     private com.raspel.erp.service.sistem.AjandaService ajandaService;
     @MockBean
     private com.raspel.erp.service.finans.ButceService butceService;
+    @MockBean
+    private com.raspel.erp.service.finans.TahsilatService tahsilatService;
 
     @Test
     void cariHesaplar_excelDoner() throws Exception {
@@ -493,5 +496,70 @@ class ExcelExportControllerTest {
                 org.mockito.ArgumentMatchers.argThat(l -> l != null && l.size() == 1
                         && "IRS-1".equals(l.get(0).get("No"))
                         && "Ali Veli".equals(l.get(0).get("Şoför"))));
+    }
+
+    @Test
+    void tahsilatGecmis_islemVeDagilimSatirlariYazar() throws Exception {
+        var islem = com.raspel.erp.dto.finans.TahsilatIslemDTO.builder()
+                .id(5L).tarih(java.time.LocalDate.now()).cariId(1L).cariAd("Müşteri A")
+                .tutar(new java.math.BigDecimal("600.00")).odemeYontemi("NAKIT")
+                .kasaAd("Merkez Kasa").durum("AKTIF")
+                .dagilimlar(List.of(
+                        com.raspel.erp.dto.finans.TahsilatIslemDTO.Dagilim.builder()
+                                .hareketId(10L).faturaId(3L).faturaNumarasi("FTR-3")
+                                .tutar(new java.math.BigDecimal("500.00")).aciklama("Tahsilat").iptal(false)
+                                .build(),
+                        com.raspel.erp.dto.finans.TahsilatIslemDTO.Dagilim.builder()
+                                .hareketId(11L).tutar(new java.math.BigDecimal("100.00"))
+                                .aciklama("Avans").iptal(true).build()))
+                .build();
+        when(tahsilatService.gecmisFiltreli(any(), any(), any(), any(), any(), any(), any(),
+                any(), any(), any())).thenReturn(new PageImpl<>(List.of(islem)));
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/tahsilat-gecmis")
+                        .requestAttr("sirketId", 1L)
+                        .param("durum", "AKTIF"))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(new byte[]{1, 2, 3}));
+
+        org.mockito.Mockito.verify(excelService).export(
+                org.mockito.ArgumentMatchers.eq("TahsilatGecmis"),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.argThat(l -> l != null && l.size() == 2
+                        && "FTR-3".equals(l.get(0).get("Fatura No"))
+                        && "Evet".equals(l.get(1).get("Dağıtım İptal"))));
+    }
+
+    @Test
+    void tahsilatYaslandirma_filtreliFaturalariYazar() throws Exception {
+        var cari = com.raspel.erp.dto.finans.TahsilatDTO.CariOzet.builder()
+                .cariId(1L).cariAd("Müşteri A").telefon("0555").email("a@x.com")
+                .aralik("0-30 Gün")
+                .faturalar(List.of(com.raspel.erp.dto.finans.TahsilatDTO.FaturaOzet.builder()
+                        .faturaId(3L).faturaNumarasi("FTR-3")
+                        .vadeTarihi(java.time.LocalDate.now().minusDays(5))
+                        .kalanTutar(new java.math.BigDecimal("500.00")).gecikmeGunu(5).build()))
+                .build();
+        when(tahsilatService.ozetGetir(eq(1L), eq("müşteri"), eq("0-30"), eq(true),
+                eq(new java.math.BigDecimal("100.00"))))
+                .thenReturn(com.raspel.erp.dto.finans.TahsilatDTO.builder()
+                        .cariler(List.of(cari)).build());
+        when(excelService.export(any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        mockMvc.perform(get("/api/exports/tahsilat-yaslandirma")
+                        .requestAttr("sirketId", 1L)
+                        .param("q", "müşteri")
+                        .param("aralik", "0-30")
+                        .param("sadeceGecikmis", "true")
+                        .param("minTutar", "100.00"))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(new byte[]{1, 2, 3}));
+
+        org.mockito.Mockito.verify(excelService).export(
+                org.mockito.ArgumentMatchers.eq("TahsilatYaslandirma"),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.argThat(l -> l != null && l.size() == 1
+                        && "FTR-3".equals(l.get(0).get("Fatura No"))));
     }
 }

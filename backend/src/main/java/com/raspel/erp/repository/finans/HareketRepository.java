@@ -102,4 +102,27 @@ public interface HareketRepository extends JpaRepository<Hareket, Long> {
             "FROM Hareket h WHERE h.sirketId = :sirketId AND h.cariHesap IS NOT NULL AND h.tutar IS NOT NULL " +
             "GROUP BY h.cariHesap.id, h.cariHesap.ad, h.tutar, h.tur HAVING COUNT(h) > 1")
     List<Map<String, Object>> mukerrerHareketGruplari(@Param("sirketId") Long sirketId);
+
+    /**
+     * Tahsilat işlemine bağlı (iptal edilmemiş) hareket id'leri. İptal akışında
+     * her satır için {@code HareketService.hareketIptal} çağrılır.
+     */
+    @Query("SELECT h.id FROM Hareket h WHERE h.tahsilatIslemId = :islemId ORDER BY h.id")
+    List<Long> findIdByTahsilatIslemId(@Param("islemId") Long islemId);
+
+    /**
+     * Tahsilat işlemlerinin dağıtım satırları. {@code @SQLRestriction("iptal = false")}
+     * iptal edilmiş hareketleri gizlediği için native sorgu kullanılır; geçmişte
+     * iptal edilen işlemlerin orijinal dağıtımları salt-okunur gösterilebilmelidir.
+     *
+     * <p>Dönen kolonlar: islem_id, hareket_id, fatura_id, fatura_numarasi,
+     * tutar, aciklama, iptal.
+     */
+    @Query(value = "SELECT h.tahsilat_islem_id, h.id, h.fatura_id, f.fatura_numarasi, " +
+                   "h.tutar, h.aciklama, h.iptal " +
+                   "FROM cari.hareket h " +
+                   "LEFT JOIN fatura.fatura f ON f.id = h.fatura_id " +
+                   "WHERE h.tahsilat_islem_id IN (:islemIds) " +
+                   "ORDER BY h.tahsilat_islem_id, h.id", nativeQuery = true)
+    List<Object[]> tahsilatDagilimlariniGetir(@Param("islemIds") java.util.Collection<Long> islemIds);
 }

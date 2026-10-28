@@ -1,10 +1,17 @@
 package com.raspel.erp.controller.finans;
 
 import com.raspel.erp.dto.finans.TahsilatDTO;
+import com.raspel.erp.dto.finans.TahsilatHedefDTO;
+import com.raspel.erp.dto.finans.TahsilatIptalIstek;
+import com.raspel.erp.dto.finans.TahsilatIslemDTO;
+import com.raspel.erp.dto.finans.TahsilatPerformansDTO;
+import com.raspel.erp.dto.finans.TopluHatirlatmaIstek;
+import com.raspel.erp.dto.finans.TopluHatirlatmaSonuc;
 import com.raspel.erp.service.finans.TahsilatService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,13 +26,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Map;
 
 @Tag(name = "Tahsilat", description = "Tahsilat ve alacak yönetimi API")
@@ -44,19 +55,75 @@ public class TahsilatController {
     private final com.raspel.erp.service.sistem.IdempotencyService idempotencyService;
 
     @GetMapping
-    @Operation(summary = "Tahsilat özeti", description = "Ödenmemiş alacakların cari bazlı yaşlandırma özetini getirir")
-    public ResponseEntity<TahsilatDTO> ozet(HttpServletRequest request) {
+    @Operation(summary = "Tahsilat özeti", description = "Ödenmemiş alacakların cari bazlı yaşlandırma özetini getirir; q/aralik/sadeceGecikmis/minTutar filtreleri yalnız cari listesini daraltır")
+    public ResponseEntity<TahsilatDTO> ozet(
+            HttpServletRequest request,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String aralik,
+            @RequestParam(required = false) Boolean sadeceGecikmis,
+            @RequestParam(required = false) BigDecimal minTutar) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(tahsilatService.ozetGetir(sirketId));
+        return ResponseEntity.ok(tahsilatService.ozetGetir(sirketId, q, aralik, sadeceGecikmis, minTutar));
     }
 
     @GetMapping("/gecmis")
-    @Operation(summary = "Tahsilat geçmişi", description = "Yapılan tüm tahsilat hareketlerini (ödeme yöntemi ve taksit bilgisiyle) sayfalı getirir")
-    public ResponseEntity<org.springframework.data.domain.Page<com.raspel.erp.dto.finans.HareketDTO>> gecmis(
+    @Operation(summary = "Tahsilat geçmişi", description = "Tahsilatları işlem (batch) bazında, sunucu filtreleri ve sayfalamayla getirir")
+    public ResponseEntity<Page<TahsilatIslemDTO>> gecmis(
             HttpServletRequest request,
-            @PageableDefault(size = 25) Pageable pageable) {
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Long cariId,
+            @RequestParam(required = false) String odemeYontemi,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) Long kasaId,
+            @RequestParam(required = false) Long bankaId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis,
+            @PageableDefault(size = 25, sort = "tarih", direction = Sort.Direction.DESC) Pageable pageable) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(tahsilatService.gecmis(sirketId, pageable));
+        return ResponseEntity.ok(tahsilatService.gecmisFiltreli(
+                sirketId, q, cariId, odemeYontemi, durum, kasaId, bankaId, baslangic, bitis, pageable));
+    }
+
+    @PostMapping("/islem/{id}/iptal")
+    @Operation(summary = "Tahsilat işlemini iptal et", description = "İşlemdeki tüm hareketleri gerekçeli olarak geri alır (ADMIN/MUHASEBE veya FINANS_WRITE)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE') or @yetkiKontrol.kontrol(authentication, 'FINANS_WRITE')")
+    public ResponseEntity<TahsilatIslemDTO> iptal(HttpServletRequest request,
+                                                  @PathVariable Long id,
+                                                  @RequestBody @Valid TahsilatIptalIstek istek) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        // sirketId servis içinde işlem kaydından doğrulanır (tenant izolasyonu).
+        return ResponseEntity.ok(tahsilatService.iptalEt(id, istek.getGerekce(), kullaniciId));
+    }
+
+    @PutMapping("/hedef")
+    @Operation(summary = "Aylık tahsilat hedefi kaydet", description = "Aynı yıl/ay için upsert eder (ADMIN/MUHASEBE)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
+    public ResponseEntity<TahsilatHedefDTO> hedef(HttpServletRequest request,
+                                                  @RequestBody @Valid TahsilatHedefDTO dto) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(tahsilatService.hedefKaydet(
+                sirketId, dto.getYil(), dto.getAy(), dto.getTutar(), kullaniciId));
+    }
+
+    @GetMapping("/performans")
+    @Operation(summary = "Tahsilat hedef performansı", description = "Seçili ayın hedefi, iptal hariç tahsilat toplamı, gerçekleşme yüzdesi ve 6 aylık trend")
+    public ResponseEntity<TahsilatPerformansDTO> performans(
+            HttpServletRequest request,
+            @RequestParam(required = false) Integer yil,
+            @RequestParam(required = false) Integer ay) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(tahsilatService.performans(sirketId, yil, ay));
+    }
+
+    @PostMapping("/toplu-hatirlat")
+    @Operation(summary = "Toplu e-posta hatırlat", description = "Seçili carilere ödeme hatırlatma e-postası gönderir; e-postasız cariler atlanır")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
+    public ResponseEntity<TopluHatirlatmaSonuc> topluHatirlat(
+            HttpServletRequest request,
+            @RequestBody @Valid TopluHatirlatmaIstek istek) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(tahsilatService.topluHatirlat(sirketId, istek.getCariIds()));
     }
 
     @PostMapping("/{cariId}/hatirlat")
@@ -107,7 +174,8 @@ public class TahsilatController {
                     dto.getTaksitKurum(), dto.getTaksitTutar(), dto.getAciklama(),
                     dto.getHareketTarihi(), sirketId,
                     dto.getPosTerminaliId(), dto.getKomisyonTutar(), dto.getValorTarihi(),
-                    dto.getTaksitId(), dto.getKasaId(), dto.getBankaId());
+                    dto.getTaksitId(), dto.getKasaId(), dto.getBankaId(),
+                    (Long) request.getAttribute("kullaniciId"));
             if (anahtar != null) {
                 Object hareketId = sonuc.get("hareketId");
                 if (hareketId instanceof Number n) {

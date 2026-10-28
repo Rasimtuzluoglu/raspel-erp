@@ -61,6 +61,9 @@ public class HareketDTO {
     /** Bağlı fatura ID'si (opsiyonel): verilirse fatura ödeme durumu hareketle birlikte güncellenir */
     private Long faturaId;
 
+    /** Bağlı tahsilat işlemi (batch) id'si. */
+    private Long tahsilatIslemId;
+
     /** Açılış fişi/devir kaydı mı (Faz 2.8). */
     private Boolean acilis;
 

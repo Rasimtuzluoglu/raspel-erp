@@ -71,6 +71,7 @@ public class ExcelExportController {
     private final com.raspel.erp.service.sistem.AnomaliTespitEngine anomaliTespitEngine;
     private final com.raspel.erp.service.sistem.IpWhitelistService ipWhitelistService;
     private final com.raspel.erp.service.sube.SubeService subeService;
+    private final com.raspel.erp.service.finans.TahsilatService tahsilatService;
 
     @GetMapping("/kdv-beyanname")
     @Operation(summary = "KDV beyannamesini Excel dışa aktar",
@@ -950,6 +951,105 @@ public class ExcelExportController {
                 }).toList();
         return excel("Subeler", new String[]{"ID", "Şube", "Yetkili", "Telefon", "Adres",
                 "Durum", "Oluşturma"}, rows);
+    }
+
+    @GetMapping("/tahsilat-gecmis")
+    @Operation(summary = "Tahsilat geçmişini Excel dışa aktar",
+            description = "Tahsilatları işlem ve dağıtım satırları halinde (filtreli) Excel (.xlsx) olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FINANS_EXPORT') or @yetkiKontrol.kontrol(authentication, 'RAPOR_EXPORT')")
+    public ResponseEntity<byte[]> tahsilatGecmis(
+            HttpServletRequest request,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Long cariId,
+            @RequestParam(required = false) String odemeYontemi,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) Long kasaId,
+            @RequestParam(required = false) Long bankaId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bitis) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        var page = tahsilatService.gecmisFiltreli(sirketId, q, cariId, odemeYontemi, durum, kasaId, bankaId,
+                baslangic, bitis,
+                PageRequest.of(0, MAX_EXPORT_ROWS, org.springframework.data.domain.Sort.by(
+                        org.springframework.data.domain.Sort.Direction.DESC, "tarih")
+                        .and(org.springframework.data.domain.Sort.by(
+                                org.springframework.data.domain.Sort.Direction.DESC, "id"))));
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (var islem : page.getContent()) {
+            boolean dagitimVar = islem.getDagilimlar() != null && !islem.getDagilimlar().isEmpty();
+            if (!dagitimVar) {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("İşlem No", islem.getId());
+                m.put("Tarih", islem.getTarih());
+                m.put("Cari", islem.getCariAd());
+                m.put("Tutar", islem.getTutar());
+                m.put("Ödeme Yöntemi", islem.getOdemeYontemi());
+                m.put("Kasa", islem.getKasaAd());
+                m.put("Banka", islem.getBankaAd());
+                m.put("Durum", islem.getDurum());
+                m.put("Fatura No", null);
+                m.put("Dağıtım Tutarı", islem.getTutar());
+                m.put("Açıklama", null);
+                m.put("Dağıtım İptal", null);
+                m.put("İptal Gerekçesi", islem.getIptalGerekce());
+                rows.add(m);
+                continue;
+            }
+            for (var d : islem.getDagilimlar()) {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("İşlem No", islem.getId());
+                m.put("Tarih", islem.getTarih());
+                m.put("Cari", islem.getCariAd());
+                m.put("Tutar", islem.getTutar());
+                m.put("Ödeme Yöntemi", islem.getOdemeYontemi());
+                m.put("Kasa", islem.getKasaAd());
+                m.put("Banka", islem.getBankaAd());
+                m.put("Durum", islem.getDurum());
+                m.put("Fatura No", d.getFaturaNumarasi());
+                m.put("Dağıtım Tutarı", d.getTutar());
+                m.put("Açıklama", d.getAciklama());
+                m.put("Dağıtım İptal", d.isIptal() ? "Evet" : "Hayır");
+                m.put("İptal Gerekçesi", islem.getIptalGerekce());
+                rows.add(m);
+            }
+        }
+        return excel("TahsilatGecmis", new String[]{"İşlem No", "Tarih", "Cari", "Tutar",
+                "Ödeme Yöntemi", "Kasa", "Banka", "Durum", "Fatura No", "Dağıtım Tutarı",
+                "Açıklama", "Dağıtım İptal", "İptal Gerekçesi"}, rows);
+    }
+
+    @GetMapping("/tahsilat-yaslandirma")
+    @Operation(summary = "Tahsilat yaşlandırmasını Excel dışa aktar",
+            description = "Açık faturaları cari/vade/gecikme bazında (q/aralik/sadeceGecikmis/minTutar filtreli) Excel (.xlsx) olarak dışa aktarır")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FINANS_EXPORT') or @yetkiKontrol.kontrol(authentication, 'RAPOR_EXPORT')")
+    public ResponseEntity<byte[]> tahsilatYaslandirma(
+            HttpServletRequest request,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String aralik,
+            @RequestParam(required = false) Boolean sadeceGecikmis,
+            @RequestParam(required = false) java.math.BigDecimal minTutar) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        var ozet = tahsilatService.ozetGetir(sirketId, q, aralik, sadeceGecikmis, minTutar);
+        List<Map<String, Object>> rows = new ArrayList<>();
+        if (ozet.getCariler() != null) {
+            for (var cari : ozet.getCariler()) {
+                if (cari.getFaturalar() == null) continue;
+                for (var f : cari.getFaturalar()) {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("Cari", cari.getCariAd());
+                    m.put("Telefon", cari.getTelefon());
+                    m.put("E-posta", cari.getEmail());
+                    m.put("Fatura No", f.getFaturaNumarasi());
+                    m.put("Vade", f.getVadeTarihi());
+                    m.put("Kalan Tutar", f.getKalanTutar());
+                    m.put("Gecikme (Gün)", f.getGecikmeGunu());
+                    m.put("Yaş Aralığı", cari.getAralik());
+                    rows.add(m);
+                }
+            }
+        }
+        return excel("TahsilatYaslandirma", new String[]{"Cari", "Telefon", "E-posta",
+                "Fatura No", "Vade", "Kalan Tutar", "Gecikme (Gün)", "Yaş Aralığı"}, rows);
     }
 
     private ResponseEntity<byte[]> excel(String name, String[] cols, List<Map<String, Object>> rows) {
