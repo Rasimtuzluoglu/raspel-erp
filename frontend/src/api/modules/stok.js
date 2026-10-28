@@ -177,14 +177,54 @@ export const depoTransferAPI = {
 }
 
 export const kategoriAPI = {
-  getAll() {
-    return apiClient.get('/kategoriler')
+  // Geriye uyumlu ad: sayfali Spring `Page<KategoriDTO>` yaniti doner.
+  getAll(params) {
+    return apiClient.get('/kategoriler', { params })
+  },
+  // Sayfali duz liste (`kapsam, q, aktif, ustKategoriId, page, size, sort`).
+  listele(params) {
+    return apiClient.get('/kategoriler', { params })
+  },
+  // 2 seviyeli agac (ust kategoriler + altKategoriler).
+  agac(params) {
+    return apiClient.get('/kategoriler/agac', { params })
+  },
+  // { toplam, aktif, pasif, altKategori }
+  ozet(params) {
+    return apiClient.get('/kategoriler/ozet', { params })
+  },
+  // Dropdown icin aktif kategoriler (ustKategoriId / ustKategoriAd dolu).
+  secenekler(params) {
+    return apiClient.get('/kategoriler/secenekler', { params })
+  },
+  getById(id) {
+    return apiClient.get(`/kategoriler/${id}`)
+  },
+  // { kategoriId, ad, toplam, detaylar: [{ modul, adet }] }
+  kullanim(id) {
+    return apiClient.get(`/kategoriler/${id}/kullanim`)
   },
   create(data) {
     return apiClient.post('/kategoriler', data)
   },
+  update(id, data) {
+    return apiClient.put(`/kategoriler/${id}`, data)
+  },
   delete(id) {
     return apiClient.delete(`/kategoriler/${id}`)
+  },
+  arsivle(id) {
+    return apiClient.post(`/kategoriler/${id}/arsivle`)
+  },
+  aktiflestir(id) {
+    return apiClient.post(`/kategoriler/${id}/aktiflestir`)
+  },
+  birlestir(data) {
+    return apiClient.post('/kategoriler/birlestir', data)
+  },
+  // Personel masraf kodlari (salt-okunur).
+  sistemKategorileri() {
+    return apiClient.get('/kategoriler/sistem-kategorileri')
   }
 }
 

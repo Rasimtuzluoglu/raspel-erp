@@ -354,11 +354,14 @@
       </div>
       <div class="form-group">
         <label>{{ t('kasa.kategori') }}</label>
+        <!-- Yalniz aktif kategoriler; ust kategori basliklariyla gruplu. -->
         <Dropdown
           v-model="hareketForm.kategoriId"
           :options="kategoriSecenekler"
-          option-label="ad"
-          option-value="id"
+          option-label="label"
+          option-value="value"
+          option-group-label="label"
+          option-group-children="items"
           :placeholder="t('faturalar.seciniz')"
           class="w-full"
         />
@@ -749,7 +752,56 @@ const filtreliHareketler = computed(() =>
   })
 )
 
-const kategoriSecenekler = computed(() => kategoriStore.kategoriler.filter((k) => k.tur === hareketTur.value))
+const kategoriKapsam = (tur = hareketTur.value) => (tur === 'GELIR' ? 'KASA_GELIR' : 'KASA_GIDER')
+
+// Kategori seceneklerini kapsama gore (aktif) yukler; store onbellekler.
+const kategoriSecenekleriYukle = async (tur = hareketTur.value) => {
+  try {
+    await kategoriStore.seceneklerGetir(kategoriKapsam(tur))
+  } catch {
+    /* secenek alinamazsa dropdown bos kalir; hareket akisi bozulmaz */
+  }
+}
+
+// Gruplu dropdown: tum ust kategoriler tek baslikta, alt kategoriler ust adi altinda.
+const kategoriSecenekler = computed(() => {
+  const kapsam = kategoriKapsam()
+  // Backend secenekleri agac olarak doner (ust + altKategoriler); duz liste de desteklenir.
+  const ham = kategoriStore.secenekOnbellek?.[kapsam] || []
+  const liste = []
+  for (const k of ham) {
+    liste.push(k)
+    if (Array.isArray(k.altKategoriler)) {
+      for (const alt of k.altKategoriler) {
+        liste.push({
+          ...alt,
+          ustKategoriId: alt.ustKategoriId ?? k.id,
+          ustKategoriAd: alt.ustKategoriAd || k.ad
+        })
+      }
+    }
+  }
+  const aktifler = liste.filter((k) => k.aktif !== false)
+  if (!aktifler.length) return []
+  const kokler = aktifler.filter((k) => !k.ustKategoriId)
+  const secenek = (k) => ({ label: k.ad, value: k.id })
+  const gruplar = []
+  if (kokler.length) {
+    gruplar.push({ label: t('kategoriler.ustKategoriler'), items: kokler.map(secenek) })
+  }
+  for (const kok of kokler) {
+    const altlar = aktifler.filter((k) => k.ustKategoriId === kok.id).map(secenek)
+    if (altlar.length) gruplar.push({ label: kok.ad, items: altlar })
+  }
+  // Ustu bulunamayan (veri tutarsizligi) secenekler kaybolmasin.
+  const tanimsiz = aktifler.filter(
+    (k) => k.ustKategoriId && !kokler.some((kok) => kok.id === k.ustKategoriId)
+  )
+  if (tanimsiz.length) {
+    gruplar.push({ label: t('kategoriler.digerKategoriler'), items: tanimsiz.map(secenek) })
+  }
+  return gruplar
+})
 
 // Aktarim dogrulama + bakiye onizlemesi.
 const kasaAktarKaynakBakiye = computed(() => Number(kasaStore.kasalar.find((k) => k.id === aktarForm.value.kaynakKasaId)?.bakiye) || 0)
@@ -773,7 +825,11 @@ const bankadanAktarGecerli = computed(() =>
 
 onMounted(async () => {
   // Store cagrilari hata firlatabilir; bir hata diger yuklemeyi durdurmasin.
-  await Promise.allSettled([kasaStore.getAllKasalar(), kategoriStore.getAllKategoriler()])
+  await Promise.allSettled([
+    kasaStore.getAllKasalar(),
+    kategoriSecenekleriYukle('GELIR'),
+    kategoriSecenekleriYukle('GIDER')
+  ])
   try {
     const r = await bankaAPI.getAll({ size: 500 })
     bankalar.value = unwrapList(r)
@@ -866,6 +922,7 @@ const openHareketDialog = (tur) => {
   hareketTur.value = tur
   hareketForm.value = { tutar: null, hareketTarihi: new Date(), kategoriId: null, aciklama: '' }
   showHareketDialog.value = true
+  kategoriSecenekleriYukle(tur)
 }
 
 const saveHareket = async () => {
