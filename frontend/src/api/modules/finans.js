@@ -170,6 +170,18 @@ export const cekSenetAPI = {
   getAll(params) {
     return apiClient.get('/cek-senet', { params })
   },
+  /** Sunucu tarafı filtreli/sayfalı liste: q, tur, durum, cariId, baslangic, bitis, vadeAralik, minTutar, protesto, page, size, sort. */
+  filtreli(params = {}) {
+    return apiClient.get('/cek-senet/filtreli', { params })
+  },
+  /** Portföy KPI özeti (adet + tutar kırılımı). */
+  ozet(params = {}) {
+    return apiClient.get('/cek-senet/ozet', { params })
+  },
+  /** Gün bazlı vade takvimi; aralık en fazla 62 gün olabilir. */
+  takvim(params = {}) {
+    return apiClient.get('/cek-senet/takvim', { params })
+  },
   getById(id) {
     return apiClient.get(`/cek-senet/${id}`)
   },
@@ -179,8 +191,38 @@ export const cekSenetAPI = {
   update(id, data) {
     return apiClient.put(`/cek-senet/${id}`, data)
   },
+  /** Geriye uyum: string durum veya { durum, kasaId, bankaId, faturaId } nesnesi kabul eder. */
   durumGuncelle(id, durum) {
-    return apiClient.put(`/cek-senet/${id}/durum`, { durum })
+    const govde = typeof durum === 'string' ? { durum } : (durum || {})
+    return apiClient.put(`/cek-senet/${id}/durum`, govde)
+  },
+  /** Tahsilatı gerekçeyle geri al (yalnız TAHSIL_EDILDI). */
+  tahsilIptal(id, gerekce) {
+    return apiClient.post(`/cek-senet/${id}/tahsil-iptal`, { gerekce })
+  },
+  /** Çek/senedi cariye ciro et. */
+  ciro(id, data) {
+    return apiClient.post(`/cek-senet/${id}/ciro`, data)
+  },
+  /** Ciro iadesi: CIRO_EDILDI -> IADE. */
+  ciroIade(id) {
+    return apiClient.post(`/cek-senet/${id}/ciro-iade`)
+  },
+  /** İade alınan çek/senedi portföye geri al. */
+  iadeAl(id) {
+    return apiClient.post(`/cek-senet/${id}/iade-al`)
+  },
+  /** Teminata ver. */
+  teminat(id, aciklama) {
+    return apiClient.post(`/cek-senet/${id}/teminat`, { aciklama })
+  },
+  /** Teminat iadesi: TEMINATTA -> PORTFOY. */
+  teminatIade(id) {
+    return apiClient.post(`/cek-senet/${id}/teminat-iade`)
+  },
+  /** Protesto et (terminal durum). */
+  protesto(id, aciklama) {
+    return apiClient.post(`/cek-senet/${id}/protesto`, { aciklama })
   },
   delete(id) {
     return apiClient.delete(`/cek-senet/${id}`)

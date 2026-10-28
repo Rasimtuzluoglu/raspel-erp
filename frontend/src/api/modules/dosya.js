@@ -164,6 +164,9 @@ export const excelAPI = {
   },
   tahsilatYaslandirma(params) {
     return apiClient.get('/exports/tahsilat-yaslandirma', { params, responseType: 'blob' })
+  },
+  cekSenet(params) {
+    return apiClient.get('/exports/cek-senet', { params, responseType: 'blob' })
   }
 }
 
