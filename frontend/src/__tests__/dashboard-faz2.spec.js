@@ -125,13 +125,14 @@ describe('Dashboard faz2 — registry ve rol varsayılanları', () => {
       ...SAG_WIDGET_ANAHTARLARI
     ])
     expect(SABIT_ANAHTARLARI).toEqual(['kpi', 'bugunSerit'])
-    expect(SOL_WIDGET_ANAHTARLARI).toHaveLength(12)
+    expect(SOL_WIDGET_ANAHTARLARI).toHaveLength(10)
     expect(SAG_WIDGET_ANAHTARLARI).toEqual([
       'gorevler',
       'hizliIslemler',
-      'kritikStok',
       'akis',
-      'icgoruler'
+      'icgoruler',
+      'siparisDurumlari',
+      'butceGerceklesen'
     ])
     expect(DASHBOARD_WIDGET_ANAHTARLARI).not.toContain('vade')
     expect(DASHBOARD_WIDGET_ANAHTARLARI).not.toContain('hedefler')
@@ -205,11 +206,11 @@ describe('Dashboard faz2 — düzen normalizasyonu', () => {
     expect(anahtarlar[2]).toBe('nakitAkisi')
     // SAG girdi sırası korunur: akis ilk sırada kalır.
     expect(anahtarlar.slice(-5)).toEqual([
-      'akis',
       'gorevler',
       'hizliIslemler',
-      'kritikStok',
-      'icgoruler'
+      'icgoruler',
+      'siparisDurumlari',
+      'butceGerceklesen'
     ])
     expect(anahtarlar.filter((k) => k === 'kpi')).toHaveLength(1)
     expect(anahtarlar).not.toContain('bilinmeyen')
@@ -253,7 +254,7 @@ describe('Dashboard faz2 — düzen normalizasyonu', () => {
     expect(widgetTasi(sira, 'kpi', 1)).toBe(sira)
     expect(widgetTasi(sira, 'bugunSerit', -1)).toBe(sira)
     // Bölge ucu: son SAG widget'ı daha aşağı gidemez.
-    expect(widgetTasi(sira, 'icgoruler', 1)).toBe(sira)
+    expect(widgetTasi(sira, 'butceGerceklesen', 1)).toBe(sira)
     expect(sira[2].key).toBe('nakitAkisi') // kaynak dizi değişmez
   })
 
@@ -360,7 +361,7 @@ describe('Dashboard faz2 — düzen kaydetme ve geri dönüş', () => {
     await wrapper.find('.db-sag [data-widget="icgoruler"] .dw-buton--gizle').trigger('click')
     expect(wrapper.find('.db-sag [data-widget="icgoruler"]').exists()).toBe(false)
 
-    // yukarı taşı: canlı akış bir üst sıraya geçer (kritik stok ile yer değiştirir)
+    // yukarı taşı: canlı akış bir üst sıraya geçer (hızlı işlemler ile yer değiştirir)
     const onceki = sagSirasi(wrapper)
     await wrapper.find('.db-sag [data-widget="akis"] [aria-label*="Yukarı"]').trigger('click')
     const sonraki = sagSirasi(wrapper)
@@ -375,7 +376,7 @@ describe('Dashboard faz2 — düzen kaydetme ve geri dönüş', () => {
     expect(gonderilen.duzen.sira.find((w) => w.key === 'icgoruler').gorunur).toBe(false)
     expect(gonderilen.duzen.sira.every((w) => !('boyut' in w))).toBe(true)
     expect(gonderilen.duzen.sira.findIndex((w) => w.key === 'akis')).toBeLessThan(
-      gonderilen.duzen.sira.findIndex((w) => w.key === 'kritikStok')
+      gonderilen.duzen.sira.findIndex((w) => w.key === 'icgoruler')
     )
     expect(gonderilen.duzen.sira[0].key).toBe('kpi')
     expect(gonderilen.duzen.sira[1].key).toBe('bugunSerit')

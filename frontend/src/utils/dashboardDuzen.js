@@ -30,8 +30,6 @@ export const SOL_WIDGET_ANAHTARLARI = [
   'enCokSatanlar',
   'enCokBorcCariler',
   'enCokAlacakCariler',
-  'siparisDurumlari',
-  'butceGerceklesen',
   'stokDegeri'
 ]
 
@@ -39,9 +37,10 @@ export const SOL_WIDGET_ANAHTARLARI = [
 export const SAG_WIDGET_ANAHTARLARI = [
   'gorevler',
   'hizliIslemler',
-  'kritikStok',
   'akis',
-  'icgoruler'
+  'icgoruler',
+  'siparisDurumlari',
+  'butceGerceklesen'
 ]
 
 /** Widget anahtarlari (registry) — sabit bantlar + iki bolge. */

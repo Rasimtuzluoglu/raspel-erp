@@ -246,12 +246,10 @@ const SOL_SIRASI = [
   'enCokSatanlar',
   'enCokBorcCariler',
   'enCokAlacakCariler',
-  'siparisDurumlari',
-  'butceGerceklesen',
   'stokDegeri'
 ]
 
-const SAG_SIRASI = ['gorevler', 'hizliIslemler', 'kritikStok', 'akis', 'icgoruler']
+const SAG_SIRASI = ['gorevler', 'hizliIslemler', 'akis', 'icgoruler', 'siparisDurumlari', 'butceGerceklesen']
 
 describe('Dashboard.vue — finans masası yerleşimi', () => {
   beforeEach(() => {
@@ -377,7 +375,7 @@ describe('Dashboard.vue — finans masası yerleşimi', () => {
     wrapper.unmount()
   })
 
-  it('gövdeyi iki bölgeye ayırır: sol grafik duvarı (12) + sağ aksiyon paneli (5)', async () => {
+  it('gövdeyi iki bölgeye ayırır: sol grafik duvarı (10) + sağ aksiyon paneli (6)', async () => {
     const wrapper = mountEt()
     await flushPromises()
 
@@ -425,7 +423,7 @@ describe('Dashboard.vue — finans masası yerleşimi', () => {
       ['stokDegeri', 'dashboard.grafikStokDegeri']
     ]
     for (const [key, anahtar] of beklenenBasliklar) {
-      const kart = wrapper.find(`.db-sol [data-widget="${key}"]`)
+      const kart = wrapper.find(`[data-widget="${key}"]`)
       expect(kart.exists(), key).toBe(true)
       expect(kart.find('.db-kart-baslik').text()).toContain(i18n.global.t(anahtar))
     }
@@ -567,7 +565,7 @@ describe('Dashboard.vue — finans masası yerleşimi', () => {
     wrapper.unmount()
   })
 
-  it('sağ panelde 5 bölümü spec sırasıyla gösterir', async () => {
+  it('sağ panelde 6 bölümü spec sırasıyla gösterir', async () => {
     const wrapper = mountEt()
     await flushPromises()
 
@@ -578,15 +576,14 @@ describe('Dashboard.vue — finans masası yerleşimi', () => {
     expect(wrapper.find('.db-sag [data-widget="hizliIslemler"]').text()).toContain(
       i18n.global.t('dashboard.hizliIslemler')
     )
-    expect(wrapper.find('.db-sag [data-widget="kritikStok"]').text()).toContain(
-      i18n.global.t('dashboard.kritikStokUyarilari')
-    )
     expect(wrapper.find('.db-sag [data-widget="akis"]').text()).toContain(
       i18n.global.t('dashboard.akisBaslik')
     )
     expect(wrapper.find('.db-sag [data-widget="icgoruler"]').text()).toContain(
       i18n.global.t('dashboard.icgoruler')
     )
+    expect(wrapper.find('.db-sag [data-widget="siparisDurumlari"]').exists()).toBe(true)
+    expect(wrapper.find('.db-sag [data-widget="butceGerceklesen"]').exists()).toBe(true)
     wrapper.unmount()
   })
 
@@ -666,16 +663,11 @@ describe('Dashboard.vue — finans masası yerleşimi', () => {
     wrapper.unmount()
   })
 
-  it('kritik stok kartında 4 satır ve başlıkta "Tümünü gör" bağlantısı vardır', async () => {
+  it('kritik stok ayrı kart olarak tekrarlanmaz (görev listesinde kalır)', async () => {
     const wrapper = mountEt()
     await flushPromises()
 
-    const kart = wrapper.find('[data-widget="kritikStok"]')
-    expect(kart.findAll('.kritik-satir')).toHaveLength(4)
-    expect(kart.text()).toContain('Kalem A')
-    const link = kart.find('.db-kart-ust a')
-    expect(link.attributes('href')).toBe('/stoklar?kritik=1')
-    expect(link.text()).toContain(i18n.global.t('dashboard.tumunuGor'))
+    expect(wrapper.find('[data-widget="kritikStok"]').exists()).toBe(false)
     wrapper.unmount()
   })
 
@@ -792,10 +784,10 @@ describe('Dashboard.vue — finans masası yerleşimi', () => {
     expect(govde.attributes('style')).toBeUndefined()
     expect(wrapper.find('.db-sol').attributes('style')).toBeUndefined()
     expect(wrapper.find('.db-sag').attributes('style')).toBeUndefined()
-    expect(wrapper.findAll('.db-sol > [data-widget]')).toHaveLength(12)
-    expect(wrapper.findAll('.db-sag > [data-widget]')).toHaveLength(5)
+    expect(wrapper.findAll('.db-sol > [data-widget]')).toHaveLength(10)
+    expect(wrapper.findAll('.db-sag > [data-widget]')).toHaveLength(6)
     expect(wrapper.find('.db-sol [data-widget="nakitAkisi"]').classes()).toContain('db-kart-alan--2')
-    expect(wrapper.find('.db-sol [data-widget="butceGerceklesen"]').classes()).toContain('db-kart-alan--1')
+    expect(wrapper.find('.db-sol [data-widget="stokDegeri"]').classes()).toContain('db-kart-alan--2')
     wrapper.unmount()
   })
 })
@@ -821,10 +813,10 @@ describe('Dashboard.vue — kişiselleştirme', () => {
 
     const panel = wrapper.find('[data-test="duzen-paneli"]')
     expect(panel.exists()).toBe(true)
-    expect(panel.findAll('[data-widget]')).toHaveLength(19)
+    expect(panel.findAll('[data-widget]')).toHaveLength(18)
     expect(panel.find('[data-bolge="SABIT"]').findAll('[data-widget]')).toHaveLength(2)
-    expect(panel.find('[data-bolge="SOL"]').findAll('[data-widget]')).toHaveLength(12)
-    expect(panel.find('[data-bolge="SAG"]').findAll('[data-widget]')).toHaveLength(5)
+    expect(panel.find('[data-bolge="SOL"]').findAll('[data-widget]')).toHaveLength(10)
+    expect(panel.find('[data-bolge="SAG"]').findAll('[data-widget]')).toHaveLength(6)
     expect(panel.find('[data-bolge="SOL"] .duzen-grup-baslik').text()).toBe(
       i18n.global.t('dashboard.bolgeGrafikler')
     )

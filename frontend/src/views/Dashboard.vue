@@ -255,23 +255,6 @@
               :bos-link-metin="t('dashboard.detayaGit')"
             />
 
-            <!-- Butce / gerceklesen -->
-            <DashboardGrafikKarti
-              v-else-if="w.key === 'butceGerceklesen'"
-              :baslik="t('dashboard.grafikButce')"
-              ikon="pi pi-calculator"
-              link-to="/butceler"
-              :link-metin="t('dashboard.detayaGit')"
-              tip="bar"
-              :veri="butceGerceklesen"
-              :secenekler="butceGerceklesenOpsiyonlari"
-              :yukleniyor="grafiklerYukleniyor"
-              :yukseklik="160"
-              :bos-mesaj="t('dashboard.butceVerisiYok')"
-              bos-link-to="/butceler"
-              :bos-link-metin="t('dashboard.detayaGit')"
-            />
-
             <!-- Stok degeri -->
             <DashboardGrafikKarti
               v-else-if="w.key === 'stokDegeri'"
@@ -350,17 +333,6 @@
               <DashboardHizliIslemler :is-admin="authStore.isAdmin" />
             </DashboardKart>
 
-            <!-- Kritik stok -->
-            <DashboardKart
-              v-else-if="w.key === 'kritikStok'"
-              :baslik="t('dashboard.kritikStokUyarilari')"
-              ikon="pi pi-exclamation-triangle"
-              link-to="/stoklar?kritik=1"
-              :link-metin="t('dashboard.tumunuGor')"
-            >
-              <DashboardKritikStok :yukleniyor="ozetYukleniyor" />
-            </DashboardKart>
-
             <!-- Canli akis -->
             <DashboardKart
               v-else-if="w.key === 'akis'"
@@ -388,6 +360,40 @@
                 :yukleniyor="icgorulerYukleniyor"
               />
             </DashboardKart>
+
+            <!-- Siparis durumlari -->
+            <DashboardGrafikKarti
+              v-else-if="w.key === 'siparisDurumlari'"
+              :baslik="t('dashboard.grafikSiparisDurumlari')"
+              ikon="pi pi-shopping-cart"
+              link-to="/siparisler"
+              :link-metin="t('dashboard.detayaGit')"
+              tip="bar"
+              :veri="siparisDurumlari"
+              :secenekler="siparisDurumlariOpsiyonlari"
+              :yukleniyor="grafiklerYukleniyor"
+              :yukseklik="160"
+              :bos-mesaj="t('dashboard.siparisDurumuVerisiYok')"
+              bos-link-to="/siparisler"
+              :bos-link-metin="t('dashboard.detayaGit')"
+            />
+
+            <!-- Butce / gerceklesen -->
+            <DashboardGrafikKarti
+              v-else-if="w.key === 'butceGerceklesen'"
+              :baslik="t('dashboard.grafikButce')"
+              ikon="pi pi-calculator"
+              link-to="/butceler"
+              :link-metin="t('dashboard.detayaGit')"
+              tip="bar"
+              :veri="butceGerceklesen"
+              :secenekler="butceGerceklesenOpsiyonlari"
+              :yukleniyor="grafiklerYukleniyor"
+              :yukseklik="160"
+              :bos-mesaj="t('dashboard.butceVerisiYok')"
+              bos-link-to="/butceler"
+              :bos-link-metin="t('dashboard.detayaGit')"
+            />
           </DashboardWidget>
         </div>
       </div>
@@ -434,7 +440,6 @@ import DashboardIcgoruKarti from '../components/dashboard/DashboardIcgoruKarti.v
 import DashboardNakitAkisi from '../components/dashboard/DashboardNakitAkisi.vue'
 import DashboardGrafikKarti from '../components/dashboard/DashboardGrafikKarti.vue'
 import DashboardAkis from '../components/dashboard/DashboardAkis.vue'
-import DashboardKritikStok from '../components/dashboard/DashboardKritikStok.vue'
 import DashboardHizliIslemler from '../components/dashboard/DashboardHizliIslemler.vue'
 import DashboardWidget from '../components/dashboard/DashboardWidget.vue'
 import DashboardDuzenPaneli from '../components/dashboard/DashboardDuzenPaneli.vue'

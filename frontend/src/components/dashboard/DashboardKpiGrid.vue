@@ -432,7 +432,7 @@ const karSinifi = computed(() => {
   flex-direction: column;
   gap: 4px;
   min-width: 0;
-  min-height: 96px;
+  min-height: 100px;
   padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -483,6 +483,23 @@ const karSinifi = computed(() => {
 }
 .kpi-kart--stok {
   --kpi-vurgu: #f59e0b;
+  /* 9 kart 5 kolonda: son kart 2 kolon kaplayarak ikinci satiri tamamlar. */
+  grid-column: span 2;
+}
+@media (max-width: 1199px) {
+  .kpi-kart--stok {
+    grid-column: span 1;
+  }
+}
+@media (max-width: 699px) {
+  .kpi-kart--stok {
+    grid-column: span 2;
+  }
+}
+@media (max-width: 419px) {
+  .kpi-kart--stok {
+    grid-column: span 1;
+  }
 }
 .kpi-kart--link:focus-visible {
   outline: 2px solid var(--accent);

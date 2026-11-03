@@ -32,13 +32,13 @@ describe('DashboardDuzenPaneli', () => {
 
     const sol = wrapper.find('[data-bolge="SOL"]')
     expect(sol.findAll('[data-widget]').map((w) => w.attributes('data-widget'))).toEqual([
-      'nakitAkisi',
-      'siparisDurumlari'
+      'nakitAkisi'
     ])
     expect(sol.find('.duzen-grup-baslik').text()).toBe(i18n.global.t('dashboard.bolgeGrafikler'))
 
     const sag = wrapper.find('[data-bolge="SAG"]')
     expect(sag.findAll('[data-widget]').map((w) => w.attributes('data-widget'))).toEqual([
+      'siparisDurumlari',
       'gorevler',
       'akis',
       'icgoruler'
@@ -86,12 +86,12 @@ describe('DashboardDuzenPaneli', () => {
       wrapper.find('[data-widget="nakitAkisi"] [aria-label*="Yukarı"]').attributes('disabled')
     ).toBeDefined()
     expect(
-      wrapper.find('[data-widget="siparisDurumlari"] [aria-label*="Aşağı"]').attributes('disabled')
+      wrapper.find('[data-widget="nakitAkisi"] [aria-label*="Aşağı"]').attributes('disabled')
     ).toBeDefined()
 
     // SAG grubu: ilk satır yukarı, son satır aşağı gidemez.
     expect(
-      wrapper.find('[data-widget="gorevler"] [aria-label*="Yukarı"]').attributes('disabled')
+      wrapper.find('[data-widget="siparisDurumlari"] [aria-label*="Yukarı"]').attributes('disabled')
     ).toBeDefined()
     expect(
       wrapper.find('[data-widget="icgoruler"] [aria-label*="Aşağı"]').attributes('disabled')
