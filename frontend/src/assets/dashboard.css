@@ -16,10 +16,19 @@
    ========================================================================== */
 
 .dashboard-container {
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 16px 20px 28px;
+  max-width: none;
+  margin: 0;
+  /* Sol/sag bosluk: ana yerlesim zaten 18px veriyor; burada ikinci bir
+     padding eklemeyerek cift bosluk olusmasini engelliyoruz. Genis ekranda
+     kenarlara daha fazla yaslanmasi icin hafif negatif marj. */
+  padding: 0 0 24px;
   min-width: 0;
+}
+
+@media (min-width: 1200px) {
+  .dashboard-container {
+    margin: 0 -10px;
+  }
 }
 
 /* Veri gelince icerik sert bir sekilde belirmesin; yumusak gecisle gorunur. */
@@ -198,7 +207,7 @@
 
 @media (max-width: 900px) {
   .dashboard-container {
-    padding: 12px 12px 20px;
+    padding: 0 0 20px;
   }
 }
 
