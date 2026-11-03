@@ -3,10 +3,12 @@
     class="kpi-grid"
     data-test="kpi-grid"
     data-widget="kpi"
+    role="group"
+    :aria-label="t('dashboard.widgetKpi')"
   >
     <template v-if="yukleniyor && !kpi">
       <div
-        v-for="i in 5"
+        v-for="i in 9"
         :key="`kpi-iskelet-${i}`"
         class="kpi-kart kpi-kart--iskelet"
         aria-hidden="true"
@@ -37,7 +39,7 @@
             <SparkLine
               :veriler="likiditeSparkline"
               renk="#10b981"
-              :yukseklik="22"
+              :yukseklik="20"
             />
           </span>
         </header>
@@ -113,7 +115,7 @@
         </footer>
       </router-link>
 
-      <!-- 4. Aylık ciro -->
+      <!-- 4. Bu ay ciro -->
       <router-link
         to="/raporlar"
         class="kpi-kart kpi-kart--ciro kpi-kart--link"
@@ -155,7 +157,7 @@
         </footer>
       </router-link>
 
-      <!-- 5. Aylık net kâr -->
+      <!-- 5. Bu ay net kâr -->
       <router-link
         to="/raporlar"
         class="kpi-kart kpi-kart--kar kpi-kart--link"
@@ -201,6 +203,118 @@
           >{{ t('dashboard.hedefBelirlenmemis') }}</span>
         </footer>
       </router-link>
+
+      <!-- 6. Bugün tahsilat -->
+      <router-link
+        to="/hareketler"
+        class="kpi-kart kpi-kart--tahsilat kpi-kart--link"
+        data-test="kpi-tahsilat"
+      >
+        <header class="kpi-ust">
+          <span class="kpi-ikon"><i
+            class="pi pi-arrow-down-left"
+            aria-hidden="true"
+          /></span>
+          <span class="kpi-etiket">{{ t('dashboard.kpiBugunTahsilat') }}</span>
+          <i
+            class="pi pi-arrow-right kpi-git"
+            aria-hidden="true"
+          />
+        </header>
+        <p
+          class="kpi-deger gizli-veri"
+          data-test="kpi-deger-tahsilat"
+        >
+          {{ para(bugun.tahsilat) }}
+        </p>
+        <footer class="kpi-alt">
+          <span>{{ t('dashboard.kpiBugunTahsilatAlt') }}</span>
+        </footer>
+      </router-link>
+
+      <!-- 7. Bugün ödeme -->
+      <router-link
+        to="/hareketler"
+        class="kpi-kart kpi-kart--odeme kpi-kart--link"
+        data-test="kpi-odeme"
+      >
+        <header class="kpi-ust">
+          <span class="kpi-ikon"><i
+            class="pi pi-arrow-up-right"
+            aria-hidden="true"
+          /></span>
+          <span class="kpi-etiket">{{ t('dashboard.kpiBugunOdeme') }}</span>
+          <i
+            class="pi pi-arrow-right kpi-git"
+            aria-hidden="true"
+          />
+        </header>
+        <p
+          class="kpi-deger gizli-veri"
+          data-test="kpi-deger-odeme"
+        >
+          {{ para(bugun.odeme) }}
+        </p>
+        <footer class="kpi-alt">
+          <span>{{ t('dashboard.kpiBugunOdemeAlt') }}</span>
+        </footer>
+      </router-link>
+
+      <!-- 8. Bekleyen sipariş -->
+      <router-link
+        to="/siparisler"
+        class="kpi-kart kpi-kart--siparis kpi-kart--link"
+        data-test="kpi-bekleyen-siparis"
+      >
+        <header class="kpi-ust">
+          <span class="kpi-ikon"><i
+            class="pi pi-shopping-cart"
+            aria-hidden="true"
+          /></span>
+          <span class="kpi-etiket">{{ t('dashboard.kpiBekleyenSiparis') }}</span>
+          <i
+            class="pi pi-arrow-right kpi-git"
+            aria-hidden="true"
+          />
+        </header>
+        <p
+          class="kpi-deger gizli-veri"
+          data-test="kpi-deger-bekleyen-siparis"
+        >
+          {{ sayi(bekleyenSiparis) }}
+        </p>
+        <footer class="kpi-alt">
+          <span>{{ t('dashboard.kpiBekleyenSiparisAlt') }}</span>
+        </footer>
+      </router-link>
+
+      <!-- 9. Stok değeri -->
+      <router-link
+        to="/stoklar"
+        class="kpi-kart kpi-kart--stok kpi-kart--link"
+        data-test="kpi-stok-degeri"
+      >
+        <header class="kpi-ust">
+          <span class="kpi-ikon"><i
+            class="pi pi-box"
+            aria-hidden="true"
+          /></span>
+          <span class="kpi-etiket">{{ t('dashboard.kpiStokDegeri') }}</span>
+          <i
+            class="pi pi-arrow-right kpi-git"
+            aria-hidden="true"
+          />
+        </header>
+        <p
+          class="kpi-deger gizli-veri"
+          data-test="kpi-deger-stok-degeri"
+        >
+          {{ para(stok.deger) }}
+        </p>
+        <footer class="kpi-alt">
+          <span>{{ t('dashboard.kpiStokAlt', { n: sayi(stok.kritikAdet) }) }}</span>
+        </footer>
+      </router-link>
     </template>
   </div>
 </template>
@@ -213,6 +327,9 @@ import { formatCurrency } from '../../utils/format.js'
 
 const props = defineProps({
   kpi: { type: Object, default: null },
+  bugun: { type: Object, default: null },
+  stok: { type: Object, default: null },
+  bekleyenSiparis: { type: Number, default: 0 },
   yukleniyor: { type: Boolean, default: false }
 })
 
@@ -222,6 +339,8 @@ const likidite = computed(() => props.kpi?.likidite || {})
 const netCari = computed(() => props.kpi?.netCari || {})
 const ciro = computed(() => props.kpi?.ciro || {})
 const kar = computed(() => props.kpi?.kar || {})
+const bugun = computed(() => props.bugun || {})
+const stok = computed(() => props.stok || {})
 
 /** null/eksik veri "—" olarak gosterilir; yapay sifir uretilmez. */
 const para = (deger) => {
@@ -231,10 +350,17 @@ const para = (deger) => {
   return formatCurrency(sayi)
 }
 
+const sayi = (deger) => {
+  if (deger === null || deger === undefined || deger === '') return '—'
+  const n = Number(deger)
+  if (!Number.isFinite(n)) return '—'
+  return n.toLocaleString('tr-TR')
+}
+
 // Likidite kartinda yuzde "trend" GOSTERILMEZ: backend'deki trendYuzde
 // gecen aya gore degisim degil, son 7 gunun net nakit akisinin likiditeye
 // oranidir. Bunun yerine ayni veriden turetilen 7 gunluk net akis sparkline'i
-// gosterilir; yuzde etiketi yaniltıcı olurdu.
+// gosterilir; yuzde etiketi yaniltici olurdu.
 const likiditeSparkline = computed(() => {
   const dizi = props.kpi?.likidite?.sparkline
   if (!Array.isArray(dizi)) return []
@@ -289,20 +415,23 @@ const karSinifi = computed(() => {
 </script>
 
 <style scoped>
-/* 5 ayri kart: ayni yukseklik, 16px bosluk, esit kolonlar. */
+/*
+ * Finans masasi KPI bandi: 9 kart, 5 + 4. Ikinci satirin son hucresi bos
+ * kalabilir; kartlar ayni yukseklikte (~96px) ve esit kolonlardadir.
+ */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
   min-width: 0;
 }
 .kpi-kart {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
-  min-height: 116px;
-  padding: 16px 18px;
+  min-height: 96px;
+  padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--bg-card);
@@ -333,19 +462,19 @@ const karSinifi = computed(() => {
   font-size: 11.5px;
   flex-shrink: 0;
 }
-.kpi-kart--likidite .kpi-ikon {
+.kpi-kart--likidite .kpi-ikon,
+.kpi-kart--alacak .kpi-ikon,
+.kpi-kart--tahsilat .kpi-ikon {
   background: var(--success-soft);
   color: var(--success);
 }
-.kpi-kart--alacak .kpi-ikon {
-  background: var(--success-soft);
-  color: var(--success);
-}
-.kpi-kart--borc .kpi-ikon {
+.kpi-kart--borc .kpi-ikon,
+.kpi-kart--odeme .kpi-ikon {
   background: var(--danger-soft);
   color: var(--danger);
 }
-.kpi-kart--ciro .kpi-ikon {
+.kpi-kart--ciro .kpi-ikon,
+.kpi-kart--siparis .kpi-ikon {
   background: rgba(59, 130, 246, 0.16);
   color: #60a5fa;
 }
@@ -353,10 +482,14 @@ const karSinifi = computed(() => {
   background: rgba(139, 92, 246, 0.16);
   color: #a78bfa;
 }
+.kpi-kart--stok .kpi-ikon {
+  background: rgba(14, 165, 233, 0.16);
+  color: #0ea5e9;
+}
 .kpi-etiket {
   flex: 1;
   min-width: 0;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--text-secondary);
   overflow: hidden;
@@ -372,34 +505,15 @@ const karSinifi = computed(() => {
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  width: 64px;
-  height: 22px;
+  width: 56px;
+  height: 20px;
   margin-left: auto;
   flex-shrink: 0;
   opacity: 0.9;
 }
-.kpi-delta {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 1px 6px;
-  border-radius: 999px;
-  font-size: 10.5px;
-  font-weight: 700;
-  flex-shrink: 0;
-  font-variant-numeric: tabular-nums;
-}
-.kpi-delta--artis {
-  color: var(--success);
-  background: var(--success-soft);
-}
-.kpi-delta--azalis {
-  color: var(--danger);
-  background: var(--danger-soft);
-}
 .kpi-deger {
   margin: 0;
-  font-size: 23px;
+  font-size: 20px;
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.15;
@@ -421,10 +535,11 @@ const karSinifi = computed(() => {
   gap: 4px;
   flex-wrap: wrap;
   margin-top: auto;
-  font-size: 11px;
+  font-size: 10.5px;
   line-height: 1.3;
   color: var(--text-muted);
   min-width: 0;
+  overflow: hidden;
 }
 .kpi-alt strong {
   color: var(--text-secondary);
@@ -473,12 +588,12 @@ const karSinifi = computed(() => {
   font-variant-numeric: tabular-nums;
 }
 .kpi-marj {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
 .kpi-hedef-yok {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -500,7 +615,7 @@ const karSinifi = computed(() => {
 }
 .kpi-iskelet--buyuk {
   width: 68%;
-  height: 22px;
+  height: 20px;
 }
 .kpi-iskelet--uzun {
   width: 100%;
@@ -525,16 +640,13 @@ const karSinifi = computed(() => {
     animation: none;
   }
 }
-/* 1100–1439: 3 kolon (3 + 2); 1440+ 5 kolon. */
-@media (max-width: 1439px) and (min-width: 1200px) {
-  .kpi-kart {
-    padding: 12px 14px;
-  }
+/* 1200–1439: 5 kolon kalir; kart biraz sikisir. */
+@media (max-width: 1439px) {
   .kpi-deger {
-    font-size: 19px;
+    font-size: 18px;
   }
   .kpi-spark {
-    width: 48px;
+    width: 44px;
   }
 }
 @media (max-width: 1199px) {
@@ -547,7 +659,7 @@ const karSinifi = computed(() => {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .kpi-deger {
-    font-size: 21px;
+    font-size: 19px;
   }
 }
 @media (max-width: 419px) {

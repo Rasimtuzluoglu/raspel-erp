@@ -68,9 +68,9 @@ const linkEtiketi = computed(() => props.linkMetin || t('dashboard.detayaGit'))
 .db-kart {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   min-width: 0;
-  padding: 18px 20px;
+  padding: 14px;
   border: 1px solid var(--border);
   border-radius: 13px;
   background: var(--bg-card);
@@ -78,17 +78,17 @@ const linkEtiketi = computed(() => props.linkMetin || t('dashboard.detayaGit'))
 .db-kart-ust {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 26px;
+  gap: 8px;
+  min-height: 22px;
   min-width: 0;
 }
 .db-kart-baslik {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin: 0;
   min-width: 0;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   line-height: 1.2;
   color: var(--text-primary);
@@ -148,7 +148,7 @@ const linkEtiketi = computed(() => props.linkMetin || t('dashboard.detayaGit'))
 }
 @media (max-width: 600px) {
   .db-kart {
-    padding: 14px 16px;
+    padding: 12px;
   }
 }
 </style>

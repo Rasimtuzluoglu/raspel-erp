@@ -419,6 +419,134 @@ export function useDashboardGrafikleri(kaynak, { nakitGun } = {}) {
     scales: eksenler.value
   }))
 
+  // --- Yeni finans masasi grafikleri ---------------------------------------
+
+  const SIPARIS_DURUM_ANAHTARLARI = {
+    TEKLIF: 'dashboard.siparisDurumTeklif',
+    SIPARIS: 'dashboard.siparisDurumSiparis',
+    BEKLIYOR: 'dashboard.siparisDurumBekliyor',
+    HAZIRLANIYOR: 'dashboard.siparisDurumHazirlaniyor',
+    YOLDA: 'dashboard.siparisDurumYolda',
+    TESLIM_EDILDI: 'dashboard.siparisDurumTeslimEdildi',
+    FATURA_KESILDI: 'dashboard.siparisDurumFaturaKesildi',
+    IPTAL: 'dashboard.siparisDurumIptal'
+  }
+
+  const siparisDurumEtiketi = (durum) => {
+    const anahtar = SIPARIS_DURUM_ANAHTARLARI[String(durum || '').toUpperCase()]
+    return anahtar ? t(anahtar) : String(durum || '—')
+  }
+
+  /** Siparis durumlari (yatay bar) — backend `GROUP BY durum` ciktisi. */
+  const siparisDurumlari = computed(() => {
+    const liste = (Array.isArray(veri.value.siparisDurumlari) ? veri.value.siparisDurumlari : [])
+      .map((s) => ({ durum: s?.durum, adet: Number(s?.adet) || 0 }))
+      .filter((s) => s.durum && s.adet > 0)
+      .sort((a, b) => b.adet - a.adet)
+    if (!liste.length) return { labels: [], datasets: [] }
+    return {
+      labels: liste.map((s) => siparisDurumEtiketi(s.durum)),
+      datasets: [
+        {
+          label: t('dashboard.siparisAdedi'),
+          data: liste.map((s) => s.adet),
+          backgroundColor: liste.map((_, i) => RENKLER[i % RENKLER.length]),
+          borderRadius: 8,
+          maxBarThickness: 18
+        }
+      ]
+    }
+  })
+
+  const siparisDurumlariOpsiyonlari = computed(() => ({
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: {
+        beginAtZero: true,
+        ticks: { color: palet.value.metin, precision: 0 },
+        grid: { color: palet.value.izgara }
+      },
+      y: { ticks: { color: palet.value.metin }, grid: { display: false } }
+    }
+  }))
+
+  /** Butce / gerceklesen (gruplu bar) — bu ay GIDER butceleri. */
+  const butceGerceklesen = computed(() => {
+    const liste = Array.isArray(veri.value.butceGerceklesen) ? veri.value.butceGerceklesen : []
+    if (!liste.length) return { labels: [], datasets: [] }
+    return {
+      labels: liste.map((b) => b.kategori || '—'),
+      datasets: [
+        {
+          label: t('dashboard.butceEtiket'),
+          data: liste.map((b) => Number(b.butce) || 0),
+          backgroundColor: '#3b82f6',
+          hoverBackgroundColor: '#60a5fa',
+          borderRadius: 6,
+          maxBarThickness: 20
+        },
+        {
+          label: t('dashboard.gerceklesenEtiket'),
+          data: liste.map((b) => Number(b.gerceklesen) || 0),
+          backgroundColor: '#10b981',
+          hoverBackgroundColor: '#34d399',
+          borderRadius: 6,
+          maxBarThickness: 20
+        }
+      ]
+    }
+  })
+
+  const butceGerceklesenOpsiyonlari = computed(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: lejant(),
+      tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}` } }
+    },
+    scales: {
+      x: {
+        ticks: { color: palet.value.metin, autoSkip: false, maxRotation: 30 },
+        grid: { display: false }
+      },
+      y: eksenler.value.y
+    }
+  }))
+
+  /** Stok degeri (kategori bazli yatay bar). */
+  const stokDegeri = computed(() => {
+    const kategoriler = Array.isArray(veri.value.stokDegeri?.kategoriler)
+      ? veri.value.stokDegeri.kategoriler
+      : []
+    if (!kategoriler.length) return { labels: [], datasets: [] }
+    return {
+      labels: kategoriler.map((k) => k.kategori || '—'),
+      datasets: [
+        {
+          label: t('dashboard.stokDegeriToplam'),
+          data: kategoriler.map((k) => Number(k.deger) || 0),
+          backgroundColor: (ctx) => yatayGradyan(ctx, '#0ea5e9', '#0ea5e955'),
+          borderRadius: 8,
+          maxBarThickness: 18
+        }
+      ]
+    }
+  })
+
+  const stokDegeriOpsiyonlari = computed(() => ({
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.x)}` } }
+    },
+    scales: yatayEksenler.value
+  }))
+
   return {
     gunlukNakitAkisi,
     gunlukNakitAkisiOpsiyonlari,
@@ -437,6 +565,12 @@ export function useDashboardGrafikleri(kaynak, { nakitGun } = {}) {
     kategoriPareto,
     kategoriParetoOpsiyonlari,
     ciroHedef,
-    ciroHedefOpsiyonlari
+    ciroHedefOpsiyonlari,
+    siparisDurumlari,
+    siparisDurumlariOpsiyonlari,
+    butceGerceklesen,
+    butceGerceklesenOpsiyonlari,
+    stokDegeri,
+    stokDegeriOpsiyonlari
   }
 }

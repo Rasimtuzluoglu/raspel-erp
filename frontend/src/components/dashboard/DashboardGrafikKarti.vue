@@ -59,6 +59,13 @@
         :options="secenekler"
       />
     </div>
+
+    <template
+      v-if="$slots.alt"
+      #alt
+    >
+      <slot name="alt" />
+    </template>
   </DashboardKart>
 </template>
 

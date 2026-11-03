@@ -3,24 +3,13 @@
     class="hizli-islemler"
     data-test="hizli-islemler"
   >
-    <button
-      type="button"
-      class="islem-karti islem-karti--ara"
-      :aria-label="t('dashboard.heroAra')"
-      @click="aramaAc"
-    >
-      <span class="islem-ikon"><i
-        class="pi pi-search"
-        aria-hidden="true"
-      /></span>
-      <span class="islem-etiket">{{ t('dashboard.heroAra') }}</span>
-    </button>
     <router-link
       v-for="islem in islemler"
       :key="islem.to"
       :to="islem.to"
       class="islem-karti"
       :class="`islem-karti--${islem.sinif}`"
+      :data-islem="islem.sinif"
     >
       <span class="islem-ikon"><i
         :class="islem.ikon"
@@ -39,31 +28,18 @@ const props = defineProps({
   isAdmin: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['ara'])
-
 const { t } = useI18n()
 
-// `App.vue` bu olayi dinleyip mevcut QuickSearch panelini acar (Ctrl+K bozulmaz).
-const aramaAc = () => {
-  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
-    window.dispatchEvent(new CustomEvent('raspel:hizli-ara'))
-  }
-  emit('ara')
-}
-
 /**
- * Yalnizca mevcut rotalar: 7 kisayol + (ADMIN ise) yonetici kokpiti.
- * "Ara" ilk hucrededir; ADMIN'de toplam 9 hucre (3x3), diger rollerde 8.
+ * Sag paneldeki aksiyon izgarasi: 6 kisayol (ADMIN). Yonetici kokpiti ve
+ * yedekler yalnizca ADMIN'e gorunur; diger rollerde 4 kalir. Yalnizca mevcut
+ * rotalar kullanilir.
  */
 const islemler = computed(() => {
   const liste = [
-    { to: '/teklifler', anahtar: 'dashboard.satisTeklifleri', ikon: 'pi pi-file-edit', sinif: 'teklif' },
-    { to: '/faturalar', anahtar: 'dashboard.faturalar', ikon: 'pi pi-file', sinif: 'fatura' },
-    { to: '/hizli-satis', anahtar: 'dashboard.hizliSatis', ikon: 'pi pi-shopping-bag', sinif: 'satis' },
-    { to: '/cari-hesaplar', anahtar: 'dashboard.cariHesaplar', ikon: 'pi pi-users', sinif: 'cari' },
-    { to: '/hareketler', anahtar: 'dashboard.tahsilatOdeme', ikon: 'pi pi-money-bill', sinif: 'tahsilat' },
-    { to: '/kasa', anahtar: 'dashboard.kasa', ikon: 'pi pi-wallet', sinif: 'kasa' },
-    { to: '/stoklar', anahtar: 'dashboard.stoklar', ikon: 'pi pi-box', sinif: 'stok' }
+    { to: '/satinalma', anahtar: 'dashboard.satinalma', ikon: 'pi pi-shopping-cart', sinif: 'satinalma' },
+    { to: '/onaylar', anahtar: 'dashboard.onaylar', ikon: 'pi pi-check-square', sinif: 'onaylar' },
+    { to: '/raporlar', anahtar: 'dashboard.raporlar', ikon: 'pi pi-chart-bar', sinif: 'raporlar' }
   ]
   if (props.isAdmin) {
     liste.push({
@@ -73,12 +49,16 @@ const islemler = computed(() => {
       sinif: 'kokpit'
     })
   }
+  liste.push({ to: '/ajanda', anahtar: 'dashboard.ajanda', ikon: 'pi pi-calendar', sinif: 'ajanda' })
+  if (props.isAdmin) {
+    liste.push({ to: '/yedekler', anahtar: 'dashboard.yedekler', ikon: 'pi pi-save', sinif: 'yedekler' })
+  }
   return liste
 })
 </script>
 
 <style scoped>
-/* 3x3 izgara: ikon cipi + etiket; her hucre en az 44px dokunma hedefi. */
+/* 3 kolonlu aksiyon izgarasi; her hucre en az 44px dokunma hedefi. */
 .hizli-islemler {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -91,14 +71,14 @@ const islemler = computed(() => {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  min-height: 62px;
+  min-height: 58px;
   min-width: 0;
   padding: 6px 4px;
   border: 0;
   border-radius: 10px;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   text-align: center;
   text-decoration: none;
@@ -117,10 +97,10 @@ const islemler = computed(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 11px;
-  font-size: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 13.5px;
   flex-shrink: 0;
   background: color-mix(in srgb, currentcolor 14%, transparent);
 }
@@ -131,32 +111,28 @@ const islemler = computed(() => {
   white-space: nowrap;
   line-height: 1.25;
 }
-.islem-karti--ara {
-  color: var(--accent);
+.islem-karti--satinalma {
+  color: #f59e0b;
+}
+.islem-karti--onaylar {
+  color: #10b981;
+}
+.islem-karti--raporlar {
+  color: #3b82f6;
 }
 .islem-karti--kokpit {
   color: #f59e0b;
 }
-.islem-karti--teklif {
-  color: var(--accent);
+.islem-karti--ajanda {
+  color: #8b5cf6;
 }
-.islem-karti--fatura {
-  color: #6366f1;
-}
-.islem-karti--satis {
-  color: #10b981;
-}
-.islem-karti--cari {
-  color: #f59e0b;
-}
-.islem-karti--tahsilat {
-  color: #ef4444;
-}
-.islem-karti--kasa {
+.islem-karti--yedekler {
   color: #0ea5e9;
 }
-.islem-karti--stok {
-  color: #d97706;
+@media (max-width: 460px) {
+  .hizli-islemler {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .islem-karti {

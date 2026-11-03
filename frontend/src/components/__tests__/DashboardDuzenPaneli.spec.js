@@ -5,11 +5,12 @@ import DashboardDuzenPaneli from '../dashboard/DashboardDuzenPaneli.vue'
 
 const widgetlar = [
   { key: 'kpi', etiket: 'Finansal Göstergeler', gorunur: true, sabit: true },
-  { key: 'bugunSerit', etiket: 'Bugün', gorunur: true, sabit: true },
+  { key: 'bugunSerit', etiket: 'Bugün', gorunur: false, sabit: true },
+  { key: 'nakitAkisi', etiket: 'Nakit Akışı', gorunur: true, sabit: false },
+  { key: 'siparisDurumlari', etiket: 'Sipariş Durumları', gorunur: false, sabit: false },
   { key: 'gorevler', etiket: 'Görev Merkezi', gorunur: true, sabit: false },
   { key: 'akis', etiket: 'Canlı Akış', gorunur: false, sabit: false },
-  { key: 'icgoruler', etiket: 'İçgörüler', gorunur: true, sabit: false },
-  { key: 'kritikStok', etiket: 'Kritik Stok', gorunur: true, sabit: false }
+  { key: 'icgoruler', etiket: 'İçgörüler', gorunur: true, sabit: false }
 ]
 
 const mountEt = (props = {}) =>
@@ -19,19 +20,33 @@ const mountEt = (props = {}) =>
   })
 
 describe('DashboardDuzenPaneli', () => {
-  it('widget\'ları tek düz listede gösterir', () => {
+  it('sabit bantları ve iki bölge grubunu gösterir', () => {
     const wrapper = mountEt()
-    expect(wrapper.findAll('[data-widget]')).toHaveLength(6)
-    expect(wrapper.find('[data-bolge]').exists()).toBe(false)
-    expect(wrapper.findAll('[data-widget]').map((w) => w.attributes('data-widget'))).toEqual([
+    expect(wrapper.findAll('[data-widget]')).toHaveLength(7)
+
+    const sabit = wrapper.find('[data-bolge="SABIT"]')
+    expect(sabit.findAll('[data-widget]').map((w) => w.attributes('data-widget'))).toEqual([
       'kpi',
-      'bugunSerit',
+      'bugunSerit'
+    ])
+
+    const sol = wrapper.find('[data-bolge="SOL"]')
+    expect(sol.findAll('[data-widget]').map((w) => w.attributes('data-widget'))).toEqual([
+      'nakitAkisi',
+      'siparisDurumlari'
+    ])
+    expect(sol.find('.duzen-grup-baslik').text()).toBe(i18n.global.t('dashboard.bolgeGrafikler'))
+
+    const sag = wrapper.find('[data-bolge="SAG"]')
+    expect(sag.findAll('[data-widget]').map((w) => w.attributes('data-widget'))).toEqual([
       'gorevler',
       'akis',
-      'icgoruler',
-      'kritikStok'
+      'icgoruler'
     ])
+    expect(sag.find('.duzen-grup-baslik').text()).toBe(i18n.global.t('dashboard.bolgeAksiyon'))
+
     expect(wrapper.find('[data-widget="akis"]').classes()).toContain('duzen-satir--gizli')
+    expect(wrapper.find('[data-widget="bugunSerit"]').classes()).toContain('duzen-satir--gizli')
   })
 
   it('boyut kontrolü içermez', () => {
@@ -63,20 +78,32 @@ describe('DashboardDuzenPaneli', () => {
     })
   })
 
-  it('yukarı/aşağı taşıma bildirir ve liste uçlarında devre dışı kalır', async () => {
+  it('yukarı/aşağı taşıma bildirir ve her bölgenin uçlarında devre dışı kalır', async () => {
     const wrapper = mountEt()
-    const ilk = wrapper.find('[data-widget="gorevler"]')
-    expect(ilk.find('[aria-label*="Yukarı"]').attributes('disabled')).toBeDefined()
+
+    // SOL grubu: ilk satır yukarı, son satır aşağı gidemez.
+    expect(
+      wrapper.find('[data-widget="nakitAkisi"] [aria-label*="Yukarı"]').attributes('disabled')
+    ).toBeDefined()
+    expect(
+      wrapper.find('[data-widget="siparisDurumlari"] [aria-label*="Aşağı"]').attributes('disabled')
+    ).toBeDefined()
+
+    // SAG grubu: ilk satır yukarı, son satır aşağı gidemez.
+    expect(
+      wrapper.find('[data-widget="gorevler"] [aria-label*="Yukarı"]').attributes('disabled')
+    ).toBeDefined()
+    expect(
+      wrapper.find('[data-widget="icgoruler"] [aria-label*="Aşağı"]').attributes('disabled')
+    ).toBeDefined()
+
+    // Orta satırlar her iki yöne gidebilir.
+    expect(
+      wrapper.find('[data-widget="akis"] [aria-label*="Yukarı"]').attributes('disabled')
+    ).toBeUndefined()
 
     await wrapper.find('[data-widget="gorevler"] [aria-label*="Aşağı"]').trigger('click')
     expect(wrapper.emitted('tasi')?.[0]?.[0]).toEqual({ key: 'gorevler', yon: 1 })
-
-    const son = wrapper.find('[data-widget="kritikStok"]')
-    expect(son.find('[aria-label*="Aşağı"]').attributes('disabled')).toBeDefined()
-
-    // Sabitlerin hemen altındaki ilk taşınabilir satır yukarı çıkabilir.
-    const icgoruler = wrapper.find('[data-widget="icgoruler"]')
-    expect(icgoruler.find('[aria-label*="Yukarı"]').attributes('disabled')).toBeUndefined()
   })
 
   it('kaydet, iptal ve sıfırla olaylarını yayar', async () => {

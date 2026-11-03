@@ -8,14 +8,19 @@ import { dashboardAPI } from '../api/index.js'
 import Dashboard from '../views/Dashboard.vue'
 import App from '../App.vue'
 import {
+  BOLGE_SAG,
+  BOLGE_SOL,
   DASHBOARD_WIDGET_ANAHTARLARI,
   ROL_SIRALARI,
   SABIT_ANAHTARLARI,
+  SAG_WIDGET_ANAHTARLARI,
+  SOL_WIDGET_ANAHTARLARI,
   WIDGET_SPANLARI,
   duzenGecerliMi,
   duzenNormallestir,
   rolDuzeni,
   widgetBirak,
+  widgetBolgesi,
   widgetGorunurlukDegistir,
   widgetSpan,
   widgetTasi
@@ -97,46 +102,61 @@ const mountDashboard = () =>
     }
   })
 
-const gridSirasi = (wrapper) =>
-  wrapper.findAll('.db-grid [data-widget]').map((w) => w.attributes('data-widget'))
+const solSirasi = (wrapper) =>
+  wrapper.findAll('.db-sol > [data-widget]').map((w) => w.attributes('data-widget'))
+
+const sagSirasi = (wrapper) =>
+  wrapper.findAll('.db-sag > [data-widget]').map((w) => w.attributes('data-widget'))
 
 const duzenModuAc = async (wrapper) => {
   await wrapper.find('.ust-buton[aria-pressed="false"]').trigger('click')
   await nextTick()
 }
 
+const bolgeSirasi = (sira, bolge) =>
+  sira.filter((w) => widgetBolgesi(w.key) === bolge).map((w) => w.key)
+
 describe('Dashboard faz2 — registry ve rol varsayılanları', () => {
-  it('registry düz listeyi ve sabit bantları tanımlar (vade/hedefler yok)', () => {
+  it('registry iki bölgeyi ve sabit bantları tanımlar (vade/hedefler yok)', () => {
     expect(DASHBOARD_WIDGET_ANAHTARLARI).toEqual([
       'kpi',
       'bugunSerit',
-      'gorevler',
-      'icgoruler',
-      'nakitAkisi',
-      'hizliIslemler',
-      'aylikGelirGider',
-      'kritikStok',
-      'kategoriSatislari',
-      'enCokSatanlar',
-      'akis'
+      ...SOL_WIDGET_ANAHTARLARI,
+      ...SAG_WIDGET_ANAHTARLARI
     ])
     expect(SABIT_ANAHTARLARI).toEqual(['kpi', 'bugunSerit'])
+    expect(SOL_WIDGET_ANAHTARLARI).toHaveLength(12)
+    expect(SAG_WIDGET_ANAHTARLARI).toEqual([
+      'gorevler',
+      'hizliIslemler',
+      'kritikStok',
+      'akis',
+      'icgoruler'
+    ])
     expect(DASHBOARD_WIDGET_ANAHTARLARI).not.toContain('vade')
     expect(DASHBOARD_WIDGET_ANAHTARLARI).not.toContain('hedefler')
     expect(DASHBOARD_WIDGET_ANAHTARLARI).not.toContain('boyut')
   })
 
-  it('kart genişlikleri anahtara göre sabittir (8+4, 8+4, 8+4, 4+4+4)', () => {
-    expect(widgetSpan('gorevler')).toBe(8)
-    expect(widgetSpan('icgoruler')).toBe(4)
-    expect(widgetSpan('nakitAkisi')).toBe(8)
-    expect(widgetSpan('hizliIslemler')).toBe(4)
-    expect(widgetSpan('aylikGelirGider')).toBe(8)
-    expect(widgetSpan('kritikStok')).toBe(4)
-    expect(widgetSpan('kategoriSatislari')).toBe(4)
-    expect(widgetSpan('enCokSatanlar')).toBe(4)
-    expect(widgetSpan('akis')).toBe(4)
-    expect(Object.keys(WIDGET_SPANLARI)).toHaveLength(9)
+  it('widget bölgeleri: SOL grafikler, SAG aksiyon, sabitler null', () => {
+    expect(widgetBolgesi('nakitAkisi')).toBe(BOLGE_SOL)
+    expect(widgetBolgesi('stokDegeri')).toBe(BOLGE_SOL)
+    expect(widgetBolgesi('gorevler')).toBe(BOLGE_SAG)
+    expect(widgetBolgesi('icgoruler')).toBe(BOLGE_SAG)
+    expect(widgetBolgesi('kpi')).toBeNull()
+    expect(widgetBolgesi('bugunSerit')).toBeNull()
+    expect(widgetBolgesi('yok')).toBeNull()
+  })
+
+  it('kart genişlikleri sol 2 kolonlu ızgaraya göredir', () => {
+    expect(widgetSpan('nakitAkisi')).toBe(2)
+    expect(widgetSpan('stokDegeri')).toBe(2)
+    expect(widgetSpan('ciroHedef')).toBe(1)
+    expect(widgetSpan('aylikGelirGider')).toBe(1)
+    expect(widgetSpan('kategoriSatislari')).toBe(1)
+    expect(widgetSpan('enCokSatanlar')).toBe(1)
+    expect(widgetSpan('gorevler')).toBe(1)
+    expect(Object.keys(WIDGET_SPANLARI)).toHaveLength(17)
   })
 
   it('ADMIN tüm bölümleri spec sırasıyla görür', () => {
@@ -164,7 +184,7 @@ describe('Dashboard faz2 — düzen normalizasyonu', () => {
     expect(duzenNormallestir(null, 'USER').sira.map((w) => w.key)).toEqual(ROL_SIRALARI.USER)
   })
 
-  it('bilinmeyen/çift kayıtları atar, eksikleri gizli ekler ve boyutu temizler', () => {
+  it('bilinmeyen/çift kayıtları atar, eksikleri görünür ekler ve boyutu temizler', () => {
     const duzen = duzenNormallestir(
       {
         versiyon: 1,
@@ -181,11 +201,21 @@ describe('Dashboard faz2 — düzen normalizasyonu', () => {
     // kpi ve bugunSerit her zaman başta.
     expect(anahtarlar[0]).toBe('kpi')
     expect(anahtarlar[1]).toBe('bugunSerit')
-    expect(anahtarlar[2]).toBe('akis')
+    // Sabitlerden sonra SOL, ardından SAG gelir (bölge toplama).
+    expect(anahtarlar[2]).toBe('nakitAkisi')
+    // SAG girdi sırası korunur: akis ilk sırada kalır.
+    expect(anahtarlar.slice(-5)).toEqual([
+      'akis',
+      'gorevler',
+      'hizliIslemler',
+      'kritikStok',
+      'icgoruler'
+    ])
     expect(anahtarlar.filter((k) => k === 'kpi')).toHaveLength(1)
     expect(anahtarlar).not.toContain('bilinmeyen')
     expect(duzen.sira.every((w) => !('boyut' in w))).toBe(true)
-    expect(duzen.sira.find((w) => w.key === 'gorevler').gorunur).toBe(false)
+    expect(duzen.sira.find((w) => w.key === 'akis').gorunur).toBe(true)
+    expect(duzen.sira.find((w) => w.key === 'gorevler').gorunur).toBe(true)
   })
 
   it('kaldırılan hedefler/vade anahtarlarını temizler', () => {
@@ -208,16 +238,23 @@ describe('Dashboard faz2 — düzen normalizasyonu', () => {
     expect(duzen.sira.every((w) => !('boyut' in w))).toBe(true)
   })
 
-  it('taşıma düz listede çalışır, sabit bantlar taşınmaz', () => {
+  it('taşıma bölge içinde çalışır, sabit bantlar taşınmaz', () => {
     const sira = rolDuzeni('ADMIN').sira
-    // gorevler -> aşağı: icgoruler ile yer değiştirir.
-    expect(widgetTasi(sira, 'gorevler', 1).map((w) => w.key).indexOf('gorevler')).toBe(3)
+
+    // SOL: nakit akışı bir adım aşağı -> ciro hedefi ile yer değiştirir.
+    const solYeni = bolgeSirasi(widgetTasi(sira, 'nakitAkisi', 1), BOLGE_SOL)
+    expect(solYeni.slice(0, 2)).toEqual(['ciroHedef', 'nakitAkisi'])
+
+    // SAG: görevler aşağı -> hızlı işlemler başa geçer.
+    const sagYeni = bolgeSirasi(widgetTasi(sira, 'gorevler', 1), BOLGE_SAG)
+    expect(sagYeni.slice(0, 2)).toEqual(['hizliIslemler', 'gorevler'])
+
     // Sabit bantlar taşınamaz.
     expect(widgetTasi(sira, 'kpi', 1)).toBe(sira)
     expect(widgetTasi(sira, 'bugunSerit', -1)).toBe(sira)
-    // Sabitlerin üzerinden atlayarak yukarı: icgoruler -> gorevler'in yerine.
-    expect(widgetTasi(sira, 'icgoruler', -1).map((w) => w.key).indexOf('icgoruler')).toBe(2)
-    expect(sira[0].key).toBe('kpi') // kaynak dizi değişmez
+    // Bölge ucu: son SAG widget'ı daha aşağı gidemez.
+    expect(widgetTasi(sira, 'icgoruler', 1)).toBe(sira)
+    expect(sira[2].key).toBe('nakitAkisi') // kaynak dizi değişmez
   })
 
   it('görünürlük ve sürükle-bırak yardımcıları yeni dizi döndürür', () => {
@@ -226,8 +263,12 @@ describe('Dashboard faz2 — düzen normalizasyonu', () => {
     expect(widgetBirak(sira, 'akis', 'kpi')).toBe(sira) // sabit hedef
     expect(widgetBirak(sira, 'kpi', 'akis')).toBe(sira) // sabit kaynak
     expect(widgetBirak(sira, 'akis', 'akis')).toBe(sira)
-    const yeni = widgetBirak(sira, 'akis', 'nakitAkisi')
-    expect(yeni.findIndex((w) => w.key === 'akis')).toBe(4)
+    // Bölgeler arası taşıma reddedilir.
+    expect(widgetBirak(sira, 'akis', 'nakitAkisi')).toBe(sira)
+    expect(widgetBirak(sira, 'nakitAkisi', 'gorevler')).toBe(sira)
+    // Aynı bölgede taşıma çalışır.
+    const yeni = widgetBirak(sira, 'akis', 'gorevler')
+    expect(bolgeSirasi(yeni, BOLGE_SAG).slice(0, 2)).toEqual(['akis', 'gorevler'])
   })
 })
 
@@ -250,7 +291,7 @@ describe('Dashboard faz2 — düzen kaydetme ve geri dönüş', () => {
     vi.clearAllMocks()
   })
 
-  it('backend tercihi varsa onu uygular', async () => {
+  it('backend tercihi varsa bölge içi sırayı ondan alır', async () => {
     dashboardAPI.tercihGetir.mockResolvedValue({
       data: {
         duzen: {
@@ -259,14 +300,17 @@ describe('Dashboard faz2 — düzen kaydetme ve geri dönüş', () => {
             { key: 'kpi', gorunur: true },
             { key: 'bugunSerit', gorunur: true },
             { key: 'akis', gorunur: true },
-            { key: 'gorevler', gorunur: true }
+            { key: 'gorevler', gorunur: true },
+            { key: 'kasaBanka', gorunur: true }
           ]
         }
       }
     })
     const wrapper = mountDashboard()
     await flushPromises()
-    expect(gridSirasi(wrapper)[0]).toBe('akis')
+    expect(sagSirasi(wrapper).slice(0, 2)).toEqual(['akis', 'gorevler'])
+    expect(solSirasi(wrapper)[0]).toBe('kasaBanka')
+    expect(solSirasi(wrapper)).toHaveLength(SOL_WIDGET_ANAHTARLARI.length)
     wrapper.unmount()
   })
 
@@ -279,6 +323,7 @@ describe('Dashboard faz2 — düzen kaydetme ve geri dönüş', () => {
           sira: [
             { key: 'kpi', gorunur: true },
             { key: 'bugunSerit', gorunur: true },
+            { key: 'nakitAkisi', gorunur: true },
             { key: 'gorevler', gorunur: true }
           ]
         },
@@ -287,7 +332,8 @@ describe('Dashboard faz2 — düzen kaydetme ve geri dönüş', () => {
     )
     const wrapper = mountDashboard()
     await flushPromises()
-    expect(gridSirasi(wrapper)[0]).toBe('gorevler')
+    expect(solSirasi(wrapper)[0]).toBe('nakitAkisi')
+    expect(sagSirasi(wrapper)[0]).toBe('gorevler')
     wrapper.unmount()
   })
 
@@ -296,27 +342,29 @@ describe('Dashboard faz2 — düzen kaydetme ve geri dönüş', () => {
     await flushPromises()
     expect(wrapper.find('[data-test="kpi-grid"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="bugun-seridi"]').exists()).toBe(true)
-    expect(gridSirasi(wrapper)).toHaveLength(DASHBOARD_WIDGET_ANAHTARLARI.length - 2)
+    expect(solSirasi(wrapper)).toEqual(SOL_WIDGET_ANAHTARLARI)
+    expect(sagSirasi(wrapper)).toEqual(SAG_WIDGET_ANAHTARLARI)
     wrapper.unmount()
   })
 
-  it('düzen modunda gizleme ve sıralama kaydedilir', async () => {
+  it('düzen modunda gizleme ve bölge içi sıralama kaydedilir', async () => {
     const wrapper = mountDashboard()
     await flushPromises()
     await duzenModuAc(wrapper)
 
     const panel = wrapper.find('[data-test="duzen-paneli"]')
     expect(panel.exists()).toBe(true)
-    expect(wrapper.find('.db-grid [data-widget="gorevler"]').classes()).toContain('dw--duzen')
+    expect(wrapper.find('.db-sag [data-widget="gorevler"]').classes()).toContain('dw--duzen')
 
     // gizle
-    await wrapper.find('.db-grid [data-widget="icgoruler"] .dw-buton--gizle').trigger('click')
-    expect(wrapper.find('.db-grid [data-widget="icgoruler"]').exists()).toBe(false)
+    await wrapper.find('.db-sag [data-widget="icgoruler"] .dw-buton--gizle').trigger('click')
+    expect(wrapper.find('.db-sag [data-widget="icgoruler"]').exists()).toBe(false)
 
-    // yukarı taşı: akis bir üst sıraya geçer
-    const oncekiSira = gridSirasi(wrapper)
-    await wrapper.find('.db-grid [data-widget="akis"] [aria-label*="Yukarı"]').trigger('click')
-    expect(gridSirasi(wrapper).indexOf('akis')).toBe(oncekiSira.indexOf('akis') - 1)
+    // yukarı taşı: canlı akış bir üst sıraya geçer (kritik stok ile yer değiştirir)
+    const onceki = sagSirasi(wrapper)
+    await wrapper.find('.db-sag [data-widget="akis"] [aria-label*="Yukarı"]').trigger('click')
+    const sonraki = sagSirasi(wrapper)
+    expect(sonraki.indexOf('akis')).toBe(onceki.indexOf('akis') - 1)
 
     await wrapper.find('.duzen-eylem--kaydet').trigger('click')
     await flushPromises()
@@ -326,26 +374,39 @@ describe('Dashboard faz2 — düzen kaydetme ve geri dönüş', () => {
     expect(gonderilen.duzen.versiyon).toBe(1)
     expect(gonderilen.duzen.sira.find((w) => w.key === 'icgoruler').gorunur).toBe(false)
     expect(gonderilen.duzen.sira.every((w) => !('boyut' in w))).toBe(true)
-    expect(gonderilen.duzen.sira.findIndex((w) => w.key === 'akis')).toBe(
-      gonderilen.duzen.sira.findIndex((w) => w.key === 'enCokSatanlar') - 1
+    expect(gonderilen.duzen.sira.findIndex((w) => w.key === 'akis')).toBeLessThan(
+      gonderilen.duzen.sira.findIndex((w) => w.key === 'kritikStok')
     )
+    expect(gonderilen.duzen.sira[0].key).toBe('kpi')
+    expect(gonderilen.duzen.sira[1].key).toBe('bugunSerit')
+    // Sabitlerden sonra SOL, sonra SAG.
+    expect(gonderilen.duzen.sira[2].key).toBe('nakitAkisi')
+    expect(
+      gonderilen.duzen.sira.findIndex((w) => w.key === 'gorevler')
+    ).toBeGreaterThan(gonderilen.duzen.sira.findIndex((w) => w.key === 'stokDegeri'))
 
     expect(wrapper.find('[data-test="duzen-paneli"]').exists()).toBe(false)
     expect(wrapper.find('[aria-live="polite"]').text()).toBe(i18n.global.t('dashboard.duzenKaydedildi'))
     wrapper.unmount()
   })
 
-  it('sürükle-bırak ile düz listede sıralama değişir', async () => {
+  it('sürükle-bırak ile aynı bölgede sıralama değişir, bölgeler arası değişmez', async () => {
     const wrapper = mountDashboard()
     await flushPromises()
     await duzenModuAc(wrapper)
 
     const dataTransfer = { setData: vi.fn(), effectAllowed: '', dropEffect: '' }
-    await wrapper.find('.db-grid [data-widget="akis"]').trigger('dragstart', { dataTransfer })
-    await wrapper.find('.db-grid [data-widget="nakitAkisi"]').trigger('drop', { dataTransfer })
-    await nextTick()
+    const solOnce = solSirasi(wrapper)
 
-    expect(gridSirasi(wrapper).indexOf('akis')).toBe(gridSirasi(wrapper).indexOf('nakitAkisi') - 1)
+    await wrapper.find('.db-sag [data-widget="akis"]').trigger('dragstart', { dataTransfer })
+    await wrapper.find('.db-sol [data-widget="nakitAkisi"]').trigger('drop', { dataTransfer })
+    await nextTick()
+    expect(solSirasi(wrapper)).toEqual(solOnce)
+
+    await wrapper.find('.db-sol [data-widget="stokDegeri"]').trigger('dragstart', { dataTransfer })
+    await wrapper.find('.db-sol [data-widget="nakitAkisi"]').trigger('drop', { dataTransfer })
+    await nextTick()
+    expect(solSirasi(wrapper)[0]).toBe('stokDegeri')
     wrapper.unmount()
   })
 
@@ -355,7 +416,7 @@ describe('Dashboard faz2 — düzen kaydetme ve geri dönüş', () => {
     await flushPromises()
 
     await duzenModuAc(wrapper)
-    await wrapper.find('.db-grid [data-widget="icgoruler"] .dw-buton--gizle').trigger('click')
+    await wrapper.find('.db-sag [data-widget="icgoruler"] .dw-buton--gizle').trigger('click')
     await wrapper.find('.duzen-eylem--kaydet').trigger('click')
     await flushPromises()
 
@@ -373,11 +434,11 @@ describe('Dashboard faz2 — düzen kaydetme ve geri dönüş', () => {
     await flushPromises()
 
     await duzenModuAc(wrapper)
-    await wrapper.find('.db-grid [data-widget="icgoruler"] .dw-buton--gizle').trigger('click')
-    expect(wrapper.find('.db-grid [data-widget="icgoruler"]').exists()).toBe(false)
+    await wrapper.find('.db-sag [data-widget="icgoruler"] .dw-buton--gizle').trigger('click')
+    expect(wrapper.find('.db-sag [data-widget="icgoruler"]').exists()).toBe(false)
 
     await wrapper.find('.duzen-eylem--sifirla').trigger('click')
-    expect(wrapper.find('.db-grid [data-widget="icgoruler"]').exists()).toBe(true)
+    expect(wrapper.find('.db-sag [data-widget="icgoruler"]').exists()).toBe(true)
     wrapper.unmount()
   })
 
@@ -386,10 +447,10 @@ describe('Dashboard faz2 — düzen kaydetme ve geri dönüş', () => {
     await flushPromises()
 
     await duzenModuAc(wrapper)
-    await wrapper.find('.db-grid [data-widget="icgoruler"] .dw-buton--gizle').trigger('click')
+    await wrapper.find('.db-sag [data-widget="icgoruler"] .dw-buton--gizle').trigger('click')
     await wrapper.find('.duzen-eylem--iptal').trigger('click')
 
-    expect(wrapper.find('.db-grid [data-widget="icgoruler"]').exists()).toBe(true)
+    expect(wrapper.find('.db-sag [data-widget="icgoruler"]').exists()).toBe(true)
     expect(dashboardAPI.tercihKaydet).not.toHaveBeenCalled()
     wrapper.unmount()
   })

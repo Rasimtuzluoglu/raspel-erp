@@ -1,21 +1,24 @@
 /* ==========================================================================
-   DASHBOARD — kart izgarasi
+   DASHBOARD — finans masasi yerlesimi
    --------------------------------------------------------------------------
-   Yerlesim (yukaridan asagi):
+   Yukaridan asagi:
      .ust-bar / .piyasa-serit  -> sade ust bar + ince piyasa seridi
-     .kpi-grid                 -> 5 ayri KPI karti
+     .kisayol-serit            -> 8 islem, tek satir, yatay kaydirma
+     .kpi-grid                 -> 9 KPI karti (5 + 4)
      .bugun-serit              -> KPI'larin altinda ince ozet serit
-     .db-grid                  -> 12 kolonlu kart izgarasi
+     .db-govde                 -> 12 kolon: .db-sol (8) + .db-sag (4)
+       .db-sol                 -> 2 kolonlu grafik duvari
+       .db-sag                 -> tek kolon aksiyon paneli
 
    Kartlar kendi cercevelerini cizer (`DashboardKart`); izgara aralarinda ek
-   cizgi yoktur, yalnizca 16px bosluk vardir. Dosya `views/Dashboard.vue`
+   cizgi yoktur, yalnizca 12px bosluk vardir. Dosya `views/Dashboard.vue`
    icinde <style src> ile GLOBAL yuklenir.
    ========================================================================== */
 
 .dashboard-container {
-  max-width: 1560px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 20px 24px 32px;
+  padding: 16px 20px 28px;
   min-width: 0;
 }
 
@@ -32,35 +35,85 @@
   }
 }
 
-/* Kartlar arasi dikey ritim */
+/* Kartlar arasi dikey ritim — finans masasi yogunlugu. */
+.dashboard-container .kisayol-serit {
+  margin-bottom: 12px;
+}
 .dashboard-container .kpi-grid {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .dashboard-container .bugun-serit {
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
-.dashboard-container .db-grid {
-  margin-top: 2px;
+.dashboard-container .db-govde {
+  margin-top: 0;
 }
 
-/* --- Ana izgara: 12 kolon ------------------------------------------------ */
-.db-grid {
+/* --- Govde: 12 kolon, 8 + 4 --------------------------------------------- */
+.db-govde {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
   align-items: start;
   min-width: 0;
 }
 
-/* Kart genislikleri anahtara gore sabittir (bkz. utils/dashboardDuzen.js) */
-.db-kart-alan--8 {
+/* Sol bolge: 2 kolonlu grafik duvari. */
+.db-sol {
   grid-column: span 8;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+  min-width: 0;
 }
-.db-kart-alan--4 {
+.db-sol .db-kart-alan--2 {
+  grid-column: span 2;
+}
+.db-sol .db-kart-alan--1 {
+  grid-column: span 1;
+}
+
+/* Sag bolge: tek kolon aksiyon paneli. */
+.db-sag {
   grid-column: span 4;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
 }
-.db-kart-alan--12 {
-  grid-column: span 12;
+.db-sol > *,
+.db-sag > * {
+  min-width: 0;
+}
+
+/* --- Stok degeri kart alt ozeti ----------------------------------------- */
+.stok-ozet {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.stok-ozet-kalem {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+.stok-ozet-etiket {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.stok-ozet-deger {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* --- Onboarding --------------------------------------------------------- */
@@ -114,43 +167,46 @@
 }
 
 /* --- Duyarli kirilimlar -------------------------------------------------- */
-/* 1200 alti: tum kartlar 6 kolon; uc genis kart 12 kolon.
-   `dense` bosluk birakmaz: 12 kolonluk kart araya girdiginde kalan yarim
-   satiri bir sonraki 6 kolonluk kart doldurur. */
+/*
+ * 1200 alti: sag panel alta iner; sol grafik duvari tek kolona duser.
+ * (Kartlar arasi 12px bosluk ve tam genislik korunur.)
+ */
 @media (max-width: 1199px) {
-  .db-grid {
-    grid-auto-flow: row dense;
+  .db-govde {
+    grid-template-columns: minmax(0, 1fr);
   }
-  .db-kart-alan--8,
-  .db-kart-alan--4 {
-    grid-column: span 6;
+  .db-sol,
+  .db-sag {
+    grid-column: 1 / -1;
   }
-  .db-grid > [data-widget="gorevler"],
-  .db-grid > [data-widget="nakitAkisi"],
-  .db-grid > [data-widget="aylikGelirGider"] {
-    grid-column: span 12;
+  .db-sol {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .db-sol .db-kart-alan--1,
+  .db-sol .db-kart-alan--2 {
+    grid-column: span 1;
   }
 }
 
-/* 760 alti: tek kolon. */
+/* 760 alti: her sey tek kolon. */
 @media (max-width: 759px) {
-  .db-kart-alan--8,
-  .db-kart-alan--4,
-  .db-kart-alan--12,
-  .db-grid > [data-widget] {
-    grid-column: span 12;
+  .db-govde,
+  .db-sol {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 @media (max-width: 900px) {
   .dashboard-container {
-    padding: 16px 16px 24px;
+    padding: 12px 12px 20px;
   }
 }
 
 @media (max-width: 600px) {
-  .db-grid {
-    gap: 12px;
+  .db-govde,
+  .db-sol,
+  .db-sag {
+    gap: 10px;
   }
 }
 

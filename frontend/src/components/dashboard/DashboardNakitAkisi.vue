@@ -38,7 +38,7 @@
       <div
         class="nakit-grafik"
         data-test="nakit-grafik"
-        :style="{ height: '200px' }"
+        :style="{ height: '160px' }"
       >
         <Line
           :data="veri"
@@ -122,7 +122,7 @@ const { t } = useI18n()
 const ARALIKLAR = [7, 30]
 
 /**
- * Grafik yalnizca gercek bir hareket varsa cizilir. Aksi halde 200px'lik bos
+ * Grafik yalnizca gercek bir hareket varsa cizilir. Aksi halde 160px'lik bos
  * grafik alani yerine 120px'lik kompakt bos durum gosterilir.
  */
 const veriVar = computed(() => {
@@ -166,7 +166,7 @@ const veriVar = computed(() => {
 .nakit-grafik {
   position: relative;
   width: 100%;
-  height: 200px;
+  height: 160px;
   min-width: 0;
 }
 .nakit-grafik--iskelet {
