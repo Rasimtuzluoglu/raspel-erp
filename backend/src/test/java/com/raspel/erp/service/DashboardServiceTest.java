@@ -30,6 +30,7 @@ import com.raspel.erp.service.finans.HareketService;
 import com.raspel.erp.repository.finans.BankaRepository;
 import com.raspel.erp.repository.finans.KasaRepository;
 import com.raspel.erp.repository.finans.MasrafRepository;
+import com.raspel.erp.repository.finans.ButceRepository;
 import com.raspel.erp.repository.ik.PersonelIzinRepository;
 import com.raspel.erp.repository.ik.PersonelMasrafTalepRepository;
 import com.raspel.erp.repository.ik.PersonelRepository;
@@ -48,6 +49,8 @@ import com.raspel.erp.repository.ticaret.IadeRepository;
 import com.raspel.erp.entity.envanter.Stok;
 import com.raspel.erp.entity.envanter.StokHareket;
 import com.raspel.erp.entity.finans.Hareket;
+import com.raspel.erp.entity.finans.Butce;
+import com.raspel.erp.entity.finans.Masraf;
 import com.raspel.erp.entity.sistem.OnayKarar;
 import com.raspel.erp.entity.sistem.Sirket;
 import com.raspel.erp.entity.sistem.SirketHedef;
@@ -74,6 +77,7 @@ class DashboardServiceTest {
     @Mock private BankaRepository bankaRepository;
     @Mock private KasaRepository kasaRepository;
     @Mock private MasrafRepository masrafRepository;
+    @Mock private ButceRepository butceRepository;
     @Mock private IadeRepository iadeRepository;
     @Mock private SirketHedefRepository sirketHedefRepository;
     @Mock private SirketRepository sirketRepository;
@@ -329,6 +333,107 @@ class DashboardServiceTest {
         assertEquals(4, grafik.getAlacakYaslandirma().size());
         assertEquals(0, grafik.getKasaBanka().getKasa().compareTo(BigDecimal.ZERO));
         assertEquals(0, grafik.getHedef().getCiro().compareTo(BigDecimal.ZERO));
+        assertTrue(grafik.getSiparisDurumlari().isEmpty());
+        assertTrue(grafik.getButceGerceklesen().isEmpty());
+        assertNotNull(grafik.getStokDegeri());
+        assertEquals(0, grafik.getStokDegeri().getToplamDeger().compareTo(BigDecimal.ZERO));
+        assertEquals(0L, grafik.getStokDegeri().getKritikAdet());
+        assertTrue(grafik.getStokDegeri().getKategoriler().isEmpty());
+    }
+
+    @Test
+    void grafikler_siparisDurumDagiliminiAdetAzalanDoner() {
+        when(siparisRepository.durumDagilimi(1L)).thenReturn(List.of(
+                new Object[]{"TESLIM_EDILDI", 5L},
+                new Object[]{"TEKLIF", 3L},
+                new Object[]{null, 1L}));
+
+        var grafik = dashboardService.grafiklerGetir(1L);
+
+        assertEquals(3, grafik.getSiparisDurumlari().size());
+        assertEquals("TESLIM_EDILDI", grafik.getSiparisDurumlari().get(0).getDurum());
+        assertEquals(5L, grafik.getSiparisDurumlari().get(0).getAdet());
+        assertEquals("TEKLIF", grafik.getSiparisDurumlari().get(1).getDurum());
+        // Durumu boş kayıt uydurma bir durum adı değil, tek "DIGER" dilimi olur.
+        assertEquals("DIGER", grafik.getSiparisDurumlari().get(2).getDurum());
+        assertEquals(1L, grafik.getSiparisDurumlari().get(2).getAdet());
+    }
+
+    @Test
+    void grafikler_butceGercekleseniBirlestirirVeAltiIleSinirlar() {
+        int yil = LocalDate.now().getYear();
+        int ay = LocalDate.now().getMonthValue();
+        int oncekiAy = ay == 1 ? 12 : ay - 1;
+
+        when(butceRepository.findBySirketIdAndYilAndTurOrderByKategoriAscAyAsc(1L, yil, "GIDER"))
+                .thenReturn(List.of(
+                        butce(yil, ay, "Kira", 1000),
+                        butce(yil, ay, " kira ", 500),
+                        butce(yil, ay, "Personel", 900),
+                        butce(yil, ay, "Yazılım", 800),
+                        butce(yil, ay, "Enerji", 700),
+                        butce(yil, ay, "Kargo", 600),
+                        butce(yil, ay, "Diğer", 500),
+                        butce(yil, ay, "Pazarlama", 400),
+                        // Önceki ayın bütçesi grafiğe girmez.
+                        butce(yil, oncekiAy, "Eski Ay", 9999)));
+
+        when(masrafRepository.findBySirketIdAndTarihBetween(eq(1L), any(), any()))
+                .thenReturn(List.of(
+                        masraf(" KIRA ", 200),
+                        masraf("Reklam", 2000)));
+
+        var grafik = dashboardService.grafiklerGetir(1L);
+        var satirlar = grafik.getButceGerceklesen();
+
+        // 9 bütçe + 1 masraf kategorisi -> en çok 6 dilim.
+        assertEquals(6, satirlar.size());
+        // Sıralama max(bütçe, gerçekleşen) azalan.
+        assertEquals("Reklam", satirlar.get(0).getKategori());
+        assertEquals(0, satirlar.get(0).getButce().compareTo(BigDecimal.ZERO));
+        assertEquals(0, satirlar.get(0).getGerceklesen().compareTo(BigDecimal.valueOf(2000)));
+        // "Kira" + " kira " büyük/küçük harf ve boşluk duyarsız birleşir.
+        assertEquals("Kira", satirlar.get(1).getKategori());
+        assertEquals(0, satirlar.get(1).getButce().compareTo(BigDecimal.valueOf(1500)));
+        assertEquals(0, satirlar.get(1).getGerceklesen().compareTo(BigDecimal.valueOf(200)));
+        assertEquals(List.of("Reklam", "Kira", "Personel", "Yazılım", "Enerji", "Kargo"),
+                satirlar.stream().map(g -> g.getKategori()).toList());
+        assertTrue(satirlar.stream().noneMatch(g -> "Eski Ay".equals(g.getKategori())));
+    }
+
+    @Test
+    void grafikler_stokDegeriVeKategoriDagiliminiDoner() {
+        when(stokRepository.toplamStokDegeriBySirketId(1L)).thenReturn(BigDecimal.valueOf(50000));
+        when(stokRepository.countKritikStokBySirketId(1L)).thenReturn(7L);
+        when(stokRepository.kategoriDegerDagilimi(eq(1L), any())).thenReturn(List.of(
+                new Object[]{"Gıda", BigDecimal.valueOf(30000), 12L},
+                new Object[]{"Temizlik", BigDecimal.valueOf(20000), 5L}));
+
+        var stok = dashboardService.grafiklerGetir(1L).getStokDegeri();
+
+        assertEquals(0, stok.getToplamDeger().compareTo(BigDecimal.valueOf(50000)));
+        assertEquals(7L, stok.getKritikAdet());
+        assertEquals(2, stok.getKategoriler().size());
+        assertEquals("Gıda", stok.getKategoriler().get(0).getKategori());
+        assertEquals(0, stok.getKategoriler().get(0).getDeger().compareTo(BigDecimal.valueOf(30000)));
+        assertEquals(12L, stok.getKategoriler().get(0).getAdet());
+        // Limit DB'de uygulanır: en değerli 6 kategori istenir.
+        verify(stokRepository).kategoriDegerDagilimi(1L, PageRequest.of(0, 6));
+    }
+
+    private Butce butce(int yil, int ay, String kategori, long tutar) {
+        return Butce.builder()
+                .yil(yil).ay(ay).tur("GIDER").kategori(kategori)
+                .tutar(BigDecimal.valueOf(tutar))
+                .build();
+    }
+
+    private Masraf masraf(String kategori, long tutar) {
+        return Masraf.builder()
+                .tarih(LocalDate.now().withDayOfMonth(1))
+                .kategori(kategori)
+                .tutar(BigDecimal.valueOf(tutar))
+                .build();
     }
 
     @Test

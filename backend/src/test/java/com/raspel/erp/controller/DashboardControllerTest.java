@@ -141,12 +141,33 @@ class DashboardControllerTest {
                         .aralik("Vadesi Geçti").tutar(BigDecimal.TEN).build()))
                 .kasaBanka(DashboardGrafikDTO.KasaBankaDTO.builder()
                         .kasa(BigDecimal.valueOf(100)).banka(BigDecimal.valueOf(200)).build())
+                .siparisDurumlari(List.of(DashboardGrafikDTO.SiparisDurumDTO.builder()
+                        .durum("TEKLIF").adet(3L).build()))
+                .butceGerceklesen(List.of(DashboardGrafikDTO.ButceGerceklesenDTO.builder()
+                        .kategori("Kira").butce(BigDecimal.valueOf(1000))
+                        .gerceklesen(BigDecimal.valueOf(1200)).build()))
+                .stokDegeri(DashboardGrafikDTO.StokDegeriDTO.builder()
+                        .toplamDeger(BigDecimal.valueOf(50000))
+                        .kritikAdet(4L)
+                        .kategoriler(List.of(DashboardGrafikDTO.StokKategoriDTO.builder()
+                                .kategori("Gıda").deger(BigDecimal.valueOf(30000)).adet(12L).build()))
+                        .build())
                 .build());
 
         mockMvc.perform(get("/api/dashboard/grafikler").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.alacakYaslandirma[0].aralik").value("Vadesi Geçti"))
-                .andExpect(jsonPath("$.kasaBanka.kasa").value(100));
+                .andExpect(jsonPath("$.kasaBanka.kasa").value(100))
+                .andExpect(jsonPath("$.siparisDurumlari[0].durum").value("TEKLIF"))
+                .andExpect(jsonPath("$.siparisDurumlari[0].adet").value(3))
+                .andExpect(jsonPath("$.butceGerceklesen[0].kategori").value("Kira"))
+                .andExpect(jsonPath("$.butceGerceklesen[0].butce").value(1000))
+                .andExpect(jsonPath("$.butceGerceklesen[0].gerceklesen").value(1200))
+                .andExpect(jsonPath("$.stokDegeri.toplamDeger").value(50000))
+                .andExpect(jsonPath("$.stokDegeri.kritikAdet").value(4))
+                .andExpect(jsonPath("$.stokDegeri.kategoriler[0].kategori").value("Gıda"))
+                .andExpect(jsonPath("$.stokDegeri.kategoriler[0].deger").value(30000))
+                .andExpect(jsonPath("$.stokDegeri.kategoriler[0].adet").value(12));
     }
 
     @Test

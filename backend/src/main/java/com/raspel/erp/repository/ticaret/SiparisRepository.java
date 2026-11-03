@@ -83,4 +83,14 @@ public interface SiparisRepository extends JpaRepository<Siparis, Long> {
            "WHERE s.sirketId = :sirketId AND s.durum IN :durumlar")
     java.math.BigDecimal sumTutarBySirketIdAndDurumIn(@Param("sirketId") Long sirketId,
                                                       @Param("durumlar") java.util.Collection<String> durumlar);
+
+    /**
+     * Anasayfa finans masası: sipariş durum dağılımı (adet azalan).
+     *
+     * <p>Durumu boş kayıtlar tek "DIGER" diliminde toplanır; bu eşleme servis
+     * tarafında yapılır ki sorgu tek gruplama ile kalsın.
+     */
+    @Query("SELECT s.durum, COUNT(s) FROM Siparis s WHERE s.sirketId = :sirketId " +
+           "GROUP BY s.durum ORDER BY COUNT(s) DESC")
+    List<Object[]> durumDagilimi(@Param("sirketId") Long sirketId);
 }

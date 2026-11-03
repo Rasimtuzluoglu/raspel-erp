@@ -39,11 +39,13 @@ import com.raspel.erp.repository.envanter.StokRepository;
 import com.raspel.erp.repository.finans.BankaRepository;
 import com.raspel.erp.repository.finans.KasaRepository;
 import com.raspel.erp.repository.finans.MasrafRepository;
+import com.raspel.erp.repository.finans.ButceRepository;
 import com.raspel.erp.repository.sistem.OnayKararRepository;
 import com.raspel.erp.repository.sistem.SirketHedefRepository;
 import com.raspel.erp.repository.sistem.SirketRepository;
 import com.raspel.erp.repository.ticaret.IadeRepository;
 import com.raspel.erp.entity.finans.Masraf;
+import com.raspel.erp.entity.finans.Butce;
 import com.raspel.erp.entity.sistem.SirketHedef;
 
 /**
@@ -67,6 +69,12 @@ public class DashboardService {
     private static final List<String> ODEME_KAPALI_DURUMLAR = List.of("ODENDI", "IPTAL");
     /** Akış ucunda dönebilecek en fazla olay. */
     private static final int AKIS_MAKS_LIMIT = 50;
+    /** Finans masası grafiklerinde dönen en fazla kategori dilimi. */
+    private static final int GRAFIK_KATEGORI_LIMIT = 6;
+    /** Bütçe türü: gider (GELIR/GIDER). */
+    private static final String BUTCE_TUR_GIDER = "GIDER";
+    /** Durumu tanımsız siparişlerin grafik etiketi. */
+    private static final String SIPARIS_DURUM_DIGER = "DIGER";
 
     private final CariHesapService cariHesapService;
     private final HareketService hareketService;
@@ -84,6 +92,7 @@ public class DashboardService {
     private final BankaRepository bankaRepository;
     private final KasaRepository kasaRepository;
     private final MasrafRepository masrafRepository;
+    private final ButceRepository butceRepository;
     private final IadeRepository iadeRepository;
     private final SirketHedefRepository sirketHedefRepository;
     private final SirketRepository sirketRepository;
@@ -440,7 +449,136 @@ public class DashboardService {
                         .kar(hedef.gerceklesenKar())
                         .hedefKar(hedef.hedefKar())
                         .build())
+                .siparisDurumlari(siparisDurumlariHesapla(sirketId))
+                .butceGerceklesen(butceGerceklesenHesapla(sirketId))
+                .stokDegeri(stokDegeriHesapla(sirketId))
                 .build();
+    }
+
+    /**
+     * Sipariş durum dağılımı. Adet azalan sıralıdır; durumu boş kayıtlar tek
+     * "DIGER" diliminde toplanır (uydurma durum adı üretilmez).
+     */
+    private List<DashboardGrafikDTO.SiparisDurumDTO> siparisDurumlariHesapla(Long sirketId) {
+        List<Object[]> satirlar = safeGetList(() -> siparisRepository.durumDagilimi(sirketId), Collections.emptyList());
+
+        Map<String, Long> adetler = new LinkedHashMap<>();
+        for (Object[] satir : satirlar) {
+            String durum = satir[0] != null && !((String) satir[0]).isBlank()
+                    ? ((String) satir[0]).trim()
+                    : SIPARIS_DURUM_DIGER;
+            adetler.merge(durum, uzun(satir[1]), Long::sum);
+        }
+        return adetler.entrySet().stream()
+                .map(entry -> DashboardGrafikDTO.SiparisDurumDTO.builder()
+                        .durum(entry.getKey())
+                        .adet(entry.getValue())
+                        .build())
+                .sorted(Comparator.comparing(DashboardGrafikDTO.SiparisDurumDTO::getAdet).reversed())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Bu yıl/ayın GIDER bütçeleri ile aynı ayın gerçekleşen masraflarını
+     * kategori bazında birleştirir.
+     *
+     * <p>Kategori eşleşmesi büyük/küçük harf duyarsız ve kırpılmış metinle
+     * yapılır ("Gıda" / "gıda" aynı dilim). Bütçesi veya gerçekleşeni olan
+     * kategoriler döner; sıralama {@code max(bütçe, gerçekleşen)} azalan,
+     * ilk {@value #GRAFIK_KATEGORI_LIMIT} dilim.
+     */
+    private List<DashboardGrafikDTO.ButceGerceklesenDTO> butceGerceklesenHesapla(Long sirketId) {
+        LocalDate bugun = LocalDate.now();
+        LocalDate ayBas = bugun.withDayOfMonth(1);
+        LocalDate aySon = bugun.withDayOfMonth(bugun.lengthOfMonth());
+
+        // Yıl + tür DB'de filtrelenir; ay filtresi servis tarafında uygulanır.
+        List<Butce> butceler = safeGetList(
+                () -> butceRepository.findBySirketIdAndYilAndTurOrderByKategoriAscAyAsc(
+                        sirketId, bugun.getYear(), BUTCE_TUR_GIDER),
+                Collections.emptyList());
+        List<Masraf> masraflar = safeGetList(
+                () -> masrafRepository.findBySirketIdAndTarihBetween(sirketId, ayBas, aySon),
+                Collections.emptyList());
+
+        // Anahtar: kırpılmış + küçük harf; değer: kullanıcıya gösterilecek yazım.
+        Map<String, String> gorunenAdlar = new LinkedHashMap<>();
+        Map<String, BigDecimal> butceTutarlari = new HashMap<>();
+        for (Butce butce : butceler) {
+            if (butce.getAy() == null || butce.getAy() != bugun.getMonthValue()) {
+                continue;
+            }
+            String anahtar = kategoriAnahtari(butce.getKategori());
+            if (anahtar == null) {
+                continue;
+            }
+            gorunenAdlar.putIfAbsent(anahtar, butce.getKategori().trim());
+            butceTutarlari.merge(anahtar, nz(butce.getTutar()), BigDecimal::add);
+        }
+
+        Map<String, BigDecimal> gerceklesenTutarlari = new HashMap<>();
+        for (Masraf masraf : masraflar) {
+            String anahtar = kategoriAnahtari(masraf.getKategori());
+            if (anahtar == null) {
+                continue;
+            }
+            gorunenAdlar.putIfAbsent(anahtar, masraf.getKategori().trim());
+            gerceklesenTutarlari.merge(anahtar, nz(masraf.getTutar()), BigDecimal::add);
+        }
+
+        List<DashboardGrafikDTO.ButceGerceklesenDTO> sonuc = new ArrayList<>();
+        for (Map.Entry<String, String> giris : gorunenAdlar.entrySet()) {
+            BigDecimal butce = nz(butceTutarlari.get(giris.getKey()));
+            BigDecimal gerceklesen = nz(gerceklesenTutarlari.get(giris.getKey()));
+            if (butce.compareTo(BigDecimal.ZERO) == 0 && gerceklesen.compareTo(BigDecimal.ZERO) == 0) {
+                continue;
+            }
+            sonuc.add(DashboardGrafikDTO.ButceGerceklesenDTO.builder()
+                    .kategori(giris.getValue())
+                    .butce(butce)
+                    .gerceklesen(gerceklesen)
+                    .build());
+        }
+
+        return sonuc.stream()
+                .sorted(Comparator.comparing((DashboardGrafikDTO.ButceGerceklesenDTO d) ->
+                                d.getButce().max(d.getGerceklesen()))
+                        .reversed()
+                        .thenComparing(DashboardGrafikDTO.ButceGerceklesenDTO::getKategori))
+                .limit(GRAFIK_KATEGORI_LIMIT)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Stok değeri özeti (toplam + kritik adet) ve kategori dağılımı.
+     * Dağılım DB'de değere göre azalan ve LIMIT'li gelir.
+     */
+    private DashboardGrafikDTO.StokDegeriDTO stokDegeriHesapla(Long sirketId) {
+        BigDecimal toplamDeger = nz(safeGet(
+                () -> stokRepository.toplamStokDegeriBySirketId(sirketId), BigDecimal.ZERO));
+        Long kritikAdet = safeGet(() -> stokRepository.countKritikStokBySirketId(sirketId), 0L);
+
+        List<DashboardGrafikDTO.StokKategoriDTO> kategoriler = safeGetList(
+                () -> stokRepository.kategoriDegerDagilimi(sirketId, PageRequest.of(0, GRAFIK_KATEGORI_LIMIT))
+                        .stream()
+                        .map(satir -> DashboardGrafikDTO.StokKategoriDTO.builder()
+                                .kategori(satir[0] != null ? (String) satir[0] : "")
+                                .deger(sayi(satir[1]))
+                                .adet(uzun(satir[2]))
+                                .build())
+                        .collect(Collectors.toList()),
+                Collections.emptyList());
+
+        return DashboardGrafikDTO.StokDegeriDTO.builder()
+                .toplamDeger(toplamDeger)
+                .kritikAdet(kritikAdet)
+                .kategoriler(kategoriler)
+                .build();
+    }
+
+    /** Kategori eşleştirme anahtarı; boş kategori {@code null} döner (adsız dilim üretilmez). */
+    private String kategoriAnahtari(String kategori) {
+        return kategori == null || kategori.isBlank() ? null : kategori.trim().toLowerCase(Locale.ROOT);
     }
 
     // ==================================================================
@@ -857,6 +995,19 @@ public class DashboardService {
 
     private BigDecimal nz(BigDecimal deger) {
         return deger != null ? deger : BigDecimal.ZERO;
+    }
+
+    /** Sorgu sonucundaki sayıyı BigDecimal'a çevirir (sürücüye göre tip değişebilir). */
+    private BigDecimal sayi(Object deger) {
+        if (deger == null) {
+            return BigDecimal.ZERO;
+        }
+        return deger instanceof BigDecimal bd ? bd : new BigDecimal(deger.toString());
+    }
+
+    /** Sorgu sonucundaki sayıyı long'a çevirir (COUNT sürücüye göre farklı tip dönebilir). */
+    private long uzun(Object deger) {
+        return deger instanceof Number sayi ? sayi.longValue() : 0L;
     }
 
     private String onayTurEtiketi(String tur) {

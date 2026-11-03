@@ -142,6 +142,20 @@ public interface StokRepository extends JpaRepository<Stok, Long> {
     List<Object[]> stokGrubuDagilimi(@Param("sirketId") Long sirketId);
 
     /**
+     * Anasayfa finans masası: kategori bazında stok değeri (miktar × fiyat)
+     * ve ürün adedi.
+     *
+     * <p>Değere göre azalan sıralanır; en değerli kategoriler için LIMIT
+     * {@link Pageable} ile gelir. Böylece tüm stoklar entity olarak yüklenmez.
+     */
+    @Query("SELECT COALESCE(s.kategori, ''), "
+            + "COALESCE(SUM(COALESCE(s.miktar, 0) * COALESCE(s.fiyat, 0)), 0), COUNT(s) "
+            + "FROM Stok s WHERE s.sirketId = :sirketId AND s.kategori IS NOT NULL "
+            + "GROUP BY s.kategori "
+            + "ORDER BY SUM(COALESCE(s.miktar, 0) * COALESCE(s.fiyat, 0)) DESC")
+    List<Object[]> kategoriDegerDagilimi(@Param("sirketId") Long sirketId, Pageable pageable);
+
+    /**
      * Marka dağılımı (değer + ürün sayısı), tüm katalogdan.
      *
      * <p>POS filtre panelindeki marka listesi önceden yüklenen sayfadan
