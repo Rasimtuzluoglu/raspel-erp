@@ -23,6 +23,15 @@
      kenarlara daha fazla yaslanmasi icin hafif negatif marj. */
   padding: 0 0 24px;
   min-width: 0;
+  /* Hafif derinlik: kartlarin arkasinda cok soluk bir marka isigi. */
+  background:
+    radial-gradient(900px 300px at 10% -80px, color-mix(in srgb, var(--accent) 7%, transparent), transparent 70%);
+  border-radius: 16px;
+}
+
+[data-theme='light'] .dashboard-container {
+  background:
+    radial-gradient(900px 300px at 10% -80px, rgba(13, 148, 136, 0.05), transparent 70%);
 }
 
 @media (min-width: 1200px) {

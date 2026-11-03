@@ -111,11 +111,20 @@ const seviyeIkonu = (seviye) => {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 4px;
+  padding: 7px 4px 7px 9px;
   border-radius: 8px;
   color: inherit;
   text-decoration: none;
   transition: background var(--dur-base, 0.2s) var(--ease-standard, ease);
+}
+.icgoru-satir--bilgi {
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.icgoru-satir--uyari {
+  box-shadow: inset 2px 0 0 var(--warning);
+}
+.icgoru-satir--kritik {
+  box-shadow: inset 2px 0 0 var(--danger);
 }
 a.icgoru-satir:hover {
   background: var(--bg-muted);

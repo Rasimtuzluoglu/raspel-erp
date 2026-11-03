@@ -108,8 +108,9 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 7px 4px;
+  padding: 7px 4px 7px 9px;
   border-radius: 8px;
+  box-shadow: inset 2px 0 0 var(--warning);
   min-width: 0;
   color: inherit;
   text-decoration: none;

@@ -66,14 +66,34 @@ const linkEtiketi = computed(() => props.linkMetin || t('dashboard.detayaGit'))
  * ek cizgi cizilmez.
  */
 .db-kart {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 10px;
   min-width: 0;
   padding: 14px;
   border: 1px solid var(--border);
-  border-radius: 13px;
+  border-radius: 14px;
   background: var(--bg-card);
+  box-shadow: var(--elev-1);
+  transition:
+    border-color var(--dur-base, 0.2s) var(--ease-standard, ease),
+    box-shadow var(--dur-base, 0.2s) var(--ease-standard, ease);
+}
+/* Ustte ince vurgu cizgisi: kartlara ortak premium kimlik. */
+.db-kart::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent 72%);
+  opacity: 0.55;
+  pointer-events: none;
+}
+.db-kart:hover {
+  border-color: var(--accent-border);
+  box-shadow: var(--elev-2);
 }
 .db-kart-ust {
   display: flex;
@@ -81,6 +101,8 @@ const linkEtiketi = computed(() => props.linkMetin || t('dashboard.detayaGit'))
   gap: 8px;
   min-height: 22px;
   min-width: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
 }
 .db-kart-baslik {
   display: flex;
@@ -88,7 +110,7 @@ const linkEtiketi = computed(() => props.linkMetin || t('dashboard.detayaGit'))
   gap: 8px;
   margin: 0;
   min-width: 0;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 700;
   line-height: 1.2;
   color: var(--text-primary);

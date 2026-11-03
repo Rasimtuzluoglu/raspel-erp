@@ -70,11 +70,15 @@ const kisayollar = [
   text-decoration: none;
   white-space: nowrap;
   transition: border-color var(--dur-base, 0.2s) var(--ease-standard, ease),
-    color var(--dur-base, 0.2s) var(--ease-standard, ease);
+    color var(--dur-base, 0.2s) var(--ease-standard, ease),
+    box-shadow var(--dur-base, 0.2s) var(--ease-standard, ease),
+    transform var(--dur-base, 0.2s) var(--ease-standard, ease);
 }
 .kisayol:hover {
   border-color: var(--accent-border);
   color: var(--text-primary);
+  box-shadow: var(--elev-1);
+  transform: translateY(-1px);
 }
 .kisayol:focus-visible {
   outline: 2px solid var(--accent);

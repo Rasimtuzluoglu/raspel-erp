@@ -426,6 +426,8 @@ const karSinifi = computed(() => {
   min-width: 0;
 }
 .kpi-kart {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -435,12 +437,52 @@ const karSinifi = computed(() => {
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--bg-card);
+  box-shadow: var(--elev-1);
   color: inherit;
   text-decoration: none;
-  transition: border-color var(--dur-base, 0.2s) var(--ease-standard, ease);
+  transition:
+    border-color var(--dur-base, 0.2s) var(--ease-standard, ease),
+    box-shadow var(--dur-base, 0.2s) var(--ease-standard, ease),
+    transform var(--dur-base, 0.2s) var(--ease-standard, ease);
+}
+/* Her KPI'nin ustunde kendi anlam rengiyle ince cizgi. */
+.kpi-kart::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: var(--kpi-vurgu, var(--accent));
+  opacity: 0.8;
+  pointer-events: none;
+}
+.kpi-kart--iskelet::before {
+  display: none;
 }
 .kpi-kart--link:hover {
   border-color: var(--accent-border);
+  box-shadow: var(--elev-2);
+  transform: translateY(-1px);
+}
+.kpi-kart--likidite,
+.kpi-kart--tahsilat {
+  --kpi-vurgu: var(--success);
+}
+.kpi-kart--alacak {
+  --kpi-vurgu: #0ea5e9;
+}
+.kpi-kart--borc,
+.kpi-kart--odeme {
+  --kpi-vurgu: var(--danger);
+}
+.kpi-kart--ciro,
+.kpi-kart--siparis {
+  --kpi-vurgu: #3b82f6;
+}
+.kpi-kart--kar {
+  --kpi-vurgu: #8b5cf6;
+}
+.kpi-kart--stok {
+  --kpi-vurgu: #f59e0b;
 }
 .kpi-kart--link:focus-visible {
   outline: 2px solid var(--accent);
