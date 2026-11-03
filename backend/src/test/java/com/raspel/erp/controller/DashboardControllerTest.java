@@ -8,6 +8,7 @@ import com.raspel.erp.dto.sistem.DashboardGrafikDTO;
 import com.raspel.erp.dto.sistem.DashboardIcgoruDTO;
 import com.raspel.erp.dto.sistem.DashboardOzetDTO;
 import com.raspel.erp.dto.sistem.DashboardTercihDTO;
+import com.raspel.erp.dto.sistem.DashboardVadeDTO;
 import com.raspel.erp.service.sistem.DashboardService;
 import com.raspel.erp.service.sistem.DashboardTercihService;
 import org.junit.jupiter.api.AfterEach;
@@ -24,6 +25,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.context.annotation.Import;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -84,7 +86,7 @@ class DashboardControllerTest {
                 .gorevSayilari(DashboardOzetDTO.GorevSayilariDTO.builder()
                         .onayBekleyen(5L).vadesiGecen(2L).build())
                 .build();
-        when(dashboardService.ozetGetir(1L, 5L, "Ali Veli", "USER")).thenReturn(dto);
+        when(dashboardService.ozetGetir(1L, 5L, "Ali Veli", "USER", "BU_AY")).thenReturn(dto);
 
         mockMvc.perform(get("/api/dashboard/ozet")
                         .requestAttr("sirketId", 1L)
@@ -98,8 +100,86 @@ class DashboardControllerTest {
     }
 
     @Test
+    void ozet_donemParametresiniIletir() throws Exception {
+        when(dashboardService.ozetGetir(eq(1L), any(), any(), any(), eq("GECEN_AY")))
+                .thenReturn(DashboardOzetDTO.builder()
+                        .donem(DashboardOzetDTO.DonemDTO.builder()
+                                .kod("GECEN_AY")
+                                .baslangic(LocalDate.of(2026, 10, 1))
+                                .bitis(LocalDate.of(2026, 10, 31))
+                                .etiket("Geçen Ay")
+                                .build())
+                        .kpi(DashboardOzetDTO.KpiDTO.builder()
+                                .ciro(DashboardOzetDTO.CiroDTO.builder()
+                                        .deger(BigDecimal.valueOf(5000))
+                                        .onceki(BigDecimal.valueOf(4000))
+                                        .degisimYuzde(BigDecimal.valueOf(25.0))
+                                        .build())
+                                .build())
+                        .build());
+
+        mockMvc.perform(get("/api/dashboard/ozet")
+                        .param("donem", "GECEN_AY")
+                        .requestAttr("sirketId", 1L)
+                        .requestAttr("kullaniciId", 5L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.donem.kod").value("GECEN_AY"))
+                .andExpect(jsonPath("$.donem.etiket").value("Geçen Ay"))
+                .andExpect(jsonPath("$.kpi.ciro.onceki").value(4000))
+                .andExpect(jsonPath("$.kpi.ciro.degisimYuzde").value(25.0));
+
+        verify(dashboardService).ozetGetir(eq(1L), eq(5L), any(), any(), eq("GECEN_AY"));
+    }
+
+    @Test
     void ozet_sirketYoksa400Doner() throws Exception {
         mockMvc.perform(get("/api/dashboard/ozet"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(dashboardService);
+    }
+
+    @Test
+    void vadeler_parametreleriIletirVeSatirlariDoner() throws Exception {
+        LocalDate bas = LocalDate.of(2026, 11, 1);
+        LocalDate bit = LocalDate.of(2026, 11, 30);
+        when(dashboardService.vadelerGetir(1L, bas, bit)).thenReturn(List.of(
+                DashboardVadeDTO.builder()
+                        .faturaId(10L).faturaNumarasi("F-10").cariAd("Cari A")
+                        .vadeTarihi(bas.plusDays(4))
+                        .kalanTutar(BigDecimal.valueOf(600))
+                        .geciktiMi(true)
+                        .build()));
+
+        mockMvc.perform(get("/api/dashboard/vadeler")
+                        .param("baslangic", "2026-11-01")
+                        .param("bitis", "2026-11-30")
+                        .requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].faturaId").value(10))
+                .andExpect(jsonPath("$[0].faturaNumarasi").value("F-10"))
+                .andExpect(jsonPath("$[0].cariAd").value("Cari A"))
+                .andExpect(jsonPath("$[0].vadeTarihi").value("2026-11-05"))
+                .andExpect(jsonPath("$[0].kalanTutar").value(600))
+                .andExpect(jsonPath("$[0].geciktiMi").value(true));
+
+        verify(dashboardService).vadelerGetir(1L, bas, bit);
+    }
+
+    @Test
+    void vadeler_parametreYoksaNullIletir() throws Exception {
+        when(dashboardService.vadelerGetir(1L, null, null)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/dashboard/vadeler").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+
+        verify(dashboardService).vadelerGetir(1L, null, null);
+    }
+
+    @Test
+    void vadeler_sirketYoksa400Doner() throws Exception {
+        mockMvc.perform(get("/api/dashboard/vadeler"))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(dashboardService);

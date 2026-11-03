@@ -5,6 +5,8 @@ import com.raspel.erp.dto.sistem.DashboardAkisDTO;
 import com.raspel.erp.dto.sistem.DashboardGorevDTO;
 import com.raspel.erp.dto.sistem.DashboardIcgoruDTO;
 import com.raspel.erp.dto.sistem.DashboardOzetDTO;
+import com.raspel.erp.dto.sistem.DashboardVadeDTO;
+import com.raspel.erp.repository.ticaret.VadeTakvimProjeksiyon;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -612,5 +614,249 @@ class DashboardServiceTest {
         assertTrue(icgoruler.stream().allMatch(i -> "WARN".equals(i.getSeviye())));
         assertTrue(icgoruler.stream().anyMatch(i -> i.getRoute().equals("/stoklar?kritik=1")));
         assertTrue(icgoruler.stream().anyMatch(i -> i.getRoute().equals("/kasa")));
+    }
+
+    // ------------------------------------------------------------------
+    // /ozet?donem=
+    // ------------------------------------------------------------------
+
+    private Fatura satisFaturasi(long tutar) {
+        return Fatura.builder().tur(Fatura.FaturaTur.SATIS)
+                .durum(Fatura.FaturaDurum.KESILDI).genelToplam(BigDecimal.valueOf(tutar)).build();
+    }
+
+    private Fatura alisFaturasi(long tutar) {
+        return Fatura.builder().tur(Fatura.FaturaTur.ALIS)
+                .durum(Fatura.FaturaDurum.KESILDI).genelToplam(BigDecimal.valueOf(tutar)).build();
+    }
+
+    /** Özet için kullanılan tarih aralıklarını yakalar (ilk çağrı dönem, ikinci çağrı önceki dönem). */
+    private void araliklariDogrula(LocalDate beklenenBas, LocalDate beklenenBit,
+                                   LocalDate beklenenOncekiBas, LocalDate beklenenOncekiBit) {
+        var basCap = org.mockito.ArgumentCaptor.forClass(LocalDate.class);
+        var bitCap = org.mockito.ArgumentCaptor.forClass(LocalDate.class);
+        verify(faturaRepository, times(2)).findBySirketIdAndTarihBetween(eq(1L), basCap.capture(), bitCap.capture());
+        assertEquals(List.of(beklenenBas, beklenenOncekiBas), basCap.getAllValues());
+        assertEquals(List.of(beklenenBit, beklenenOncekiBit), bitCap.getAllValues());
+    }
+
+    @Test
+    void ozetDonem_buAyAraliginiVeOncekiAyiKullanir() {
+        LocalDate bugun = LocalDate.now();
+        LocalDate ayBas = bugun.withDayOfMonth(1);
+        LocalDate aySon = bugun.withDayOfMonth(bugun.lengthOfMonth());
+        LocalDate gecenAyBas = ayBas.minusMonths(1);
+        LocalDate gecenAySon = ayBas.minusDays(1);
+
+        when(faturaRepository.findBySirketIdAndTarihBetween(eq(1L), any(), any()))
+                .thenReturn(List.of(satisFaturasi(5000), alisFaturasi(1000)))
+                .thenReturn(List.of(satisFaturasi(4000)));
+        when(masrafRepository.findBySirketIdAndTarihBetween(eq(1L), any(), any())).thenReturn(List.of());
+
+        DashboardOzetDTO ozet = dashboardService.ozetGetir(1L, 9L, "Ali", "ADMIN", "BU_AY");
+
+        assertEquals("BU_AY", ozet.getDonem().getKod());
+        assertEquals("Bu Ay", ozet.getDonem().getEtiket());
+        assertEquals(ayBas, ozet.getDonem().getBaslangic());
+        assertEquals(aySon, ozet.getDonem().getBitis());
+
+        assertEquals(0, ozet.getKpi().getCiro().getDeger().compareTo(BigDecimal.valueOf(5000)));
+        assertEquals(0, ozet.getKpi().getCiro().getOnceki().compareTo(BigDecimal.valueOf(4000)));
+        // (5000 - 4000) / 4000 * 100 = 25
+        assertEquals(0, ozet.getKpi().getCiro().getDegisimYuzde().compareTo(BigDecimal.valueOf(25.0)));
+
+        assertEquals(0, ozet.getKpi().getKar().getDeger().compareTo(BigDecimal.valueOf(4000)));
+        assertEquals(0, ozet.getKpi().getKar().getOnceki().compareTo(BigDecimal.valueOf(4000)));
+        assertEquals(0, ozet.getKpi().getKar().getDegisimYuzde().compareTo(BigDecimal.ZERO));
+
+        araliklariDogrula(ayBas, aySon, gecenAyBas, gecenAySon);
+    }
+
+    @Test
+    void ozetDonem_gecenAyiVeIkiAyOncekiAraligiKullanir() {
+        LocalDate bugun = LocalDate.now();
+        LocalDate bas = bugun.minusMonths(1).withDayOfMonth(1);
+        LocalDate bit = bas.withDayOfMonth(bas.lengthOfMonth());
+
+        DashboardOzetDTO ozet = dashboardService.ozetGetir(1L, 9L, "Ali", "ADMIN", "gecen_ay");
+
+        // Kod büyük harfe normalize edilir.
+        assertEquals("GECEN_AY", ozet.getDonem().getKod());
+        assertEquals("Geçen Ay", ozet.getDonem().getEtiket());
+        assertEquals(bas, ozet.getDonem().getBaslangic());
+        assertEquals(bit, ozet.getDonem().getBitis());
+        // Diğer dönemlerde aylık hedef yoktur.
+        assertNull(ozet.getKpi().getCiro().getHedef());
+        assertNull(ozet.getKpi().getCiro().getYuzde());
+        assertNull(ozet.getKpi().getKar().getHedef());
+        verifyNoInteractions(sirketHedefRepository);
+
+        araliklariDogrula(bas, bit, bas.minusMonths(1), bas.minusDays(1));
+    }
+
+    @Test
+    void ozetDonem_buCeyrekAraliginiVeOncekiCeyregiKullanir() {
+        LocalDate bugun = LocalDate.now();
+        int ilkAy = ((bugun.getMonthValue() - 1) / 3) * 3 + 1;
+        LocalDate bas = LocalDate.of(bugun.getYear(), ilkAy, 1);
+        LocalDate bit = bas.plusMonths(3).minusDays(1);
+
+        DashboardOzetDTO ozet = dashboardService.ozetGetir(1L, 9L, "Ali", "ADMIN", "BU_CEYREK");
+
+        assertEquals("BU_CEYREK", ozet.getDonem().getKod());
+        assertEquals("Bu Çeyrek", ozet.getDonem().getEtiket());
+        assertEquals(bas, ozet.getDonem().getBaslangic());
+        assertEquals(bit, ozet.getDonem().getBitis());
+        assertNull(ozet.getKpi().getCiro().getHedef());
+
+        araliklariDogrula(bas, bit, bas.minusMonths(3), bas.minusDays(1));
+    }
+
+    @Test
+    void ozetDonem_buYilAraliginiVeGecenYiliKullanir() {
+        int yil = LocalDate.now().getYear();
+        LocalDate bas = LocalDate.of(yil, 1, 1);
+        LocalDate bit = LocalDate.of(yil, 12, 31);
+
+        DashboardOzetDTO ozet = dashboardService.ozetGetir(1L, 9L, "Ali", "ADMIN", "BU_YIL");
+
+        assertEquals("BU_YIL", ozet.getDonem().getKod());
+        assertEquals("Bu Yıl", ozet.getDonem().getEtiket());
+        assertEquals(bas, ozet.getDonem().getBaslangic());
+        assertEquals(bit, ozet.getDonem().getBitis());
+        assertNull(ozet.getKpi().getKar().getHedef());
+
+        araliklariDogrula(bas, bit, bas.minusYears(1), bit.minusYears(1));
+    }
+
+    @Test
+    void ozetDonem_gecersizDonemBusinessExceptionFirlatir() {
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> dashboardService.ozetGetir(1L, 9L, "Ali", "ADMIN", "DUN"));
+        verifyNoInteractions(faturaRepository, masrafRepository, sirketHedefRepository);
+    }
+
+    @Test
+    void ozetDonem_bosDonemBuAyaDuser() {
+        DashboardOzetDTO ozet = dashboardService.ozetGetir(1L, 9L, "Ali", "ADMIN", " ");
+
+        assertEquals("BU_AY", ozet.getDonem().getKod());
+    }
+
+    @Test
+    void ozetDonem_oncekiSifirsaDegisimYuzdeNullDoner() {
+        when(faturaRepository.findBySirketIdAndTarihBetween(eq(1L), any(), any()))
+                .thenReturn(List.of(satisFaturasi(5000)))
+                .thenReturn(List.of());
+
+        DashboardOzetDTO ozet = dashboardService.ozetGetir(1L, 9L, "Ali", "ADMIN", "BU_AY");
+
+        assertEquals(0, ozet.getKpi().getCiro().getOnceki().compareTo(BigDecimal.ZERO));
+        assertNull(ozet.getKpi().getCiro().getDegisimYuzde());
+        assertNull(ozet.getKpi().getKar().getDegisimYuzde());
+    }
+
+    @Test
+    void ozetDonem_hedefYalnizcaBuAydaDolu() {
+        when(sirketHedefRepository.findBySirketIdAndYilAndAy(eq(1L), any(), any()))
+                .thenReturn(Optional.of(SirketHedef.builder()
+                        .hedefCiro(BigDecimal.valueOf(10000))
+                        .hedefKar(BigDecimal.valueOf(2000))
+                        .build()));
+
+        DashboardOzetDTO buAy = dashboardService.ozetGetir(1L, 9L, "Ali", "ADMIN", "BU_AY");
+        DashboardOzetDTO buYil = dashboardService.ozetGetir(1L, 9L, "Ali", "ADMIN", "BU_YIL");
+
+        assertEquals(0, buAy.getKpi().getCiro().getHedef().compareTo(BigDecimal.valueOf(10000)));
+        assertEquals(0, buAy.getKpi().getCiro().getYuzde().compareTo(BigDecimal.ZERO));
+        assertEquals(0, buAy.getKpi().getKar().getHedef().compareTo(BigDecimal.valueOf(2000)));
+        assertNull(buYil.getKpi().getCiro().getHedef());
+        assertNull(buYil.getKpi().getCiro().getYuzde());
+        assertNull(buYil.getKpi().getKar().getHedef());
+    }
+
+    // ------------------------------------------------------------------
+    // /vadeler
+    // ------------------------------------------------------------------
+
+    private VadeTakvimProjeksiyon projeksiyon(Long id, String numara, String cariAd, LocalDate vade,
+                                              long genelToplam, long odenen) {
+        return new VadeTakvimProjeksiyon() {
+            @Override public Long getFaturaId() { return id; }
+            @Override public String getFaturaNumarasi() { return numara; }
+            @Override public String getCariAd() { return cariAd; }
+            @Override public LocalDate getVadeTarihi() { return vade; }
+            @Override public BigDecimal getGenelToplam() { return BigDecimal.valueOf(genelToplam); }
+            @Override public BigDecimal getOdenenTutar() { return BigDecimal.valueOf(odenen); }
+        };
+    }
+
+    @Test
+    void vadeler_projeksiyonuDtoYaCevirirKalanTutarVeGecikmeBayragi() {
+        LocalDate bugun = LocalDate.now();
+        when(faturaRepository.vadeTakvimi(eq(1L), eq(Fatura.FaturaDurum.KESILDI), any(), any(), any(), any()))
+                .thenReturn(List.of(
+                        projeksiyon(10L, "F-10", "Cari A", bugun.minusDays(2), 1000, 400),
+                        projeksiyon(11L, "F-11", "Cari B", bugun, 500, 500),
+                        projeksiyon(12L, "F-12", "Cari C", bugun.plusDays(3), 300, 0)));
+        LocalDate bas = bugun.minusDays(5);
+        LocalDate bit = bugun.plusDays(10);
+
+        List<DashboardVadeDTO> vadeler = dashboardService.vadelerGetir(1L, bas, bit);
+
+        assertEquals(3, vadeler.size());
+        assertEquals(10L, vadeler.get(0).getFaturaId());
+        assertEquals("F-10", vadeler.get(0).getFaturaNumarasi());
+        assertEquals("Cari A", vadeler.get(0).getCariAd());
+        assertEquals(bugun.minusDays(2), vadeler.get(0).getVadeTarihi());
+        assertEquals(0, vadeler.get(0).getKalanTutar().compareTo(BigDecimal.valueOf(600)));
+        assertTrue(vadeler.get(0).getGeciktiMi());
+        // Vadesi bugün olan fatura gecikmiş sayılmaz.
+        assertFalse(vadeler.get(1).getGeciktiMi());
+        assertFalse(vadeler.get(2).getGeciktiMi());
+
+        verify(faturaRepository).vadeTakvimi(eq(1L), eq(Fatura.FaturaDurum.KESILDI),
+                eq(List.of("ODENDI", "IPTAL")), eq(bas), eq(bit), eq(PageRequest.of(0, 200)));
+    }
+
+    @Test
+    void vadeler_varsayilanAralikIcindeBulunulanAydir() {
+        LocalDate bugun = LocalDate.now();
+        when(faturaRepository.vadeTakvimi(eq(1L), any(), any(), any(), any(), any())).thenReturn(List.of());
+
+        dashboardService.vadelerGetir(1L, null, null);
+
+        verify(faturaRepository).vadeTakvimi(eq(1L), eq(Fatura.FaturaDurum.KESILDI), any(),
+                eq(bugun.withDayOfMonth(1)),
+                eq(bugun.withDayOfMonth(bugun.lengthOfMonth())),
+                eq(PageRequest.of(0, 200)));
+    }
+
+    @Test
+    void vadeler_tenantYoksaBusinessExceptionFirlatir() {
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> dashboardService.vadelerGetir(null, LocalDate.now(), LocalDate.now().plusDays(1)));
+        verifyNoInteractions(faturaRepository);
+    }
+
+    @Test
+    void vadeler_baslangicBitisdenSonraysaBusinessExceptionFirlatir() {
+        LocalDate bas = LocalDate.now();
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> dashboardService.vadelerGetir(1L, bas, bas.minusDays(1)));
+        verifyNoInteractions(faturaRepository);
+    }
+
+    @Test
+    void vadeler_93GunSiniriniUygular() {
+        LocalDate bas = LocalDate.now();
+        when(faturaRepository.vadeTakvimi(eq(1L), any(), any(), any(), any(), any())).thenReturn(List.of());
+
+        // 93 gün dahil kabul edilir.
+        assertDoesNotThrow(() -> dashboardService.vadelerGetir(1L, bas, bas.plusDays(92)));
+        // 94 gün reddedilir.
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> dashboardService.vadelerGetir(1L, bas, bas.plusDays(93)));
     }
 }

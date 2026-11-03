@@ -6,8 +6,10 @@ import com.raspel.erp.dto.sistem.DashboardGorevDTO;
 import com.raspel.erp.dto.sistem.DashboardGrafikDTO;
 import com.raspel.erp.dto.sistem.DashboardIcgoruDTO;
 import com.raspel.erp.dto.sistem.DashboardOzetDTO;
+import com.raspel.erp.dto.sistem.DashboardVadeDTO;
 import com.raspel.erp.dto.finans.HareketDTO;
 import com.raspel.erp.entity.finans.Hareket;
+import com.raspel.erp.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -19,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.raspel.erp.service.finans.CariHesapService;
@@ -44,6 +47,7 @@ import com.raspel.erp.repository.sistem.OnayKararRepository;
 import com.raspel.erp.repository.sistem.SirketHedefRepository;
 import com.raspel.erp.repository.sistem.SirketRepository;
 import com.raspel.erp.repository.ticaret.IadeRepository;
+import com.raspel.erp.repository.ticaret.VadeTakvimProjeksiyon;
 import com.raspel.erp.entity.finans.Masraf;
 import com.raspel.erp.entity.finans.Butce;
 import com.raspel.erp.entity.sistem.SirketHedef;
@@ -69,6 +73,12 @@ public class DashboardService {
     private static final List<String> ODEME_KAPALI_DURUMLAR = List.of("ODENDI", "IPTAL");
     /** Akış ucunda dönebilecek en fazla olay. */
     private static final int AKIS_MAKS_LIMIT = 50;
+    /** Vade takviminde dönebilecek en fazla fatura. */
+    private static final int VADE_MAKS_KAYIT = 200;
+    /** Vade takvimi aralığının azami kapsamı (gün, dahil). */
+    private static final long VADE_MAKS_GUN = 93;
+    /** KPI dönemi varsayılanı (geriye uyum). */
+    private static final String DONEM_VARSAYILAN = "BU_AY";
     /** Finans masası grafiklerinde dönen en fazla kategori dilimi. */
     private static final int GRAFIK_KATEGORI_LIMIT = 6;
     /** Bütçe türü: gider (GELIR/GIDER). */
@@ -245,14 +255,26 @@ public class DashboardService {
      *
      * <p>Yalnızca COUNT/SUM ve tek sorguluk seriler kullanılır; hiçbir liste
      * entity olarak yüklenmez. Hero kullanıcı adı taşıdığı için cache anahtarı
-     * kullanıcıyı da içerir (roller arası isim sızmasını önler).
+     * kullanıcıyı da içerir (roller arası isim sızmasını önler). Dönem seçimi
+     * de anahtara girer; aksi halde farklı dönemler aynı cache kaydını paylaşır.
+     *
+     * @param donem {@code BU_AY} (varsayılan), {@code GECEN_AY},
+     *              {@code BU_CEYREK} veya {@code BU_YIL}
      */
     @Transactional(readOnly = true)
-    @Cacheable(value = "dashboard", key = "'ozet:' + #sirketId + ':' + #rol + ':' + #kullaniciId")
-    public DashboardOzetDTO ozetGetir(Long sirketId, Long kullaniciId, String kullaniciAd, String rol) {
-        log.debug("Dashboard ozeti hazirlaniyor... sirketId: {}, rol: {}", sirketId, rol);
+    @Cacheable(value = "dashboard", key = "'ozet:' + #sirketId + ':' + #rol + ':' + #kullaniciId + ':' + #donem")
+    public DashboardOzetDTO ozetGetir(Long sirketId, Long kullaniciId, String kullaniciAd, String rol, String donem) {
+        log.debug("Dashboard ozeti hazirlaniyor... sirketId: {}, rol: {}, donem: {}", sirketId, rol, donem);
 
-        HedefVerisi hedef = hedefVerisiHesapla(sirketId);
+        DonemAraligi aralik = donemAraligiCoz(donem);
+        DonemGerceklesen simdiki = donemGerceklesenHesapla(sirketId, aralik.baslangic(), aralik.bitis());
+        DonemGerceklesen onceki = donemGerceklesenHesapla(sirketId, aralik.oncekiBaslangic(), aralik.oncekiBitis());
+
+        // Aylık hedef yalnızca BU_AY için tanımlıdır; diğer dönemlerde hedef yoktur.
+        HedefKaydi hedef = DONEM_VARSAYILAN.equals(aralik.kod()) ? hedefKaydiGetir(sirketId) : null;
+        BigDecimal hedefCiro = hedef != null ? hedef.hedefCiro() : null;
+        BigDecimal hedefKar = hedef != null ? hedef.hedefKar() : null;
+
         KasaBanka kasaBanka = kasaBankaHesapla(sirketId);
         BigDecimal likidite = nz(kasaBanka.kasa()).add(nz(kasaBanka.banka()));
 
@@ -267,7 +289,7 @@ public class DashboardService {
         BigDecimal netCari = alacak.subtract(borc);
 
         long kritikStok = safeGet(() -> stokRepository.countKritikStokBySirketId(sirketId), 0L);
-        BigDecimal marj = yuzde(hedef.gerceklesenKar(), hedef.gerceklesenCiro());
+        BigDecimal marj = yuzde(simdiki.kar(), simdiki.ciro());
 
         String sirketAd = safeGet(() -> sirketRepository.findById(sirketId).map(s -> s.getAd()).orElse(null), null);
 
@@ -311,14 +333,18 @@ public class DashboardService {
                                 .borc(borc)
                                 .build())
                         .ciro(DashboardOzetDTO.CiroDTO.builder()
-                                .deger(hedef.gerceklesenCiro())
-                                .hedef(hedef.hedefCiro())
-                                .yuzde(yuzde(hedef.gerceklesenCiro(), hedef.hedefCiro()))
+                                .deger(simdiki.ciro())
+                                .hedef(hedefCiro)
+                                .yuzde(hedef != null ? yuzde(simdiki.ciro(), hedefCiro) : null)
+                                .onceki(onceki.ciro())
+                                .degisimYuzde(degisimYuzde(simdiki.ciro(), onceki.ciro()))
                                 .build())
                         .kar(DashboardOzetDTO.KarDTO.builder()
-                                .deger(hedef.gerceklesenKar())
-                                .hedef(hedef.hedefKar())
+                                .deger(simdiki.kar())
+                                .hedef(hedefKar)
                                 .marj(marj)
+                                .onceki(onceki.kar())
+                                .degisimYuzde(degisimYuzde(simdiki.kar(), onceki.kar()))
                                 .build())
                         .build())
                 .stok(DashboardOzetDTO.StokDTO.builder()
@@ -333,7 +359,62 @@ public class DashboardService {
                         .bekleyenTeslimat(bekleyenTeslimat)
                         .vadesiYaklasan(vadesiYaklasan)
                         .build())
+                .donem(DashboardOzetDTO.DonemDTO.builder()
+                        .kod(aralik.kod())
+                        .baslangic(aralik.baslangic())
+                        .bitis(aralik.bitis())
+                        .etiket(aralik.etiket())
+                        .build())
                 .build();
+    }
+
+    /** Geriye uyum: dönem verilmezse {@code BU_AY}. */
+    public DashboardOzetDTO ozetGetir(Long sirketId, Long kullaniciId, String kullaniciAd, String rol) {
+        return ozetGetir(sirketId, kullaniciId, kullaniciAd, rol, DONEM_VARSAYILAN);
+    }
+
+    // ==================================================================
+    // Vade takvimi
+    // ==================================================================
+
+    /**
+     * Vadesi verilen aralığa düşen açık faturalar (vade takvimi).
+     *
+     * <p>Kapsam: {@code KESILDI} durumlu ve ödeme durumu {@code ODENDI}/{@code IPTAL}
+     * olmayan faturalar. Tenant zorunludur; aralık en fazla
+     * {@value #VADE_MAKS_GUN} gün (dahil) ve sonuç en fazla
+     * {@value #VADE_MAKS_KAYIT} satırdır. Sıralama vade tarihine göre artandır.
+     */
+    @Transactional(readOnly = true)
+    public List<DashboardVadeDTO> vadelerGetir(Long sirketId, LocalDate baslangic, LocalDate bitis) {
+        if (sirketId == null) {
+            throw new BusinessException("Şirket bilgisi bulunamadı");
+        }
+        LocalDate bas = baslangic != null ? baslangic : LocalDate.now().withDayOfMonth(1);
+        LocalDate bit = bitis != null ? bitis : LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
+        if (bas.isAfter(bit)) {
+            throw new BusinessException("Başlangıç tarihi bitiş tarihinden sonra olamaz");
+        }
+        if (ChronoUnit.DAYS.between(bas, bit) + 1 > VADE_MAKS_GUN) {
+            throw new BusinessException("Vade aralığı en fazla " + VADE_MAKS_GUN + " gün olabilir");
+        }
+
+        LocalDate bugun = LocalDate.now();
+        List<VadeTakvimProjeksiyon> satirlar = safeGetList(
+                () -> faturaRepository.vadeTakvimi(sirketId, Fatura.FaturaDurum.KESILDI,
+                        ODEME_KAPALI_DURUMLAR, bas, bit, PageRequest.of(0, VADE_MAKS_KAYIT)),
+                Collections.emptyList());
+
+        return satirlar.stream()
+                .map(s -> DashboardVadeDTO.builder()
+                        .faturaId(s.getFaturaId())
+                        .faturaNumarasi(s.getFaturaNumarasi())
+                        .cariAd(s.getCariAd())
+                        .vadeTarihi(s.getVadeTarihi())
+                        .kalanTutar(nz(s.getGenelToplam()).subtract(nz(s.getOdenenTutar())))
+                        .geciktiMi(s.getVadeTarihi() != null && s.getVadeTarihi().isBefore(bugun))
+                        .build())
+                .toList();
     }
 
     // ==================================================================
@@ -907,34 +988,107 @@ public class DashboardService {
      * kullanır; masraf ve alış maliyeti tek fatura listesinden türetilir.
      */
     private HedefVerisi hedefVerisiHesapla(Long sirketId) {
-        LocalDate ayBas = LocalDate.now().withDayOfMonth(1);
-        LocalDate aySon = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
+        LocalDate bugun = LocalDate.now();
+        LocalDate ayBas = bugun.withDayOfMonth(1);
+        LocalDate aySon = bugun.withDayOfMonth(bugun.lengthOfMonth());
 
+        HedefKaydi hedef = hedefKaydiGetir(sirketId);
+        DonemGerceklesen gerceklesen = donemGerceklesenHesapla(sirketId, ayBas, aySon);
+        return new HedefVerisi(hedef.hedefCiro(), gerceklesen.ciro(), hedef.hedefKar(), gerceklesen.kar());
+    }
+
+    /** Cari yıl/ay hedef kaydı; kayıt yoksa sıfır hedefler döner. */
+    private HedefKaydi hedefKaydiGetir(Long sirketId) {
+        LocalDate bugun = LocalDate.now();
         Optional<SirketHedef> hedefOpt = safeGet(
-                () -> sirketHedefRepository.findBySirketIdAndYilAndAy(sirketId, LocalDate.now().getYear(), LocalDate.now().getMonthValue()),
+                () -> sirketHedefRepository.findBySirketIdAndYilAndAy(sirketId, bugun.getYear(), bugun.getMonthValue()),
                 Optional.empty());
-        BigDecimal hedefCiro = hedefOpt.map(SirketHedef::getHedefCiro).orElse(BigDecimal.ZERO);
-        BigDecimal hedefKar = hedefOpt.map(SirketHedef::getHedefKar).orElse(BigDecimal.ZERO);
+        return new HedefKaydi(
+                hedefOpt.map(SirketHedef::getHedefCiro).orElse(BigDecimal.ZERO),
+                hedefOpt.map(SirketHedef::getHedefKar).orElse(BigDecimal.ZERO));
+    }
 
-        // Ayın faturaları tek sorguyla çekilir; ciro ve alış maliyeti aynı listeden hesaplanır.
-        final List<Fatura> ayFaturalari = safeGetList(
-                () -> faturaRepository.findBySirketIdAndTarihBetween(sirketId, ayBas, aySon),
+    /**
+     * Verilen tarih aralığında gerçekleşen ciro ve kâr (tek fatura listesi).
+     *
+     * <p>Ciro = {@code SATIS + KESILDI} faturaların genel toplamı; kâr =
+     * ciro − {@code ALIS + KESILDI} faturalar − aynı aralıktaki masraflar.
+     */
+    private DonemGerceklesen donemGerceklesenHesapla(Long sirketId, LocalDate baslangic, LocalDate bitis) {
+        final List<Fatura> faturalar = safeGetList(
+                () -> faturaRepository.findBySirketIdAndTarihBetween(sirketId, baslangic, bitis),
                 Collections.emptyList());
-        BigDecimal gerceklesenCiro = ayFaturalari.stream()
+        BigDecimal ciro = faturalar.stream()
                 .filter(f -> f.getTur() == Fatura.FaturaTur.SATIS && f.getDurum() == Fatura.FaturaDurum.KESILDI)
                 .map(f -> f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal toplamAlisMaliyeti = ayFaturalari.stream()
+        BigDecimal toplamAlisMaliyeti = faturalar.stream()
                 .filter(f -> f.getTur() == Fatura.FaturaTur.ALIS && f.getDurum() == Fatura.FaturaDurum.KESILDI)
                 .map(f -> f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal toplamMasraflar = safeGet(() -> masrafRepository.findBySirketIdAndTarihBetween(sirketId, ayBas, aySon).stream()
+        BigDecimal toplamMasraflar = safeGet(() -> masrafRepository.findBySirketIdAndTarihBetween(sirketId, baslangic, bitis).stream()
                 .map(Masraf::getTutar).filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add), BigDecimal.ZERO);
 
-        BigDecimal gerceklesenKar = gerceklesenCiro.subtract(toplamAlisMaliyeti).subtract(toplamMasraflar);
-        return new HedefVerisi(hedefCiro, gerceklesenCiro, hedefKar, gerceklesenKar);
+        return new DonemGerceklesen(ciro, ciro.subtract(toplamAlisMaliyeti).subtract(toplamMasraflar));
+    }
+
+    /**
+     * Dönem kodunu (ve bir önceki eşdeğer dönemi) tarih aralığına çevirir.
+     * {@code null}/boş → {@code BU_AY}; bilinmeyen kod 400 (BusinessException).
+     */
+    private DonemAraligi donemAraligiCoz(String donem) {
+        DonemKodu kod;
+        try {
+            kod = donem == null || donem.isBlank()
+                    ? DonemKodu.BU_AY
+                    : DonemKodu.valueOf(donem.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException("Geçersiz dönem: " + donem);
+        }
+
+        LocalDate bugun = LocalDate.now();
+        return switch (kod) {
+            case BU_AY -> {
+                LocalDate bas = bugun.withDayOfMonth(1);
+                yield aralik(kod, "Bu Ay", bas, bugun.withDayOfMonth(bugun.lengthOfMonth()));
+            }
+            case GECEN_AY -> {
+                LocalDate bas = bugun.minusMonths(1).withDayOfMonth(1);
+                yield aralik(kod, "Geçen Ay", bas, bas.withDayOfMonth(bas.lengthOfMonth()));
+            }
+            case BU_CEYREK -> {
+                int ilkAy = ((bugun.getMonthValue() - 1) / 3) * 3 + 1;
+                LocalDate bas = LocalDate.of(bugun.getYear(), ilkAy, 1);
+                yield aralik(kod, "Bu Çeyrek", bas, bas.plusMonths(3).minusDays(1));
+            }
+            case BU_YIL -> {
+                LocalDate bas = LocalDate.of(bugun.getYear(), 1, 1);
+                yield aralik(kod, "Bu Yıl", bas, LocalDate.of(bugun.getYear(), 12, 31));
+            }
+        };
+    }
+
+    /** Dönem aralığını ve bir önceki eşdeğer dönemi kurar. */
+    private DonemAraligi aralik(DonemKodu kod, String etiket, LocalDate bas, LocalDate bit) {
+        LocalDate oncekiBas;
+        LocalDate oncekiBit;
+        switch (kod) {
+            case BU_YIL -> {
+                oncekiBas = bas.minusYears(1);
+                oncekiBit = bit.minusYears(1);
+            }
+            case BU_CEYREK -> {
+                oncekiBas = bas.minusMonths(3);
+                oncekiBit = bas.minusDays(1);
+            }
+            default -> {
+                oncekiBas = bas.minusMonths(1);
+                oncekiBit = bas.minusDays(1);
+            }
+        }
+        return new DonemAraligi(kod.name(), etiket, bas, bit, oncekiBas, oncekiBit);
     }
 
     /** İade oranı: dönem satış iadesi tutarının satış cirosuna oranı (yüzde). */
@@ -991,6 +1145,19 @@ public class DashboardService {
         return payda != null && payda.compareTo(BigDecimal.ZERO) > 0
                 ? nz(pay).multiply(BigDecimal.valueOf(100)).divide(payda, 1, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
+    }
+
+    /**
+     * Önceki döneme göre yüzde değişim: {@code (deger − onceki) / |onceki| × 100}.
+     * Önceki değer yoksa veya 0 ise oran tanımsızdır → {@code null} (UI rozeti gizler).
+     */
+    private BigDecimal degisimYuzde(BigDecimal deger, BigDecimal onceki) {
+        if (onceki == null || onceki.compareTo(BigDecimal.ZERO) == 0) {
+            return null;
+        }
+        return nz(deger).subtract(onceki)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(onceki.abs(), 1, RoundingMode.HALF_UP);
     }
 
     private BigDecimal nz(BigDecimal deger) {
@@ -1051,6 +1218,24 @@ public class DashboardService {
     /** Hedef/gerçekleşen ciro ve kâr çifti (tek hesaplama, çok tüketici). */
     private record HedefVerisi(BigDecimal hedefCiro, BigDecimal gerceklesenCiro,
                                BigDecimal hedefKar, BigDecimal gerceklesenKar) {
+    }
+
+    /** Aylık hedef kaydı (kayıt yoksa sıfırlar). */
+    private record HedefKaydi(BigDecimal hedefCiro, BigDecimal hedefKar) {
+    }
+
+    /** Bir tarih aralığında gerçekleşen ciro ve kâr. */
+    private record DonemGerceklesen(BigDecimal ciro, BigDecimal kar) {
+    }
+
+    /** KPI döneminin tarih aralığı ve bir önceki eşdeğer dönem. */
+    private record DonemAraligi(String kod, String etiket, LocalDate baslangic, LocalDate bitis,
+                                LocalDate oncekiBaslangic, LocalDate oncekiBitis) {
+    }
+
+    /** Desteklenen KPI dönemleri. */
+    private enum DonemKodu {
+        BU_AY, GECEN_AY, BU_CEYREK, BU_YIL
     }
 
     /** Kasa + banka bakiyeleri. */

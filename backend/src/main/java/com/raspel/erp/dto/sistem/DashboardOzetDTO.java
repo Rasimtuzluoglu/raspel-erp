@@ -3,6 +3,7 @@ package com.raspel.erp.dto.sistem;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -22,6 +23,23 @@ public class DashboardOzetDTO {
     private KpiDTO kpi;
     private StokDTO stok;
     private GorevSayilariDTO gorevSayilari;
+    /** Seçili KPI dönemi (varsayılan BU_AY). */
+    private DonemDTO donem;
+
+    /**
+     * KPI dönemi. {@code kod}: BU_AY | GECEN_AY | BU_CEYREK | BU_YIL.
+     * Likidite/net cari/stok anlık değerlerdir, dönemden etkilenmez.
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class DonemDTO {
+        private String kod;
+        private LocalDate baslangic;
+        private LocalDate bitis;
+        private String etiket;
+    }
 
     @Data
     @NoArgsConstructor
@@ -88,6 +106,10 @@ public class DashboardOzetDTO {
         private BigDecimal deger;
         private BigDecimal hedef;
         private BigDecimal yuzde;
+        /** Bir önceki eşdeğer dönemin cirosu. */
+        private BigDecimal onceki;
+        /** Önceki döneme göre yüzde değişim; önceki 0 ise null. */
+        private BigDecimal degisimYuzde;
     }
 
     @Data
@@ -98,6 +120,10 @@ public class DashboardOzetDTO {
         private BigDecimal deger;
         private BigDecimal hedef;
         private BigDecimal marj;
+        /** Bir önceki eşdeğer dönemin kârı. */
+        private BigDecimal onceki;
+        /** Önceki döneme göre yüzde değişim; önceki 0 ise null. */
+        private BigDecimal degisimYuzde;
     }
 
     @Data

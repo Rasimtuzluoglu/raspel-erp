@@ -208,6 +208,28 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
                                                    @Param("bitis") java.time.LocalDate bitis);
 
     /**
+     * Anasayfa vade takvimi: vadesi aralığa düşen, kesilmiş ve ödeme durumu
+     * kapanmamış (ODENDI/IPTAL dışı) faturaların minimal projeksiyonu.
+     *
+     * <p>Entity grafiği yüklenmez; {@code LEFT JOIN} ile yalnızca cari adı
+     * okunur. Sonuç vade tarihine göre artan sıralıdır ve {@code pageable} ile
+     * sınırlandırılır (en fazla 200 satır).
+     */
+    @Query("SELECT f.id AS faturaId, f.faturaNumarasi AS faturaNumarasi, c.ad AS cariAd, " +
+            "f.vadeTarihi AS vadeTarihi, f.genelToplam AS genelToplam, f.odenenTutar AS odenenTutar " +
+            "FROM Fatura f LEFT JOIN f.cariHesap c " +
+            "WHERE f.sirketId = :sirketId AND f.durum = :durum " +
+            "AND f.odemeDurumu NOT IN :odemeDurumlari " +
+            "AND f.vadeTarihi BETWEEN :baslangic AND :bitis " +
+            "ORDER BY f.vadeTarihi ASC, f.id ASC")
+    List<VadeTakvimProjeksiyon> vadeTakvimi(@Param("sirketId") Long sirketId,
+                                            @Param("durum") Fatura.FaturaDurum durum,
+                                            @Param("odemeDurumlari") java.util.List<String> odemeDurumlari,
+                                            @Param("baslangic") java.time.LocalDate baslangic,
+                                            @Param("bitis") java.time.LocalDate bitis,
+                                            Pageable pageable);
+
+    /**
      * Vadesi yaklaşan (bugün + ileriye dönük) ve kalan tutarı olan faturalar.
      */
     @Query("SELECT f FROM Fatura f WHERE f.sirketId = :sirketId AND f.durum = :durum " +

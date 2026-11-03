@@ -7,12 +7,14 @@ import com.raspel.erp.dto.sistem.DashboardGrafikDTO;
 import com.raspel.erp.dto.sistem.DashboardIcgoruDTO;
 import com.raspel.erp.dto.sistem.DashboardOzetDTO;
 import com.raspel.erp.dto.sistem.DashboardTercihDTO;
+import com.raspel.erp.dto.sistem.DashboardVadeDTO;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.service.sistem.DashboardService;
 import com.raspel.erp.service.sistem.DashboardTercihService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.GrantedAuthority;
@@ -21,6 +23,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -60,12 +63,27 @@ public class DashboardController {
     // ------------------------------------------------------------------
 
     @GetMapping("/ozet")
-    @Operation(summary = "Anasayfa hızlı özeti", description = "Hero, bugün şeridi, KPI'lar, stok ve görev sayaçlarını döndürür")
-    public ResponseEntity<DashboardOzetDTO> ozetGetir(HttpServletRequest request) {
+    @Operation(summary = "Anasayfa hızlı özeti", description = "Hero, bugün şeridi, dönem KPI'ları, stok ve görev sayaçlarını döndürür")
+    public ResponseEntity<DashboardOzetDTO> ozetGetir(
+            HttpServletRequest request,
+            @RequestParam(defaultValue = "BU_AY") String donem) {
         Long sirketId = sirketId(request);
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         return ResponseEntity.ok(dashboardService.ozetGetir(
-                sirketId, kullaniciId, kullaniciAdi(request), aktifRol()));
+                sirketId, kullaniciId, kullaniciAdi(request), aktifRol(), donem));
+    }
+
+    /**
+     * Vade takvimi. Varsayılan aralık içinde bulunulan ayın ilk/son günüdür.
+     * Tenant zorunludur; aralık en fazla 93 gün olabilir (400).
+     */
+    @GetMapping("/vadeler")
+    @Operation(summary = "Vade takvimi", description = "Vadesi aralığa düşen açık faturaları vade tarihine göre artan döndürür")
+    public ResponseEntity<List<DashboardVadeDTO>> vadelerGetir(
+            HttpServletRequest request,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bitis) {
+        return ResponseEntity.ok(dashboardService.vadelerGetir(sirketId(request), baslangic, bitis));
     }
 
     @GetMapping("/gorevler")
