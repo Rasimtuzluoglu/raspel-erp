@@ -97,3 +97,79 @@ describe('DashboardKpiGrid — 9 kart', () => {
     expect(wrapper.find('[data-test="kpi-stok-degeri"]').text()).toContain('12')
   })
 })
+
+describe('DashboardKpiGrid — dönem, trend ve hedef', () => {
+  it('ciro ve kâr kartlarında önceki döneme göre trend rozeti gösterir', () => {
+    const wrapper = mountEt({
+      kpi: {
+        ...kpi,
+        ciro: { deger: 300000, hedef: 500000, yuzde: 60, degisimYuzde: 12.5 },
+        kar: { deger: -8000, hedef: 0, marj: -2.6, degisimYuzde: -8.4 }
+      }
+    })
+
+    const ciroTrend = wrapper.find('[data-test="kpi-trend-ciro"]')
+    expect(ciroTrend.exists()).toBe(true)
+    expect(ciroTrend.classes()).toContain('kpi-trend--artis')
+    expect(ciroTrend.text()).toContain('▲')
+    expect(ciroTrend.text()).toContain('%')
+    expect(ciroTrend.attributes('title')).toBe(i18n.global.t('dashboard.oncekiDonemeGore'))
+
+    const karTrend = wrapper.find('[data-test="kpi-trend-kar"]')
+    expect(karTrend.exists()).toBe(true)
+    expect(karTrend.classes()).toContain('kpi-trend--azalis')
+    expect(karTrend.text()).toContain('▼')
+  })
+
+  it('degisimYuzde null veya 0 ise trend rozeti çizmez', () => {
+    const wrapper = mountEt({
+      kpi: {
+        ...kpi,
+        ciro: { deger: 100, hedef: 500, yuzde: 20, degisimYuzde: 0 },
+        kar: { deger: 100, hedef: 500, marj: 10, degisimYuzde: null }
+      }
+    })
+    expect(wrapper.find('[data-test="kpi-trend-ciro"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="kpi-trend-kar"]').exists()).toBe(false)
+  })
+
+  it('hedef yoksa "Hedef belirle" bağlantısı yönetici kokpitine gider', () => {
+    const wrapper = mountEt({
+      kpi: {
+        ...kpi,
+        ciro: { deger: 300000, hedef: null, yuzde: null },
+        kar: { deger: 50000, hedef: 0, marj: 16.6 }
+      }
+    })
+
+    expect(wrapper.find('[data-test="kpi-ciro"]').attributes('href')).toBe('/yonetici-kokpiti')
+    expect(wrapper.find('[data-test="kpi-kar"]').attributes('href')).toBe('/yonetici-kokpiti')
+    expect(wrapper.find('[data-test="kpi-hedef-baglanti"]').text()).toContain(
+      i18n.global.t('dashboard.hedefBelirle')
+    )
+
+    // Ikinci kartta da (kar) ayni baglanti metni bulunur.
+    expect(wrapper.findAll('[data-test="kpi-hedef-baglanti"]')).toHaveLength(2)
+  })
+
+  it('hedef varsa kartlar raporlara gider ve bağlantı metni gösterilmez', () => {
+    const wrapper = mountEt()
+    expect(wrapper.find('[data-test="kpi-ciro"]').attributes('href')).toBe('/raporlar')
+    expect(wrapper.find('[data-test="kpi-kar"]').attributes('href')).toBe('/raporlar')
+    expect(wrapper.find('[data-test="kpi-hedef-baglanti"]').exists()).toBe(false)
+  })
+
+  it('seçilen dönem KPI başlığına yansır', () => {
+    const buYil = mountEt({ donem: 'BU_YIL' })
+    expect(buYil.find('[data-test="kpi-ciro"]').text()).toContain(
+      i18n.global.t('dashboard.kpiCiroDonem', { donem: i18n.global.t('dashboard.donemBuYil') })
+    )
+    buYil.unmount()
+
+    const varsayilan = mountEt()
+    expect(varsayilan.find('[data-test="kpi-ciro"]').text()).toContain(
+      i18n.global.t('dashboard.donemBuAy')
+    )
+    varsayilan.unmount()
+  })
+})

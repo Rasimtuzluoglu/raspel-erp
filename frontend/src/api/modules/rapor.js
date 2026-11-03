@@ -7,11 +7,19 @@ export const dashboardAPI = {
   getData() {
     return apiClient.get('/dashboard')
   },
-  ozet() {
-    return apiClient.get('/dashboard/ozet')
+  // `params` verilmezse backend varsayilani (BU_AY) kullanilir; eski cagrilar
+  // parametresiz calismaya devam eder.
+  ozet(params) {
+    return params
+      ? apiClient.get('/dashboard/ozet', { params })
+      : apiClient.get('/dashboard/ozet')
   },
   gorevler() {
     return apiClient.get('/dashboard/gorevler')
+  },
+  // Vadesi aralikta olan faturalar (en fazla 93 gun, en fazla 200 kayit).
+  vadeler(params) {
+    return apiClient.get('/dashboard/vadeler', { params })
   },
   grafikler() {
     return apiClient.get('/dashboard/grafikler')

@@ -190,6 +190,111 @@
   outline-offset: 2px;
 }
 
+/* --- Drawer kabugu (hizli onay + vade takvimi) --------------------------- */
+/*
+ * Anasayfadaki iki yardimci panel (hizli onay, vade takvimi) ayni kabugu
+ * paylasir: sagdan acilan sabit panel + karartilmis katman. Panel genisligi
+ * 440px; mobilde 92vw. Icerik bilesenleri kendi stillerini tasir.
+ */
+.db-drawer-katman {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(2, 12, 14, 0.55);
+  animation: dbKatmanGir 0.18s ease-out;
+}
+.db-drawer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 440px;
+  max-width: 92vw;
+  height: 100%;
+  padding: 16px;
+  overflow-y: auto;
+  border-left: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow: var(--elev-3, var(--elev-2));
+  animation: dbDrawerGir 0.22s ease-out;
+}
+.db-drawer:focus-visible {
+  outline: none;
+}
+.db-drawer-ust {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.db-drawer-baslik-alan {
+  min-width: 0;
+  flex: 1;
+}
+.db-drawer-baslik {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+.db-drawer-alt {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.db-drawer-kapat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.db-drawer-kapat:hover {
+  border-color: var(--border);
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+.db-drawer-kapat:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@keyframes dbKatmanGir {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes dbDrawerGir {
+  from {
+    transform: translateX(16px);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .db-drawer {
+    width: 92vw;
+    padding: 12px;
+  }
+}
+
 /* --- Duyarli kirilimlar -------------------------------------------------- */
 /*
  * 1200 alti: sag panel alta iner; sol grafik duvari tek kolona duser.

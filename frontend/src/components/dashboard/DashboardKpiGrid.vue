@@ -115,29 +115,44 @@
         </footer>
       </router-link>
 
-      <!-- 4. Bu ay ciro -->
+      <!-- 4. Dönem cirosu -->
       <router-link
-        to="/raporlar"
+        :to="ciroHedefVar ? '/raporlar' : '/yonetici-kokpiti'"
         class="kpi-kart kpi-kart--ciro kpi-kart--link"
         data-test="kpi-ciro"
+        :aria-label="ciroAria"
       >
         <header class="kpi-ust">
           <span class="kpi-ikon"><i
             class="pi pi-chart-bar"
             aria-hidden="true"
           /></span>
-          <span class="kpi-etiket">{{ t('dashboard.kpiCiro') }}</span>
+          <span class="kpi-etiket">{{ t('dashboard.kpiCiroDonem', { donem: donemEtiketi }) }}</span>
           <i
             class="pi pi-arrow-right kpi-git"
             aria-hidden="true"
           />
         </header>
-        <p
-          class="kpi-deger gizli-veri"
-          data-test="kpi-deger-ciro"
-        >
-          {{ para(ciro.deger) }}
-        </p>
+        <div class="kpi-deger-satir">
+          <p
+            class="kpi-deger gizli-veri"
+            data-test="kpi-deger-ciro"
+          >
+            {{ para(ciro.deger) }}
+          </p>
+          <span
+            v-if="ciroTrend"
+            class="kpi-trend"
+            :class="`kpi-trend--${ciroTrend.yon}`"
+            :title="t('dashboard.oncekiDonemeGore')"
+            :aria-label="trendEtiketi(ciroTrend)"
+            role="img"
+            data-test="kpi-trend-ciro"
+          >
+            <span aria-hidden="true">{{ ciroTrend.ok }}</span>
+            <span>{{ ciroTrend.metin }}</span>
+          </span>
+        </div>
         <footer class="kpi-alt kpi-alt--blok">
           <template v-if="ciroHedefVar">
             <div class="kpi-ilerleme">
@@ -152,35 +167,57 @@
           </template>
           <span
             v-else
-            class="kpi-hedef-yok"
-          >{{ t('dashboard.hedefBelirlenmemis') }}</span>
+            class="kpi-hedef-yok kpi-hedef-yok--link"
+            data-test="kpi-hedef-baglanti"
+          >
+            {{ t('dashboard.hedefBelirle') }}
+            <i
+              class="pi pi-arrow-right"
+              aria-hidden="true"
+            />
+          </span>
         </footer>
       </router-link>
 
-      <!-- 5. Bu ay net kâr -->
+      <!-- 5. Dönem net kârı -->
       <router-link
-        to="/raporlar"
+        :to="karHedefVar ? '/raporlar' : '/yonetici-kokpiti'"
         class="kpi-kart kpi-kart--kar kpi-kart--link"
         data-test="kpi-kar"
+        :aria-label="karAria"
       >
         <header class="kpi-ust">
           <span class="kpi-ikon"><i
             class="pi pi-chart-line"
             aria-hidden="true"
           /></span>
-          <span class="kpi-etiket">{{ t('dashboard.kpiKar') }}</span>
+          <span class="kpi-etiket">{{ t('dashboard.kpiKarDonem', { donem: donemEtiketi }) }}</span>
           <i
             class="pi pi-arrow-right kpi-git"
             aria-hidden="true"
           />
         </header>
-        <p
-          class="kpi-deger gizli-veri"
-          data-test="kpi-deger-kar"
-          :class="karSinifi"
-        >
-          {{ karMetni }}
-        </p>
+        <div class="kpi-deger-satir">
+          <p
+            class="kpi-deger gizli-veri"
+            data-test="kpi-deger-kar"
+            :class="karSinifi"
+          >
+            {{ karMetni }}
+          </p>
+          <span
+            v-if="karTrend"
+            class="kpi-trend"
+            :class="`kpi-trend--${karTrend.yon}`"
+            :title="t('dashboard.oncekiDonemeGore')"
+            :aria-label="trendEtiketi(karTrend)"
+            role="img"
+            data-test="kpi-trend-kar"
+          >
+            <span aria-hidden="true">{{ karTrend.ok }}</span>
+            <span>{{ karTrend.metin }}</span>
+          </span>
+        </div>
         <footer class="kpi-alt kpi-alt--blok">
           <div class="kpi-ilerleme">
             <span class="kpi-marj">{{ t('dashboard.kpiMarj') }} %{{ marjMetni }}</span>
@@ -199,8 +236,15 @@
           </template>
           <span
             v-else
-            class="kpi-hedef-yok"
-          >{{ t('dashboard.hedefBelirlenmemis') }}</span>
+            class="kpi-hedef-yok kpi-hedef-yok--link"
+            data-test="kpi-hedef-baglanti"
+          >
+            {{ t('dashboard.hedefBelirle') }}
+            <i
+              class="pi pi-arrow-right"
+              aria-hidden="true"
+            />
+          </span>
         </footer>
       </router-link>
 
@@ -330,10 +374,21 @@ const props = defineProps({
   bugun: { type: Object, default: null },
   stok: { type: Object, default: null },
   bekleyenSiparis: { type: Number, default: 0 },
-  yukleniyor: { type: Boolean, default: false }
+  yukleniyor: { type: Boolean, default: false },
+  /** Secili donem kodu: BU_AY | GECEN_AY | BU_CEYREK | BU_YIL */
+  donem: { type: String, default: 'BU_AY' }
 })
 
 const { t } = useI18n()
+
+const DONEM_ANAHTARLARI = {
+  BU_AY: 'dashboard.donemBuAy',
+  GECEN_AY: 'dashboard.donemGecenAy',
+  BU_CEYREK: 'dashboard.donemBuCeyrek',
+  BU_YIL: 'dashboard.donemBuYil'
+}
+
+const donemEtiketi = computed(() => t(DONEM_ANAHTARLARI[props.donem] || DONEM_ANAHTARLARI.BU_AY))
 
 const likidite = computed(() => props.kpi?.likidite || {})
 const netCari = computed(() => props.kpi?.netCari || {})
@@ -412,6 +467,43 @@ const karSinifi = computed(() => {
   if (!Number.isFinite(sayi) || sayi === 0) return ''
   return sayi > 0 ? 'kpi-deger--artis' : 'kpi-deger--azalis'
 })
+
+/**
+ * Onceki esdeger doneme gore degisim rozeti. Backend `degisimYuzde` null
+ * dondurebilir (onceki donem 0 ise) veya 0 olabilir; bu durumlarda rozet
+ * GOSTERILMEZ. Yon: artis ▲ yesil, azalis ▼ kirmizi.
+ */
+const trend = (kpiDeger) => {
+  const ham = kpiDeger?.degisimYuzde
+  if (ham === null || ham === undefined || ham === '') return null
+  const sayi = Number(ham)
+  if (!Number.isFinite(sayi) || sayi === 0) return null
+  return {
+    yon: sayi > 0 ? 'artis' : 'azalis',
+    ok: sayi > 0 ? '▲' : '▼',
+    metin: `%${Math.abs(sayi).toLocaleString('tr-TR', { maximumFractionDigits: 1 })}`
+  }
+}
+
+const ciroTrend = computed(() => trend(ciro.value))
+const karTrend = computed(() => trend(kar.value))
+
+const trendEtiketi = (bilgi) =>
+  `${t('dashboard.oncekiDonemeGore')}: ${bilgi.ok} ${bilgi.metin}`
+
+// Kartin erisilebilir adi: hedef yoksa kullanicinin neden baska bir ekrana
+// yonlendirildigini aciklar.
+const ciroAria = computed(() =>
+  ciroHedefVar.value
+    ? undefined
+    : `${t('dashboard.kpiCiroDonem', { donem: donemEtiketi.value })} — ${t('dashboard.hedefBelirle')}`
+)
+const karAria = computed(() =>
+  karHedefVar.value
+    ? undefined
+    : `${t('dashboard.kpiKarDonem', { donem: donemEtiketi.value })} — ${t('dashboard.hedefBelirle')}`
+)
+
 </script>
 
 <style scoped>
@@ -588,6 +680,37 @@ const karSinifi = computed(() => {
 .kpi-deger--azalis {
   color: var(--danger);
 }
+/* Deger + trend rozeti ayni satirda; rozet degeri sikistirmaz. */
+.kpi-deger-satir {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+.kpi-deger-satir .kpi-deger {
+  min-width: 0;
+}
+.kpi-trend {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1px;
+  flex-shrink: 0;
+  padding: 1px 5px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.kpi-trend--artis {
+  color: var(--success);
+  background: var(--success-soft);
+}
+.kpi-trend--azalis {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
 .kpi-alt {
   display: flex;
   align-items: center;
@@ -657,6 +780,17 @@ const karSinifi = computed(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+/* Hedef yoksa kart "Hedef belirle" hedefine (/yonetici-kokpiti) baglanir. */
+.kpi-hedef-yok--link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--accent);
+  font-weight: 700;
+}
+.kpi-hedef-yok--link i {
+  font-size: 8.5px;
 }
 .kpi-kart--iskelet {
   justify-content: center;

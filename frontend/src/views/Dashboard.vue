@@ -10,9 +10,15 @@
       :son-guncelleme="sonGuncelleme"
       :yenileniyor="yenileniyor"
       :duzen-modu="duzenModu"
+      :donem="donem"
+      :gorev-sayilari="gorevSayilari"
+      :oto-yenile="otoYenile"
       @yenile="yenile"
       @ara="aramaAc"
       @duzenle="duzenModuDegistir"
+      @donem-degistir="donemDegistir"
+      @takvim="takvimAc"
+      @oto-degistir="otoYenileAyarla"
     />
 
     <DashboardPiyasaSeridi />
@@ -55,6 +61,7 @@
         :stok="stokKpi"
         :bekleyen-siparis="bekleyenSiparis"
         :yukleniyor="ozetYukleniyor"
+        :donem="donem"
       />
 
       <!-- 3) Sabit "Bugun" seridi: KPI'larin hemen altinda -->
@@ -320,7 +327,9 @@
                 :gorevler="dashboardStore.gorevler"
                 :yukleniyor="gorevlerYukleniyor"
                 :hata="gorevlerHata"
+                :yetkili="onayYetkili"
                 @yenile="gorevleriYenile"
+                @hizli-onay="hizliOnayAc"
               />
             </DashboardKart>
 
@@ -418,6 +427,20 @@
         &times;
       </button>
     </div>
+
+    <!-- Hizli onay: gorev satirindaki ONAY_* kayitlari icin sagdan acilan panel -->
+    <DashboardOnayDrawer
+      :visible="onayDrawerAcik"
+      :tur="onayTuru"
+      @update:visible="onayDrawerAcik = $event"
+      @guncellendi="onaySonrasiYenile"
+    />
+
+    <!-- Vade takvimi: aylik izgara + secili gun listesi -->
+    <DashboardVadeTakvimi
+      :visible="takvimAcik"
+      @update:visible="takvimAcik = $event"
+    />
   </div>
 </template>
 
@@ -443,7 +466,10 @@ import DashboardAkis from '../components/dashboard/DashboardAkis.vue'
 import DashboardHizliIslemler from '../components/dashboard/DashboardHizliIslemler.vue'
 import DashboardWidget from '../components/dashboard/DashboardWidget.vue'
 import DashboardDuzenPaneli from '../components/dashboard/DashboardDuzenPaneli.vue'
+import DashboardOnayDrawer from '../components/dashboard/DashboardOnayDrawer.vue'
+import DashboardVadeTakvimi from '../components/dashboard/DashboardVadeTakvimi.vue'
 import { useDashboardGrafikleri } from '../composables/useDashboardGrafikleri.js'
+import { useDashboardOtoYenileme } from '../composables/useDashboardOtoYenileme.js'
 import { formatCurrency } from '../utils/format.js'
 import {
   BOLGE_SAG,
@@ -618,6 +644,31 @@ const yedekUyarisiGoster = ref(true)
 // Nakit akisi segmenti (7/30 gun). API her zaman 30 gun doner; istemci dilimler.
 const nakitGun = ref(30)
 
+// --- Donem / yardimci paneller --------------------------------------------
+const DONEM_ANAHTAR = 'raspel_dashboard_donem'
+const DONEMLER = ['BU_AY', 'GECEN_AY', 'BU_CEYREK', 'BU_YIL']
+
+const donemOku = () => {
+  try {
+    const kayit = localStorage.getItem(DONEM_ANAHTAR)
+    return DONEMLER.includes(kayit) ? kayit : 'BU_AY'
+  } catch {
+    return 'BU_AY'
+  }
+}
+
+const donem = ref(donemOku())
+const onayDrawerAcik = ref(false)
+const onayTuru = ref('ONAY_IZIN')
+const takvimAcik = ref(false)
+
+const gorevSayilari = computed(() => dashboardStore.ozet?.gorevSayilari || {})
+
+// Hizli onay yalnizca yonetici ve muhasebe rolunde gorunur.
+const onayYetkili = computed(
+  () => authStore.isAdmin === true || authStore.kullanici?.role === 'MUHASEBE'
+)
+
 const kullaniciAd = computed(
   () =>
     authStore.kullanici?.displayName ||
@@ -743,8 +794,8 @@ const yenile = async () => {
   try {
     // Doviz kurlari ikincil bilgidir; kritik yolu bloklamaz.
     dovizStore?.kurlariYukle?.().catch(() => {})
-    // 1. dalga: KPI + bugun seridi + gorev sayaclari
-    await dashboardStore.getOzet()
+    // 1. dalga: KPI + bugun seridi + gorev sayaclari (secili donem)
+    await dashboardStore.getOzet(donem.value)
     // 2. dalga: gorev merkezi + icgoruler
     await Promise.all([dashboardStore.getGorevler(), dashboardStore.getIcgoruler()])
     // 3. dalga: grafikler + canli akis
@@ -755,6 +806,39 @@ const yenile = async () => {
     yenileniyor.value = false
     hazir.value = true
   }
+}
+
+// Otomatik yenileme: 60 sn, yalniz sekme gorunurken (tercih cihazda saklanir).
+const { aktif: otoYenile, ayarla: otoYenileAyarla } = useDashboardOtoYenileme(() => yenile())
+
+/** Donem secimi: KPI'lari secilen donem icin yeniden yukler ve tercihi saklar. */
+const donemDegistir = async (yeni) => {
+  if (!DONEMLER.includes(yeni) || yeni === donem.value) return
+  donem.value = yeni
+  try {
+    localStorage.setItem(DONEM_ANAHTAR, yeni)
+  } catch {
+    /* depolama kapaliysa oturum boyunca bellekte kalir */
+  }
+  await dashboardStore.getOzet(yeni)
+  guncellemeZamaniGuncelle()
+}
+
+/** Gorev satirindaki "Hizli onay" aksiyonu. */
+const hizliOnayAc = (tur) => {
+  if (!onayYetkili.value) return
+  onayTuru.value = tur || 'ONAY_IZIN'
+  onayDrawerAcik.value = true
+}
+
+/** Drawer'da karar verildi: gorev sayaclari ve ozet tazelenir. */
+const onaySonrasiYenile = async () => {
+  duyur(t('dashboard.onayBasarili'))
+  await Promise.all([dashboardStore.getGorevler(), dashboardStore.getOzet(donem.value)])
+}
+
+const takvimAc = () => {
+  takvimAcik.value = true
 }
 
 // Akis 60 sn'de bir sessizce tazelenir (yalnizca sayfa gorunurken).

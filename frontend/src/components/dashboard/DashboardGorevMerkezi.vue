@@ -94,6 +94,20 @@
             aria-hidden="true"
           />
         </router-link>
+        <button
+          v-if="yetkili && ONAY_TURLERI[g.tur]"
+          type="button"
+          class="gorev-hizli-onay"
+          :aria-label="`${gorevBasligi(g)} — ${t('dashboard.hizliOnay')}`"
+          :data-test="`gorev-hizli-onay-${g.tur}`"
+          @click="emit('hizli-onay', g.tur)"
+        >
+          <i
+            class="pi pi-bolt"
+            aria-hidden="true"
+          />
+          <span class="gorev-hizli-onay-metin">{{ t('dashboard.hizliOnay') }}</span>
+        </button>
       </li>
     </ul>
   </div>
@@ -107,10 +121,12 @@ import { formatCurrency } from '../../utils/format.js'
 const props = defineProps({
   gorevler: { type: Array, default: () => [] },
   yukleniyor: { type: Boolean, default: false },
-  hata: { type: String, default: null }
+  hata: { type: String, default: null },
+  /** Onay yetkisi (ADMIN / MUHASEBE): hizli onay aksiyonunu gosterir. */
+  yetkili: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['yenile'])
+const emit = defineEmits(['yenile', 'hizli-onay'])
 
 const { t } = useI18n()
 
@@ -301,6 +317,37 @@ const siraliGorevler = computed(() =>
 .gorev-eylem i {
   font-size: 9px;
 }
+/* Hizli onay: yalniz ONAY_* satirlarinda ve yetkili kullanicida gorunur. */
+.gorev-hizli-onay {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  min-height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--accent-border);
+  border-radius: 7px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--dur-base, 0.2s) var(--ease-standard, ease),
+    color var(--dur-base, 0.2s) var(--ease-standard, ease);
+}
+.gorev-hizli-onay:hover {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+.gorev-hizli-onay:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.gorev-hizli-onay i {
+  font-size: 9.5px;
+}
 .gorev-durum {
   display: flex;
   align-items: center;
@@ -310,8 +357,7 @@ const siraliGorevler = computed(() =>
   color: var(--text-muted);
   font-size: 12.5px;
   min-height: 40px;
-}
-.gorev-durum--bos i {
+}.gorev-durum--bos i {
   color: var(--success);
 }
 .gorev-durum--hata {
@@ -386,7 +432,8 @@ const siraliGorevler = computed(() =>
 }
 @media (prefers-reduced-motion: reduce) {
   .gorev-satir,
-  .iskelet {
+  .iskelet,
+  .gorev-hizli-onay {
     transition: none;
     animation: none;
   }
@@ -395,8 +442,12 @@ const siraliGorevler = computed(() =>
   .gorev-satir {
     gap: 10px;
     padding: 5px 0;
+    flex-wrap: wrap;
   }
   .gorev-tutar {
+    display: none;
+  }
+  .gorev-hizli-onay-metin {
     display: none;
   }
 }

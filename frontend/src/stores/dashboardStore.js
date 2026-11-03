@@ -137,12 +137,19 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
-  /** Hero + KPI + gorev sayaclari. Sayfanin kritik yolu budur. */
-  const getOzet = async () => {
+  /**
+   * Hero + KPI + gorev sayaclari. Sayfanin kritik yolu budur.
+   * `donem` verilmezse backend varsayilani (BU_AY) kullanilir; boylece eski
+   * parametresiz cagrilar ayni sekilde calismaya devam eder.
+   * Kabul edilen bicimler: 'BU_AY' | 'GECEN_AY' | 'BU_CEYREK' | 'BU_YIL'
+   * veya { donem: 'BU_AY' }.
+   */
+  const getOzet = async (donem) => {
+    const kod = typeof donem === 'string' ? donem : donem?.donem
     ozetYukleniyor.value = true
     ozetHata.value = null
     try {
-      const response = await dashboardAPI.ozet()
+      const response = await dashboardAPI.ozet(kod ? { donem: kod } : undefined)
       ozet.value = response.data || null
       return ozet.value
     } catch (err) {

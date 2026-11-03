@@ -78,7 +78,25 @@
         class="nakit-projeksiyon"
         data-test="nakit-projeksiyon"
       >
-        <span class="nakit-projeksiyon-baslik">{{ t('dashboard.hedefNakitProjeksiyon') }}</span>
+        <div class="nakit-projeksiyon-ust">
+          <span class="nakit-projeksiyon-baslik">{{ t('dashboard.hedefNakitProjeksiyon') }}</span>
+          <span class="nakit-projeksiyon-rozet">{{ t('dashboard.tahmini') }}</span>
+        </div>
+
+        <!-- 30/60/90 gunluk tahmin: 3 noktali mini cizgi grafik. -->
+        <div
+          v-if="projeksiyonGrafikVar"
+          class="nakit-projeksiyon-grafik"
+          data-test="nakit-projeksiyon-grafik"
+          role="img"
+          :aria-label="projeksiyonOzeti"
+        >
+          <Line
+            :data="projeksiyonVerisi"
+            :options="projeksiyonOpsiyonlari"
+          />
+        </div>
+
         <div class="nakit-projeksiyon-cipler">
           <div
             v-for="p in projeksiyonlar"
@@ -104,6 +122,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Line } from 'vue-chartjs'
 import DashboardKart from './DashboardKart.vue'
+import { useChartTema } from '../../composables/useChartTema.js'
 import { formatCurrency } from '../../utils/format.js'
 
 const props = defineProps({
@@ -118,6 +137,7 @@ const props = defineProps({
 const emit = defineEmits(['update:gun'])
 
 const { t } = useI18n()
+const { palet } = useChartTema()
 
 const ARALIKLAR = [7, 30]
 
@@ -129,6 +149,79 @@ const veriVar = computed(() => {
   const setler = Array.isArray(props.veri?.datasets) ? props.veri.datasets : []
   return setler.some((s) => Array.isArray(s.data) && s.data.some((v) => Number(v) > 0))
 })
+
+// --- 30/60/90 gunluk tahmin grafigi --------------------------------------
+const projeksiyonVar = computed(
+  () =>
+    props.projeksiyonlar.length >= 2 &&
+    props.projeksiyonlar.every((p) => Number.isFinite(Number(p?.deger)))
+)
+
+// Tahmin, gerceklesen veri yokken tek basina anlamli degil; bos durumda
+// kart kompakt bos mesaji gosterir (cipler yine kalir).
+const projeksiyonGrafikVar = computed(() => veriVar.value && projeksiyonVar.value)
+
+const azaltHareket = () => {
+  try {
+    return (
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches === true
+    )
+  } catch {
+    return false
+  }
+}
+
+const projeksiyonVerisi = computed(() => ({
+  labels: props.projeksiyonlar.map((p) => p.etiket),
+  datasets: [
+    {
+      label: t('dashboard.tahmini'),
+      data: props.projeksiyonlar.map((p) => Number(p.deger) || 0),
+      borderColor: '#14b8a6',
+      backgroundColor: 'rgba(20, 184, 166, 0.14)',
+      borderWidth: 2,
+      borderDash: [4, 3],
+      tension: 0.35,
+      fill: true,
+      pointRadius: 3,
+      pointBackgroundColor: '#14b8a6',
+      pointBorderColor: '#14b8a6'
+    }
+  ]
+}))
+
+const projeksiyonOpsiyonlari = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  animation: azaltHareket() ? false : { duration: 320 },
+  layout: { padding: { top: 4, right: 4, bottom: 0, left: 0 } },
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      callbacks: {
+        label: (ctx) => `${t('dashboard.tahmini')}: ${formatCurrency(ctx.parsed.y)}`
+      }
+    }
+  },
+  scales: {
+    x: {
+      grid: { display: false },
+      border: { display: false },
+      ticks: { color: palet.value.metin, font: { size: 9 }, maxRotation: 0 }
+    },
+    y: { display: false, grid: { display: false } }
+  }
+}))
+
+const projeksiyonOzeti = computed(
+  () =>
+    `${t('dashboard.tahmini')} ${t('dashboard.hedefNakitProjeksiyon')}: ` +
+    props.projeksiyonlar
+      .map((p) => `${p.etiket} ${formatCurrency(p.deger)}`)
+      .join(', ')
+)
 </script>
 
 <style scoped>
@@ -235,24 +328,46 @@ const veriVar = computed(() => {
 }
 .nakit-projeksiyon {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 8px;
   margin-top: 12px;
   padding-top: 10px;
   border-top: 1px solid var(--border);
+  min-width: 0;
+}
+.nakit-projeksiyon-ust {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 .nakit-projeksiyon-baslik {
   font-size: 11px;
   font-weight: 600;
   color: var(--text-muted);
 }
+.nakit-projeksiyon-rozet {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.nakit-projeksiyon-grafik {
+  position: relative;
+  width: 100%;
+  height: 72px;
+  min-width: 0;
+}
 .nakit-projeksiyon-cipler {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
-  flex: 1;
-  min-width: 220px;
+  min-width: 0;
 }
 .nakit-cip {
   display: flex;
@@ -314,7 +429,9 @@ const veriVar = computed(() => {
 @media (max-width: 600px) {
   .nakit-projeksiyon-cipler {
     grid-template-columns: minmax(0, 1fr);
-    min-width: 100%;
+  }
+  .nakit-projeksiyon-grafik {
+    height: 64px;
   }
 }
 </style>
