@@ -6293,6 +6293,8 @@
     "akisBaslik": "Canlı Akış",
     "akisBos": "Henüz bir hareket yok.",
     "akisHata": "Akış yüklenemedi.",
+    "veriKismiHata": "Anasayfa verilerinin bir kısmı yüklenemedi",
+    "yenidenDene": "Yeniden dene",
     "akisSimdi": "az önce",
     "akisDakikaOnce": "{n} dk önce",
     "akisSaatOnce": "{n} sa önce",

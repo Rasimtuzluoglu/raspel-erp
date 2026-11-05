@@ -35,14 +35,24 @@
     </div>
 
     <template v-else-if="veriVar">
+      <!-- Grafik, kart gorunur alana yaklasana kadar mount edilmez (lazy). -->
       <div
+        ref="grafikKok"
         class="nakit-grafik"
+        :class="{ 'nakit-grafik--iskelet': !gorunur }"
         data-test="nakit-grafik"
         :style="{ height: '160px' }"
       >
         <Line
+          v-if="gorunur"
           :data="veri"
           :options="secenekler"
+        />
+        <span
+          v-else
+          class="iskelet"
+          aria-hidden="true"
+          data-test="nakit-bekliyor"
         />
       </div>
       <p class="nakit-gerceklesen">
@@ -92,6 +102,7 @@
           :aria-label="projeksiyonOzeti"
         >
           <Line
+            v-if="gorunur"
             :data="projeksiyonVerisi"
             :options="projeksiyonOpsiyonlari"
           />
@@ -118,10 +129,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Line } from 'vue-chartjs'
 import DashboardKart from './DashboardKart.vue'
+import { useGorunurluk } from '../../composables/useGorunurluk.js'
 import { useChartTema } from '../../composables/useChartTema.js'
 import { formatCurrency } from '../../utils/format.js'
 
@@ -138,6 +150,10 @@ const emit = defineEmits(['update:gun'])
 
 const { t } = useI18n()
 const { palet } = useChartTema()
+
+// Kart gorunur olana kadar grafikler iskelet olarak bekler; canvas sonra kurulur.
+const grafikKok = ref(null)
+const { gorunur } = useGorunurluk(grafikKok)
 
 const ARALIKLAR = [7, 30]
 

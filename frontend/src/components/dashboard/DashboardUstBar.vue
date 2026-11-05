@@ -200,7 +200,7 @@
       <button
         type="button"
         class="ust-buton ust-buton--ara"
-        :aria-label="t('dashboard.heroAra')"
+        :title="t('dashboard.heroAra')"
         @click="emit('ara')"
       >
         <i
@@ -610,7 +610,8 @@ onBeforeUnmount(() => {
   top: -4px;
   right: -4px;
   border-color: var(--bg-card);
-  background: var(--accent);
+  /* Kucuk punto beyaz metin icin daha koyu aksan tonu (4.5:1 uzeri). */
+  background: var(--accent-hover);
   color: var(--accent-contrast);
 }
 .ust-buton--aktif {
@@ -694,7 +695,8 @@ onBeforeUnmount(() => {
   padding: 0 4px;
   border-radius: 999px;
   border: 1px solid var(--bg-card);
-  background: var(--danger);
+  /* Koyu kirmizi zemin: beyaz metinle 4.5:1 uzeri kontrast. */
+  background: #b91c1c;
   color: #fff;
   font-size: 9.5px;
   font-weight: 800;

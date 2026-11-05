@@ -6293,6 +6293,8 @@
     "akisBaslik": "Live Feed",
     "akisBos": "No activity yet.",
     "akisHata": "Feed could not be loaded.",
+    "veriKismiHata": "Some dashboard data could not be loaded",
+    "yenidenDene": "Try again",
     "akisSimdi": "just now",
     "akisDakikaOnce": "{n} min ago",
     "akisSaatOnce": "{n} hr ago",

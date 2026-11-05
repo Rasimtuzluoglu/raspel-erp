@@ -120,7 +120,6 @@
         :to="ciroHedefVar ? '/raporlar' : '/yonetici-kokpiti'"
         class="kpi-kart kpi-kart--ciro kpi-kart--link"
         data-test="kpi-ciro"
-        :aria-label="ciroAria"
       >
         <header class="kpi-ust">
           <span class="kpi-ikon"><i
@@ -184,7 +183,6 @@
         :to="karHedefVar ? '/raporlar' : '/yonetici-kokpiti'"
         class="kpi-kart kpi-kart--kar kpi-kart--link"
         data-test="kpi-kar"
-        :aria-label="karAria"
       >
         <header class="kpi-ust">
           <span class="kpi-ikon"><i
@@ -490,20 +488,6 @@ const karTrend = computed(() => trend(kar.value))
 
 const trendEtiketi = (bilgi) =>
   `${t('dashboard.oncekiDonemeGore')}: ${bilgi.ok} ${bilgi.metin}`
-
-// Kartin erisilebilir adi: hedef yoksa kullanicinin neden baska bir ekrana
-// yonlendirildigini aciklar.
-const ciroAria = computed(() =>
-  ciroHedefVar.value
-    ? undefined
-    : `${t('dashboard.kpiCiroDonem', { donem: donemEtiketi.value })} — ${t('dashboard.hedefBelirle')}`
-)
-const karAria = computed(() =>
-  karHedefVar.value
-    ? undefined
-    : `${t('dashboard.kpiKarDonem', { donem: donemEtiketi.value })} — ${t('dashboard.hedefBelirle')}`
-)
-
 </script>
 
 <style scoped>
@@ -781,13 +765,17 @@ const karAria = computed(() =>
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* Hedef yoksa kart "Hedef belirle" hedefine (/yonetici-kokpiti) baglanir. */
+/* Hedef yoksa kart "Hedef belirle" hedefine (/yonetici-kokpiti) baglanir.
+   Aksan rengi kucuk metinde 4.5:1 altinda kaldigi icin ikincil metin
+   rengi + alt cizgi kullanilir. */
 .kpi-hedef-yok--link {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  color: var(--accent);
+  color: var(--text-secondary);
   font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 .kpi-hedef-yok--link i {
   font-size: 8.5px;

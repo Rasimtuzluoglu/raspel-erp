@@ -48,15 +48,24 @@
       </router-link>
     </div>
 
+    <!-- Grafik, kart gorunur alana yaklasana kadar mount edilmez (lazy). -->
     <div
       v-else
+      ref="grafikKok"
       class="grafik-govde"
       :style="{ height: `${yukseklik}px` }"
     >
       <component
         :is="grafikBileseni"
+        v-if="gorunur"
         :data="veri"
         :options="secenekler"
+      />
+      <span
+        v-else
+        class="iskelet"
+        aria-hidden="true"
+        data-test="grafik-bekliyor"
       />
     </div>
 
@@ -70,7 +79,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
 import {
@@ -86,6 +95,7 @@ import {
   Filler
 } from 'chart.js'
 import DashboardKart from './DashboardKart.vue'
+import { useGorunurluk } from '../../composables/useGorunurluk.js'
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler)
 
@@ -107,6 +117,10 @@ const props = defineProps({
 })
 
 const { t } = useI18n()
+
+// Grafik alani gorunur olana kadar iskelet gosterilir; canvas bu noktada kurulur.
+const grafikKok = ref(null)
+const { gorunur } = useGorunurluk(grafikKok)
 
 const grafikBileseni = computed(() => {
   if (props.tip === 'donut') return Doughnut

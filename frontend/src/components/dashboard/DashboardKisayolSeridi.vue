@@ -158,9 +158,16 @@ watch(
   flex-shrink: 0;
   background: color-mix(in srgb, currentcolor 14%, transparent);
 }
+/* Ikon aksiyon rengini korur; etiket ise okunabilirlik icin ikincil metin
+   rengini kullanir (aksiyon renkleri kucuk metinde 4.5:1 altinda kaliyor). */
 .kisayol-etiket {
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--text-secondary);
+}
+.kisayol:hover .kisayol-etiket,
+.kisayol-duzenle:hover .kisayol-etiket {
+  color: var(--text-primary);
 }
 .kisayol--yeniFatura {
   color: #6366f1;

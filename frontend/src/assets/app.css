@@ -2556,3 +2556,12 @@ body {
     max-width: calc(100vw - 24px) !important;
   }
 }
+
+/* Mobil alt menu etiketleri: --text-muted acik temada 4.5:1 altinda kaliyor.
+   Yalnizca renk degisir; aktif sekmenin ikonu aksan rengini korur. */
+.app-container .mobil-alt-menu .mam-item span {
+  color: var(--text-secondary);
+}
+.app-container .mobil-alt-menu .mam-item.aktif span {
+  color: var(--text-primary);
+}

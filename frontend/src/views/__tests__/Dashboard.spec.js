@@ -757,7 +757,9 @@ describe('Dashboard.vue — finans masası yerleşimi', () => {
 
     const yenile = wrapper.find(`[aria-label="${i18n.global.t('dashboard.yenile')}"]`)
     expect(yenile.exists()).toBe(true)
-    expect(wrapper.find('.ust-buton--ara').attributes('aria-label')).toBe(
+    // Görünür metin erişilebilir adı oluşturur; aria-label kullanılmaz.
+    expect(wrapper.find('.ust-buton--ara').attributes('aria-label')).toBeUndefined()
+    expect(wrapper.find('.ust-buton--ara').text()).toContain(
       i18n.global.t('dashboard.heroAra')
     )
     expect(wrapper.find('.nakit-segment').attributes('role')).toBe('group')
@@ -766,6 +768,29 @@ describe('Dashboard.vue — finans masası yerleşimi', () => {
     )
     expect(wrapper.find('.db-sol').attributes('role')).toBe('group')
     expect(wrapper.find('[data-test="kpi-grid"]').attributes('role')).toBe('group')
+    wrapper.unmount()
+  })
+
+  it('özet/grafik hatasında kompakt uyarı bandı gösterir ve yeniden dener', async () => {
+    dashboardAPI.ozet.mockRejectedValueOnce(new Error('kapalı'))
+    const wrapper = mountEt()
+    await flushPromises()
+
+    const bant = wrapper.find('[data-test="veri-uyari"]')
+    expect(bant.exists()).toBe(true)
+    expect(bant.attributes('aria-live')).toBe('polite')
+    expect(bant.text()).toContain(i18n.global.t('dashboard.veriKismiHata'))
+    expect(bant.text()).toContain(i18n.global.t('dashboard.yenidenDene'))
+    // Sayfa kilitlenmez: yüklenen KPI kartları yerinde kalır.
+    expect(wrapper.findAll('[data-test="kpi-grid"] .kpi-kart')).toHaveLength(9)
+
+    const once = dashboardAPI.ozet.mock.calls.length
+    dashboardAPI.ozet.mockResolvedValueOnce({ data: ozetVerisi })
+    await bant.find('[data-test="veri-uyari-yenile"]').trigger('click')
+    await flushPromises()
+
+    expect(dashboardAPI.ozet.mock.calls.length).toBe(once + 1)
+    expect(wrapper.find('[data-test="veri-uyari"]').exists()).toBe(false)
     wrapper.unmount()
   })
 

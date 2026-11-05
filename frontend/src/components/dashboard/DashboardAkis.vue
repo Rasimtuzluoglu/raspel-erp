@@ -2,9 +2,6 @@
   <div
     class="canli-akis"
     data-test="canli-akis"
-    role="feed"
-    :aria-label="t('dashboard.akisBaslik')"
-    aria-busy="false"
   >
     <div
       v-if="yukleniyor && !akis.length"
@@ -51,7 +48,6 @@
         v-for="(olay, index) in sonOlaylar"
         :key="`${olay.tur}-${olay.tarih}-${index}`"
         class="akis-satir"
-        role="article"
       >
         <span
           class="akis-nokta"

@@ -23,6 +23,29 @@
       @notlar="notlarAcik = true"
     />
 
+    <!-- Kismi yukleme hatasi: sayfayi kilitlemez, yuklenen kartlar kalir. -->
+    <div
+      v-if="veriHatasi"
+      class="db-veri-uyari"
+      role="status"
+      aria-live="polite"
+      data-test="veri-uyari"
+    >
+      <i
+        class="pi pi-exclamation-triangle"
+        aria-hidden="true"
+      />
+      <span class="db-veri-uyari-metin">{{ t('dashboard.veriKismiHata') }}</span>
+      <button
+        type="button"
+        class="db-veri-uyari-buton"
+        data-test="veri-uyari-yenile"
+        @click="yenile"
+      >
+        {{ t('dashboard.yenidenDene') }}
+      </button>
+    </div>
+
     <DashboardPiyasaSeridi />
 
     <p
@@ -700,6 +723,11 @@ const akisYukleniyor = computed(() => dashboardStore.akisYukleniyor)
 const icgorulerYukleniyor = computed(() => dashboardStore.icgorulerYukleniyor)
 const gorevlerHata = computed(() => dashboardStore.gorevlerHata)
 const akisHata = computed(() => dashboardStore.akisHata)
+// Ozet veya grafiklerden biri bile dusse kullaniciya tek, kompakt bir bant
+// gosterilir; diger bolumler yuklenmeye devam eder.
+const veriHatasi = computed(
+  () => Boolean(dashboardStore.ozetHata || dashboardStore.grafiklerHata)
+)
 
 // KPI 8: gorev listesindeki onay bekleyen siparis adedi (yuklenene kadar 0).
 const bekleyenSiparis = computed(() => {
