@@ -164,6 +164,21 @@
         />
       </button>
 
+      <!-- Kar analizi: secili donem icin urun/cari bazli kar-marj drawer'i -->
+      <button
+        type="button"
+        class="ust-buton ust-buton--ikon"
+        :aria-label="t('dashboard.karAnaliziAc')"
+        :title="t('dashboard.karAnaliziAc')"
+        data-test="kar-analizi-buton"
+        @click="emit('kar-analizi')"
+      >
+        <i
+          class="pi pi-chart-line"
+          aria-hidden="true"
+        />
+      </button>
+
       <!-- Vade takvimi -->
       <button
         type="button"
@@ -268,6 +283,7 @@ const emit = defineEmits([
   'duzenle',
   'donem-degistir',
   'takvim',
+  'kar-analizi',
   'oto-degistir',
   'notlar',
   'excel-indirildi'

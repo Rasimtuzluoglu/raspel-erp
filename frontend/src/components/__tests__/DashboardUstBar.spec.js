@@ -144,6 +144,17 @@ describe('DashboardUstBar — takvim ve otomatik yenileme', () => {
     wrapper.unmount()
   })
 
+  it('kâr analizi ikonu kar-analizi olayını yayar', async () => {
+    const wrapper = mountEt()
+    const buton = wrapper.find('[data-test="kar-analizi-buton"]')
+    expect(buton.exists()).toBe(true)
+    expect(buton.attributes('aria-label')).toBe(i18n.global.t('dashboard.karAnaliziAc'))
+    expect(buton.attributes('title')).toBe(i18n.global.t('dashboard.karAnaliziAc'))
+    await buton.trigger('click')
+    expect(wrapper.emitted('kar-analizi')).toHaveLength(1)
+    wrapper.unmount()
+  })
+
   it('otomatik yenileme anahtarı durumu yansıtır ve değişimi iletir', async () => {
     const wrapper = mountEt({ otoYenile: false })
     const anahtar = wrapper.find('[data-test="oto-yenileme"]')

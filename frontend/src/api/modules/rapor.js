@@ -30,6 +30,10 @@ export const dashboardAPI = {
   icgoruler() {
     return apiClient.get('/dashboard/icgoruler')
   },
+  // Secili donem icin urun/cari bazli kar-marj analizi.
+  karAnalizi(params) {
+    return apiClient.get('/dashboard/kar-analizi', { params })
+  },
   tercihGetir() {
     return apiClient.get('/dashboard/tercihler')
   },

@@ -19,6 +19,7 @@
       @duzenle="duzenModuDegistir"
       @donem-degistir="donemDegistir"
       @takvim="takvimAc"
+      @kar-analizi="karAnaliziAc"
       @oto-degistir="otoYenileAyarla"
       @notlar="notlarAcik = true"
     />
@@ -467,6 +468,13 @@
       @update:visible="takvimAcik = $event"
     />
 
+    <!-- Kar analizi: secili donem icin urun/cari bazli kar-marj -->
+    <DashboardKarAnalizi
+      :visible="karAnaliziAcik"
+      :donem="donem"
+      @update:visible="karAnaliziAcik = $event"
+    />
+
     <!-- Kisisel not / todo: yalnizca cihazda saklanir, backend cagrisi yok. -->
     <DashboardNotlarDrawer
       :visible="notlarAcik"
@@ -500,6 +508,7 @@ import DashboardWidget from '../components/dashboard/DashboardWidget.vue'
 import DashboardDuzenPaneli from '../components/dashboard/DashboardDuzenPaneli.vue'
 import DashboardOnayDrawer from '../components/dashboard/DashboardOnayDrawer.vue'
 import DashboardVadeTakvimi from '../components/dashboard/DashboardVadeTakvimi.vue'
+import DashboardKarAnalizi from '../components/dashboard/DashboardKarAnalizi.vue'
 import DashboardNotlarDrawer from '../components/dashboard/DashboardNotlarDrawer.vue'
 import { useDashboardGrafikleri } from '../composables/useDashboardGrafikleri.js'
 import { useDashboardOtoYenileme } from '../composables/useDashboardOtoYenileme.js'
@@ -694,6 +703,7 @@ const donem = ref(donemOku())
 const onayDrawerAcik = ref(false)
 const onayTuru = ref('ONAY_IZIN')
 const takvimAcik = ref(false)
+const karAnaliziAcik = ref(false)
 const notlarAcik = ref(false)
 
 const kullaniciId = computed(() => authStore.kullanici?.id ?? null)
@@ -880,6 +890,10 @@ const onaySonrasiYenile = async () => {
 
 const takvimAc = () => {
   takvimAcik.value = true
+}
+
+const karAnaliziAc = () => {
+  karAnaliziAcik.value = true
 }
 
 // Akis 60 sn'de bir sessizce tazelenir (yalnizca sayfa gorunurken).

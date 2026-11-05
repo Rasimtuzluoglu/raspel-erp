@@ -24,6 +24,7 @@ vi.mock('../../api/index.js', () => ({
     grafikler: vi.fn(),
     akis: vi.fn(),
     icgoruler: vi.fn(),
+    karAnalizi: vi.fn(),
     tercihGetir: vi.fn(),
     tercihKaydet: vi.fn()
   },

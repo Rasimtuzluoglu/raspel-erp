@@ -25,6 +25,7 @@ vi.mock('../../api/index.js', () => ({
     akis: vi.fn(),
     icgoruler: vi.fn(),
     vadeler: vi.fn(),
+    karAnalizi: vi.fn(),
     tercihGetir: vi.fn(),
     tercihKaydet: vi.fn()
   },
@@ -128,6 +129,18 @@ const varsayilanMocklar = () => {
   dashboardAPI.akis.mockResolvedValue({ data: [] })
   dashboardAPI.icgoruler.mockResolvedValue({ data: [] })
   dashboardAPI.vadeler.mockResolvedValue({ data: [] })
+  dashboardAPI.karAnalizi.mockResolvedValue({
+    data: {
+      donem: { kod: 'BU_AY', baslangic: buAyIlk, bitis: buAySon, etiket: 'Bu Ay' },
+      ozet: { ciro: 300000, maliyet: 210000, kar: 90000, marj: 30, maliyetsizKalem: 0 },
+      urunler: [
+        { stokId: 1, ad: 'Ürün A', ciro: 100000, maliyet: 70000, kar: 30000, marj: 30 }
+      ],
+      cariler: [
+        { cariId: 1, ad: 'ABC Ticaret Ltd.', ciro: 250000, maliyet: 170000, kar: 80000, marj: 32 }
+      ]
+    }
+  })
   dashboardAPI.tercihGetir.mockResolvedValue({ data: { duzen: null } })
   dashboardAPI.tercihKaydet.mockResolvedValue({ data: { duzen: null } })
   onaylarAPI.bekleyen.mockResolvedValue({ data: [] })
@@ -330,6 +343,34 @@ describe('Dashboard — bildirim zili ve yardımcı paneller', () => {
 
     expect(wrapper.find('[data-test="vade-takvimi"]').exists()).toBe(true)
     expect(dashboardAPI.vadeler).toHaveBeenCalledWith({ baslangic: buAyIlk, bitis: buAySon })
+    wrapper.unmount()
+  })
+
+  it('kâr analizi ikonu drawer\'ı açar ve seçili dönemi aktarır', async () => {
+    const wrapper = mountEt()
+    await flushPromises()
+
+    await wrapper.find('[data-test="kar-analizi-buton"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="kar-analizi-drawer"]').exists()).toBe(true)
+    expect(dashboardAPI.karAnalizi).toHaveBeenCalledWith({ donem: 'BU_AY' })
+    expect(wrapper.find('[data-test="kar-analizi-urun-tablo"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('drawer açıkken dönem değişince kâr analizi yeni dönemle yenilenir', async () => {
+    const wrapper = mountEt()
+    await flushPromises()
+
+    await wrapper.find('[data-test="kar-analizi-buton"]').trigger('click')
+    await flushPromises()
+    dashboardAPI.karAnalizi.mockClear()
+
+    await wrapper.find('[data-test="donem-secici"]').setValue('BU_YIL')
+    await flushPromises()
+
+    expect(dashboardAPI.karAnalizi).toHaveBeenCalledWith({ donem: 'BU_YIL' })
     wrapper.unmount()
   })
 })
