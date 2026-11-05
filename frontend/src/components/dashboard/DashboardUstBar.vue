@@ -111,6 +111,59 @@
         </div>
       </div>
 
+      <!-- Kisisel notlar: rozet acik (tamamlanmamis) not sayisidir. -->
+      <button
+        type="button"
+        class="ust-buton ust-buton--ikon ust-buton--rozet"
+        :aria-label="notEtiketi"
+        :title="t('dashboard.notlarAc')"
+        data-test="not-buton"
+        @click="emit('notlar')"
+      >
+        <i
+          class="pi pi-clipboard"
+          aria-hidden="true"
+        />
+        <span
+          v-if="acikNotAdedi > 0"
+          class="ust-zil-rozet ust-not-rozet"
+          data-test="not-rozet"
+          aria-hidden="true"
+        >{{ notRozetMetni }}</span>
+      </button>
+
+      <!-- Excel disa aktarma: secili donem ile /exports/dashboard -->
+      <button
+        type="button"
+        class="ust-buton ust-buton--ikon"
+        :aria-label="t('dashboard.excelIndir')"
+        :title="t('dashboard.excelIndir')"
+        :disabled="excelIndiriliyor"
+        data-test="excel-indir"
+        @click="excelIndir"
+      >
+        <i
+          class="pi"
+          :class="excelIndiriliyor ? 'pi-spin pi-spinner' : 'pi-file-excel'"
+          aria-hidden="true"
+        />
+      </button>
+
+      <!-- Yazdirma / PDF: tarayicinin kendi print akisi kullanilir. -->
+      <button
+        type="button"
+        class="ust-buton ust-buton--ikon"
+        :aria-label="t('dashboard.yazdirAc')"
+        :title="t('dashboard.yazdirAc')"
+        data-test="yazdir"
+        @click="yazdir"
+      >
+        <i
+          class="pi pi-print"
+          aria-hidden="true"
+        />
+      </button>
+
       <!-- Vade takvimi -->
       <button
         type="button"
@@ -190,8 +243,11 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { PrimeVueToastSymbol } from 'primevue/usetoast'
+import { excelAPI } from '../../api/index.js'
+import { NOTLAR_OLAYI, acikNotSayisi } from '../../utils/dashboardNotlar.js'
 
 const props = defineProps({
   kullaniciAd: { type: String, default: '' },
@@ -202,12 +258,29 @@ const props = defineProps({
   duzenModu: { type: Boolean, default: false },
   donem: { type: String, default: 'BU_AY' },
   gorevSayilari: { type: Object, default: () => ({}) },
-  otoYenile: { type: Boolean, default: false }
+  otoYenile: { type: Boolean, default: false },
+  kullaniciId: { type: [String, Number], default: null }
 })
 
-const emit = defineEmits(['yenile', 'ara', 'duzenle', 'donem-degistir', 'takvim', 'oto-degistir'])
+const emit = defineEmits([
+  'yenile',
+  'ara',
+  'duzenle',
+  'donem-degistir',
+  'takvim',
+  'oto-degistir',
+  'notlar',
+  'excel-indirildi'
+])
 
 const { t } = useI18n()
+
+// Toast opsiyoneldir: saglayici yoksa (test/izole kullanim) sessiz gecer.
+const toast = inject(PrimeVueToastSymbol, null)
+const bildir = (severity, detay) => {
+  if (!toast || typeof toast.add !== 'function') return
+  toast.add({ severity, summary: t('dashboard.excelIndir'), detail: detay, life: 3000 })
+}
 
 /** Backend donem kodlari; sirasi secicide gorunen siradir. */
 const DONEM_SECENEKLERI = [
@@ -310,11 +383,106 @@ watch(zilAcik, (acik) => {
   }
 })
 
+// --- Kisisel not rozeti ----------------------------------------------------
+// Ilk deger senkron okunur; boylece ust bar rozeti ilk boyamada dogru olur.
+const acikNotAdedi = ref(acikNotSayisi(props.kullaniciId))
+
+const notRozetMetni = computed(() =>
+  acikNotAdedi.value > 99 ? '99+' : String(acikNotAdedi.value)
+)
+const notEtiketi = computed(() => `${t('dashboard.notlar')} (${acikNotAdedi.value})`)
+
+const notSayisiHesapla = (olay) => {
+  const detay = olay?.detail
+  if (
+    detay &&
+    detay.kullaniciId !== undefined &&
+    String(detay.kullaniciId) !== String(props.kullaniciId)
+  ) {
+    return
+  }
+  acikNotAdedi.value = acikNotSayisi(props.kullaniciId)
+}
+
+const notDinleyicisiniBagla = () => {
+  if (typeof window === 'undefined') return
+  window.addEventListener(NOTLAR_OLAYI, notSayisiHesapla)
+}
+
+const notDinleyicisiniKaldir = () => {
+  if (typeof window === 'undefined') return
+  window.removeEventListener(NOTLAR_OLAYI, notSayisiHesapla)
+}
+
+watch(
+  () => props.kullaniciId,
+  () => {
+    acikNotAdedi.value = acikNotSayisi(props.kullaniciId)
+  }
+)
+
+// --- Excel disa aktarma ----------------------------------------------------
+const excelIndiriliyor = ref(false)
+
+const excelDosyaAdi = () => {
+  const tarih = new Date()
+  const yil = tarih.getFullYear()
+  const ay = String(tarih.getMonth() + 1).padStart(2, '0')
+  const gun = String(tarih.getDate()).padStart(2, '0')
+  return `dashboard-${yil}${ay}${gun}.xlsx`
+}
+
+const blobIndir = (blob, dosyaAdi) => {
+  if (typeof document === 'undefined' || typeof URL === 'undefined') return
+  if (typeof URL.createObjectURL !== 'function') return
+  const url = URL.createObjectURL(blob)
+  try {
+    const baglanti = document.createElement('a')
+    baglanti.href = url
+    baglanti.download = dosyaAdi
+    baglanti.rel = 'noopener'
+    document.body.appendChild(baglanti)
+    baglanti.click()
+    baglanti.remove()
+  } finally {
+    if (typeof URL.revokeObjectURL === 'function') URL.revokeObjectURL(url)
+  }
+}
+
+const excelIndir = async () => {
+  if (excelIndiriliyor.value) return
+  excelIndiriliyor.value = true
+  try {
+    const cevap = await excelAPI.dashboard({ donem: props.donem })
+    const veri = cevap?.data
+    const blob = typeof Blob !== 'undefined' && veri instanceof Blob ? veri : new Blob([veri ?? ''])
+    blobIndir(blob, excelDosyaAdi())
+    bildir('success', t('dashboard.excelIndirildi'))
+    emit('excel-indirildi')
+  } catch {
+    bildir('error', t('dashboard.excelHata'))
+  } finally {
+    excelIndiriliyor.value = false
+  }
+}
+
+// --- Yazdirma / PDF --------------------------------------------------------
+const yazdir = () => {
+  if (typeof window !== 'undefined' && typeof window.print === 'function') window.print()
+}
+
+onMounted(() => {
+  acikNotAdedi.value = acikNotSayisi(props.kullaniciId)
+  notDinleyicisiniBagla()
+})
+
 onBeforeUnmount(() => {
+  notDinleyicisiniKaldir()
   if (typeof document === 'undefined') return
   document.removeEventListener('click', disariTikla, true)
   document.removeEventListener('keydown', tusKacisi)
 })
+
 </script>
 
 <style scoped>
@@ -434,6 +602,16 @@ onBeforeUnmount(() => {
 .ust-buton--ikon {
   width: 34px;
   padding: 0;
+}
+.ust-buton--rozet {
+  position: relative;
+}
+.ust-not-rozet {
+  top: -4px;
+  right: -4px;
+  border-color: var(--bg-card);
+  background: var(--accent);
+  color: var(--accent-contrast);
 }
 .ust-buton--aktif {
   color: var(--accent-contrast);

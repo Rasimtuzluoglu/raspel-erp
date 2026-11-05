@@ -13,12 +13,14 @@
       :donem="donem"
       :gorev-sayilari="gorevSayilari"
       :oto-yenile="otoYenile"
+      :kullanici-id="kullaniciId"
       @yenile="yenile"
       @ara="aramaAc"
       @duzenle="duzenModuDegistir"
       @donem-degistir="donemDegistir"
       @takvim="takvimAc"
       @oto-degistir="otoYenileAyarla"
+      @notlar="notlarAcik = true"
     />
 
     <DashboardPiyasaSeridi />
@@ -50,8 +52,8 @@
     </div>
 
     <template v-else>
-      <!-- 1) Ust kisayol seridi: 8 islem, tek satir, yatay kaydirma -->
-      <DashboardKisayolSeridi />
+      <!-- 1) Ust kisayol seridi: secili islemler, tek satir, yatay kaydirma -->
+      <DashboardKisayolSeridi :is-admin="authStore.isAdmin" />
 
       <!-- 2) Sabit KPI bandi: 9 kart (5 + 4) -->
       <DashboardKpiGrid
@@ -441,6 +443,13 @@
       :visible="takvimAcik"
       @update:visible="takvimAcik = $event"
     />
+
+    <!-- Kisisel not / todo: yalnizca cihazda saklanir, backend cagrisi yok. -->
+    <DashboardNotlarDrawer
+      :visible="notlarAcik"
+      :kullanici-id="kullaniciId"
+      @update:visible="notlarAcik = $event"
+    />
   </div>
 </template>
 
@@ -468,6 +477,7 @@ import DashboardWidget from '../components/dashboard/DashboardWidget.vue'
 import DashboardDuzenPaneli from '../components/dashboard/DashboardDuzenPaneli.vue'
 import DashboardOnayDrawer from '../components/dashboard/DashboardOnayDrawer.vue'
 import DashboardVadeTakvimi from '../components/dashboard/DashboardVadeTakvimi.vue'
+import DashboardNotlarDrawer from '../components/dashboard/DashboardNotlarDrawer.vue'
 import { useDashboardGrafikleri } from '../composables/useDashboardGrafikleri.js'
 import { useDashboardOtoYenileme } from '../composables/useDashboardOtoYenileme.js'
 import { formatCurrency } from '../utils/format.js'
@@ -661,6 +671,9 @@ const donem = ref(donemOku())
 const onayDrawerAcik = ref(false)
 const onayTuru = ref('ONAY_IZIN')
 const takvimAcik = ref(false)
+const notlarAcik = ref(false)
+
+const kullaniciId = computed(() => authStore.kullanici?.id ?? null)
 
 const gorevSayilari = computed(() => dashboardStore.ozet?.gorevSayilari || {})
 

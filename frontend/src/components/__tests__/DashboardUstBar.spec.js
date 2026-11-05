@@ -1,8 +1,13 @@
-import { describe, it, expect, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import i18n from '../../i18n.js'
 import DashboardUstBar from '../dashboard/DashboardUstBar.vue'
+import { NOTLAR_OLAYI, notlarAnahtari } from '../../utils/dashboardNotlar.js'
+
+const { excelMock } = vi.hoisted(() => ({ excelMock: { dashboard: vi.fn() } }))
+
+vi.mock('../../api/index.js', () => ({ excelAPI: excelMock }))
 
 const RouterLinkStub = {
   props: ['to'],
@@ -157,5 +162,114 @@ describe('DashboardUstBar — takvim ve otomatik yenileme', () => {
     await acikAnahtar.trigger('click')
     expect(acik.emitted('oto-degistir')).toEqual([[false]])
     acik.unmount()
+  })
+})
+
+describe('DashboardUstBar — kişisel not rozeti', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+  afterEach(() => {
+    localStorage.clear()
+  })
+
+  it('açık not sayısını rozet olarak gösterir ve notları açar', async () => {
+    localStorage.setItem(
+      notlarAnahtari(5),
+      JSON.stringify([
+        { id: '1', metin: 'Açık not', tamam: false, tarih: '2026-11-05T08:00:00.000Z' },
+        { id: '2', metin: 'İkinci açık', tamam: false, tarih: '2026-11-05T09:00:00.000Z' },
+        { id: '3', metin: 'Bitti', tamam: true, tarih: '2026-11-05T10:00:00.000Z' }
+      ])
+    )
+
+    const wrapper = mountEt({ kullaniciId: 5 })
+    const rozet = wrapper.find('[data-test="not-rozet"]')
+    expect(rozet.exists()).toBe(true)
+    expect(rozet.text()).toBe('2')
+    expect(wrapper.find('[data-test="not-buton"]').attributes('aria-label')).toContain('2')
+
+    await wrapper.find('[data-test="not-buton"]').trigger('click')
+    expect(wrapper.emitted('notlar')).toHaveLength(1)
+    wrapper.unmount()
+  })
+
+  it('not yoksa rozet göstermez', () => {
+    const wrapper = mountEt({ kullaniciId: 5 })
+    expect(wrapper.find('[data-test="not-rozet"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('not güncelleme olayında rozeti tazeler, başka kullanıcıyı yok sayar', async () => {
+    const wrapper = mountEt({ kullaniciId: 5 })
+
+    localStorage.setItem(
+      notlarAnahtari(5),
+      JSON.stringify([{ id: '1', metin: 'Yeni', tamam: false, tarih: '' }])
+    )
+    window.dispatchEvent(new CustomEvent(NOTLAR_OLAYI, { detail: { kullaniciId: 5 } }))
+    await nextTick()
+    expect(wrapper.find('[data-test="not-rozet"]').text()).toBe('1')
+
+    localStorage.setItem(
+      notlarAnahtari(5),
+      JSON.stringify([
+        { id: '1', metin: 'Yeni', tamam: false, tarih: '' },
+        { id: '2', metin: 'Bir tane daha', tamam: false, tarih: '' }
+      ])
+    )
+    window.dispatchEvent(new CustomEvent(NOTLAR_OLAYI, { detail: { kullaniciId: 99 } }))
+    await nextTick()
+    expect(wrapper.find('[data-test="not-rozet"]').text()).toBe('1')
+    wrapper.unmount()
+  })
+})
+
+describe('DashboardUstBar — Excel ve yazdırma', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    localStorage.clear()
+  })
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('seçili dönemle Excel dışa aktarma çağrısı yapar', async () => {
+    excelMock.dashboard.mockResolvedValue({ data: new Blob(['xlsx']) })
+    const tikla = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    const wrapper = mountEt({ donem: 'GECEN_AY' })
+
+    await wrapper.find('[data-test="excel-indir"]').trigger('click')
+    await flushPromises()
+
+    expect(excelMock.dashboard).toHaveBeenCalledTimes(1)
+    expect(excelMock.dashboard).toHaveBeenCalledWith({ donem: 'GECEN_AY' })
+    expect(wrapper.emitted('excel-indirildi')).toHaveLength(1)
+    expect(wrapper.find('[data-test="excel-indir"]').attributes('disabled')).toBeUndefined()
+    expect(tikla).toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  it('Excel hatasında çağrıyı tamamlar ve butonu yeniden etkinleştirir', async () => {
+    excelMock.dashboard.mockRejectedValue(new Error('offline'))
+    const wrapper = mountEt()
+
+    await wrapper.find('[data-test="excel-indir"]').trigger('click')
+    await flushPromises()
+
+    expect(excelMock.dashboard).toHaveBeenCalledTimes(1)
+    expect(wrapper.emitted('excel-indirildi')).toBeUndefined()
+    expect(wrapper.find('[data-test="excel-indir"]').attributes('disabled')).toBeUndefined()
+    wrapper.unmount()
+  })
+
+  it('yazdır ikonu window.print çağırır', async () => {
+    const yazdir = vi.spyOn(window, 'print').mockImplementation(() => {})
+    const wrapper = mountEt()
+
+    await wrapper.find('[data-test="yazdir"]').trigger('click')
+
+    expect(yazdir).toHaveBeenCalledTimes(1)
+    wrapper.unmount()
   })
 })

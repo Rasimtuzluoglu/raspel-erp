@@ -27,6 +27,7 @@ vi.mock('../../api/index.js', () => ({
     tercihGetir: vi.fn(),
     tercihKaydet: vi.fn()
   },
+  excelAPI: { dashboard: vi.fn() },
   stokAPI: { kritik: vi.fn() }
 }))
 

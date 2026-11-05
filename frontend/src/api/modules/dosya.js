@@ -51,6 +51,9 @@ export const backupAPI = {
 }
 
 export const excelAPI = {
+  dashboard(params) {
+    return apiClient.get('/exports/dashboard', { params, responseType: 'blob' })
+  },
   cariHesaplar() {
     return apiClient.get('/exports/cari-hesaplar', { responseType: 'blob' })
   },

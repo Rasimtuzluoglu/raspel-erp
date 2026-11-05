@@ -32,6 +32,7 @@ vi.mock('../../api/index.js', () => ({
     bekleyen: vi.fn(),
     karar: vi.fn()
   },
+  excelAPI: { dashboard: vi.fn() },
   stokAPI: { kritik: vi.fn() },
   networkStatus: { online: true, showBanner: false, sunucuyaUlasilamiyor: false },
   faturaAPI: { create: vi.fn() },

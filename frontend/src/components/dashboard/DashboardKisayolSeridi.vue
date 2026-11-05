@@ -5,11 +5,11 @@
     data-test="kisayol-seridi"
   >
     <router-link
-      v-for="k in kisayollar"
+      v-for="k in seciliKisayollar"
       :key="k.key"
       :to="k.to"
       class="kisayol"
-      :class="`kisayol--${k.key}`"
+      :class="`kisayol--${k.renk}`"
       :data-kisayol="k.key"
     >
       <span class="kisayol-ikon"><i
@@ -18,28 +18,83 @@
       /></span>
       <span class="kisayol-etiket">{{ t(k.anahtar) }}</span>
     </router-link>
+
+    <button
+      type="button"
+      class="kisayol-duzenle"
+      :aria-label="t('dashboard.kisayolDuzenle')"
+      :title="t('dashboard.kisayolDuzenle')"
+      data-test="kisayol-duzenle"
+      @click="ayarlariAc"
+    >
+      <span class="kisayol-ikon"><i
+        class="pi pi-pencil"
+        aria-hidden="true"
+      /></span>
+      <span class="kisayol-etiket">{{ t('dashboard.kisayolDuzenle') }}</span>
+    </button>
+
+    <span
+      class="sr-only"
+      role="status"
+      aria-live="polite"
+    >{{ duyuru }}</span>
+
+    <DashboardKisayolAyarlari
+      :visible="ayarlarAcik"
+      :secim="secim"
+      :is-admin="isAdmin"
+      @update:visible="ayarlarAcik = $event"
+      @kaydet="kaydet"
+    />
   </nav>
 </template>
 
 <script setup>
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import DashboardKisayolAyarlari from './DashboardKisayolAyarlari.vue'
+import {
+  kisayollariCoz,
+  kisayollariOku,
+  kisayollariYaz
+} from '../../utils/dashboardKisayollar.js'
+
+const props = defineProps({
+  /** ADMIN olmayan kullanici kokpit/yedekler kisayollarini gormez. */
+  isAdmin: { type: Boolean, default: false }
+})
 
 const { t } = useI18n()
 
 /**
- * Finans masasinin ust kisayol seridi. Yalnizca mevcut rotalar kullanilir;
- * tek satir, yatay kaydirilabilir, her hedef en az 40px yuksekligindedir.
+ * Finans masasinin ust kisayol seridi. Secim cihazda `raspel_dashboard_kisayollar`
+ * anahtarinda tutulur; siralama her zaman katalog sirasidir.
  */
-const kisayollar = [
-  { key: 'yeniFatura', to: '/faturalar', anahtar: 'dashboard.kisayolYeniFatura', ikon: 'pi pi-file' },
-  { key: 'tahsilat', to: '/hareketler', anahtar: 'dashboard.kisayolTahsilat', ikon: 'pi pi-arrow-down-left' },
-  { key: 'odeme', to: '/hareketler', anahtar: 'dashboard.kisayolOdeme', ikon: 'pi pi-arrow-up-right' },
-  { key: 'hizliSatis', to: '/hizli-satis', anahtar: 'dashboard.kisayolHizliSatis', ikon: 'pi pi-shopping-bag' },
-  { key: 'yeniCari', to: '/cari-hesaplar', anahtar: 'dashboard.kisayolYeniCari', ikon: 'pi pi-users' },
-  { key: 'kasa', to: '/kasa', anahtar: 'dashboard.kisayolKasa', ikon: 'pi pi-wallet' },
-  { key: 'stoklar', to: '/stoklar', anahtar: 'dashboard.kisayolStoklar', ikon: 'pi pi-box' },
-  { key: 'teklifler', to: '/teklifler', anahtar: 'dashboard.kisayolTeklifler', ikon: 'pi pi-file-edit' }
-]
+const secim = ref(kisayollariOku(props.isAdmin))
+const ayarlarAcik = ref(false)
+const duyuru = ref('')
+
+const seciliKisayollar = computed(() => kisayollariCoz(secim.value, props.isAdmin))
+
+const ayarlariAc = () => {
+  duyuru.value = ''
+  ayarlarAcik.value = true
+}
+
+const kaydet = (keys) => {
+  secim.value = kisayollariYaz(keys, props.isAdmin)
+  ayarlarAcik.value = false
+  duyuru.value = t('dashboard.kisayolKaydedildi')
+}
+
+// Rol degisirse (oturum yenilenmesi) secim yeniden okunur; yetkisiz kayitlar duser.
+watch(
+  () => props.isAdmin,
+  (adminMi) => {
+    secim.value = kisayollariOku(adminMi)
+  }
+)
 </script>
 
 <style scoped>
@@ -54,7 +109,8 @@ const kisayollar = [
   overscroll-behavior-x: contain;
   scrollbar-width: thin;
 }
-.kisayol {
+.kisayol,
+.kisayol-duzenle {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -74,15 +130,22 @@ const kisayollar = [
     box-shadow var(--dur-base, 0.2s) var(--ease-standard, ease),
     transform var(--dur-base, 0.2s) var(--ease-standard, ease);
 }
-.kisayol:hover {
+.kisayol:hover,
+.kisayol-duzenle:hover {
   border-color: var(--accent-border);
   color: var(--text-primary);
   box-shadow: var(--elev-1);
   transform: translateY(-1px);
 }
-.kisayol:focus-visible {
+.kisayol:focus-visible,
+.kisayol-duzenle:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+.kisayol-duzenle {
+  border-style: dashed;
+  cursor: pointer;
+  font-family: inherit;
 }
 .kisayol-ikon {
   display: inline-flex;
@@ -123,8 +186,27 @@ const kisayollar = [
 .kisayol--teklifler {
   color: var(--accent);
 }
+.kisayol--satinalma {
+  color: #8b5cf6;
+}
+.kisayol--onaylar {
+  color: #14b8a6;
+}
+.kisayol--raporlar {
+  color: #3b82f6;
+}
+.kisayol--kokpit {
+  color: #0d9488;
+}
+.kisayol--ajanda {
+  color: #ec4899;
+}
+.kisayol--yedekler {
+  color: #64748b;
+}
 @media (prefers-reduced-motion: reduce) {
-  .kisayol {
+  .kisayol,
+  .kisayol-duzenle {
     transition: none;
   }
 }

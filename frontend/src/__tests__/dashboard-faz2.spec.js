@@ -4,7 +4,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { nextTick } from 'vue'
 import ToastService from 'primevue/toastservice'
 import i18n from '../i18n.js'
-import { dashboardAPI } from '../api/index.js'
+import { dashboardAPI, excelAPI } from '../api/index.js'
 import Dashboard from '../views/Dashboard.vue'
 import App from '../App.vue'
 import {
@@ -47,6 +47,7 @@ vi.mock('../api/index.js', () => ({
     tercihGetir: vi.fn(),
     tercihKaydet: vi.fn()
   },
+  excelAPI: { dashboard: vi.fn() },
   stokAPI: { kritik: vi.fn() },
   networkStatus: { online: true, showBanner: false, sunucuyaUlasilamiyor: false },
   faturaAPI: { create: vi.fn() },
@@ -494,5 +495,111 @@ describe('Dashboard faz2 — App.vue arama olayı', () => {
     wrapper.unmount()
     // Unmount sonrası dinleyici kalmamalı.
     window.dispatchEvent(new CustomEvent('raspel:hizli-ara'))
+  })
+})
+
+describe('Dashboard faz2 — kişisel notlar, kısayol ve dışa aktarma entegrasyonu', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    localStorage.clear()
+    authMock.kullanici = { id: 1, displayName: 'Ayşe Yılmaz', username: 'ayse', role: 'ADMIN' }
+    authMock.isAdmin = true
+    authMock.isSaha = false
+    authMock.isLoggedIn = true
+    dashboardAPI.ozet.mockResolvedValue({ data: ozetVerisi })
+    dashboardAPI.gorevler.mockResolvedValue({ data: [] })
+    dashboardAPI.grafikler.mockResolvedValue({ data: {} })
+    dashboardAPI.akis.mockResolvedValue({ data: [] })
+    dashboardAPI.icgoruler.mockResolvedValue({ data: [] })
+    dashboardAPI.tercihGetir.mockResolvedValue({ data: { duzen: null } })
+    dashboardAPI.tercihKaydet.mockResolvedValue({ data: { duzen: null } })
+    excelAPI.dashboard.mockResolvedValue({ data: new Blob(['xlsx']) })
+  })
+
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('not ikonu drawer açar; eklenen not rozeti ve depoyu günceller', async () => {
+    const wrapper = mountDashboard()
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="not-rozet"]').exists()).toBe(false)
+    await wrapper.find('[data-test="not-buton"]').trigger('click')
+    await nextTick()
+
+    const drawer = wrapper.find('[data-test="notlar-drawer"]')
+    expect(drawer.exists()).toBe(true)
+    expect(drawer.attributes('aria-modal')).toBe('true')
+
+    const girdi = wrapper.find('[data-test="not-girdi"]')
+    await girdi.setValue('Müşteri toplantısı')
+    await girdi.trigger('keydown.enter')
+    await nextTick()
+
+    expect(wrapper.find('.notlar-oge').text()).toContain('Müşteri toplantısı')
+    expect(wrapper.find('[data-test="not-rozet"]').text()).toBe('1')
+    expect(JSON.parse(localStorage.getItem('raspel_dashboard_notlar_1'))[0].metin).toBe(
+      'Müşteri toplantısı'
+    )
+    wrapper.unmount()
+  })
+
+  it('kısayol düzenleme modalı seçimi kaydeder ve şeridi günceller', async () => {
+    const wrapper = mountDashboard()
+    await flushPromises()
+
+    expect(wrapper.findAll('.kisayol')).toHaveLength(8)
+    await wrapper.find('[data-test="kisayol-duzenle"]').trigger('click')
+    await nextTick()
+    expect(wrapper.find('[data-test="kisayol-ayarlari"]').exists()).toBe(true)
+
+    await wrapper.find('[data-test="kisayol-secim-kasa"]').setValue(false)
+    await wrapper.find('[data-test="kisayol-secim-ajanda"]').setValue(true)
+    await wrapper.find('[data-test="kisayol-kaydet"]').trigger('click')
+    await nextTick()
+
+    expect(wrapper.find('[data-test="kisayol-ayarlari"]').exists()).toBe(false)
+    const anahtarlar = wrapper.findAll('.kisayol').map((k) => k.attributes('data-kisayol'))
+    expect(anahtarlar).toContain('ajanda')
+    expect(anahtarlar).not.toContain('kasa')
+    expect(anahtarlar).toHaveLength(8)
+    expect(JSON.parse(localStorage.getItem('raspel_dashboard_kisayollar'))).toContain('ajanda')
+    wrapper.unmount()
+  })
+
+  it('ADMIN olmayan kullanıcı kokpit/yedekler kısayolunu görmez', async () => {
+    authMock.kullanici = { id: 2, displayName: 'Ali', username: 'ali', role: 'USER' }
+    authMock.isAdmin = false
+
+    const wrapper = mountDashboard()
+    await flushPromises()
+
+    await wrapper.find('[data-test="kisayol-duzenle"]').trigger('click')
+    await nextTick()
+
+    expect(wrapper.find('[data-test="kisayol-secim-kokpit"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="kisayol-secim-yedekler"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="kisayol-secim-raporlar"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('Excel ikonu seçili dönemle indirir, yazdır ikonu print çağırır', async () => {
+    const yazdir = vi.spyOn(window, 'print').mockImplementation(() => {})
+    const tikla = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    const wrapper = mountDashboard()
+    await flushPromises()
+
+    await wrapper.find('[data-test="excel-indir"]').trigger('click')
+    await flushPromises()
+    expect(excelAPI.dashboard).toHaveBeenCalledWith({ donem: 'BU_AY' })
+    expect(tikla).toHaveBeenCalled()
+
+    await wrapper.find('[data-test="yazdir"]').trigger('click')
+    expect(yazdir).toHaveBeenCalledTimes(1)
+
+    wrapper.unmount()
+    yazdir.mockRestore()
+    tikla.mockRestore()
   })
 })
