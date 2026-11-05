@@ -65,6 +65,7 @@ class OnayServiceTest {
     @Mock private PersonelMasrafTalepService personelMasrafTalepService;
     @Mock private SatinalmaTalepService satinalmaTalepService;
     @Mock private SiparisService siparisService;
+    @Mock private DashboardYayinService dashboardYayinService;
 
     @InjectMocks
     private OnayService onayService;
@@ -98,6 +99,7 @@ class OnayServiceTest {
         assertEquals(7L, dto.getKararVerenId());
         assertEquals("Ali Veli", dto.getKararVerenAd());
         assertEquals(99L, dto.getId());
+        verify(dashboardYayinService).yayinla(eq(1L), eq("ONAY"), contains("IZIN"));
     }
 
     @Test

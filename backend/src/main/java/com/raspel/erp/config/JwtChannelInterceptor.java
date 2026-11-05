@@ -21,8 +21,12 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class JwtChannelInterceptor implements ChannelInterceptor {
 
+    /**
+     * Şirket bazlı yayın kanalları: bildirimler ve anasayfa (dashboard).
+     * Abone olunan şirket id'si oturumun şirketiyle eşleşmek zorundadır.
+     */
     private static final Pattern SIRKET_TOPIC_PATTERN =
-            Pattern.compile("^/topic/(bildirimler)/(\\d+)$");
+            Pattern.compile("^/topic/(bildirimler|dashboard)/(\\d+)$");
 
     /** Genel sohbet kanalı ve silme olayı (Faz 3.1: sil de doğrulanır). */
     private static final Pattern SOHBET_GENEL_PATTERN =

@@ -101,6 +101,28 @@ class JwtChannelInterceptorTest {
     }
 
     @Test
+    void subscribe_kendiSirketDashboardKanalinaIzinVerilir() {
+        Map<String, Object> attrs = new HashMap<>();
+        attrs.put("sirketId", 5L);
+        Message<?> mesaj = subscribeMesaji("/topic/dashboard/5", attrs);
+        assertDoesNotThrow(() -> interceptor.preSend(mesaj, null));
+    }
+
+    @Test
+    void subscribe_baskaSirketDashboardKanalinaReddedilir() {
+        Map<String, Object> attrs = new HashMap<>();
+        attrs.put("sirketId", 5L);
+        Message<?> mesaj = subscribeMesaji("/topic/dashboard/9", attrs);
+        assertThrows(MessageDeliveryException.class, () -> interceptor.preSend(mesaj, null));
+    }
+
+    @Test
+    void subscribe_anonimOturumDashboardKanalinaReddedilir() {
+        Message<?> mesaj = subscribeMesaji("/topic/dashboard/5", new HashMap<>());
+        assertThrows(MessageDeliveryException.class, () -> interceptor.preSend(mesaj, null));
+    }
+
+    @Test
     void subscribe_sohbetBaskaSirketKanalinaReddedilir() {
         Map<String, Object> attrs = new HashMap<>();
         attrs.put("sirketId", 5L);

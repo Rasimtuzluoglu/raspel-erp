@@ -24,6 +24,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 import com.raspel.erp.service.sistem.BildirimService;
+import com.raspel.erp.service.sistem.DashboardYayinService;
 
 /**
  * Hareket Service
@@ -42,6 +43,7 @@ public class HareketService {
     private final CariHesapRepository cariHesapRepository;
     private final CariHesapService cariHesapService;
     private final BildirimService bildirimService;
+    private final DashboardYayinService dashboardYayinService;
         private final FaturaRepository faturaRepository;
     private final com.raspel.erp.service.sistem.AuditLogService auditLogService;
     private final TenantChecker tenantChecker;
@@ -228,6 +230,8 @@ public class HareketService {
         }
         
         log.info("Hareket başarıyla oluşturuldu - ID: {}", kaydedilenHareket.getId());
+        dashboardYayinService.yayinla(sirketId, "HAREKET",
+                hareketTuru + " hareketi: " + dto.getTutar() + " ₺");
         
         return entityDTOyeCevir(kaydedilenHareket);
     }
@@ -379,6 +383,8 @@ public class HareketService {
                         + (tersKasaBanka > 0 ? " - Bağlı kasa/banka hareketi ters kaydedildi (" + tersKasaBanka + ")" : ""));
         
         hareketRepository.deleteById(id);
+        dashboardYayinService.yayinla(hareket.getSirketId(), "HAREKET",
+                "Hareket silindi: " + hareket.getTur() + " " + hareket.getTutar() + " ₺");
         log.info("Hareket başarıyla silindi - ID: {}", id);
     }
 
@@ -419,6 +425,8 @@ public class HareketService {
                         + (hareket.getFaturaId() != null ? " - Fatura: " + hareket.getFaturaId() : "")
                         + (tersKasaBanka > 0 ? " - Bağlı kasa/banka hareketi ters kaydedildi (" + tersKasaBanka + ")" : ""));
         log.info("Hareket iptal edildi - ID: {}", id);
+        dashboardYayinService.yayinla(kaydedilen.getSirketId(), "HAREKET",
+                "Hareket iptal edildi: " + kaydedilen.getTur() + " " + kaydedilen.getTutar() + " ₺");
         return entityDTOyeCevir(kaydedilen);
     }
 

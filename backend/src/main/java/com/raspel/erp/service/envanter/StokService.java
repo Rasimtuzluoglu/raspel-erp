@@ -51,6 +51,7 @@ public class StokService {
     private final StokHareketRepository stokHareketRepository;
     private final CariHesapRepository cariHesapRepository;
     private final BildirimService bildirimService;
+    private final com.raspel.erp.service.sistem.DashboardYayinService dashboardYayinService;
         private final TenantChecker tenantChecker;
     private final CacheYardimci cacheYardimci;
     private final StokFiyatRepository stokFiyatRepository;
@@ -643,6 +644,8 @@ public class StokService {
         StokHareketDTO sonuc = hareketToDTO(stokHareketRepository.save(h));
         kritikStokBildirimiGonder(stok);
         cacheYardimci.commitSonrasiTemizle("stoklar", "dashboard");
+        dashboardYayinService.yayinla(stok.getSirketId(), "STOK",
+                "Stok hareketi: " + stok.getAd() + " " + dto.getTur() + " " + miktar);
         return sonuc;
     }
 
@@ -707,6 +710,8 @@ public class StokService {
         }
         stokHareketRepository.deleteById(hareketId);
         cacheYardimci.commitSonrasiTemizle("stoklar", "dashboard");
+        dashboardYayinService.yayinla(stok.getSirketId(), "STOK",
+                "Stok hareketi silindi: " + stok.getAd() + " " + h.getTur() + " " + h.getMiktar());
     }
 
     @Transactional(readOnly = true)

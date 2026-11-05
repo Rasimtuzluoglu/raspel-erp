@@ -30,6 +30,7 @@ class BankaMutabakatServiceTest {
     @Mock private FaturaRepository faturaRepository;
     @Mock private TenantChecker tenantChecker;
     @Mock private com.raspel.erp.repository.finans.BankaRepository bankaRepository;
+    @Mock private com.raspel.erp.service.sistem.DashboardYayinService dashboardYayinService;
 
     @InjectMocks private BankaMutabakatService bankaMutabakatService;
 

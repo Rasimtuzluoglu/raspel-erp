@@ -48,6 +48,7 @@ public class BankaMutabakatService {
     private final TenantChecker tenantChecker;
     private final com.raspel.erp.repository.finans.BankaRepository bankaRepository;
     private final com.raspel.erp.service.finans.HareketService hareketService;
+    private final com.raspel.erp.service.sistem.DashboardYayinService dashboardYayinService;
 
     private static final DateTimeFormatter[] TARIH_FORMATLARI = {
             DateTimeFormatter.ofPattern("dd.MM.yyyy"),
@@ -100,10 +101,11 @@ public class BankaMutabakatService {
     }
 
     /** Bankanın var olduğunu ve isteğin şirketine ait olduğunu doğrular. */
-    private void bankaDogrula(Long bankaId) {
+    private Banka bankaDogrula(Long bankaId) {
         Banka banka = bankaRepository.findById(bankaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Banka", bankaId));
         tenantChecker.check(banka.getSirketId(), "Banka");
+        return banka;
     }
 
     public int yukle(Long bankaId, MultipartFile dosya, Long sirketId) {
@@ -122,6 +124,8 @@ public class BankaMutabakatService {
         }
         List<BankaHareketi> kaydedilen = bankaHareketiRepository.saveAll(kayitlar);
         otomatikEslestir(bankaId, sirketId);
+        dashboardYayinService.yayinla(sirketId, "BANKA",
+                "Banka hareketi yüklendi: " + kaydedilen.size() + " kayıt");
         log.info("Banka mutabakat yüklemesi tamamlandı - Banka: {}, Kayıt: {}", bankaId, kaydedilen.size());
         return kaydedilen.size();
     }
@@ -238,9 +242,11 @@ public class BankaMutabakatService {
     }
 
     public void sil(Long bankaId) {
-        bankaDogrula(bankaId);
+        Banka banka = bankaDogrula(bankaId);
         List<BankaHareketi> list = bankaHareketiRepository.findByBankaIdOrderByTarihDesc(bankaId);
         bankaHareketiRepository.deleteAll(list);
+        dashboardYayinService.yayinla(banka.getSirketId(), "BANKA",
+                "Banka hareketleri silindi: " + list.size() + " kayıt");
     }
 
     // ---------- YARDIMCILAR ----------

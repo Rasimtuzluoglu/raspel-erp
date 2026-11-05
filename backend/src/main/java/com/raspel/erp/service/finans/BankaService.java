@@ -28,6 +28,7 @@ public class BankaService {
     private final BankaHareketiRepository bankaHareketiRepository;
     private final TenantChecker tenantChecker;
     private final com.raspel.erp.config.CacheYardimci cacheYardimci;
+    private final com.raspel.erp.service.sistem.DashboardYayinService dashboardYayinService;
 
     @Transactional(readOnly = true)
     public Page<BankaDTO> tumBankalariGetir(Long sirketId, Pageable pageable) {
@@ -90,6 +91,7 @@ public class BankaService {
                 .build();
         Banka kaydedilen = bankaRepository.save(banka);
         cacheYardimci.commitSonrasiTemizle("dashboard");
+        dashboardYayinService.yayinla(kaydedilen.getSirketId(), "BANKA", "Yeni banka hesabı: " + kaydedilen.getAd());
         return entityDTOyeCevir(kaydedilen);
     }
 
@@ -118,6 +120,8 @@ public class BankaService {
         if (dto.getAd() != null) banka.setAd(dto.getAd());
         Banka guncellenen = bankaRepository.save(banka);
         cacheYardimci.commitSonrasiTemizle("dashboard");
+        dashboardYayinService.yayinla(guncellenen.getSirketId(), "BANKA",
+                "Banka hesabı güncellendi: " + guncellenen.getAd());
         return entityDTOyeCevir(guncellenen);
     }
 
@@ -135,6 +139,7 @@ public class BankaService {
         }
         bankaRepository.deleteById(id);
         cacheYardimci.commitSonrasiTemizle("dashboard");
+        dashboardYayinService.yayinla(banka.getSirketId(), "BANKA", "Banka hesabı silindi: " + banka.getAd());
     }
 
     private BankaDTO entityDTOyeCevir(Banka banka) {

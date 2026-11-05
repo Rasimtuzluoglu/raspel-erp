@@ -31,6 +31,7 @@ import org.springframework.data.domain.Pageable;
 import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.service.sistem.BildirimService;
+import com.raspel.erp.service.sistem.DashboardYayinService;
 import com.raspel.erp.entity.finans.Hareket;
 import com.raspel.erp.service.envanter.StokService;
 
@@ -50,6 +51,7 @@ class StokServiceTest {
     @Mock private com.raspel.erp.service.envanter.MaliyetService maliyetService;
     @Mock private com.raspel.erp.service.envanter.BarkodUretService barkodUretService;
     @Mock private com.raspel.erp.service.sistem.KategoriService kategoriService;
+    @Mock private DashboardYayinService dashboardYayinService;
     @InjectMocks private StokService stokService;
 
     private Stok createStok(Long id) {
@@ -316,6 +318,7 @@ class StokServiceTest {
     @Test
     void hareketEkle_giris_artirirMiktari() {
         Stok stok = createStok(1L);
+        stok.setSirketId(1L);
         when(stokRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(stok));
         StokHareketDTO dto = StokHareketDTO.builder().stokId(1L).tur("GIRIS").miktar(BigDecimal.valueOf(10))
                 .hareketTarihi(LocalDate.now()).build();
@@ -325,6 +328,7 @@ class StokServiceTest {
         var result = stokService.hareketEkle(dto);
         assertEquals(BigDecimal.valueOf(60), stok.getMiktar());
         assertNotNull(result);
+        verify(dashboardYayinService).yayinla(eq(1L), eq("STOK"), contains("GIRIS"));
     }
 
     @Test

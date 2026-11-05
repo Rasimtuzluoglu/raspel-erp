@@ -43,6 +43,7 @@ class KasaServiceTest {
     @Mock private com.raspel.erp.service.sistem.DonemService donemService;
     @Mock private com.raspel.erp.repository.finans.HareketRepository hareketRepository;
     @Mock private com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
+    @Mock private com.raspel.erp.service.sistem.DashboardYayinService dashboardYayinService;
     @InjectMocks private KasaService kasaService;
 
     private Kasa createKasa(Long id) {
@@ -141,6 +142,7 @@ class KasaServiceTest {
     @Test
     void hareketEkle_gelir_artirirBakiye() {
         Kasa kasa = createKasa(1L);
+        kasa.setSirketId(1L);
         kasa.setBakiye(BigDecimal.valueOf(5000));
         when(kasaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(kasa));
         KasaHareketDTO dto = KasaHareketDTO.builder().kasaId(1L).tur("GELIR")
@@ -151,6 +153,7 @@ class KasaServiceTest {
         var result = kasaService.hareketEkle(dto);
         assertEquals(BigDecimal.valueOf(6000), kasa.getBakiye());
         assertNotNull(result);
+        verify(dashboardYayinService).yayinla(eq(1L), eq("KASA"), contains("GELIR"));
     }
 
     @Test

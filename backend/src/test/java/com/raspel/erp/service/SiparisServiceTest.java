@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import com.raspel.erp.service.sistem.BildirimService;
+import com.raspel.erp.service.sistem.DashboardYayinService;
 import com.raspel.erp.service.sistem.EmailService;
 import com.raspel.erp.service.ticaret.FaturaService;
 import com.raspel.erp.service.sistem.SeriNoServisi;
@@ -50,6 +51,7 @@ class SiparisServiceTest {
     @Mock private com.raspel.erp.repository.muhasebe.IrsaliyeRepository irsaliyeRepository;
     @Mock private com.raspel.erp.repository.sistem.KullaniciRepository kullaniciRepository;
     @Mock private com.raspel.erp.service.ticaret.TeslimatService teslimatService;
+    @Mock private DashboardYayinService dashboardYayinService;
     @InjectMocks private SiparisService siparisService;
 
     private Siparis createSiparis(Long id) {

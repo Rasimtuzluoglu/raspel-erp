@@ -95,6 +95,8 @@ public class OnayService {
     private final SatinalmaTalepService satinalmaTalepService;
     private final SiparisService siparisService;
 
+    private final DashboardYayinService dashboardYayinService;
+
     // ------------------------------------------------------------------
     // Özet
     // ------------------------------------------------------------------
@@ -486,7 +488,7 @@ public class OnayService {
         // Önce modül işlemi; başarısızsa aşağıya geçilmez (karar kaydı yok).
         modulKarari(tur, kaynakId, karar, kullaniciAd, gerekce);
 
-        return onayKararRepository.save(OnayKarar.builder()
+        OnayKarar kayit = onayKararRepository.save(OnayKarar.builder()
                 .sirketId(sirketId)
                 .tur(tur.name())
                 .kaynakId(kaynakId)
@@ -498,6 +500,9 @@ public class OnayService {
                 .kararVerenAd(kullaniciAd)
                 .olusturmaTarihi(LocalDateTime.now())
                 .build());
+        dashboardYayinService.yayinla(sirketId, "ONAY",
+                "Onay kararı: " + tur + " #" + kaynakId + " → " + karar);
+        return kayit;
     }
 
     /** Modül çağrısı öncesi mevcut durum (kayıt yoksa null; modül çağrısı hata verir). */

@@ -32,6 +32,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import com.raspel.erp.service.sistem.BildirimService;
+import com.raspel.erp.service.sistem.DashboardYayinService;
 import com.raspel.erp.service.sistem.EmailService;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.service.sistem.SeriNoServisi;
@@ -52,6 +53,7 @@ public class SiparisService {
     private final FaturaService faturaService;
     private final SeriNoServisi seriNoServisi;
     private final BildirimService bildirimService;
+    private final DashboardYayinService dashboardYayinService;
         private final EmailService emailService;
     private final TenantChecker tenantChecker;
     private final GorevRepository gorevRepository;
@@ -154,6 +156,7 @@ public class SiparisService {
         // Faz 2.1: proaktif kredi limiti uyarısı (engellemez, bilgilendirir).
         krediLimitiUyarisiGonder(s.getCariHesapId(), sirketId, s.getGenelToplam(), siparisNo);
         cacheYardimci.commitSonrasiTemizle("dashboard");
+        dashboardYayinService.yayinla(sirketId, "SIPARIS", "Yeni sipariş: " + siparisNo);
         return entityToDTO(s);
     }
 
@@ -343,6 +346,8 @@ public class SiparisService {
                     });
         }
         cacheYardimci.commitSonrasiTemizle("dashboard");
+        dashboardYayinService.yayinla(s.getSirketId(), "SIPARIS",
+                "Sipariş durumu: " + s.getSiparisNo() + " → " + durum);
         return sonuc;
     }
 

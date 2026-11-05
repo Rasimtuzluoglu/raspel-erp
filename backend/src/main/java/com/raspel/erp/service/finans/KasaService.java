@@ -48,6 +48,7 @@ public class KasaService {
     private final com.raspel.erp.service.sistem.DonemService donemService;
     private final com.raspel.erp.repository.finans.HareketRepository hareketRepository;
     private final com.raspel.erp.repository.ticaret.FaturaRepository faturaRepository;
+    private final com.raspel.erp.service.sistem.DashboardYayinService dashboardYayinService;
 
     @Transactional(readOnly = true)
     public Page<KasaDTO> tumKasalarGetir(Long sirketId, Pageable pageable) {
@@ -283,7 +284,10 @@ public class KasaService {
 
         kasaRepository.save(kasa);
         cacheYardimci.commitSonrasiTemizle("dashboard");
-        return hareketToDTO(kasaHareketRepository.save(hareket));
+        KasaHareketDTO sonuc = hareketToDTO(kasaHareketRepository.save(hareket));
+        dashboardYayinService.yayinla(kasa.getSirketId(), "KASA",
+                "Kasa hareketi: " + kasa.getAd() + " " + dto.getTur() + " " + dto.getTutar() + " ₺");
+        return sonuc;
     }
 
         public void hareketSil(Long hareketId) {
@@ -303,6 +307,8 @@ public class KasaService {
                         + kasa.getAd() + " (bakiye terslendi)");
         kasaHareketRepository.deleteById(hareketId);
         cacheYardimci.commitSonrasiTemizle("dashboard");
+        dashboardYayinService.yayinla(kasa.getSirketId(), "KASA",
+                "Kasa hareketi silindi: " + kasa.getAd() + " " + hareket.getTutar() + " ₺");
     }
 
     /**

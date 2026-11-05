@@ -26,6 +26,7 @@ import static org.mockito.Mockito.*;
 import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.service.sistem.BildirimService;
+import com.raspel.erp.service.sistem.DashboardYayinService;
 import com.raspel.erp.service.finans.CariHesapService;
 import com.raspel.erp.service.finans.HareketService;
 
@@ -41,6 +42,7 @@ class HareketServiceTest {
     @Mock private com.raspel.erp.config.CacheYardimci cacheYardimci;
     @Mock private TenantChecker tenantChecker;
     @Mock private com.raspel.erp.service.sistem.DonemService donemService;
+    @Mock private DashboardYayinService dashboardYayinService;
     @InjectMocks private HareketService hareketService;
 
     private CariHesap createCariHesap() {
@@ -172,6 +174,7 @@ class HareketServiceTest {
         doNothing().when(cariHesapService).bakiyeGuncelle(1L, BigDecimal.valueOf(1000));
         var result = hareketService.hareketOlustur(dto, 1L);
         assertEquals(Hareket.HareketTuru.TAHSILAT.name(), result.getTur());
+        verify(dashboardYayinService).yayinla(eq(1L), eq("HAREKET"), contains("TAHSILAT"));
     }
 
     @Test

@@ -38,6 +38,7 @@ class MasrafServiceTest {
     @Mock private com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
     @Mock private com.raspel.erp.repository.finans.CariHesapRepository cariHesapRepository;
     @Mock private com.raspel.erp.service.sistem.KategoriService kategoriService;
+    @Mock private com.raspel.erp.service.sistem.DashboardYayinService dashboardYayinService;
     @InjectMocks private MasrafService masrafService;
 
     private Masraf ornekMasraf(Long id) {
@@ -80,6 +81,7 @@ class MasrafServiceTest {
         var sonuc = masrafService.olustur(dto, 1L);
         assertEquals("Yakıt", sonuc.getAciklama());
         assertEquals(1L, sonuc.getSirketId());
+        verify(dashboardYayinService).yayinla(eq(1L), eq("MASRAF"), contains("Masraf eklendi"));
     }
 
     @Test

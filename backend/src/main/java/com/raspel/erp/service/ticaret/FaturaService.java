@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import com.raspel.erp.service.sistem.BildirimService;
+import com.raspel.erp.service.sistem.DashboardYayinService;
 import com.raspel.erp.service.sistem.TcmbKurService;
 import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.repository.finans.CariHesapRepository;
@@ -84,6 +85,7 @@ public class FaturaService {
     private final com.raspel.erp.service.envanter.StokSeriService stokSeriService;
     private final SeriNoServisi seriNoServisi;
     private final BildirimService bildirimService;
+    private final DashboardYayinService dashboardYayinService;
         private final EmailService emailService;
     private final PdfRaporService pdfRaporService;
     private final SirketRepository sirketRepository;
@@ -675,6 +677,7 @@ public class FaturaService {
 
         FaturaDTO sonuc = entityDTOyeCevir(kaydedilen);
         sonuc.setEmailGonderimDurumu(emailGonderimDurumu);
+        dashboardYayinService.yayinla(sirketId, "FATURA", "Yeni fatura: " + faturaNo);
         return sonuc;
     }
 
@@ -902,6 +905,8 @@ public class FaturaService {
         faturaGecmisService.kaydet(guncellenen, FaturaGecmisService.DURUM,
                 "Durum: " + eskiDurum + " → " + durum,
                 durumOncekiSnapshot, faturaGecmisService.snapshot(guncellenen));
+        dashboardYayinService.yayinla(guncellenen.getSirketId(), "FATURA",
+                "Fatura durumu: " + guncellenen.getFaturaNumarasi() + " → " + durum);
         return entityDTOyeCevir(guncellenen);
     }
 
@@ -1264,6 +1269,8 @@ public class FaturaService {
         faturaGecmisService.kaydet(guncellenen, FaturaGecmisService.GUNCELLE,
                 faturaGecmisService.diffOzet(duzenlemeOncekiSnapshot, duzenlemeYeniSnapshot),
                 duzenlemeOncekiSnapshot, duzenlemeYeniSnapshot);
+        dashboardYayinService.yayinla(guncellenen.getSirketId(), "FATURA",
+                "Fatura güncellendi: " + guncellenen.getFaturaNumarasi());
         return entityDTOyeCevir(guncellenen);
     }
 
@@ -1284,8 +1291,11 @@ public class FaturaService {
             throw new BusinessException("Bu fişe bağlı kasa/banka/cari hareketleri var; fişi silmeden önce ilgili hareketleri iptal edin.");
         }
         String silmeOncesiSnapshot = faturaGecmisService.snapshot(fatura);
+        Long silinenSirketId = fatura.getSirketId();
+        String silinenFaturaNo = fatura.getFaturaNumarasi();
         faturaRepository.deleteById(id);
         faturaGecmisService.kaydet(fatura, FaturaGecmisService.SIL, "Fatura silindi", silmeOncesiSnapshot, null);
+        dashboardYayinService.yayinla(silinenSirketId, "FATURA", "Fatura silindi: " + silinenFaturaNo);
     }
 
     /**

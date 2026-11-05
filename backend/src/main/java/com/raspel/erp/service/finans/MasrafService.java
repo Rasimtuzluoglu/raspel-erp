@@ -50,6 +50,7 @@ public class MasrafService {
     private final com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
     private final com.raspel.erp.repository.finans.CariHesapRepository cariHesapRepository;
     private final com.raspel.erp.service.sistem.KategoriService kategoriService;
+    private final com.raspel.erp.service.sistem.DashboardYayinService dashboardYayinService;
 
     @Transactional(readOnly = true)
     public Page<MasrafDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -141,6 +142,7 @@ public class MasrafService {
         odemeIsle(kaydedilen);
         otomatikMuhasebeService.masrafIsle(kaydedilen);
         cacheYardimci.commitSonrasiTemizle("dashboard");
+        dashboardYayinService.yayinla(sirketId, "MASRAF", "Masraf eklendi: " + kaydedilen.getTutar() + " ₺");
         return entityToDTO(kaydedilen);
     }
 
@@ -194,6 +196,8 @@ public class MasrafService {
                 com.raspel.erp.service.muhasebe.OtomatikMuhasebeService.KAYNAK_MASRAF, kaydedilen.getId());
         otomatikMuhasebeService.masrafIsle(kaydedilen);
         cacheYardimci.commitSonrasiTemizle("dashboard");
+        dashboardYayinService.yayinla(kaydedilen.getSirketId(), "MASRAF",
+                "Masraf güncellendi: " + kaydedilen.getTutar() + " ₺");
         return entityToDTO(kaydedilen);
     }
 
@@ -210,6 +214,7 @@ public class MasrafService {
                 com.raspel.erp.service.muhasebe.OtomatikMuhasebeService.KAYNAK_MASRAF, m.getId());
         masrafRepository.deleteById(id);
         cacheYardimci.commitSonrasiTemizle("dashboard");
+        dashboardYayinService.yayinla(m.getSirketId(), "MASRAF", "Masraf silindi: " + m.getTutar() + " ₺");
     }
 
     /** Masraf ödemesi: seçilen kasa/banka hesabından çıkış işlenir. */

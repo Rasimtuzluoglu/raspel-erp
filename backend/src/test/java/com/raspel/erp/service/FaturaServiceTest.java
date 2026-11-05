@@ -26,6 +26,7 @@ import static org.mockito.Mockito.*;
 import com.raspel.erp.config.TenantChecker;
 import com.raspel.erp.config.CacheYardimci;
 import com.raspel.erp.service.sistem.BildirimService;
+import com.raspel.erp.service.sistem.DashboardYayinService;
 import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.service.finans.CariHesapService;
@@ -78,6 +79,7 @@ class FaturaServiceTest {
     @Mock private com.raspel.erp.repository.sistem.KullaniciRepository kullaniciRepository;
     @Mock private jakarta.persistence.EntityManager entityManager;
     @Mock private com.raspel.erp.service.muhasebe.OtomatikMuhasebeService otomatikMuhasebeService;
+    @Mock private DashboardYayinService dashboardYayinService;
     @InjectMocks private FaturaService faturaService;
 
     @org.junit.jupiter.api.BeforeEach
@@ -223,6 +225,7 @@ class FaturaServiceTest {
         when(faturaRepository.save(any(Fatura.class))).thenReturn(saved);
         var result = faturaService.faturaOlustur(dto, 1L, null, null);
         assertNotNull(result);
+        verify(dashboardYayinService).yayinla(eq(1L), eq("FATURA"), contains("Yeni fatura"));
     }
 
     @Test
