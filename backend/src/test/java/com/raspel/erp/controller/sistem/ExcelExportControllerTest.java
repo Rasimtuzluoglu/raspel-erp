@@ -108,6 +108,8 @@ class ExcelExportControllerTest {
     private com.raspel.erp.service.finans.CekSenetService cekSenetService;
     @MockBean
     private com.raspel.erp.service.sistem.OnayService onayService;
+    @MockBean
+    private com.raspel.erp.service.sistem.DashboardService dashboardService;
 
     @Test
     void cariHesaplar_excelDoner() throws Exception {
@@ -615,5 +617,106 @@ class ExcelExportControllerTest {
                 org.mockito.ArgumentMatchers.any(),
                 org.mockito.ArgumentMatchers.argThat(l -> l != null && l.size() == 1
                         && "FTR-3".equals(l.get(0).get("Fatura No"))));
+    }
+
+    @Test
+    void dashboard_ozetVeGrafiklerSayfalariniDoner() throws Exception {
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                        "admin", null,
+                        List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"))));
+        var ozet = com.raspel.erp.dto.sistem.DashboardOzetDTO.builder()
+                .donem(com.raspel.erp.dto.sistem.DashboardOzetDTO.DonemDTO.builder()
+                        .kod("BU_YIL").etiket("2026 Yılı").build())
+                .kpi(com.raspel.erp.dto.sistem.DashboardOzetDTO.KpiDTO.builder()
+                        .ciro(com.raspel.erp.dto.sistem.DashboardOzetDTO.CiroDTO.builder()
+                                .deger(new java.math.BigDecimal("12345.67"))
+                                .onceki(new java.math.BigDecimal("10000.00"))
+                                .degisimYuzde(new java.math.BigDecimal("23.46"))
+                                .build())
+                        .kar(com.raspel.erp.dto.sistem.DashboardOzetDTO.KarDTO.builder()
+                                .deger(new java.math.BigDecimal("2345.67"))
+                                .onceki(new java.math.BigDecimal("1000.00"))
+                                .build())
+                        .likidite(com.raspel.erp.dto.sistem.DashboardOzetDTO.LikiditeDTO.builder()
+                                .deger(new java.math.BigDecimal("5000.00")).build())
+                        .netCari(com.raspel.erp.dto.sistem.DashboardOzetDTO.NetCariDTO.builder()
+                                .alacak(new java.math.BigDecimal("8000.00"))
+                                .borc(new java.math.BigDecimal("3000.00")).build())
+                        .build())
+                .stok(com.raspel.erp.dto.sistem.DashboardOzetDTO.StokDTO.builder()
+                        .deger(new java.math.BigDecimal("15000.00")).kritikAdet(4L).build())
+                .gorevSayilari(com.raspel.erp.dto.sistem.DashboardOzetDTO.GorevSayilariDTO.builder()
+                        .onayBekleyen(3L).vadesiGecen(2L).build())
+                .build();
+        var grafikler = com.raspel.erp.dto.sistem.DashboardGrafikDTO.builder()
+                .aylikGelirGider(List.of(com.raspel.erp.dto.sistem.DashboardDTO.AylikGelirGiderDTO.builder()
+                        .ay("2026-01").gelir(new java.math.BigDecimal("100"))
+                        .gider(new java.math.BigDecimal("40")).build()))
+                .kategoriSatislari(List.of(com.raspel.erp.dto.sistem.DashboardDTO.KategoriSatisDTO.builder()
+                        .kategori("Mobilya").tutar(new java.math.BigDecimal("900")).build()))
+                .build();
+
+        when(dashboardService.ozetGetir(eq(1L), eq(7L), any(), eq("ADMIN"), eq("BU_YIL"))).thenReturn(ozet);
+        when(dashboardService.grafiklerGetir(1L)).thenReturn(grafikler);
+        when(excelService.exportCokluSayfa(any())).thenAnswer(cagri -> {
+            @SuppressWarnings("unchecked")
+            List<ExcelExportService.Sayfa> sayfalar = (List<ExcelExportService.Sayfa>) cagri.getArgument(0);
+            return new ExcelExportService().exportCokluSayfa(sayfalar);
+        });
+
+        byte[] govde = mockMvc.perform(get("/api/exports/dashboard")
+                        .requestAttr("sirketId", 1L)
+                        .requestAttr("kullaniciId", 7L)
+                        .requestAttr("displayName", "Ayşe")
+                        .param("donem", "BU_YIL"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                        .string(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                                org.hamcrest.Matchers.containsString("attachment; filename=\"dashboard-"
+                                        + java.time.LocalDate.now()
+                                        .format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE)
+                                        + ".xlsx\"")))
+                .andReturn().getResponse().getContentAsByteArray();
+
+        try (org.apache.poi.xssf.usermodel.XSSFWorkbook wb =
+                     new org.apache.poi.xssf.usermodel.XSSFWorkbook(new java.io.ByteArrayInputStream(govde))) {
+            var ozetSayfa = wb.getSheet("Ozet");
+            var grafikSayfa = wb.getSheet("Grafikler");
+            org.junit.jupiter.api.Assertions.assertNotNull(ozetSayfa);
+            org.junit.jupiter.api.Assertions.assertNotNull(grafikSayfa);
+
+            org.junit.jupiter.api.Assertions.assertEquals("Alan", ozetSayfa.getRow(0).getCell(0).getStringCellValue());
+            org.junit.jupiter.api.Assertions.assertEquals("Dönem", ozetSayfa.getRow(1).getCell(0).getStringCellValue());
+            org.junit.jupiter.api.Assertions.assertEquals("2026 Yılı", ozetSayfa.getRow(1).getCell(1).getStringCellValue());
+            org.junit.jupiter.api.Assertions.assertEquals("Ciro", ozetSayfa.getRow(2).getCell(0).getStringCellValue());
+            org.junit.jupiter.api.Assertions.assertEquals(12345.67,
+                    ozetSayfa.getRow(2).getCell(1).getNumericCellValue(), 0.001);
+            org.junit.jupiter.api.Assertions.assertEquals("Kritik Stok",
+                    ozetSayfa.getRow(11).getCell(0).getStringCellValue());
+            org.junit.jupiter.api.Assertions.assertEquals(4.0,
+                    ozetSayfa.getRow(11).getCell(1).getNumericCellValue(), 0.001);
+
+            org.junit.jupiter.api.Assertions.assertEquals("12 Ay Gelir/Gider/Net",
+                    grafikSayfa.getRow(0).getCell(0).getStringCellValue());
+            org.junit.jupiter.api.Assertions.assertEquals("Ay", grafikSayfa.getRow(1).getCell(0).getStringCellValue());
+            org.junit.jupiter.api.Assertions.assertEquals("2026-01",
+                    grafikSayfa.getRow(2).getCell(0).getStringCellValue());
+            org.junit.jupiter.api.Assertions.assertEquals(100.0,
+                    grafikSayfa.getRow(2).getCell(1).getNumericCellValue(), 0.001);
+            org.junit.jupiter.api.Assertions.assertEquals(60.0,
+                    grafikSayfa.getRow(2).getCell(3).getNumericCellValue(), 0.001);
+            // Bölüm başlıkları arasında boş satır bulunur (hücresiz satır).
+            org.junit.jupiter.api.Assertions.assertNull(grafikSayfa.getRow(3).getCell(0));
+        }
+
+        org.mockito.Mockito.verify(dashboardService).ozetGetir(
+                org.mockito.ArgumentMatchers.eq(1L), org.mockito.ArgumentMatchers.eq(7L),
+                org.mockito.ArgumentMatchers.eq("Ayşe"), org.mockito.ArgumentMatchers.eq("ADMIN"),
+                org.mockito.ArgumentMatchers.eq("BU_YIL"));
+        org.mockito.Mockito.verify(dashboardService).grafiklerGetir(1L);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
     }
 }

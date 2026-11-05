@@ -12,15 +12,22 @@ import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.PageRequest;
+import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import org.springframework.data.domain.Pageable;
+import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.service.sistem.AuditLogService;
 import com.raspel.erp.service.finans.BankaService;
 import com.raspel.erp.service.finans.CariHesapService;
+import com.raspel.erp.service.sistem.DashboardService;
 import com.raspel.erp.service.sistem.ExcelExportService;
+import com.raspel.erp.service.sistem.ExcelExportService.Sayfa;
+import com.raspel.erp.service.sistem.ExcelExportService.SayfaSatiri;
 import com.raspel.erp.service.muhasebe.MuhasebeService;
 import com.raspel.erp.service.muhasebe.IrsaliyeService;
+import com.raspel.erp.dto.sistem.DashboardGrafikDTO;
+import com.raspel.erp.dto.sistem.DashboardOzetDTO;
 import com.raspel.erp.dto.muhasebe.BilancoDTO;
 import com.raspel.erp.dto.muhasebe.KarZararDTO;
 import com.raspel.erp.entity.ticaret.Fatura;
@@ -74,6 +81,7 @@ public class ExcelExportController {
     private final com.raspel.erp.service.finans.TahsilatService tahsilatService;
     private final com.raspel.erp.service.finans.CekSenetService cekSenetService;
     private final com.raspel.erp.service.sistem.OnayService onayService;
+    private final DashboardService dashboardService;
 
     @GetMapping("/kdv-beyanname")
     @Operation(summary = "KDV beyannamesini Excel dışa aktar",
@@ -1125,6 +1133,183 @@ public class ExcelExportController {
         }).toList();
         return excel("Onaylar", new String[]{"Tür", "Kayıt No", "Başlık", "Alt Başlık", "Tutar",
                 "Tarih", "Oluşturma", "Durum", "Açıklama"}, rows);
+    }
+
+    @GetMapping("/dashboard")
+    @Operation(summary = "Anasayfa verilerini Excel dışa aktar",
+            description = "Seçili dönemin KPI özetini (Ozet) ve anasayfa grafiklerini (Grafikler) "
+                    + "iki sayfalı Excel (.xlsx) olarak dışa aktarır")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
+    public ResponseEntity<byte[]> dashboard(
+            HttpServletRequest request,
+            @RequestParam(defaultValue = "BU_AY") String donem) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        if (sirketId == null) {
+            throw new BusinessException("Şirket bilgisi bulunamadı");
+        }
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        DashboardOzetDTO ozet = dashboardService.ozetGetir(
+                sirketId, kullaniciId, kullaniciAdi(request), aktifRol(), donem);
+        DashboardGrafikDTO grafikler = dashboardService.grafiklerGetir(sirketId);
+
+        byte[] data = excelService.exportCokluSayfa(List.of(
+                dashboardOzetSayfasi(ozet), dashboardGrafikSayfasi(grafikler)));
+        String dosyaAdi = "dashboard-" + java.time.LocalDate.now()
+                .format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE) + ".xlsx";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + dosyaAdi + "\"")
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(data);
+    }
+
+    /** Ozet sayfası: dönem KPI'ları, stok ve görev sayaçları. */
+    private Sayfa dashboardOzetSayfasi(DashboardOzetDTO ozet) {
+        DashboardOzetDTO.DonemDTO donem = ozet.getDonem();
+        DashboardOzetDTO.KpiDTO kpi = ozet.getKpi();
+        DashboardOzetDTO.CiroDTO ciro = kpi != null ? kpi.getCiro() : null;
+        DashboardOzetDTO.KarDTO kar = kpi != null ? kpi.getKar() : null;
+        DashboardOzetDTO.LikiditeDTO likidite = kpi != null ? kpi.getLikidite() : null;
+        DashboardOzetDTO.NetCariDTO netCari = kpi != null ? kpi.getNetCari() : null;
+        DashboardOzetDTO.StokDTO stok = ozet.getStok();
+        DashboardOzetDTO.GorevSayilariDTO gorev = ozet.getGorevSayilari();
+
+        List<SayfaSatiri> satirlar = new ArrayList<>();
+        satirlar.add(SayfaSatiri.baslik("Alan", "Değer"));
+        satirlar.add(SayfaSatiri.veri("Dönem", donem != null ? donem.getEtiket() : null));
+        satirlar.add(SayfaSatiri.veri("Ciro", ciro != null ? ciro.getDeger() : null));
+        satirlar.add(SayfaSatiri.veri("Önceki dönem ciro", ciro != null ? ciro.getOnceki() : null));
+        satirlar.add(SayfaSatiri.veri("Değişim %", ciro != null ? ciro.getDegisimYuzde() : null));
+        satirlar.add(SayfaSatiri.veri("Net Kâr", kar != null ? kar.getDeger() : null));
+        satirlar.add(SayfaSatiri.veri("Önceki dönem kâr", kar != null ? kar.getOnceki() : null));
+        satirlar.add(SayfaSatiri.veri("Likidite", likidite != null ? likidite.getDeger() : null));
+        satirlar.add(SayfaSatiri.veri("Alacak", netCari != null ? netCari.getAlacak() : null));
+        satirlar.add(SayfaSatiri.veri("Borç", netCari != null ? netCari.getBorc() : null));
+        satirlar.add(SayfaSatiri.veri("Stok Değeri", stok != null ? stok.getDeger() : null));
+        satirlar.add(SayfaSatiri.veri("Kritik Stok", stok != null ? stok.getKritikAdet() : null));
+        satirlar.add(SayfaSatiri.veri("Bekleyen Onay", gorev != null ? gorev.getOnayBekleyen() : null));
+        satirlar.add(SayfaSatiri.veri("Vadesi Geçen", gorev != null ? gorev.getVadesiGecen() : null));
+        return new Sayfa("Ozet", satirlar);
+    }
+
+    /** Grafikler sayfası: her grafik için bölüm başlığı + sütun başlığı + veri. */
+    private Sayfa dashboardGrafikSayfasi(DashboardGrafikDTO grafikler) {
+        List<SayfaSatiri> satirlar = new ArrayList<>();
+
+        satirlar.add(SayfaSatiri.bolum("12 Ay Gelir/Gider/Net"));
+        satirlar.add(SayfaSatiri.baslik("Ay", "Gelir", "Gider", "Net"));
+        for (var g : liste(grafikler.getAylikGelirGider())) {
+            satirlar.add(SayfaSatiri.veri(g.getAy(), g.getGelir(), g.getGider(),
+                    nz(g.getGelir()).subtract(nz(g.getGider()))));
+        }
+        satirlar.add(SayfaSatiri.bos());
+
+        satirlar.add(SayfaSatiri.bolum("30 Gün Nakit Akışı"));
+        satirlar.add(SayfaSatiri.baslik("Gün", "Gelir", "Gider", "Net"));
+        for (var g : liste(grafikler.getGunlukNakitAkisi())) {
+            satirlar.add(SayfaSatiri.veri(g.getGun(), g.getGelir(), g.getGider(),
+                    nz(g.getGelir()).subtract(nz(g.getGider()))));
+        }
+        satirlar.add(SayfaSatiri.bos());
+
+        satirlar.add(SayfaSatiri.bolum("Kategori Satışları"));
+        satirlar.add(SayfaSatiri.baslik("Kategori", "Tutar"));
+        for (var k : liste(grafikler.getKategoriSatislari())) {
+            satirlar.add(SayfaSatiri.veri(k.getKategori(), k.getTutar()));
+        }
+        satirlar.add(SayfaSatiri.bos());
+
+        satirlar.add(SayfaSatiri.bolum("En Çok Satanlar"));
+        satirlar.add(SayfaSatiri.baslik("Stok Kodu", "Ürün", "Satış Miktarı"));
+        for (var u : liste(grafikler.getEnCokSatanlar())) {
+            satirlar.add(SayfaSatiri.veri(u.getStokKodu(), u.getStokAd(), u.getSatisMiktari()));
+        }
+        satirlar.add(SayfaSatiri.bos());
+
+        satirlar.add(SayfaSatiri.bolum("Alacak Yaşlandırma"));
+        satirlar.add(SayfaSatiri.baslik("Yaş Aralığı", "Tutar"));
+        for (var y : liste(grafikler.getAlacakYaslandirma())) {
+            satirlar.add(SayfaSatiri.veri(y.getAralik(), y.getTutar()));
+        }
+        satirlar.add(SayfaSatiri.bos());
+
+        satirlar.add(SayfaSatiri.bolum("En Borçlu Cariler"));
+        satirlar.add(SayfaSatiri.baslik("Cari", "Tutar"));
+        for (var c : liste(grafikler.getEnCokBorcCariler())) {
+            satirlar.add(SayfaSatiri.veri(c.getCariAd(), c.getTutar()));
+        }
+        satirlar.add(SayfaSatiri.bos());
+
+        satirlar.add(SayfaSatiri.bolum("En Alacaklı Cariler"));
+        satirlar.add(SayfaSatiri.baslik("Cari", "Tutar"));
+        for (var c : liste(grafikler.getEnCokAlacakCariler())) {
+            satirlar.add(SayfaSatiri.veri(c.getCariAd(), c.getTutar()));
+        }
+        satirlar.add(SayfaSatiri.bos());
+
+        satirlar.add(SayfaSatiri.bolum("Sipariş Durumları"));
+        satirlar.add(SayfaSatiri.baslik("Durum", "Adet"));
+        for (var s : liste(grafikler.getSiparisDurumlari())) {
+            satirlar.add(SayfaSatiri.veri(s.getDurum(), s.getAdet()));
+        }
+        satirlar.add(SayfaSatiri.bos());
+
+        satirlar.add(SayfaSatiri.bolum("Bütçe / Gerçekleşen"));
+        satirlar.add(SayfaSatiri.baslik("Kategori", "Bütçe", "Gerçekleşen", "Fark"));
+        for (var b : liste(grafikler.getButceGerceklesen())) {
+            satirlar.add(SayfaSatiri.veri(b.getKategori(), b.getButce(), b.getGerceklesen(),
+                    nz(b.getGerceklesen()).subtract(nz(b.getButce()))));
+        }
+        satirlar.add(SayfaSatiri.bos());
+
+        satirlar.add(SayfaSatiri.bolum("Stok Değeri"));
+        satirlar.add(SayfaSatiri.baslik("Kategori", "Değer", "Adet"));
+        if (grafikler.getStokDegeri() != null) {
+            for (var k : liste(grafikler.getStokDegeri().getKategoriler())) {
+                satirlar.add(SayfaSatiri.veri(k.getKategori(), k.getDeger(), k.getAdet()));
+            }
+        }
+
+        return new Sayfa("Grafikler", satirlar);
+    }
+
+    private <T> List<T> liste(List<T> degerler) {
+        return degerler != null ? degerler : List.of();
+    }
+
+    private BigDecimal nz(BigDecimal deger) {
+        return deger != null ? deger : BigDecimal.ZERO;
+    }
+
+    /** SecurityContext authority'lerinden rol (ADMIN > MUHASEBE > USER). */
+    private String aktifRol() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return "USER";
+        }
+        var roller = auth.getAuthorities().stream()
+                .map(org.springframework.security.core.GrantedAuthority::getAuthority)
+                .toList();
+        if (roller.contains("ROLE_ADMIN")) {
+            return "ADMIN";
+        }
+        if (roller.contains("ROLE_MUHASEBE")) {
+            return "MUHASEBE";
+        }
+        return "USER";
+    }
+
+    /** Görünen ad: JWT/API token filtresinin yazdığı displayName → username. */
+    private String kullaniciAdi(HttpServletRequest request) {
+        Object displayName = request.getAttribute("displayName");
+        if (displayName instanceof String ad && !ad.isBlank()) {
+            return ad;
+        }
+        Object username = request.getAttribute("username");
+        if (username instanceof String ad && !ad.isBlank()) {
+            return ad;
+        }
+        return "Kullanıcı";
     }
 
     private ResponseEntity<byte[]> excel(String name, String[] cols, List<Map<String, Object>> rows) {
