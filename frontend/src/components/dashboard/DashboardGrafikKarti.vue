@@ -16,7 +16,7 @@
     <div
       v-if="yukleniyor"
       class="grafik-govde"
-      :style="{ height: `${yukseklik}px` }"
+      :style="{ '--grafik-yukseklik': `${yukseklik}px` }"
       aria-hidden="true"
     >
       <span class="iskelet" />
@@ -53,7 +53,7 @@
       v-else
       ref="grafikKok"
       class="grafik-govde"
-      :style="{ height: `${yukseklik}px` }"
+      :style="{ '--grafik-yukseklik': `${yukseklik}px` }"
     >
       <component
         :is="grafikBileseni"
@@ -143,6 +143,7 @@ const bosMu = computed(
   position: relative;
   width: 100%;
   min-width: 0;
+  height: var(--grafik-yukseklik, 240px);
 }
 .iskelet {
   display: block;
@@ -207,6 +208,12 @@ const bosMu = computed(
 @media (prefers-reduced-motion: reduce) {
   .iskelet {
     animation: none;
+  }
+}
+/* Mobil: grafikler 140px yukseklige iner (prop degeri CSS degiskeniyle korunur). */
+@media (max-width: 760px) {
+  .grafik-govde {
+    height: 140px;
   }
 }
 </style>

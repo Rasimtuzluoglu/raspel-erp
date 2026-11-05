@@ -115,7 +115,7 @@
       <!-- Kisisel notlar: rozet acik (tamamlanmamis) not sayisidir. -->
       <button
         type="button"
-        class="ust-buton ust-buton--ikon ust-buton--rozet"
+        class="ust-buton ust-buton--ikon ust-buton--rozet ust-buton--masaustu"
         :aria-label="notEtiketi"
         :title="t('dashboard.notlarAc')"
         data-test="not-buton"
@@ -136,7 +136,7 @@
       <!-- Excel disa aktarma: secili donem ile /exports/dashboard -->
       <button
         type="button"
-        class="ust-buton ust-buton--ikon"
+        class="ust-buton ust-buton--ikon ust-buton--masaustu"
         :aria-label="t('dashboard.excelIndir')"
         :title="t('dashboard.excelIndir')"
         :disabled="excelIndiriliyor"
@@ -153,7 +153,7 @@
       <!-- Yazdirma / PDF: tarayicinin kendi print akisi kullanilir. -->
       <button
         type="button"
-        class="ust-buton ust-buton--ikon"
+        class="ust-buton ust-buton--ikon ust-buton--masaustu"
         :aria-label="t('dashboard.yazdirAc')"
         :title="t('dashboard.yazdirAc')"
         data-test="yazdir"
@@ -168,7 +168,7 @@
       <!-- Kar analizi: secili donem icin urun/cari bazli kar-marj drawer'i -->
       <button
         type="button"
-        class="ust-buton ust-buton--ikon"
+        class="ust-buton ust-buton--ikon ust-buton--masaustu"
         :aria-label="t('dashboard.karAnaliziAc')"
         :title="t('dashboard.karAnaliziAc')"
         data-test="kar-analizi-buton"
@@ -183,7 +183,7 @@
       <!-- Vade takvimi -->
       <button
         type="button"
-        class="ust-buton ust-buton--ikon"
+        class="ust-buton ust-buton--ikon ust-buton--masaustu"
         :aria-label="t('dashboard.vadeTakvimiAc')"
         :title="t('dashboard.vadeTakvimiAc')"
         data-test="vade-takvimi-buton"
@@ -198,7 +198,7 @@
       <!-- Canli guncelleme anahtari: STOMP aboneligi; kopukken 60 sn yedek polling. -->
       <button
         type="button"
-        class="ust-buton ust-buton--ikon ust-oto"
+        class="ust-buton ust-buton--ikon ust-oto ust-buton--masaustu"
         :class="{ 'ust-buton--secili': otoYenile }"
         role="switch"
         :aria-checked="otoYenile ? 'true' : 'false'"
@@ -228,7 +228,7 @@
       </button>
       <button
         type="button"
-        class="ust-buton ust-buton--ikon"
+        class="ust-buton ust-buton--ikon ust-buton--masaustu"
         :aria-label="t('dashboard.yenile')"
         :title="t('dashboard.yenile')"
         :disabled="yenileniyor"
@@ -242,7 +242,7 @@
       </button>
       <button
         type="button"
-        class="ust-buton ust-buton--ikon"
+        class="ust-buton ust-buton--ikon ust-buton--masaustu"
         :class="{ 'ust-buton--aktif': duzenModu }"
         :aria-label="duzenModu ? t('dashboard.duzenBitir') : t('dashboard.duzenle')"
         :title="duzenModu ? t('dashboard.duzenBitir') : t('dashboard.duzenle')"
@@ -254,12 +254,177 @@
           aria-hidden="true"
         />
       </button>
+
+      <!--
+        Mobil (<=760px): masaustu ikonlari CSS ile gizlenir; ayni eylemler
+        "Daha fazla" popover'inda 44px satirlar olarak sunulur. Popover
+        DOM'da her zaman yoktur; yalnizca acikken render edilir.
+      -->
+      <div
+        ref="mobilAlan"
+        class="ust-mobil-alan"
+      >
+        <button
+          ref="mobilDaha"
+          type="button"
+          class="ust-buton ust-buton--ikon ust-mobil-daha"
+          :class="{ 'ust-buton--secili': mobilMenuAcik }"
+          :aria-label="t('dashboard.dahaFazlaIslem')"
+          :title="t('dashboard.dahaFazlaIslem')"
+          aria-haspopup="dialog"
+          :aria-expanded="mobilMenuAcik ? 'true' : 'false'"
+          aria-controls="db-mobil-menu"
+          data-test="mobil-daha"
+          @click="mobilMenuDegistir"
+        >
+          <i
+            class="pi pi-ellipsis-h"
+            aria-hidden="true"
+          />
+        </button>
+
+        <div
+          v-if="mobilMenuAcik"
+          id="db-mobil-menu"
+          ref="mobilMenu"
+          class="ust-mobil-menu"
+          role="dialog"
+          aria-modal="false"
+          :aria-label="t('dashboard.dahaFazlaIslem')"
+          data-test="mobil-menu"
+          @keydown.esc.stop.prevent="mobilMenuKapat(true)"
+          @keydown.tab="mobilOdakDongusu"
+        >
+          <button
+            type="button"
+            class="ust-mobil-satir"
+            data-test="mobil-aksiyon-notlar"
+            @click="mobilEylem('notlar')"
+          >
+            <i
+              class="pi pi-clipboard"
+              aria-hidden="true"
+            />
+            <span class="ust-mobil-etiket">{{ t('dashboard.notlar') }}</span>
+            <span
+              v-if="acikNotAdedi > 0"
+              class="ust-mobil-rozet"
+              aria-hidden="true"
+            >{{ notRozetMetni }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="ust-mobil-satir"
+            data-test="mobil-aksiyon-takvim"
+            @click="mobilEylem('takvim')"
+          >
+            <i
+              class="pi pi-calendar"
+              aria-hidden="true"
+            />
+            <span class="ust-mobil-etiket">{{ t('dashboard.vadeTakvimi') }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="ust-mobil-satir"
+            data-test="mobil-aksiyon-kar"
+            @click="mobilEylem('kar')"
+          >
+            <i
+              class="pi pi-chart-line"
+              aria-hidden="true"
+            />
+            <span class="ust-mobil-etiket">{{ t('dashboard.karAnalizi') }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="ust-mobil-satir"
+            :disabled="excelIndiriliyor"
+            data-test="mobil-aksiyon-excel"
+            @click="mobilExcel"
+          >
+            <i
+              class="pi"
+              :class="excelIndiriliyor ? 'pi-spin pi-spinner' : 'pi-file-excel'"
+              aria-hidden="true"
+            />
+            <span class="ust-mobil-etiket">{{ t('dashboard.excelIndir') }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="ust-mobil-satir"
+            data-test="mobil-aksiyon-yazdir"
+            @click="mobilEylem('yazdir')"
+          >
+            <i
+              class="pi pi-print"
+              aria-hidden="true"
+            />
+            <span class="ust-mobil-etiket">{{ t('dashboard.yazdirAc') }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="ust-mobil-satir ust-mobil-satir--anahtar"
+            role="switch"
+            :aria-checked="otoYenile ? 'true' : 'false'"
+            :aria-label="otoYenile ? t('dashboard.otoYenilemeKapat') : t('dashboard.otoYenilemeAc')"
+            data-test="mobil-aksiyon-canli"
+            @click="emit('oto-degistir', !otoYenile)"
+          >
+            <i
+              class="pi pi-sync"
+              aria-hidden="true"
+            />
+            <span class="ust-mobil-etiket">{{ t('dashboard.canliMod') }}</span>
+            <span
+              class="ust-mobil-anahtar"
+              :class="{ 'ust-mobil-anahtar--acik': otoYenile }"
+              aria-hidden="true"
+            ><span class="ust-mobil-knob" /></span>
+          </button>
+
+          <button
+            type="button"
+            class="ust-mobil-satir"
+            :disabled="yenileniyor"
+            data-test="mobil-aksiyon-yenile"
+            @click="mobilEylem('yenile')"
+          >
+            <i
+              class="pi"
+              :class="yenileniyor ? 'pi-spin pi-spinner' : 'pi-refresh'"
+              aria-hidden="true"
+            />
+            <span class="ust-mobil-etiket">{{ t('dashboard.yenile') }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="ust-mobil-satir"
+            :class="{ 'ust-mobil-satir--aktif': duzenModu }"
+            :aria-pressed="duzenModu"
+            data-test="mobil-aksiyon-duzenle"
+            @click="mobilEylem('duzenle')"
+          >
+            <i
+              class="pi pi-sliders-h"
+              aria-hidden="true"
+            />
+            <span class="ust-mobil-etiket">{{ duzenModu ? t('dashboard.duzenBitir') : t('dashboard.duzenle') }}</span>
+          </button>
+        </div>
+      </div>
     </div>
   </header>
 </template>
 
 <script setup>
-import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { PrimeVueToastSymbol } from 'primevue/usetoast'
 import { excelAPI } from '../../api/index.js'
@@ -411,6 +576,79 @@ watch(zilAcik, (acik) => {
   }
 })
 
+// --- Mobil "Daha fazla" menusu ---------------------------------------------
+// Masaustu ikonlari CSS ile gizlenir; mobilde ayni emit'ler buradan tetiklenir.
+const mobilMenuAcik = ref(false)
+const mobilAlan = ref(null)
+const mobilMenu = ref(null)
+const mobilDaha = ref(null)
+
+const mobilMenuKapat = (odakla = false) => {
+  mobilMenuAcik.value = false
+  if (odakla) mobilDaha.value?.focus?.()
+}
+
+const mobilMenuDegistir = () => {
+  mobilMenuAcik.value = !mobilMenuAcik.value
+}
+
+const mobilDisariTikla = (olay) => {
+  const kok = mobilAlan.value
+  if (!kok || kok.contains?.(olay.target)) return
+  mobilMenuKapat(false)
+}
+
+const mobilTusKacisi = (olay) => {
+  if (olay.key === 'Escape') mobilMenuKapat(true)
+}
+
+/** Popover acikken Tab ilk/son oge arasinda dongusel kalir. */
+const mobilOdakDongusu = (olay) => {
+  const kok = mobilMenu.value
+  if (!kok) return
+  const odaklanabilir = [...kok.querySelectorAll('button:not([disabled])')]
+  if (odaklanabilir.length === 0) return
+  const ilk = odaklanabilir[0]
+  const son = odaklanabilir[odaklanabilir.length - 1]
+  const aktif = document.activeElement
+  if (olay.shiftKey && (aktif === ilk || !kok.contains(aktif))) {
+    olay.preventDefault()
+    son.focus()
+  } else if (!olay.shiftKey && (aktif === son || !kok.contains(aktif))) {
+    olay.preventDefault()
+    ilk.focus()
+  }
+}
+
+const mobilEylem = (ad) => {
+  mobilMenuKapat()
+  if (ad === 'notlar') emit('notlar')
+  else if (ad === 'takvim') emit('takvim')
+  else if (ad === 'kar') emit('kar-analizi')
+  else if (ad === 'yazdir') yazdir()
+  else if (ad === 'yenile') emit('yenile')
+  else if (ad === 'duzenle') emit('duzenle')
+}
+
+const mobilExcel = async () => {
+  await excelIndir()
+  mobilMenuKapat()
+}
+
+watch(mobilMenuAcik, async (acik) => {
+  if (typeof document === 'undefined') return
+  if (acik) {
+    document.addEventListener('click', mobilDisariTikla, true)
+    document.addEventListener('keydown', mobilTusKacisi)
+    // Odak menuye tasinir: klavye kullanicisi ilk satirdan devam eder.
+    await nextTick()
+    mobilMenu.value?.querySelector('button:not([disabled])')?.focus?.()
+  } else {
+    document.removeEventListener('click', mobilDisariTikla, true)
+    document.removeEventListener('keydown', mobilTusKacisi)
+  }
+})
+
 // --- Kisisel not rozeti ----------------------------------------------------
 // Ilk deger senkron okunur; boylece ust bar rozeti ilk boyamada dogru olur.
 const acikNotAdedi = ref(acikNotSayisi(props.kullaniciId))
@@ -509,6 +747,8 @@ onBeforeUnmount(() => {
   if (typeof document === 'undefined') return
   document.removeEventListener('click', disariTikla, true)
   document.removeEventListener('keydown', tusKacisi)
+  document.removeEventListener('click', mobilDisariTikla, true)
+  document.removeEventListener('keydown', mobilTusKacisi)
 })
 
 </script>
@@ -823,6 +1063,133 @@ onBeforeUnmount(() => {
     transition: none;
   }
 }
+/* --- Mobil "Daha fazla" menusu ------------------------------------------ */
+/*
+ * Popover yalnizca mobilde gorunur. Masaustunde tetikleyici ve menu DOM'da
+ * olabilir ama CSS ile gizlenir; masaustu ikon seti birebir korunur.
+ */
+.ust-mobil-alan {
+  position: relative;
+  display: none;
+  flex-shrink: 0;
+}
+.ust-mobil-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: min(300px, calc(100vw - 24px));
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-card);
+  box-shadow: var(--elev-3, var(--elev-2));
+}
+.ust-mobil-satir {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--dur-base, 0.2s) var(--ease-standard, ease),
+    color var(--dur-base, 0.2s) var(--ease-standard, ease);
+}
+.ust-mobil-satir:hover:not(:disabled) {
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+.ust-mobil-satir:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.ust-mobil-satir:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.ust-mobil-satir > i {
+  width: 18px;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--accent);
+}
+.ust-mobil-etiket {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ust-mobil-rozet {
+  flex-shrink: 0;
+  min-width: 20px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-hover);
+  color: var(--accent-contrast);
+  font-size: 10.5px;
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.ust-mobil-satir--aktif {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+/* Canli mod anahtari: satir butonunun saginda gorsel switch. */
+.ust-mobil-anahtar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 22px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  transition: background var(--dur-base, 0.2s) var(--ease-standard, ease);
+}
+.ust-mobil-anahtar--acik {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.ust-mobil-knob {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transform: translateX(0);
+  transition: transform var(--dur-base, 0.2s) var(--ease-standard, ease);
+}
+.ust-mobil-anahtar--acik .ust-mobil-knob {
+  transform: translateX(16px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ust-mobil-satir,
+  .ust-mobil-anahtar,
+  .ust-mobil-knob {
+    transition: none;
+  }
+}
+
+/* --- Mobil yerlesim (<=760px) ------------------------------------------- */
 @media (max-width: 900px) {
   .ust-bar {
     flex-direction: column;
@@ -834,15 +1201,85 @@ onBeforeUnmount(() => {
     justify-content: flex-start;
   }
 }
+
+@media (max-width: 760px) {
+  .ust-bar {
+    gap: 6px;
+    padding-bottom: 12px;
+  }
+  /* Canli/cevrimdisi durumu kendi satirinda kalir (tasma yok). */
+  .ust-canli {
+    flex-basis: 100%;
+    margin-left: 0;
+    margin-top: 2px;
+  }
+  .ust-sag {
+    flex: 1 1 100%;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-start;
+  }
+  /* Donem secici tam satir. */
+  .ust-donem {
+    flex: 1 1 100%;
+    order: 0;
+  }
+  .ust-donem-secim {
+    width: 100%;
+    max-width: none;
+    min-height: 44px;
+    /* iOS otomatik yakinlastirmasini engellemek icin 16px. */
+    font-size: 16px;
+  }
+  .ust-buton {
+    min-height: 44px;
+  }
+  .ust-buton--ikon {
+    width: 44px;
+  }
+  .ust-buton--ara {
+    order: 1;
+    width: 44px;
+    min-height: 44px;
+    margin-left: auto;
+    padding: 0;
+    border-color: transparent;
+  }
+  .ust-ara-metin,
+  .ust-buton--ara kbd {
+    display: none;
+  }
+  .ust-zil-alan {
+    order: 2;
+  }
+  .ust-zil {
+    width: 44px;
+    min-height: 44px;
+  }
+  .ust-zil-menu {
+    width: min(300px, calc(100vw - 24px));
+  }
+  .ust-mobil-alan {
+    display: inline-flex;
+    order: 3;
+  }
+  .ust-mobil-daha {
+    width: 44px;
+    min-height: 44px;
+  }
+  /* Masaustu ikonlari DOM'da kalir; yalnizca mobilde gizlenir. */
+  .ust-buton--masaustu {
+    display: none;
+  }
+}
+
 @media (max-width: 560px) {
   .ust-selam {
     font-size: 16px;
   }
-  .ust-ara-metin {
-    display: none;
-  }
   .ust-donem-secim {
-    max-width: 128px;
+    max-width: none;
   }
 }
 </style>

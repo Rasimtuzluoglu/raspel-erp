@@ -47,8 +47,41 @@ export default defineConfig(({ mode }) => ({
         scope: '/',
         display: 'standalone',
         display_override: ['standalone', 'minimal-ui'],
+        preferred_related_applications: false,
         orientation: 'any',
         categories: ['business', 'finance', 'productivity'],
+        // Uzun basinca / uygulama simgesine basinca cikan kisayollar.
+        // Amac: sik kullanilan dort ekrana tek dokunusla erisim.
+        shortcuts: [
+          {
+            name: 'Onaylar',
+            short_name: 'Onaylar',
+            description: 'Bekleyen onayları aç',
+            url: '/onaylar',
+            icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }]
+          },
+          {
+            name: 'Faturalar',
+            short_name: 'Faturalar',
+            description: 'Fatura listesini aç',
+            url: '/faturalar',
+            icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }]
+          },
+          {
+            name: 'Kasa',
+            short_name: 'Kasa',
+            description: 'Kasa hareketlerini aç',
+            url: '/kasa',
+            icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }]
+          },
+          {
+            name: 'Stoklar',
+            short_name: 'Stoklar',
+            description: 'Stok listesini aç',
+            url: '/stoklar',
+            icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }]
+          }
+        ],
         icons: [
           {
             src: '/icon-192.png',

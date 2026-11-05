@@ -263,6 +263,198 @@ describe('DashboardUstBar — canli gostergesi', () => {
   })
 })
 
+describe('DashboardUstBar — mobil "Daha fazla" menüsü', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    localStorage.clear()
+  })
+  afterEach(() => {
+    vi.restoreAllMocks()
+    localStorage.clear()
+    document.body.style.overflow = ''
+  })
+
+  it('tetikleyici aria durumunu yansıtır ve menüyü açıp kapatır', async () => {
+    const wrapper = mountEt()
+    const daha = wrapper.find('[data-test="mobil-daha"]')
+
+    expect(daha.exists()).toBe(true)
+    expect(daha.attributes('aria-haspopup')).toBe('dialog')
+    expect(daha.attributes('aria-expanded')).toBe('false')
+    expect(daha.attributes('aria-controls')).toBe('db-mobil-menu')
+    expect(wrapper.find('[data-test="mobil-menu"]').exists()).toBe(false)
+
+    await daha.trigger('click')
+    expect(daha.attributes('aria-expanded')).toBe('true')
+    expect(wrapper.find('[data-test="mobil-menu"]').exists()).toBe(true)
+
+    await daha.trigger('click')
+    expect(daha.attributes('aria-expanded')).toBe('false')
+    expect(wrapper.find('[data-test="mobil-menu"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('mobil satırları 44px hedefli eylemleri listeler', async () => {
+    const wrapper = mountEt()
+    await wrapper.find('[data-test="mobil-daha"]').trigger('click')
+
+    const satirlar = [
+      'mobil-aksiyon-notlar',
+      'mobil-aksiyon-takvim',
+      'mobil-aksiyon-kar',
+      'mobil-aksiyon-excel',
+      'mobil-aksiyon-yazdir',
+      'mobil-aksiyon-canli',
+      'mobil-aksiyon-yenile',
+      'mobil-aksiyon-duzenle'
+    ]
+    for (const anahtar of satirlar) {
+      expect(wrapper.find(`[data-test="${anahtar}"]`).exists(), anahtar).toBe(true)
+    }
+    expect(wrapper.find('[data-test="mobil-aksiyon-canli"]').attributes('role')).toBe('switch')
+    wrapper.unmount()
+  })
+
+  it('Notlar ve Vade Takvimi satırları aynı emit\'leri tetikler ve menüyü kapatır', async () => {
+    const wrapper = mountEt()
+    await wrapper.find('[data-test="mobil-daha"]').trigger('click')
+    await wrapper.find('[data-test="mobil-aksiyon-notlar"]').trigger('click')
+    expect(wrapper.emitted('notlar')).toHaveLength(1)
+    expect(wrapper.find('[data-test="mobil-menu"]').exists()).toBe(false)
+
+    await wrapper.find('[data-test="mobil-daha"]').trigger('click')
+    await wrapper.find('[data-test="mobil-aksiyon-takvim"]').trigger('click')
+    expect(wrapper.emitted('takvim')).toHaveLength(1)
+
+    await wrapper.find('[data-test="mobil-daha"]').trigger('click')
+    await wrapper.find('[data-test="mobil-aksiyon-kar"]').trigger('click')
+    expect(wrapper.emitted('kar-analizi')).toHaveLength(1)
+    wrapper.unmount()
+  })
+
+  it('Excel satırı seçili dönemle dışa aktarır', async () => {
+    excelMock.dashboard.mockResolvedValue({ data: new Blob(['xlsx']) })
+    const tikla = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    const wrapper = mountEt({ donem: 'BU_YIL' })
+
+    await wrapper.find('[data-test="mobil-daha"]').trigger('click')
+    await wrapper.find('[data-test="mobil-aksiyon-excel"]').trigger('click')
+    await flushPromises()
+
+    expect(excelMock.dashboard).toHaveBeenCalledWith({ donem: 'BU_YIL' })
+    expect(wrapper.emitted('excel-indirildi')).toHaveLength(1)
+    expect(tikla).toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  it('Yazdır satırı window.print çağırır', async () => {
+    const yazdir = vi.spyOn(window, 'print').mockImplementation(() => {})
+    const wrapper = mountEt()
+
+    await wrapper.find('[data-test="mobil-daha"]').trigger('click')
+    await wrapper.find('[data-test="mobil-aksiyon-yazdir"]').trigger('click')
+
+    expect(yazdir).toHaveBeenCalledTimes(1)
+    wrapper.unmount()
+  })
+
+  it('Canlı mod anahtarı durumu yansıtır ve değişimi iletir', async () => {
+    const wrapper = mountEt({ otoYenile: true })
+    await wrapper.find('[data-test="mobil-daha"]').trigger('click')
+
+    const anahtar = wrapper.find('[data-test="mobil-aksiyon-canli"]')
+    expect(anahtar.attributes('aria-checked')).toBe('true')
+    expect(anahtar.attributes('aria-label')).toBe(i18n.global.t('dashboard.otoYenilemeKapat'))
+
+    await anahtar.trigger('click')
+    expect(wrapper.emitted('oto-degistir')).toEqual([[false]])
+    // Anahtar menüyü kapatmaz: kullanıcı durumu yerinde görür.
+    expect(wrapper.find('[data-test="mobil-menu"]').exists()).toBe(true)
+    wrapper.unmount()
+
+    const kapali = mountEt({ otoYenile: false })
+    await kapali.find('[data-test="mobil-daha"]').trigger('click')
+    expect(kapali.find('[data-test="mobil-aksiyon-canli"]').attributes('aria-checked')).toBe('false')
+    kapali.unmount()
+  })
+
+  it('Yenile ve Düzenle satırları emit eder, düzen durumu yansıtılır', async () => {
+    const wrapper = mountEt({ duzenModu: true })
+    await wrapper.find('[data-test="mobil-daha"]').trigger('click')
+
+    const duzenle = wrapper.find('[data-test="mobil-aksiyon-duzenle"]')
+    expect(duzenle.attributes('aria-pressed')).toBe('true')
+    expect(duzenle.text()).toContain(i18n.global.t('dashboard.duzenBitir'))
+
+    await duzenle.trigger('click')
+    expect(wrapper.emitted('duzenle')).toHaveLength(1)
+
+    await wrapper.find('[data-test="mobil-daha"]').trigger('click')
+    await wrapper.find('[data-test="mobil-aksiyon-yenile"]').trigger('click')
+    expect(wrapper.emitted('yenile')).toHaveLength(1)
+    wrapper.unmount()
+  })
+
+  it('açılınca odağı ilk satıra taşır, Escape kapatıp odağı tetikleyiciye döndürür', async () => {
+    const wrapper = mountEt({}, { attachTo: document.body })
+    const daha = wrapper.find('[data-test="mobil-daha"]')
+    await daha.trigger('click')
+    await nextTick()
+    await nextTick()
+
+    expect(document.activeElement?.dataset?.test).toBe('mobil-aksiyon-notlar')
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await nextTick()
+
+    expect(wrapper.find('[data-test="mobil-menu"]').exists()).toBe(false)
+    expect(document.activeElement).toBe(daha.element)
+    wrapper.unmount()
+  })
+
+  it('dışarı tıklama menüyü kapatır', async () => {
+    const wrapper = mountEt({}, { attachTo: document.body })
+    await wrapper.find('[data-test="mobil-daha"]').trigger('click')
+    expect(wrapper.find('[data-test="mobil-menu"]').exists()).toBe(true)
+
+    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await nextTick()
+
+    expect(wrapper.find('[data-test="mobil-menu"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('masaüstü butonları DOM\'da korunur (CSS ile gizlenir)', () => {
+    const wrapper = mountEt()
+    const masaustu = [
+      'not-buton',
+      'excel-indir',
+      'yazdir',
+      'kar-analizi-buton',
+      'vade-takvimi-buton',
+      'oto-yenileme',
+      'bildirim-zili',
+      'donem-secici'
+    ]
+    for (const anahtar of masaustu) {
+      expect(wrapper.find(`[data-test="${anahtar}"]`).exists(), anahtar).toBe(true)
+    }
+    expect(wrapper.find('.ust-buton--ara').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('kaldırılınca mobil belge dinleyicileri temizlenir', async () => {
+    const kaldir = vi.spyOn(document, 'removeEventListener')
+    const wrapper = mountEt()
+    await wrapper.find('[data-test="mobil-daha"]').trigger('click')
+    wrapper.unmount()
+
+    expect(kaldir).toHaveBeenCalledWith('click', expect.any(Function), true)
+    expect(kaldir).toHaveBeenCalledWith('keydown', expect.any(Function))
+    kaldir.mockRestore()
+  })
+})
+
 describe('DashboardUstBar — Excel ve yazdırma', () => {
   beforeEach(() => {
     vi.clearAllMocks()

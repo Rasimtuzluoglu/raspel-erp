@@ -439,16 +439,53 @@ const siraliGorevler = computed(() =>
   }
 }
 @media (max-width: 600px) {
+  /*
+   * Mobil: adet/tutar ve aksiyon ikinci satira sarar. Ilk satir ikon +
+   * baslik, ikinci satir rozet + tutar + eylem. Dokunma hedefleri 44px.
+   */
   .gorev-satir {
-    gap: 10px;
-    padding: 5px 0;
+    gap: 8px;
+    padding: 8px 0;
     flex-wrap: wrap;
+    align-items: center;
+  }
+  .gorev-ikon {
+    order: 1;
+  }
+  .gorev-icerik {
+    order: 2;
+    flex: 1 1 calc(100% - 44px);
+  }
+  .gorev-sag {
+    order: 3;
+    margin-left: 40px;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
   }
   .gorev-tutar {
-    display: none;
+    display: inline;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .gorev-eylem {
+    order: 4;
+    min-height: 44px;
+    padding: 0 10px;
+    margin-left: auto;
+  }
+  .gorev-hizli-onay {
+    order: 5;
+    min-height: 44px;
+    padding: 0 10px;
   }
   .gorev-hizli-onay-metin {
-    display: none;
+    display: inline;
+  }
+  .gorev-dene {
+    min-height: 44px;
   }
 }
 </style>

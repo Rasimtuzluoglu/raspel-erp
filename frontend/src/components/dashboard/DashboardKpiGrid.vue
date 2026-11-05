@@ -1,7 +1,9 @@
 <template>
   <div
-    class="kpi-grid"
+    class="kpi-grid kpi-grid--mobil-2"
     data-test="kpi-grid"
+    data-mobil-kolon="2"
+    data-mobil-tek-kolon-esik="359"
     data-widget="kpi"
     role="group"
     :aria-label="t('dashboard.widgetKpi')"
@@ -572,7 +574,8 @@ const trendEtiketi = (bilgi) =>
     grid-column: span 2;
   }
 }
-@media (max-width: 419px) {
+/* Mobil tek kolon esigi: 360px alti. 360-699 arasi iki kolon kalir. */
+@media (max-width: 359px) {
   .kpi-kart--stok {
     grid-column: span 1;
   }
@@ -654,6 +657,7 @@ const trendEtiketi = (bilgi) =>
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -836,14 +840,25 @@ const trendEtiketi = (bilgi) =>
   }
 }
 @media (max-width: 699px) {
-  .kpi-grid {
+  .kpi-grid,
+  .kpi-grid--mobil-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .kpi-deger {
     font-size: 19px;
   }
 }
-@media (max-width: 419px) {
+/* 360-699: iki kolon (spec). 430 altinda deger 18-20px araliginda kalir. */
+@media (max-width: 430px) {
+  .kpi-deger {
+    font-size: 19px;
+  }
+  .kpi-kart {
+    padding: 12px;
+  }
+}
+/* 360 alti: tek kolon. */
+@media (max-width: 359px) {
   .kpi-grid {
     grid-template-columns: minmax(0, 1fr);
   }

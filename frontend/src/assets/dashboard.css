@@ -248,6 +248,9 @@
 .db-drawer-katman {
   position: fixed;
   inset: 0;
+  /* iOS Safari'de adres cubugu payi: dvh ile gercek gorunur yukseklik. */
+  height: 100vh;
+  height: 100dvh;
   z-index: 1300;
   display: flex;
   justify-content: flex-end;
@@ -262,8 +265,11 @@
   width: 440px;
   max-width: 92vw;
   height: 100%;
-  padding: 16px;
+  max-height: 100dvh;
+  /* Alt guvenli alan: iPhone ana cubugu drawer icerigini kirpmaz. */
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
+  overscroll-behavior: contain;
   border-left: 1px solid var(--border);
   background: var(--bg-card);
   color: var(--text-primary);
@@ -340,7 +346,7 @@
 @media (max-width: 600px) {
   .db-drawer {
     width: 92vw;
-    padding: 12px;
+    padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -375,8 +381,11 @@
 }
 
 @media (max-width: 900px) {
+  /* Sabit alt menu app.css'te .main-content uzerinde 72px olarak ayrilir;
+     burada guvenli alan + son kart ile menu arasinda nefes payi eklenir.
+     Boylece son KPI/kart alt menunun altinda kalmaz. */
   .dashboard-container {
-    padding: 0 0 20px;
+    padding: 0 0 calc(env(safe-area-inset-bottom, 0px) + 24px);
   }
 }
 
@@ -422,8 +431,10 @@
   width: 520px;
   max-width: 92vw;
   max-height: 88vh;
+  max-height: 88dvh;
   padding: 16px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid var(--border);
   border-radius: 16px;
   background: var(--bg-card);

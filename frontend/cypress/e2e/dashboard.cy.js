@@ -212,13 +212,13 @@ describe('Anasayfa (dashboard) — yerleşim, etkileşim ve dışa aktarma', () 
     yatayTasmaYok()
   })
 
-  it('390px: tek kolon, yatay taşma yok', () => {
+  it('390px: iki kolon KPI, tek kolon gövde, yatay taşma yok', () => {
     cy.viewport(390, 844)
     anasayfaAc()
 
     cy.get('[data-test="kpi-grid"]').should(($grid) => {
       const kolonlar = window.getComputedStyle($grid[0]).gridTemplateColumns.split(' ').filter(Boolean)
-      expect(kolonlar, 'KPI tek kolon').to.have.length(1)
+      expect(kolonlar, 'KPI iki kolon (360-699)').to.have.length(2)
     })
     cy.get('[data-test="dashboard-govde"]').should(($govde) => {
       const kolonlar = window.getComputedStyle($govde[0]).gridTemplateColumns.split(' ').filter(Boolean)
@@ -229,7 +229,51 @@ describe('Anasayfa (dashboard) — yerleşim, etkileşim ve dışa aktarma', () 
       expect(kolonlar, 'grafik duvarı tek kolon').to.have.length(1)
     })
 
+    // Mobil üst bar: dönem seçici tam satır, üç ikon taşmadan sığar.
+    cy.get('.ust-sag').should(($sag) => {
+      expect($sag[0].scrollWidth, 'üst bar taşması').to.be.at.most($sag[0].clientWidth + 1)
+    })
+    cy.get('[data-test="donem-secici"]').should('be.visible')
+    cy.get('[data-test="mobil-daha"]').should('be.visible')
+
     yatayTasmaYok()
+  })
+
+  it('390px: "Daha fazla" menüsü açılır, satırlar görünür ve Escape kapatır', () => {
+    cy.viewport(390, 844)
+    anasayfaAc()
+
+    cy.get('[data-test="mobil-daha"]')
+      .should('have.attr', 'aria-expanded', 'false')
+      .click()
+    cy.get('[data-test="mobil-daha"]').should('have.attr', 'aria-expanded', 'true')
+    cy.get('[data-test="mobil-menu"]').should('be.visible')
+
+    const satirlar = [
+      'notlar',
+      'takvim',
+      'kar',
+      'excel',
+      'yazdir',
+      'canli',
+      'yenile',
+      'duzenle'
+    ]
+    satirlar.forEach((ad) => {
+      cy.get(`[data-test="mobil-aksiyon-${ad}"]`).should('be.visible')
+    })
+
+    // 44px dokunma hedefi (Cypress AUT'u olceklebilecegi icin hesaplanan
+    // yukseklik yerine CSS kurali dogrulanir).
+    cy.get('[data-test="mobil-aksiyon-notlar"]').should(($satir) => {
+      expect(window.getComputedStyle($satir[0]).minHeight).to.eq('44px')
+    })
+
+    cy.get('[data-test="mobil-menu"]').trigger('keydown', { key: 'Escape' })
+    cy.get('[data-test="mobil-menu"]').should('not.exist')
+
+    // Masaüstü eylemleri mobilde gizli; emit yolu menüden işler.
+    cy.get('[data-test="excel-indir"]').should('not.be.visible')
   })
 
   it('dönem seçici "Bu Yıl" isteği donem=BU_YIL ile gönderir', () => {

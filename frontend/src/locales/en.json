@@ -8,7 +8,8 @@
     "bekleyenSatis": "{sayi} offline sale(s) waiting to be synced.",
     "simdiGonder": "Send Now",
     "bekleyenSatisGonderildi": "{sayi} pending sale(s) sent successfully.",
-    "bekleyenSatisGonderilemedi": "Pending sales could not be sent; check the connection and try again."
+    "bekleyenSatisGonderilemedi": "Pending sales could not be sent; check the connection and try again.",
+    "cevrimdisiSonVeriler": "You are offline — showing the last data"
   },
   "marjHesap": {
     "baslik": "Profit Margin Calculator",
@@ -6508,7 +6509,9 @@
     "excelIndir": "Download Excel",
     "excelIndirildi": "Excel downloaded.",
     "excelHata": "Excel could not be downloaded.",
-    "yazdirAc": "Print this page"
+    "yazdirAc": "Print this page",
+    "dahaFazlaIslem": "More actions",
+    "canliMod": "Live mode"
   },
   "quickSearch": {
     "placeholder": "Search (account, stock, invoice, staff, project, warehouse, branch...)",
@@ -6683,6 +6686,13 @@
     "portal": "Portal",
     "sohbet": "Chat",
     "dahaFazla": "More"
+  },
+  "pwa": {
+    "kurulumBaslik": "Add RasPel to your home screen",
+    "kurulumAlt": "Faster launch and a full-screen experience.",
+    "ekle": "Add",
+    "iosYonlendirme": "Share → Add to Home Screen",
+    "kurulumTamam": "RasPel was added to your home screen."
   },
   "iletisim": {
     "title": "Mail & WhatsApp",

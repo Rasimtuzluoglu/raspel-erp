@@ -41,7 +41,7 @@
         class="nakit-grafik"
         :class="{ 'nakit-grafik--iskelet': !gorunur }"
         data-test="nakit-grafik"
-        :style="{ height: '160px' }"
+        :style="{ '--nakit-yukseklik': '160px' }"
       >
         <Line
           v-if="gorunur"
@@ -275,7 +275,7 @@ const projeksiyonOzeti = computed(
 .nakit-grafik {
   position: relative;
   width: 100%;
-  height: 160px;
+  height: var(--nakit-yukseklik, 160px);
   min-width: 0;
 }
 .nakit-grafik--iskelet {
@@ -448,6 +448,12 @@ const projeksiyonOzeti = computed(
   }
   .nakit-projeksiyon-grafik {
     height: 64px;
+  }
+}
+/* Mobil: grafik alani 140px'e iner (inline deger CSS degiskeniyle ezilir). */
+@media (max-width: 760px) {
+  .nakit-grafik {
+    height: 140px;
   }
 }
 </style>

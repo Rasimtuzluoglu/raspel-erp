@@ -817,6 +817,54 @@ describe('Dashboard.vue — finans masası yerleşimi', () => {
     expect(wrapper.find('.db-sol [data-widget="stokDegeri"]').classes()).toContain('db-kart-alan--2')
     wrapper.unmount()
   })
+
+  it('390px KPI bandı: 2 kolon sınıfı ve mobil taşma kuralları işaretli', async () => {
+    const wrapper = mountEt()
+    await flushPromises()
+
+    const kpi = wrapper.find('[data-test="kpi-grid"]')
+    // CSS medya sorgusu bu sınıf üzerinden 360-699 arasını iki kolona kilitler.
+    expect(kpi.classes()).toContain('kpi-grid--mobil-2')
+    expect(kpi.attributes('data-mobil-kolon')).toBe('2')
+    expect(kpi.attributes('data-mobil-tek-kolon-esik')).toBe('359')
+    expect(kpi.findAll('.kpi-kart')).toHaveLength(9)
+    // Değer hücreleri taşmayı önlemek için kendi genişliğine sıkışabilir.
+    expect(wrapper.findAll('.kpi-deger').length).toBeGreaterThan(0)
+    wrapper.unmount()
+  })
+
+  it('mobil üst bar: Daha fazla tetikleyicisi ve gizli masaüstü eylemleri DOM\'da', async () => {
+    const wrapper = mountEt()
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="mobil-daha"]').exists()).toBe(true)
+    expect(wrapper.find('.ust-mobil-alan').exists()).toBe(true)
+    expect(wrapper.find('[data-test="mobil-menu"]').exists()).toBe(false)
+
+    // Masaüstü kontrolleri CSS ile gizlenir; emit yolları korunur.
+    for (const anahtar of ['not-buton', 'excel-indir', 'yazdir', 'vade-takvimi-buton', 'oto-yenileme']) {
+      expect(wrapper.find(`[data-test="${anahtar}"]`).exists(), anahtar).toBe(true)
+    }
+    wrapper.unmount()
+  })
+
+  it('grafik yükseklikleri mobilde CSS değişkeniyle ezilebilir (sabit inline height yok)', async () => {
+    const wrapper = mountEt()
+    await flushPromises()
+
+    const govdeler = wrapper.findAll('[data-test="grafik-karti"] .grafik-govde')
+    expect(govdeler.length).toBeGreaterThan(0)
+    for (const govde of govdeler) {
+      const stil = govde.attributes('style') || ''
+      expect(stil).toContain('--grafik-yukseklik')
+      expect(stil).not.toMatch(/(^|;)\s*height\s*:/)
+    }
+
+    const nakit = wrapper.find('[data-test="nakit-grafik"]')
+    expect(nakit.attributes('style') || '').toContain('--nakit-yukseklik')
+    expect(nakit.attributes('style') || '').not.toMatch(/(^|;)\s*height\s*:/)
+    wrapper.unmount()
+  })
 })
 
 describe('Dashboard.vue — kişiselleştirme', () => {

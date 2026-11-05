@@ -707,6 +707,29 @@ const takvimAcik = ref(false)
 const karAnaliziAcik = ref(false)
 const notlarAcik = ref(false)
 
+/**
+ * Anasayfa drawer'lari acikken govde kaydirmasi kilitlenir. Aksi halde mobilde
+ * panel arkasindaki sayfa kayar ve odak baglami kaybolur. Onceki deger saklanir
+ * (baska bir bilesen overflow yazmissa ezilmez).
+ */
+const drawerAcik = computed(
+  () => onayDrawerAcik.value || takvimAcik.value || karAnaliziAcik.value || notlarAcik.value
+)
+let oncekiGovdeOverflow = null
+
+watch(drawerAcik, (acik) => {
+  if (typeof document === 'undefined' || !document.body) return
+  if (acik) {
+    if (oncekiGovdeOverflow === null) {
+      oncekiGovdeOverflow = document.body.style.overflow || ''
+    }
+    document.body.style.overflow = 'hidden'
+  } else if (oncekiGovdeOverflow !== null) {
+    document.body.style.overflow = oncekiGovdeOverflow
+    oncekiGovdeOverflow = null
+  }
+})
+
 const kullaniciId = computed(() => authStore.kullanici?.id ?? null)
 
 const gorevSayilari = computed(() => dashboardStore.ozet?.gorevSayilari || {})
@@ -1057,6 +1080,10 @@ onBeforeUnmount(() => {
   canliZamanlayiciTemizle()
   if (typeof document !== 'undefined') {
     document.removeEventListener('visibilitychange', gorunurlukDegisti)
+    if (oncekiGovdeOverflow !== null) {
+      document.body.style.overflow = oncekiGovdeOverflow
+      oncekiGovdeOverflow = null
+    }
   }
 })
 </script>

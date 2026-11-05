@@ -31,6 +31,21 @@
     >
       <transition name="slide-down">
         <div
+          v-if="!cevrimici && !offlineBannerVisible"
+          class="cevrimdisi-serit"
+          role="status"
+          aria-live="polite"
+          data-test="cevrimdisi-serit"
+        >
+          <i
+            class="pi pi-wifi"
+            aria-hidden="true"
+          />
+          <span>{{ $t('app.cevrimdisiSonVeriler') }}</span>
+        </div>
+      </transition>
+      <transition name="slide-down">
+        <div
           v-if="offlineBannerVisible"
           class="offline-banner"
         >
@@ -163,6 +178,8 @@
     <ConfirmDialog />
 
     <MobilAltMenu v-if="altMenuGoster" />
+    <!-- PWA kurulum bandi: alt menunun hemen ustunde, yalnizca mobilde. -->
+    <PwaKurulum v-if="altMenuGoster" />
   </div>
 </template>
 
@@ -175,6 +192,7 @@ import { faturaAPI, teslimatAPI } from './api/index.js'
 import { useOfflineSatisKuyrugu } from './composables/useOfflineSatisKuyrugu.js'
 import { useSunumModu } from './composables/useSunumModu.js'
 import { useToastBildirim } from './composables/useToastBildirim.js'
+import { useCevrimici } from './composables/useCevrimici.js'
 import { useI18n } from 'vue-i18n'
 import { useMagicKeys } from '@vueuse/core'
 
@@ -186,6 +204,7 @@ import QuickSearch from './components/QuickSearch.vue'
 import GeriAlToast from './components/GeriAlToast.vue'
 import AppBreadcrumb from './components/AppBreadcrumb.vue'
 import MobilAltMenu from './components/MobilAltMenu.vue'
+import PwaKurulum from './components/PwaKurulum.vue'
 import KisayolRehberi from './components/KisayolRehberi.vue'
 
 // Nadiren kullanilan araclar/modallar: yalnizca acildiklarinda yuklenir
@@ -211,6 +230,7 @@ const errorBoundaryKey = computed(() => route?.fullPath || 'app')
 const toastBildirim = useToastBildirim()
 const { t } = useI18n()
 const { aktif: sunumAktif, maske: sunumMaske, degistir: sunumDegistir, maskeAyarla: sunumMaskeAyarla } = useSunumModu()
+const { cevrimici } = useCevrimici()
 const { ctrl_k, cmd_k, escape } = useMagicKeys()
 
 const quickSearchVisible = ref(false)
@@ -358,6 +378,52 @@ watch(
 </script>
 
 <style>
+/* Ince cevrimdisi bandi: navigator.onLine anlik sinyali. Sunucuya
+   ulasilamadiginda daha kapsamli .offline-banner devreye girer; ikisi ayni
+   anda gosterilmez (bkz. App.vue sablonu). */
+.cevrimdisi-serit {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky, 900);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  border: 1px solid #f59e0b;
+  border-radius: 10px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 600;
+}
+[data-theme='dark'] .cevrimdisi-serit {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+.cevrimdisi-serit i {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+.cevrimdisi-serit span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 900px) {
+  /* Mobilde ust bar sabit; ince bant onun altinda kalsin (offline-banner ile ayni). */
+  .cevrimdisi-serit {
+    top: 56px;
+    z-index: var(--z-sticky);
+  }
+}
+@media print {
+  .cevrimdisi-serit {
+    display: none !important;
+  }
+}
 .offline-banner {
   position: sticky;
   top: 0;

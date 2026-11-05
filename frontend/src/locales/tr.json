@@ -8,7 +8,8 @@
     "bekleyenSatis": "Çevrimdışı alınan {sayi} satış senkronize edilmeyi bekliyor.",
     "simdiGonder": "Şimdi Gönder",
     "bekleyenSatisGonderildi": "{sayi} bekleyen satış başarıyla gönderildi.",
-    "bekleyenSatisGonderilemedi": "Bekleyen satışlar gönderilemedi; bağlantıyı kontrol edip tekrar deneyin."
+    "bekleyenSatisGonderilemedi": "Bekleyen satışlar gönderilemedi; bağlantıyı kontrol edip tekrar deneyin.",
+    "cevrimdisiSonVeriler": "Çevrimdışısınız – son veriler gösteriliyor"
   },
   "marjHesap": {
     "baslik": "Kâr Marjı Hesaplayıcı",
@@ -6508,7 +6509,9 @@
     "excelIndir": "Excel indir",
     "excelIndirildi": "Excel indirildi.",
     "excelHata": "Excel indirilemedi.",
-    "yazdirAc": "Sayfayı yazdır"
+    "yazdirAc": "Sayfayı yazdır",
+    "dahaFazlaIslem": "Daha fazla işlem",
+    "canliMod": "Canlı mod"
   },
   "quickSearch": {
     "placeholder": "Ara (cari, stok, fatura, personel, proje, depo, şube...)",
@@ -6683,6 +6686,13 @@
     "portal": "Portal",
     "sohbet": "Sohbet",
     "dahaFazla": "Daha Fazla"
+  },
+  "pwa": {
+    "kurulumBaslik": "RasPel'i ana ekrana ekle",
+    "kurulumAlt": "Daha hızlı açılış ve tam ekran deneyimi.",
+    "ekle": "Ekle",
+    "iosYonlendirme": "Paylaş → Ana Ekrana Ekle",
+    "kurulumTamam": "RasPel ana ekrana eklendi."
   },
   "iletisim": {
     "title": "Mail & WhatsApp",
