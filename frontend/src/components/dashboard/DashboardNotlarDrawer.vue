@@ -48,30 +48,47 @@
       >
         <label
           class="sr-only"
-          for="db-not-girdi"
-        >{{ t('dashboard.notlarMetin') }}</label>
+          for="db-not-baslik"
+        >{{ t('dashboard.notlarBaslikAlan') }}</label>
         <input
-          id="db-not-girdi"
-          ref="girdi"
-          v-model="metin"
+          id="db-not-baslik"
+          ref="baslikGirdi"
+          v-model="baslik"
           type="text"
           class="notlar-girdi"
-          :maxlength="MAX_NOT_METIN"
-          :placeholder="t('dashboard.notlarIpucu')"
+          :maxlength="200"
+          :placeholder="t('dashboard.notlarBaslikIpucu')"
           :aria-invalid="hata ? 'true' : 'false'"
           :aria-describedby="hata ? 'db-not-hata' : undefined"
-          data-test="not-girdi"
-          @keydown.enter.prevent="ekle"
+          data-test="not-baslik"
+          @keydown.enter.prevent="icerikGirdi?.focus?.()"
         >
+        <label
+          class="sr-only"
+          for="db-not-icerik"
+        >{{ t('dashboard.notlarIcerikAlan') }}</label>
+        <textarea
+          id="db-not-icerik"
+          ref="icerikGirdi"
+          v-model="icerik"
+          class="notlar-girdi notlar-girdi--cok"
+          rows="2"
+          :maxlength="2000"
+          :placeholder="t('dashboard.notlarIcerikIpucu')"
+          data-test="not-icerik"
+          @keydown.ctrl.enter.prevent="ekle"
+          @keydown.meta.enter.prevent="ekle"
+        />
         <button
           type="submit"
           class="notlar-ekle-btn"
+          :disabled="kaydediliyor"
           :aria-label="t('dashboard.notlarEkle')"
           :title="t('dashboard.notlarEkle')"
           data-test="not-ekle"
         >
           <i
-            class="pi pi-plus"
+            :class="kaydediliyor ? 'pi pi-spin pi-spinner' : 'pi pi-plus'"
             aria-hidden="true"
           />
         </button>
@@ -88,27 +105,67 @@
       </p>
 
       <div class="notlar-ust">
+        <span class="notlar-sayac">{{ t('dashboard.notlarSon', { n: notlar.length }) }}</span>
+        <div class="notlar-ust-eylem">
+          <button
+            type="button"
+            class="notlar-yenile"
+            :disabled="yukleniyor"
+            :aria-label="t('dashboard.yenile')"
+            :title="t('dashboard.yenile')"
+            data-test="notlar-yenile"
+            @click="yukle"
+          >
+            <i
+              :class="yukleniyor ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"
+              aria-hidden="true"
+            />
+          </button>
+          <router-link
+            to="/notlar"
+            class="notlar-tumu"
+            data-test="notlar-tumu"
+            @click="kapat"
+          >
+            {{ t('dashboard.tumunuGor') }}
+            <i
+              class="pi pi-arrow-right"
+              aria-hidden="true"
+            />
+          </router-link>
+        </div>
+      </div>
+
+      <div
+        v-if="yukleniyor && !notlar.length"
+        class="notlar-iskelet"
+        aria-hidden="true"
+        data-test="notlar-iskelet"
+      >
         <span
-          class="notlar-sayac"
-          data-test="not-sayac"
-        >{{ t('dashboard.notlarSayac', { acik: acikSayi, toplam: notlar.length }) }}</span>
+          v-for="i in 3"
+          :key="`not-iskelet-${i}`"
+          class="iskelet"
+        />
+      </div>
+
+      <div
+        v-else-if="yuklemeHatasi"
+        class="notlar-durum notlar-durum--hata"
+        data-test="notlar-hata-durum"
+      >
+        <span>{{ t('dashboard.notlarYuklenemedi') }}</span>
         <button
-          v-if="tamamlananVar"
           type="button"
-          class="notlar-temizle"
-          data-test="not-temizle"
-          @click="tamamlananlariTemizle"
+          class="notlar-dene"
+          @click="yukle"
         >
-          <i
-            class="pi pi-trash"
-            aria-hidden="true"
-          />
-          {{ t('dashboard.notlarTamamlananlariTemizle') }}
+          {{ t('dashboard.yenidenDene') }}
         </button>
       </div>
 
       <ul
-        v-if="notlar.length"
+        v-else-if="notlar.length"
         class="notlar-liste"
         data-test="not-liste"
       >
@@ -116,33 +173,25 @@
           v-for="not in notlar"
           :key="not.id"
           class="notlar-oge"
-          :class="{ 'notlar-oge--tamam': not.tamam }"
           :data-test="`not-oge-${not.id}`"
         >
-          <label class="notlar-onay">
-            <input
-              type="checkbox"
-              :checked="not.tamam"
-              :aria-label="not.tamam ? t('dashboard.notlarGeriAl') : t('dashboard.notlarTamamla')"
-              data-test="not-tamam"
-              @change="tamamla(not)"
+          <div class="notlar-icerik-alan">
+            <span class="notlar-baslik">{{ not.baslik }}</span>
+            <p
+              v-if="not.icerik"
+              class="notlar-metin"
             >
-            <span class="notlar-metin">{{ not.metin }}</span>
-          </label>
-          <small class="notlar-tarih">{{ tarihMetni(not.tarih) }}</small>
-          <button
-            type="button"
-            class="notlar-sil"
-            :aria-label="t('dashboard.notlarSil')"
-            :title="t('dashboard.notlarSil')"
-            data-test="not-sil"
-            @click="sil(not)"
-          >
-            <i
-              class="pi pi-times"
-              aria-hidden="true"
-            />
-          </button>
+              {{ not.icerik }}
+            </p>
+            <div class="notlar-alt">
+              <span class="notlar-tarih">{{ tarihMetni(not.olusturmaTarihi) }}</span>
+              <span
+                v-if="not.onemDerecesi && not.onemDerecesi !== 'NORMAL'"
+                class="notlar-onem"
+                :class="`notlar-onem--${not.onemDerecesi.toLowerCase()}`"
+              >{{ onemAdi(not.onemDerecesi) }}</span>
+            </div>
+          </div>
         </li>
       </ul>
 
@@ -165,87 +214,76 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatDate } from '../../utils/format.js'
-import {
-  MAX_NOT,
-  MAX_NOT_METIN,
-  notlarOku,
-  notlarOlayiYay,
-  notlarYaz,
-  yeniNotId
-} from '../../utils/dashboardNotlar.js'
+import { useNotStore } from '../../stores/notStore.js'
 
 const props = defineProps({
-  visible: { type: Boolean, default: false },
-  kullaniciId: { type: [String, Number], default: null }
+  visible: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['update:visible'])
 
 const { t } = useI18n()
+const store = useNotStore()
 
 const panel = ref(null)
-const girdi = ref(null)
-const metin = ref('')
+const baslikGirdi = ref(null)
+const icerikGirdi = ref(null)
+const baslik = ref('')
+const icerik = ref('')
 const hata = ref('')
-const notlar = ref([])
+const kaydediliyor = ref(false)
 
 let oncekiOdak = null
 
-const acikSayi = computed(() => notlar.value.filter((not) => !not.tamam).length)
-const tamamlananVar = computed(() => notlar.value.some((not) => not.tamam))
+const notlar = computed(() => (Array.isArray(store.notlar) ? store.notlar.slice(0, 10) : []))
+const yukleniyor = computed(() => store.loading)
+const yuklemeHatasi = computed(() => store.error)
 
-const tarihMetni = (tarih) => formatDate(tarih)
+const tarihMetni = (tarih) => (tarih ? formatDate(tarih) : '')
+const onemAdi = (v) =>
+  ({
+    DUSUK: t('notlar.dusuk'),
+    NORMAL: t('notlar.normal'),
+    YUKSEK: t('notlar.yuksek'),
+    KRITIK: t('notlar.kritik')
+  })[v] || v
 
-const yukle = () => {
-  notlar.value = notlarOku(props.kullaniciId)
-}
+const yukle = () =>
+  store
+    .getAllNotlar({ page: 0, size: 10, sort: 'olusturmaTarihi,desc' })
+    .catch(() => {
+      /* hata store.error uzerinden gosterilir */
+    })
 
-const kaliciYaz = () => {
-  notlar.value = notlarYaz(notlar.value, props.kullaniciId)
-  notlarOlayiYay({ kullaniciId: props.kullaniciId, acik: acikSayi.value })
-}
-
-const ekle = () => {
-  const temiz = metin.value.trim()
-  if (!temiz) {
-    hata.value = t('dashboard.notlarBosHata')
+const ekle = async () => {
+  const temizBaslik = baslik.value.trim()
+  if (!temizBaslik) {
+    hata.value = t('dashboard.notlarBaslikZorunlu')
+    baslikGirdi.value?.focus?.()
     return
   }
-  if (temiz.length > MAX_NOT_METIN) {
-    hata.value = t('dashboard.notlarUzunHata', { limit: MAX_NOT_METIN })
+  if (temizBaslik.length > 200) {
+    hata.value = t('dashboard.notlarUzunHata', { limit: 200 })
     return
   }
-  if (notlar.value.length >= MAX_NOT) {
-    hata.value = t('dashboard.notlarLimitHata', { limit: MAX_NOT })
-    return
+  kaydediliyor.value = true
+  hata.value = ''
+  try {
+    await store.addNot({
+      baslik: temizBaslik,
+      icerik: icerik.value.trim(),
+      onemDerecesi: 'NORMAL',
+      renk: 'MAVI'
+    })
+    baslik.value = ''
+    icerik.value = ''
+    await yukle()
+    baslikGirdi.value?.focus?.()
+  } catch (err) {
+    hata.value = err?.response?.data?.message || t('dashboard.notlarKaydedilemedi')
+  } finally {
+    kaydediliyor.value = false
   }
-  notlar.value = [
-    { id: yeniNotId(), metin: temiz, tamam: false, tarih: new Date().toISOString() },
-    ...notlar.value
-  ]
-  metin.value = ''
-  hata.value = ''
-  kaliciYaz()
-}
-
-const tamamla = (not) => {
-  notlar.value = notlar.value.map((kayit) =>
-    kayit.id === not.id ? { ...kayit, tamam: !kayit.tamam } : kayit
-  )
-  hata.value = ''
-  kaliciYaz()
-}
-
-const sil = (not) => {
-  notlar.value = notlar.value.filter((kayit) => kayit.id !== not.id)
-  hata.value = ''
-  kaliciYaz()
-}
-
-const tamamlananlariTemizle = () => {
-  notlar.value = notlar.value.filter((not) => !not.tamam)
-  hata.value = ''
-  kaliciYaz()
 }
 
 const kapat = () => emit('update:visible', false)
@@ -282,12 +320,13 @@ watch(
   (acik) => {
     if (acik) {
       oncekiOdak = typeof document !== 'undefined' ? document.activeElement : null
-      metin.value = ''
+      baslik.value = ''
+      icerik.value = ''
       hata.value = ''
       yukle()
       nextTick(() => {
         panel.value?.focus?.()
-        girdi.value?.focus?.()
+        baslikGirdi.value?.focus?.()
       })
     } else if (oncekiOdak && typeof oncekiOdak.focus === 'function') {
       oncekiOdak.focus?.()
@@ -295,16 +334,6 @@ watch(
     }
   },
   { immediate: true }
-)
-
-watch(
-  () => props.kullaniciId,
-  () => {
-    if (props.visible) {
-      hata.value = ''
-      yukle()
-    }
-  }
 )
 </script>
 
@@ -316,21 +345,27 @@ watch(
 
 /* --- Ekleme alani -------------------------------------------------------- */
 .notlar-ekle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 38px;
+  grid-template-rows: auto auto;
+  gap: 6px 8px;
 }
 .notlar-girdi {
-  flex: 1;
+  grid-column: 1;
   min-width: 0;
   min-height: 38px;
-  padding: 0 10px;
+  padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: 9px;
   background: var(--bg-muted);
   color: var(--text-primary);
   font-size: 12.5px;
   font-family: inherit;
+}
+.notlar-girdi--cok {
+  resize: vertical;
+  min-height: 54px;
+  line-height: 1.4;
 }
 .notlar-girdi::placeholder {
   color: var(--text-muted);
@@ -343,12 +378,12 @@ watch(
   border-color: var(--danger);
 }
 .notlar-ekle-btn {
+  grid-column: 2;
+  grid-row: 1 / span 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  width: 38px;
-  height: 38px;
+  align-self: stretch;
   border: 1px solid var(--accent);
   border-radius: 9px;
   background: var(--accent);
@@ -356,8 +391,12 @@ watch(
   cursor: pointer;
   transition: background var(--dur-base, 0.2s) var(--ease-standard, ease);
 }
-.notlar-ekle-btn:hover {
+.notlar-ekle-btn:hover:not(:disabled) {
   background: var(--accent-hover);
+}
+.notlar-ekle-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
 }
 .notlar-ekle-btn:focus-visible {
   outline: 2px solid var(--accent);
@@ -369,7 +408,7 @@ watch(
   color: var(--danger);
 }
 
-/* --- Sayac / toplu temizleme -------------------------------------------- */
+/* --- Ust satir ----------------------------------------------------------- */
 .notlar-ust {
   display: flex;
   align-items: center;
@@ -380,33 +419,53 @@ watch(
 .notlar-sayac {
   font-size: 11px;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
-.notlar-temizle {
+.notlar-ust-eylem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.notlar-yenile {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  min-height: 28px;
-  padding: 0 8px;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 600;
   cursor: pointer;
 }
-.notlar-temizle:hover {
-  border-color: var(--danger-border, var(--border));
-  color: var(--danger);
+.notlar-yenile:hover:not(:disabled) {
+  border-color: var(--accent-border);
+  color: var(--accent);
 }
-.notlar-temizle:focus-visible {
+.notlar-yenile:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-.notlar-temizle i {
-  font-size: 10px;
+.notlar-tumu {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+.notlar-tumu i {
+  font-size: 9px;
+}
+.notlar-tumu:hover {
+  color: var(--accent-hover);
+}
+.notlar-tumu:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* --- Liste --------------------------------------------------------------- */
@@ -419,77 +478,106 @@ watch(
   gap: 8px;
 }
 .notlar-oge {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   padding: 9px 10px;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--bg-muted);
   min-width: 0;
 }
-.notlar-onay {
+.notlar-icerik-alan {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.notlar-baslik {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.notlar-metin {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.notlar-alt {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 1;
-  min-width: 0;
-  cursor: pointer;
-}
-.notlar-onay input {
-  flex-shrink: 0;
-  width: 15px;
-  height: 15px;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-.notlar-onay input:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-.notlar-metin {
-  min-width: 0;
-  font-size: 12.5px;
-  line-height: 1.4;
-  color: var(--text-primary);
-  overflow-wrap: anywhere;
-}
-.notlar-oge--tamam .notlar-metin {
-  color: var(--text-muted);
-  text-decoration: line-through;
+  flex-wrap: wrap;
 }
 .notlar-tarih {
-  flex-shrink: 0;
   font-size: 10px;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
-.notlar-sil {
-  display: inline-flex;
+.notlar-onem {
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 700;
+}
+.notlar-onem--dusuk {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.notlar-onem--yuksek {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+.notlar-onem--kritik {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+/* --- Durumlar ------------------------------------------------------------ */
+.notlar-iskelet {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.notlar-iskelet .iskelet {
+  display: block;
+  height: 54px;
+  border-radius: 10px;
+  background: var(--bg-muted);
+}
+.notlar-durum {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 26px;
-  height: 26px;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 10px;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px;
+  border: 1px solid var(--danger-border, var(--border));
+  border-radius: 10px;
+  font-size: 12px;
+  color: var(--danger);
+}
+.notlar-dene {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 11.5px;
+  font-weight: 600;
   cursor: pointer;
 }
-.notlar-sil:hover {
-  border-color: var(--danger-border, var(--border));
-  color: var(--danger);
-  background: var(--danger-soft);
-}
-.notlar-sil:focus-visible {
+.notlar-dene:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-
-/* --- Bos durum ----------------------------------------------------------- */
 .notlar-bos {
   display: flex;
   align-items: center;
@@ -497,7 +585,7 @@ watch(
   margin: 0;
   padding: 18px 4px;
   font-size: 12.5px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 .notlar-bos i {
   font-size: 15px;

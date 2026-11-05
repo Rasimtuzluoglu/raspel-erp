@@ -14,7 +14,6 @@
       :donem="donem"
       :gorev-sayilari="gorevSayilari"
       :oto-yenile="otoYenile"
-      :kullanici-id="kullaniciId"
       @yenile="yenile"
       @ara="aramaAc"
       @duzenle="duzenModuDegistir"
@@ -476,10 +475,9 @@
       @update:visible="karAnaliziAcik = $event"
     />
 
-    <!-- Kisisel not / todo: yalnizca cihazda saklanir, backend cagrisi yok. -->
+    <!-- Kisisel notlar: sunucu tarafli /api/notlar (tum cihazlarda ortak). -->
     <DashboardNotlarDrawer
       :visible="notlarAcik"
-      :kullanici-id="kullaniciId"
       @update:visible="notlarAcik = $event"
     />
   </div>
@@ -729,8 +727,6 @@ watch(drawerAcik, (acik) => {
     oncekiGovdeOverflow = null
   }
 })
-
-const kullaniciId = computed(() => authStore.kullanici?.id ?? null)
 
 const gorevSayilari = computed(() => dashboardStore.ozet?.gorevSayilari || {})
 

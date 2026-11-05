@@ -112,11 +112,11 @@
         </div>
       </div>
 
-      <!-- Kisisel notlar: rozet acik (tamamlanmamis) not sayisidir. -->
+      <!-- Kisisel notlar: sunucu tarafli /api/notlar modulunu acar. -->
       <button
         type="button"
-        class="ust-buton ust-buton--ikon ust-buton--rozet ust-buton--masaustu"
-        :aria-label="notEtiketi"
+        class="ust-buton ust-buton--ikon ust-buton--masaustu"
+        :aria-label="t('dashboard.notlarAc')"
         :title="t('dashboard.notlarAc')"
         data-test="not-buton"
         @click="emit('notlar')"
@@ -125,12 +125,6 @@
           class="pi pi-clipboard"
           aria-hidden="true"
         />
-        <span
-          v-if="acikNotAdedi > 0"
-          class="ust-zil-rozet ust-not-rozet"
-          data-test="not-rozet"
-          aria-hidden="true"
-        >{{ notRozetMetni }}</span>
       </button>
 
       <!-- Excel disa aktarma: secili donem ile /exports/dashboard -->
@@ -306,11 +300,6 @@
               aria-hidden="true"
             />
             <span class="ust-mobil-etiket">{{ t('dashboard.notlar') }}</span>
-            <span
-              v-if="acikNotAdedi > 0"
-              class="ust-mobil-rozet"
-              aria-hidden="true"
-            >{{ notRozetMetni }}</span>
           </button>
 
           <button
@@ -424,11 +413,10 @@
 </template>
 
 <script setup>
-import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, inject, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { PrimeVueToastSymbol } from 'primevue/usetoast'
 import { excelAPI } from '../../api/index.js'
-import { NOTLAR_OLAYI, acikNotSayisi } from '../../utils/dashboardNotlar.js'
 
 const props = defineProps({
   kullaniciAd: { type: String, default: '' },
@@ -440,8 +428,7 @@ const props = defineProps({
   duzenModu: { type: Boolean, default: false },
   donem: { type: String, default: 'BU_AY' },
   gorevSayilari: { type: Object, default: () => ({}) },
-  otoYenile: { type: Boolean, default: false },
-  kullaniciId: { type: [String, Number], default: null }
+  otoYenile: { type: Boolean, default: false }
 })
 
 const emit = defineEmits([
@@ -649,44 +636,6 @@ watch(mobilMenuAcik, async (acik) => {
   }
 })
 
-// --- Kisisel not rozeti ----------------------------------------------------
-// Ilk deger senkron okunur; boylece ust bar rozeti ilk boyamada dogru olur.
-const acikNotAdedi = ref(acikNotSayisi(props.kullaniciId))
-
-const notRozetMetni = computed(() =>
-  acikNotAdedi.value > 99 ? '99+' : String(acikNotAdedi.value)
-)
-const notEtiketi = computed(() => `${t('dashboard.notlar')} (${acikNotAdedi.value})`)
-
-const notSayisiHesapla = (olay) => {
-  const detay = olay?.detail
-  if (
-    detay &&
-    detay.kullaniciId !== undefined &&
-    String(detay.kullaniciId) !== String(props.kullaniciId)
-  ) {
-    return
-  }
-  acikNotAdedi.value = acikNotSayisi(props.kullaniciId)
-}
-
-const notDinleyicisiniBagla = () => {
-  if (typeof window === 'undefined') return
-  window.addEventListener(NOTLAR_OLAYI, notSayisiHesapla)
-}
-
-const notDinleyicisiniKaldir = () => {
-  if (typeof window === 'undefined') return
-  window.removeEventListener(NOTLAR_OLAYI, notSayisiHesapla)
-}
-
-watch(
-  () => props.kullaniciId,
-  () => {
-    acikNotAdedi.value = acikNotSayisi(props.kullaniciId)
-  }
-)
-
 // --- Excel disa aktarma ----------------------------------------------------
 const excelIndiriliyor = ref(false)
 
@@ -737,13 +686,7 @@ const yazdir = () => {
   if (typeof window !== 'undefined' && typeof window.print === 'function') window.print()
 }
 
-onMounted(() => {
-  acikNotAdedi.value = acikNotSayisi(props.kullaniciId)
-  notDinleyicisiniBagla()
-})
-
 onBeforeUnmount(() => {
-  notDinleyicisiniKaldir()
   if (typeof document === 'undefined') return
   document.removeEventListener('click', disariTikla, true)
   document.removeEventListener('keydown', tusKacisi)
@@ -887,17 +830,6 @@ onBeforeUnmount(() => {
 .ust-buton--ikon {
   width: 34px;
   padding: 0;
-}
-.ust-buton--rozet {
-  position: relative;
-}
-.ust-not-rozet {
-  top: -4px;
-  right: -4px;
-  border-color: var(--bg-card);
-  /* Kucuk punto beyaz metin icin daha koyu aksan tonu (4.5:1 uzeri). */
-  background: var(--accent-hover);
-  color: var(--accent-contrast);
 }
 .ust-buton--aktif {
   color: var(--accent-contrast);
@@ -1133,18 +1065,6 @@ onBeforeUnmount(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.ust-mobil-rozet {
-  flex-shrink: 0;
-  min-width: 20px;
-  padding: 1px 7px;
-  border-radius: 999px;
-  background: var(--accent-hover);
-  color: var(--accent-contrast);
-  font-size: 10.5px;
-  font-weight: 800;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
 }
 .ust-mobil-satir--aktif {
   background: var(--accent-soft);

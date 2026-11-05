@@ -3,7 +3,6 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import i18n from '../../i18n.js'
 import DashboardUstBar from '../dashboard/DashboardUstBar.vue'
-import { NOTLAR_OLAYI, notlarAnahtari } from '../../utils/dashboardNotlar.js'
 
 const { excelMock } = vi.hoisted(() => ({ excelMock: { dashboard: vi.fn() } }))
 
@@ -176,62 +175,30 @@ describe('DashboardUstBar — takvim ve otomatik yenileme', () => {
   })
 })
 
-describe('DashboardUstBar — kişisel not rozeti', () => {
-  beforeEach(() => {
-    localStorage.clear()
-  })
-  afterEach(() => {
-    localStorage.clear()
-  })
+describe('DashboardUstBar — kişisel notlar', () => {
+  it('not butonu rozet göstermez ve notları açar', async () => {
+    const wrapper = mountEt()
+    const buton = wrapper.find('[data-test="not-buton"]')
 
-  it('açık not sayısını rozet olarak gösterir ve notları açar', async () => {
-    localStorage.setItem(
-      notlarAnahtari(5),
-      JSON.stringify([
-        { id: '1', metin: 'Açık not', tamam: false, tarih: '2026-11-05T08:00:00.000Z' },
-        { id: '2', metin: 'İkinci açık', tamam: false, tarih: '2026-11-05T09:00:00.000Z' },
-        { id: '3', metin: 'Bitti', tamam: true, tarih: '2026-11-05T10:00:00.000Z' }
-      ])
-    )
+    expect(buton.attributes('aria-label')).toBe(i18n.global.t('dashboard.notlarAc'))
+    expect(wrapper.find('[data-test="not-rozet"]').exists()).toBe(false)
 
-    const wrapper = mountEt({ kullaniciId: 5 })
-    const rozet = wrapper.find('[data-test="not-rozet"]')
-    expect(rozet.exists()).toBe(true)
-    expect(rozet.text()).toBe('2')
-    expect(wrapper.find('[data-test="not-buton"]').attributes('aria-label')).toContain('2')
-
-    await wrapper.find('[data-test="not-buton"]').trigger('click')
+    await buton.trigger('click')
     expect(wrapper.emitted('notlar')).toHaveLength(1)
     wrapper.unmount()
   })
 
-  it('not yoksa rozet göstermez', () => {
-    const wrapper = mountEt({ kullaniciId: 5 })
-    expect(wrapper.find('[data-test="not-rozet"]').exists()).toBe(false)
-    wrapper.unmount()
-  })
-
-  it('not güncelleme olayında rozeti tazeler, başka kullanıcıyı yok sayar', async () => {
-    const wrapper = mountEt({ kullaniciId: 5 })
-
-    localStorage.setItem(
-      notlarAnahtari(5),
-      JSON.stringify([{ id: '1', metin: 'Yeni', tamam: false, tarih: '' }])
-    )
-    window.dispatchEvent(new CustomEvent(NOTLAR_OLAYI, { detail: { kullaniciId: 5 } }))
+  it('mobil menüdeki not satırı da notları açar', async () => {
+    const wrapper = mountEt()
+    await wrapper.find('[data-test="mobil-daha"]').trigger('click')
     await nextTick()
-    expect(wrapper.find('[data-test="not-rozet"]').text()).toBe('1')
 
-    localStorage.setItem(
-      notlarAnahtari(5),
-      JSON.stringify([
-        { id: '1', metin: 'Yeni', tamam: false, tarih: '' },
-        { id: '2', metin: 'Bir tane daha', tamam: false, tarih: '' }
-      ])
-    )
-    window.dispatchEvent(new CustomEvent(NOTLAR_OLAYI, { detail: { kullaniciId: 99 } }))
-    await nextTick()
-    expect(wrapper.find('[data-test="not-rozet"]').text()).toBe('1')
+    const satir = wrapper.find('[data-test="mobil-aksiyon-notlar"]')
+    expect(satir.text()).toContain(i18n.global.t('dashboard.notlar'))
+    expect(satir.find('.ust-mobil-rozet').exists()).toBe(false)
+
+    await satir.trigger('click')
+    expect(wrapper.emitted('notlar')).toHaveLength(1)
     wrapper.unmount()
   })
 })

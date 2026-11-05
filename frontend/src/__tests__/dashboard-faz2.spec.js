@@ -4,7 +4,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { nextTick } from 'vue'
 import ToastService from 'primevue/toastservice'
 import i18n from '../i18n.js'
-import { dashboardAPI, excelAPI } from '../api/index.js'
+import { dashboardAPI, excelAPI, notAPI } from '../api/index.js'
 import Dashboard from '../views/Dashboard.vue'
 import App from '../App.vue'
 import {
@@ -48,6 +48,7 @@ vi.mock('../api/index.js', () => ({
     tercihKaydet: vi.fn()
   },
   excelAPI: { dashboard: vi.fn() },
+  notAPI: { getAll: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
   stokAPI: { kritik: vi.fn() },
   networkStatus: { online: true, showBanner: false, sunucuyaUlasilamiyor: false },
   faturaAPI: { create: vi.fn() },
@@ -514,34 +515,62 @@ describe('Dashboard faz2 — kişisel notlar, kısayol ve dışa aktarma entegra
     dashboardAPI.tercihGetir.mockResolvedValue({ data: { duzen: null } })
     dashboardAPI.tercihKaydet.mockResolvedValue({ data: { duzen: null } })
     excelAPI.dashboard.mockResolvedValue({ data: new Blob(['xlsx']) })
+    notAPI.getAll.mockResolvedValue({ data: { content: [], totalElements: 0 } })
+    notAPI.create.mockResolvedValue({ data: { id: 1 } })
   })
 
   afterEach(() => {
     vi.clearAllMocks()
   })
 
-  it('not ikonu drawer açar; eklenen not rozeti ve depoyu günceller', async () => {
+  it('not ikonu drawer açar; eklenen notu /api/notlar üzerinden kaydeder', async () => {
+    notAPI.getAll
+      .mockResolvedValueOnce({ data: { content: [], totalElements: 0 } })
+      .mockResolvedValueOnce({
+        data: {
+          content: [
+            {
+              id: 1,
+              baslik: 'Müşteri toplantısı',
+              icerik: '',
+              onemDerecesi: 'NORMAL',
+              renk: 'MAVI',
+              olusturmaTarihi: '2026-11-05T08:00:00'
+            }
+          ],
+          totalElements: 1
+        }
+      })
+
     const wrapper = mountDashboard()
     await flushPromises()
 
     expect(wrapper.find('[data-test="not-rozet"]').exists()).toBe(false)
     await wrapper.find('[data-test="not-buton"]').trigger('click')
+    await flushPromises()
     await nextTick()
 
     const drawer = wrapper.find('[data-test="notlar-drawer"]')
     expect(drawer.exists()).toBe(true)
     expect(drawer.attributes('aria-modal')).toBe('true')
+    expect(notAPI.getAll).toHaveBeenCalledWith({
+      page: 0,
+      size: 10,
+      sort: 'olusturmaTarihi,desc'
+    })
+    expect(wrapper.find('[data-test="notlar-bos"]').exists()).toBe(true)
 
-    const girdi = wrapper.find('[data-test="not-girdi"]')
-    await girdi.setValue('Müşteri toplantısı')
-    await girdi.trigger('keydown.enter')
+    await wrapper.find('[data-test="not-baslik"]').setValue('Müşteri toplantısı')
+    await wrapper.find('.notlar-ekle').trigger('submit')
+    await flushPromises()
     await nextTick()
 
-    expect(wrapper.find('.notlar-oge').text()).toContain('Müşteri toplantısı')
-    expect(wrapper.find('[data-test="not-rozet"]').text()).toBe('1')
-    expect(JSON.parse(localStorage.getItem('raspel_dashboard_notlar_1'))[0].metin).toBe(
-      'Müşteri toplantısı'
+    expect(notAPI.create).toHaveBeenCalledWith(
+      expect.objectContaining({ baslik: 'Müşteri toplantısı' })
     )
+    expect(wrapper.find('.notlar-oge').text()).toContain('Müşteri toplantısı')
+    // Rozet kaldırıldı: not sayısı artık üst barda gösterilmez.
+    expect(wrapper.find('[data-test="not-rozet"]').exists()).toBe(false)
     wrapper.unmount()
   })
 

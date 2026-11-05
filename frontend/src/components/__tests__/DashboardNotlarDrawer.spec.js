@@ -1,34 +1,134 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { createPinia } from 'pinia'
 import i18n from '../../i18n.js'
 import DashboardNotlarDrawer from '../dashboard/DashboardNotlarDrawer.vue'
-import { MAX_NOT, notlarAnahtari, notlarOku } from '../../utils/dashboardNotlar.js'
+
+const { notAPIMock } = vi.hoisted(() => ({
+  notAPIMock: {
+    getAll: vi.fn(),
+    getById: vi.fn(),
+    cariNotlari: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn()
+  }
+}))
+
+vi.mock('../../api/index.js', () => ({ notAPI: notAPIMock }))
+
+const RouterLinkStub = {
+  props: ['to'],
+  template: '<a :href="to"><slot /></a>'
+}
+
+const notlar = [
+  {
+    id: 1,
+    baslik: 'Banka mutabakatı',
+    icerik: 'Cari hesap kontrolü',
+    onemDerecesi: 'YUKSEK',
+    renk: 'MAVI',
+    olusturmaTarihi: '2026-11-04T10:00:00'
+  },
+  {
+    id: 2,
+    baslik: 'Saha ziyareti',
+    icerik: '',
+    onemDerecesi: 'NORMAL',
+    renk: 'MAVI',
+    olusturmaTarihi: '2026-11-03T09:00:00'
+  }
+]
+
+const sayfa = (content) => ({ data: { content, totalElements: content.length } })
 
 const mountEt = (props = {}, options = {}) =>
   mount(DashboardNotlarDrawer, {
-    props: { visible: true, kullaniciId: 7, ...props },
-    global: { plugins: [i18n] },
-    ...options
+    props: { visible: true, ...props },
+    ...options,
+    global: {
+      plugins: [createPinia(), i18n],
+      stubs: { 'router-link': RouterLinkStub },
+      ...(options.global || {})
+    }
   })
 
-const notEkle = async (wrapper, metin) => {
-  const girdi = wrapper.find('[data-test="not-girdi"]')
-  await girdi.setValue(metin)
-  await girdi.trigger('keydown.enter')
+const yukleVeBekle = async (wrapper) => {
+  await flushPromises()
   await nextTick()
+  return wrapper
 }
 
-describe('DashboardNotlarDrawer — ekle / tamamla / sil', () => {
+describe('DashboardNotlarDrawer — /api/notlar', () => {
   beforeEach(() => {
-    localStorage.clear()
-  })
-  afterEach(() => {
-    localStorage.clear()
+    notAPIMock.getAll.mockReset()
+    notAPIMock.create.mockReset()
+    notAPIMock.getAll.mockResolvedValue(sayfa(notlar))
+    notAPIMock.create.mockResolvedValue({ data: notlar[0] })
   })
 
-  it('boş durumda boş mesaj gösterir', () => {
+  it('açılışta son 10 notu sunucudan ister ve listeler', async () => {
     const wrapper = mountEt()
+    await yukleVeBekle(wrapper)
+
+    expect(notAPIMock.getAll).toHaveBeenCalledTimes(1)
+    expect(notAPIMock.getAll).toHaveBeenCalledWith({
+      page: 0,
+      size: 10,
+      sort: 'olusturmaTarihi,desc'
+    })
+
+    const ogeler = wrapper.findAll('.notlar-oge')
+    expect(ogeler).toHaveLength(2)
+    expect(ogeler[0].text()).toContain('Banka mutabakatı')
+    expect(ogeler[0].text()).toContain('Cari hesap kontrolü')
+    expect(ogeler[1].text()).toContain('Saha ziyareti')
+    // YUKSEK önem rozeti gösterilir; NORMAL gösterilmez.
+    expect(ogeler[0].find('[class*="notlar-onem--yuksek"]').exists()).toBe(true)
+    expect(ogeler[1].find('[class*="notlar-onem"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('başlık ve açıklamayı gösterir, tümünü gör /notlar adresine gider', async () => {
+    const wrapper = mountEt()
+    await yukleVeBekle(wrapper)
+
+    expect(wrapper.find('#db-notlar-baslik').text()).toBe(i18n.global.t('dashboard.notlarBaslik'))
+    expect(wrapper.text()).toContain(i18n.global.t('dashboard.notlarAlt'))
+
+    const tumu = wrapper.find('[data-test="notlar-tumu"]')
+    expect(tumu.attributes('href')).toBe('/notlar')
+    wrapper.unmount()
+  })
+
+  it('en fazla 10 not gösterir', async () => {
+    notAPIMock.getAll.mockResolvedValue(
+      sayfa(
+        Array.from({ length: 14 }, (_, i) => ({
+          id: i + 1,
+          baslik: `Not ${i + 1}`,
+          icerik: '',
+          onemDerecesi: 'NORMAL',
+          olusturmaTarihi: '2026-11-03T09:00:00'
+        }))
+      )
+    )
+
+    const wrapper = mountEt()
+    await yukleVeBekle(wrapper)
+
+    expect(wrapper.findAll('.notlar-oge')).toHaveLength(10)
+    wrapper.unmount()
+  })
+
+  it('kayıt yoksa boş durum gösterir', async () => {
+    notAPIMock.getAll.mockResolvedValue(sayfa([]))
+
+    const wrapper = mountEt()
+    await yukleVeBekle(wrapper)
+
     expect(wrapper.find('[data-test="notlar-bos"]').text()).toContain(
       i18n.global.t('dashboard.notlarBos')
     )
@@ -36,134 +136,133 @@ describe('DashboardNotlarDrawer — ekle / tamamla / sil', () => {
     wrapper.unmount()
   })
 
-  it('Enter ile not ekler ve kullanıcı anahtarına yazar', async () => {
+  it('yükleme hatasında yeniden dene sunar ve tekrar ister', async () => {
+    notAPIMock.getAll.mockRejectedValueOnce(new Error('ağ hatası'))
+
     const wrapper = mountEt()
-    await notEkle(wrapper, 'Tedarikçiyi ara')
+    await yukleVeBekle(wrapper)
 
-    const ogeler = wrapper.findAll('.notlar-oge')
-    expect(ogeler).toHaveLength(1)
-    expect(ogeler[0].text()).toContain('Tedarikçiyi ara')
-    expect(wrapper.find('[data-test="not-girdi"]').element.value).toBe('')
+    const hata = wrapper.find('[data-test="notlar-hata-durum"]')
+    expect(hata.exists()).toBe(true)
+    expect(hata.text()).toContain(i18n.global.t('dashboard.notlarYuklenemedi'))
 
-    const kayit = JSON.parse(localStorage.getItem(notlarAnahtari(7)))
-    expect(kayit).toHaveLength(1)
-    expect(kayit[0]).toMatchObject({ metin: 'Tedarikçiyi ara', tamam: false })
-    expect(kayit[0].id).toBeTruthy()
-    expect(kayit[0].tarih).toBeTruthy()
-    wrapper.unmount()
-  })
+    notAPIMock.getAll.mockResolvedValue(sayfa(notlar))
+    await hata.find('button').trigger('click')
+    await yukleVeBekle(wrapper)
 
-  it('notu tamamlar ve açık sayaç rozetini günceller', async () => {
-    const wrapper = mountEt()
-    await notEkle(wrapper, 'Banka mutabakatı')
-    expect(wrapper.find('[data-test="not-sayac"]').text()).toContain('1')
-
-    await wrapper.find('[data-test="not-tamam"]').setValue(true)
-    await nextTick()
-
-    expect(wrapper.findAll('.notlar-oge--tamam')).toHaveLength(1)
-    expect(wrapper.find('[data-test="not-sayac"]').text()).toContain('0')
-    const kayit = JSON.parse(localStorage.getItem(notlarAnahtari(7)))
-    expect(kayit[0].tamam).toBe(true)
-    wrapper.unmount()
-  })
-
-  it('notu siler ve depodan kaldırır', async () => {
-    const wrapper = mountEt()
-    await notEkle(wrapper, 'Silinecek not')
-
-    await wrapper.find('[data-test="not-sil"]').trigger('click')
-    await nextTick()
-
-    expect(wrapper.find('.notlar-oge').exists()).toBe(false)
-    expect(wrapper.find('[data-test="notlar-bos"]').exists()).toBe(true)
-    expect(notlarOku(7)).toEqual([])
-    wrapper.unmount()
-  })
-
-  it('tamamlananları toplu temizler, açık notları korur', async () => {
-    const wrapper = mountEt()
-    await notEkle(wrapper, 'Birinci')
-    await notEkle(wrapper, 'İkinci')
-
-    // Yeni not başa eklendiği için ilk satır "İkinci"dir.
-    await wrapper.findAll('[data-test="not-tamam"]')[0].setValue(true)
-    await nextTick()
+    expect(notAPIMock.getAll).toHaveBeenCalledTimes(2)
     expect(wrapper.findAll('.notlar-oge')).toHaveLength(2)
-
-    await wrapper.find('[data-test="not-temizle"]').trigger('click')
-    await nextTick()
-
-    const kalan = wrapper.findAll('.notlar-oge')
-    expect(kalan).toHaveLength(1)
-    expect(kalan[0].text()).toContain('Birinci')
-    expect(notlarOku(7)).toHaveLength(1)
     wrapper.unmount()
   })
 
-  it('boş metni reddeder ve kayıt oluşturmaz', async () => {
+  it('yenile düğmesi listeyi yeniden yükler', async () => {
     const wrapper = mountEt()
-    const girdi = wrapper.find('[data-test="not-girdi"]')
-    await girdi.setValue('   ')
-    await girdi.trigger('keydown.enter')
+    await yukleVeBekle(wrapper)
+
+    await wrapper.find('[data-test="notlar-yenile"]').trigger('click')
+    await yukleVeBekle(wrapper)
+
+    expect(notAPIMock.getAll).toHaveBeenCalledTimes(2)
+    wrapper.unmount()
+  })
+
+  it('hızlı ekleme başlık ve içeriği /api/notlar üzerinden kaydeder', async () => {
+    notAPIMock.getAll
+      .mockResolvedValueOnce(sayfa(notlar))
+      .mockResolvedValueOnce(
+        sayfa([
+          {
+            id: 9,
+            baslik: 'Yeni not',
+            icerik: 'Detay',
+            onemDerecesi: 'NORMAL',
+            renk: 'MAVI',
+            olusturmaTarihi: '2026-11-05T08:00:00'
+          },
+          ...notlar
+        ])
+      )
+
+    const wrapper = mountEt()
+    await yukleVeBekle(wrapper)
+
+    await wrapper.find('[data-test="not-baslik"]').setValue('  Yeni not  ')
+    await wrapper.find('[data-test="not-icerik"]').setValue('  Detay  ')
+    await wrapper.find('.notlar-ekle').trigger('submit')
+    await yukleVeBekle(wrapper)
+
+    expect(notAPIMock.create).toHaveBeenCalledTimes(1)
+    expect(notAPIMock.create).toHaveBeenCalledWith({
+      baslik: 'Yeni not',
+      icerik: 'Detay',
+      onemDerecesi: 'NORMAL',
+      renk: 'MAVI'
+    })
+
+    expect(wrapper.find('[data-test="not-baslik"]').element.value).toBe('')
+    expect(wrapper.find('[data-test="not-icerik"]').element.value).toBe('')
+    expect(wrapper.findAll('.notlar-oge')).toHaveLength(3)
+    expect(wrapper.text()).toContain('Yeni not')
+    wrapper.unmount()
+  })
+
+  it('Ctrl+Enter ile de kaydeder', async () => {
+    const wrapper = mountEt()
+    await yukleVeBekle(wrapper)
+
+    await wrapper.find('[data-test="not-baslik"]').setValue('Klavye notu')
+    await wrapper.find('[data-test="not-icerik"]').trigger('keydown', {
+      key: 'Enter',
+      ctrlKey: true
+    })
+    await yukleVeBekle(wrapper)
+
+    expect(notAPIMock.create).toHaveBeenCalledWith(
+      expect.objectContaining({ baslik: 'Klavye notu' })
+    )
+    wrapper.unmount()
+  })
+
+  it('boş başlığı reddeder ve istek atmaz', async () => {
+    const wrapper = mountEt()
+    await yukleVeBekle(wrapper)
+
+    await wrapper.find('[data-test="not-baslik"]').setValue('   ')
+    await wrapper.find('.notlar-ekle').trigger('submit')
     await nextTick()
 
     expect(wrapper.find('[data-test="not-hata"]').text()).toBe(
-      i18n.global.t('dashboard.notlarBosHata')
+      i18n.global.t('dashboard.notlarBaslikZorunlu')
     )
-    expect(wrapper.find('.notlar-oge').exists()).toBe(false)
-    expect(localStorage.getItem(notlarAnahtari(7))).toBeNull()
+    expect(notAPIMock.create).not.toHaveBeenCalled()
+    expect(wrapper.find('[data-test="not-baslik"]').attributes('aria-invalid')).toBe('true')
     wrapper.unmount()
   })
 
-  it('50 not sınırını aşmaz', async () => {
-    const dolu = Array.from({ length: MAX_NOT }, (_, i) => ({
-      id: `n-${i}`,
-      metin: `Not ${i}`,
-      tamam: false,
-      tarih: '2026-11-05T08:00:00.000Z'
-    }))
-    localStorage.setItem(notlarAnahtari(7), JSON.stringify(dolu))
+  it('kaydetme hatasında sunucu mesajını gösterir', async () => {
+    notAPIMock.create.mockRejectedValueOnce({
+      response: { data: { message: 'Başlık zaten kullanılıyor' } }
+    })
 
     const wrapper = mountEt()
-    expect(wrapper.findAll('.notlar-oge')).toHaveLength(MAX_NOT)
+    await yukleVeBekle(wrapper)
 
-    await notEkle(wrapper, 'Fazla not')
-    expect(wrapper.find('[data-test="not-hata"]').text()).toBe(
-      i18n.global.t('dashboard.notlarLimitHata', { limit: MAX_NOT })
-    )
-    expect(wrapper.findAll('.notlar-oge')).toHaveLength(MAX_NOT)
-    expect(notlarOku(7)).toHaveLength(MAX_NOT)
+    await wrapper.find('[data-test="not-baslik"]').setValue('Tekrar eden')
+    await wrapper.find('.notlar-ekle').trigger('submit')
+    await yukleVeBekle(wrapper)
+
+    expect(wrapper.find('[data-test="not-hata"]').text()).toBe('Başlık zaten kullanılıyor')
     wrapper.unmount()
   })
-})
 
-describe('DashboardNotlarDrawer — kalıcılık ve klavye', () => {
-  beforeEach(() => {
-    localStorage.clear()
-  })
-  afterEach(() => {
-    localStorage.clear()
-  })
-
-  it('notlar kapatıp yeniden açıldığında korunur', async () => {
-    const ilk = mountEt()
-    await notEkle(ilk, 'Kalıcı not')
-    ilk.unmount()
-
-    const ikinci = mountEt()
-    expect(ikinci.find('.notlar-oge').text()).toContain('Kalıcı not')
-    ikinci.unmount()
-  })
-
-  it('Escape kapatma olayı yayar ve odak geri döner', async () => {
+  it('Escape ile kapanır ve odağı tetikleyiciye döndürür', async () => {
     const tetik = document.createElement('button')
     document.body.appendChild(tetik)
     tetik.focus()
 
     const wrapper = mountEt({}, { attachTo: document.body })
-    await nextTick()
-    expect(document.activeElement).toBe(wrapper.find('[data-test="not-girdi"]').element)
+    await yukleVeBekle(wrapper)
+    expect(document.activeElement).toBe(wrapper.find('[data-test="not-baslik"]').element)
 
     await wrapper.find('[data-test="notlar-drawer"]').trigger('keydown', { key: 'Escape' })
     expect(wrapper.emitted('update:visible')).toEqual([[false]])
@@ -176,23 +275,14 @@ describe('DashboardNotlarDrawer — kalıcılık ve klavye', () => {
     tetik.remove()
   })
 
-  it('farklı kullanıcı kimliği ayrı depo anahtarı kullanır', async () => {
-    const wrapper = mountEt({ kullaniciId: 7 })
-    await notEkle(wrapper, 'Kullanıcı 7 notu')
-    wrapper.unmount()
+  it('kapalıyken istek atmaz, açıldığında yükler', async () => {
+    const wrapper = mountEt({ visible: false })
+    await yukleVeBekle(wrapper)
+    expect(notAPIMock.getAll).not.toHaveBeenCalled()
 
-    const diger = mountEt({ kullaniciId: 9 })
-    expect(diger.find('[data-test="notlar-bos"]').exists()).toBe(true)
-    diger.unmount()
-
-    expect(localStorage.getItem(notlarAnahtari(7))).toBeTruthy()
-    expect(localStorage.getItem(notlarAnahtari(9))).toBeNull()
-  })
-
-  it('kullanıcı kimliği yoksa genel anahtara yazar', async () => {
-    const wrapper = mountEt({ kullaniciId: null })
-    await notEkle(wrapper, 'Genel not')
-    expect(localStorage.getItem('raspel_dashboard_notlar_genel')).toBeTruthy()
+    await wrapper.setProps({ visible: true })
+    await yukleVeBekle(wrapper)
+    expect(notAPIMock.getAll).toHaveBeenCalledTimes(1)
     wrapper.unmount()
   })
 })
