@@ -188,7 +188,10 @@ initTabloEtiketleri()
     try {
       kok.querySelectorAll('button[title]:not([aria-label])').forEach((b) => {
         const baslik = b.getAttribute('title')
-        if (baslik) b.setAttribute('aria-label', baslik)
+        // Gorunur metni olan butona title'dan aria-label eklemek erisilebilir
+        // adi gorunur metinle uyumsuz yapar (Lighthouse label-content-name).
+        // Yalnizca ikon-only butonlari etiketle.
+        if (baslik && !(b.textContent || '').trim()) b.setAttribute('aria-label', baslik)
       })
     } catch {
       /* yoksay */
@@ -214,7 +217,7 @@ initTabloEtiketleri()
         if (!d || d.nodeType !== 1) continue
         if (d.matches && d.matches('button[title]:not([aria-label])')) {
           const baslik = d.getAttribute('title')
-          if (baslik) d.setAttribute('aria-label', baslik)
+          if (baslik && !(d.textContent || '').trim()) d.setAttribute('aria-label', baslik)
         }
         etiketle(d)
       }

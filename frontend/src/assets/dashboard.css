@@ -41,16 +41,10 @@
 }
 
 /* Veri gelince icerik sert bir sekilde belirmesin; yumusak gecisle gorunur. */
+/* Icerik gecisi: opacity animasyonu KALDIRILDI. Arka plan sekmesinde/animasyon
+   kisitli ortamlarda yarim opaklikta takilip metin kontrastini dusuruyordu. */
 .dashboard-container.icerik-hazir {
-  animation: icerikFade 0.3s ease-out;
-}
-@keyframes icerikFade {
-  from {
-    opacity: 0.6;
-  }
-  to {
-    opacity: 1;
-  }
+  animation: none;
 }
 
 /* Kartlar arasi dikey ritim — finans masasi yogunlugu. */

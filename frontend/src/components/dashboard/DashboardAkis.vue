@@ -241,7 +241,7 @@ a.akis-icerik:focus-visible {
 }
 .akis-aciklama {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

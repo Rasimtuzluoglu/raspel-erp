@@ -36,6 +36,7 @@ export function useGorunurluk(hedefRef, secenekler = {}) {
   let gozlemci = null
   let birakildi = false
   let yazdirDinleyicisi = null
+  let yedekZamanlayici = null
 
   const gozlemciyiBirak = () => {
     if (!gozlemci) return
@@ -93,6 +94,12 @@ export function useGorunurluk(hedefRef, secenekler = {}) {
       window.addEventListener('beforeprint', yazdirDinleyicisi)
     }
     izlemeyeBasla()
+    // Guvenlik agi: bazi gomulu tarayicilarda/arka plan sekmelerinde
+    // IntersectionObserver geri cagrisi hic gelmeyebilir. Bu durumda grafik
+    // sonsuza kadar iskelet kalmasin; kisa bir sure sonra yine de ciz.
+    yedekZamanlayici = setTimeout(() => {
+      if (!gorunur.value) gorunurYap()
+    }, 1500)
   })
 
   // Veri sonradan gelip grafik alani olusursa izlemeyi o zaman baslat.
@@ -100,6 +107,10 @@ export function useGorunurluk(hedefRef, secenekler = {}) {
 
   onBeforeUnmount(() => {
     birakildi = true
+    if (yedekZamanlayici) {
+      clearTimeout(yedekZamanlayici)
+      yedekZamanlayici = null
+    }
     if (yazdirDinleyicisi && typeof window !== 'undefined') {
       window.removeEventListener('beforeprint', yazdirDinleyicisi)
       yazdirDinleyicisi = null

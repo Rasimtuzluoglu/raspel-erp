@@ -172,7 +172,7 @@ a.icgoru-satir:focus-visible {
 }
 .icgoru-mesaj {
   font-size: 11.5px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   line-height: 1.35;
   overflow: hidden;
   text-overflow: ellipsis;
