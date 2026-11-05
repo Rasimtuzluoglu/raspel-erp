@@ -5,6 +5,7 @@ import com.raspel.erp.dto.sistem.DashboardDTO;
 import com.raspel.erp.dto.sistem.DashboardGorevDTO;
 import com.raspel.erp.dto.sistem.DashboardGrafikDTO;
 import com.raspel.erp.dto.sistem.DashboardIcgoruDTO;
+import com.raspel.erp.dto.sistem.DashboardKarAnaliziDTO;
 import com.raspel.erp.dto.sistem.DashboardOzetDTO;
 import com.raspel.erp.dto.sistem.DashboardVadeDTO;
 import com.raspel.erp.dto.finans.HareketDTO;
@@ -47,6 +48,8 @@ import com.raspel.erp.repository.sistem.OnayKararRepository;
 import com.raspel.erp.repository.sistem.SirketHedefRepository;
 import com.raspel.erp.repository.sistem.SirketRepository;
 import com.raspel.erp.repository.ticaret.IadeRepository;
+import com.raspel.erp.repository.ticaret.KarAnalizOzetProjeksiyon;
+import com.raspel.erp.repository.ticaret.KarAnalizSatirProjeksiyon;
 import com.raspel.erp.repository.ticaret.VadeTakvimProjeksiyon;
 import com.raspel.erp.entity.finans.Masraf;
 import com.raspel.erp.entity.finans.Butce;
@@ -85,6 +88,12 @@ public class DashboardService {
     private static final String BUTCE_TUR_GIDER = "GIDER";
     /** Durumu tanımsız siparişlerin grafik etiketi. */
     private static final String SIPARIS_DURUM_DIGER = "DIGER";
+    /** Kâr analizinde dönen en fazla ürün/cari sayısı. */
+    private static final int KAR_ANALIZI_LIMIT = 10;
+    /** Adı bulunmayan ürün için gösterim etiketi. */
+    private static final String KAR_ANALIZI_URUN_AD_YOK = "(Ürün adı yok)";
+    /** Adı bulunmayan cari için gösterim etiketi. */
+    private static final String KAR_ANALIZI_CARI_AD_YOK = "(Cari adı yok)";
 
     private final CariHesapService cariHesapService;
     private final HareketService hareketService;
@@ -371,6 +380,111 @@ public class DashboardService {
     /** Geriye uyum: dönem verilmezse {@code BU_AY}. */
     public DashboardOzetDTO ozetGetir(Long sirketId, Long kullaniciId, String kullaniciAd, String rol) {
         return ozetGetir(sirketId, kullaniciId, kullaniciAd, rol, DONEM_VARSAYILAN);
+    }
+
+    // ==================================================================
+    // Kâr analizi
+    // ==================================================================
+
+    /**
+     * Seçili dönemde kesilmiş satış faturalarının ürün ve cari bazlı kâr
+     * analizi.
+     *
+     * <p>Kapsam yalnızca {@code SATIS + KESILDI} faturalardır. Ciro kalem
+     * tutarıdır ({@code tutar}); maliyet kalemin maliyet anlık görüntüsüdür
+     * ({@code maliyetTutar}; yoksa {@code birimMaliyet × adet}). Maliyeti hiç
+     * olmayan kalemler 0 maliyetle hesaba girer ve {@code maliyetsizKalem}
+     * sayacında raporlanır. Ürün ve cari kırılımları kâr azalan ilk
+     * {@value #KAR_ANALIZI_LIMIT} satırdır; ciro 0 olan ürün grupları atlanır.
+     *
+     * <p>Tenant zorunludur; cache anahtarı şirket, rol ve dönemi içerir.
+     *
+     * @param donem {@code BU_AY} (varsayılan), {@code GECEN_AY},
+     *              {@code BU_CEYREK} veya {@code BU_YIL}
+     */
+    @Transactional(readOnly = true)
+    @Cacheable(value = "dashboard", key = "'karAnalizi:' + #sirketId + ':' + #rol + ':' + #donem")
+    public DashboardKarAnaliziDTO karAnaliziGetir(Long sirketId, String rol, String donem) {
+        if (sirketId == null) {
+            throw new BusinessException("Şirket bilgisi bulunamadı");
+        }
+        log.debug("Dashboard kâr analizi hazırlanıyor... sirketId: {}, rol: {}, donem: {}",
+                sirketId, rol, donem);
+
+        DonemAraligi aralik = donemAraligiCoz(donem);
+        LocalDate baslangic = aralik.baslangic();
+        LocalDate bitis = aralik.bitis();
+        Fatura.FaturaTur tur = Fatura.FaturaTur.SATIS;
+        Fatura.FaturaDurum durum = Fatura.FaturaDurum.KESILDI;
+
+        KarAnalizOzetProjeksiyon ozetSatiri = safeGet(
+                () -> faturaKalemRepository.karAnaliziOzet(sirketId, tur, durum, baslangic, bitis), null);
+        BigDecimal ciro = nz(ozetSatiri != null ? ozetSatiri.getCiro() : null);
+        BigDecimal maliyet = nz(ozetSatiri != null ? ozetSatiri.getMaliyet() : null);
+        BigDecimal kar = ciro.subtract(maliyet);
+
+        long maliyetsizKalem = safeGet(
+                () -> faturaKalemRepository.maliyetsizKalemSayisi(sirketId, tur, durum, baslangic, bitis), 0L);
+
+        List<DashboardKarAnaliziDTO.UrunDTO> urunler = safeGetList(
+                () -> faturaKalemRepository.karAnaliziUrunler(sirketId, tur, durum, baslangic, bitis,
+                                PageRequest.of(0, KAR_ANALIZI_LIMIT))
+                        .stream().map(this::urunKarSatirinaCevir).collect(Collectors.toList()),
+                Collections.emptyList());
+
+        List<DashboardKarAnaliziDTO.CariDTO> cariler = safeGetList(
+                () -> faturaKalemRepository.karAnaliziCariler(sirketId, tur, durum, baslangic, bitis,
+                                PageRequest.of(0, KAR_ANALIZI_LIMIT))
+                        .stream().map(this::cariKarSatirinaCevir).collect(Collectors.toList()),
+                Collections.emptyList());
+
+        return DashboardKarAnaliziDTO.builder()
+                .donem(DashboardKarAnaliziDTO.DonemDTO.builder()
+                        .kod(aralik.kod())
+                        .baslangic(baslangic)
+                        .bitis(bitis)
+                        .etiket(aralik.etiket())
+                        .build())
+                .ozet(DashboardKarAnaliziDTO.OzetDTO.builder()
+                        .ciro(ciro)
+                        .maliyet(maliyet)
+                        .kar(kar)
+                        .marj(marjHesapla(ciro, kar))
+                        .maliyetsizKalem(maliyetsizKalem)
+                        .build())
+                .urunler(urunler)
+                .cariler(cariler)
+                .build();
+    }
+
+    private DashboardKarAnaliziDTO.UrunDTO urunKarSatirinaCevir(KarAnalizSatirProjeksiyon satir) {
+        BigDecimal ciro = nz(satir.getCiro());
+        BigDecimal maliyet = nz(satir.getMaliyet());
+        BigDecimal kar = ciro.subtract(maliyet);
+        return DashboardKarAnaliziDTO.UrunDTO.builder()
+                .stokId(satir.getId())
+                .ad(satir.getAd() != null && !satir.getAd().isBlank()
+                        ? satir.getAd() : KAR_ANALIZI_URUN_AD_YOK)
+                .ciro(ciro)
+                .maliyet(maliyet)
+                .kar(kar)
+                .marj(marjHesapla(ciro, kar))
+                .build();
+    }
+
+    private DashboardKarAnaliziDTO.CariDTO cariKarSatirinaCevir(KarAnalizSatirProjeksiyon satir) {
+        BigDecimal ciro = nz(satir.getCiro());
+        BigDecimal maliyet = nz(satir.getMaliyet());
+        BigDecimal kar = ciro.subtract(maliyet);
+        return DashboardKarAnaliziDTO.CariDTO.builder()
+                .cariId(satir.getId())
+                .ad(satir.getAd() != null && !satir.getAd().isBlank()
+                        ? satir.getAd() : KAR_ANALIZI_CARI_AD_YOK)
+                .ciro(ciro)
+                .maliyet(maliyet)
+                .kar(kar)
+                .marj(marjHesapla(ciro, kar))
+                .build();
     }
 
     // ==================================================================
@@ -1145,6 +1259,17 @@ public class DashboardService {
         return payda != null && payda.compareTo(BigDecimal.ZERO) > 0
                 ? nz(pay).multiply(BigDecimal.valueOf(100)).divide(payda, 1, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
+    }
+
+    /**
+     * Kâr marjı: {@code kar / ciro × 100}. Ciro yoksa veya 0 ise oran
+     * tanımsızdır → {@code null} (UI marj alanını gizler).
+     */
+    private BigDecimal marjHesapla(BigDecimal ciro, BigDecimal kar) {
+        if (ciro == null || ciro.compareTo(BigDecimal.ZERO) == 0) {
+            return null;
+        }
+        return nz(kar).multiply(BigDecimal.valueOf(100)).divide(ciro, 1, RoundingMode.HALF_UP);
     }
 
     /**

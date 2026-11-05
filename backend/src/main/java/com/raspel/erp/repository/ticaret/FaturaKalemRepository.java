@@ -133,4 +133,75 @@ public interface FaturaKalemRepository extends JpaRepository<FaturaKalem, Long> 
                                                        @Param("durum") com.raspel.erp.entity.ticaret.Fatura.FaturaDurum durum,
                                                        @Param("baslangic") java.time.LocalDate baslangic,
                                                        @Param("bitis") java.time.LocalDate bitis);
+
+    /**
+     * Kâr analizi dönem özeti. Ciro kalem tutarı, maliyet ise kalemin maliyet
+     * anlık görüntüsüdür ({@code maliyetTutar}; yoksa {@code birimMaliyet × adet}).
+     * Maliyeti olmayan kalemler toplama katılmaz (SUM null'ları atlar); bu
+     * kalemlerin sayısı {@link #maliyetsizKalemSayisi} ile raporlanır.
+     */
+    @Query("SELECT SUM(k.tutar) AS ciro, " +
+           "SUM(COALESCE(k.maliyetTutar, k.birimMaliyet * k.adet)) AS maliyet " +
+           "FROM FaturaKalem k JOIN k.fatura f " +
+           "WHERE f.sirketId = :sirketId AND f.tur = :tur AND f.durum = :durum " +
+           "AND f.tarih BETWEEN :baslangic AND :bitis")
+    KarAnalizOzetProjeksiyon karAnaliziOzet(@Param("sirketId") Long sirketId,
+                                            @Param("tur") com.raspel.erp.entity.ticaret.Fatura.FaturaTur tur,
+                                            @Param("durum") com.raspel.erp.entity.ticaret.Fatura.FaturaDurum durum,
+                                            @Param("baslangic") java.time.LocalDate baslangic,
+                                            @Param("bitis") java.time.LocalDate bitis);
+
+    /**
+     * Maliyet anlık görüntüsü hiç olmayan (ne {@code maliyetTutar} ne
+     * {@code birimMaliyet}) kalem sayısı. Bu kalemler kâr hesabına 0 maliyetle
+     * girer; UI'da uyarı olarak gösterilir.
+     */
+    @Query("SELECT COUNT(k) FROM FaturaKalem k JOIN k.fatura f " +
+           "WHERE f.sirketId = :sirketId AND f.tur = :tur AND f.durum = :durum " +
+           "AND f.tarih BETWEEN :baslangic AND :bitis " +
+           "AND k.maliyetTutar IS NULL AND k.birimMaliyet IS NULL")
+    long maliyetsizKalemSayisi(@Param("sirketId") Long sirketId,
+                               @Param("tur") com.raspel.erp.entity.ticaret.Fatura.FaturaTur tur,
+                               @Param("durum") com.raspel.erp.entity.ticaret.Fatura.FaturaDurum durum,
+                               @Param("baslangic") java.time.LocalDate baslangic,
+                               @Param("bitis") java.time.LocalDate bitis);
+
+    /**
+     * En kârlı ürünler (kâr azalan). Ciro 0 olan gruplar atlanır; LIMIT
+     * {@link org.springframework.data.domain.Pageable} ile verilir.
+     */
+    @Query("SELECT k.stokId AS id, s.ad AS ad, SUM(k.tutar) AS ciro, " +
+           "SUM(COALESCE(k.maliyetTutar, k.birimMaliyet * k.adet)) AS maliyet " +
+           "FROM FaturaKalem k JOIN k.fatura f LEFT JOIN Stok s ON s.id = k.stokId " +
+           "WHERE f.sirketId = :sirketId AND f.tur = :tur AND f.durum = :durum " +
+           "AND f.tarih BETWEEN :baslangic AND :bitis " +
+           "GROUP BY k.stokId, s.ad " +
+           "HAVING SUM(k.tutar) <> 0 " +
+           "ORDER BY COALESCE(SUM(k.tutar), 0) - COALESCE(SUM(COALESCE(k.maliyetTutar, k.birimMaliyet * k.adet)), 0) DESC, " +
+           "SUM(k.tutar) DESC")
+    List<KarAnalizSatirProjeksiyon> karAnaliziUrunler(@Param("sirketId") Long sirketId,
+                                                      @Param("tur") com.raspel.erp.entity.ticaret.Fatura.FaturaTur tur,
+                                                      @Param("durum") com.raspel.erp.entity.ticaret.Fatura.FaturaDurum durum,
+                                                      @Param("baslangic") java.time.LocalDate baslangic,
+                                                      @Param("bitis") java.time.LocalDate bitis,
+                                                      org.springframework.data.domain.Pageable pageable);
+
+    /**
+     * En kârlı cariler (kâr azalan). Cari hesabı olmayan faturalar atlanır;
+     * LIMIT {@link org.springframework.data.domain.Pageable} ile verilir.
+     */
+    @Query("SELECT f.cariHesap.id AS id, f.cariHesap.ad AS ad, SUM(k.tutar) AS ciro, " +
+           "SUM(COALESCE(k.maliyetTutar, k.birimMaliyet * k.adet)) AS maliyet " +
+           "FROM FaturaKalem k JOIN k.fatura f " +
+           "WHERE f.sirketId = :sirketId AND f.tur = :tur AND f.durum = :durum " +
+           "AND f.tarih BETWEEN :baslangic AND :bitis AND f.cariHesap IS NOT NULL " +
+           "GROUP BY f.cariHesap.id, f.cariHesap.ad " +
+           "ORDER BY COALESCE(SUM(k.tutar), 0) - COALESCE(SUM(COALESCE(k.maliyetTutar, k.birimMaliyet * k.adet)), 0) DESC, " +
+           "SUM(k.tutar) DESC")
+    List<KarAnalizSatirProjeksiyon> karAnaliziCariler(@Param("sirketId") Long sirketId,
+                                                      @Param("tur") com.raspel.erp.entity.ticaret.Fatura.FaturaTur tur,
+                                                      @Param("durum") com.raspel.erp.entity.ticaret.Fatura.FaturaDurum durum,
+                                                      @Param("baslangic") java.time.LocalDate baslangic,
+                                                      @Param("bitis") java.time.LocalDate bitis,
+                                                      org.springframework.data.domain.Pageable pageable);
 }

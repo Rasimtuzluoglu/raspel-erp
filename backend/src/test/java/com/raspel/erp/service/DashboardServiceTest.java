@@ -4,8 +4,11 @@ import com.raspel.erp.dto.finans.HareketDTO;
 import com.raspel.erp.dto.sistem.DashboardAkisDTO;
 import com.raspel.erp.dto.sistem.DashboardGorevDTO;
 import com.raspel.erp.dto.sistem.DashboardIcgoruDTO;
+import com.raspel.erp.dto.sistem.DashboardKarAnaliziDTO;
 import com.raspel.erp.dto.sistem.DashboardOzetDTO;
 import com.raspel.erp.dto.sistem.DashboardVadeDTO;
+import com.raspel.erp.repository.ticaret.KarAnalizOzetProjeksiyon;
+import com.raspel.erp.repository.ticaret.KarAnalizSatirProjeksiyon;
 import com.raspel.erp.repository.ticaret.VadeTakvimProjeksiyon;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -858,5 +861,199 @@ class DashboardServiceTest {
         // 94 gün reddedilir.
         assertThrows(com.raspel.erp.exception.BusinessException.class,
                 () -> dashboardService.vadelerGetir(1L, bas, bas.plusDays(93)));
+    }
+
+    // ------------------------------------------------------------------
+    // /kar-analizi
+    // ------------------------------------------------------------------
+
+    private KarAnalizSatirProjeksiyon karSatiri(Long id, String ad, BigDecimal ciro, BigDecimal maliyet) {
+        return new KarAnalizSatirProjeksiyon() {
+            @Override public Long getId() { return id; }
+            @Override public String getAd() { return ad; }
+            @Override public BigDecimal getCiro() { return ciro; }
+            @Override public BigDecimal getMaliyet() { return maliyet; }
+        };
+    }
+
+    private KarAnalizOzetProjeksiyon karOzeti(BigDecimal ciro, BigDecimal maliyet) {
+        return new KarAnalizOzetProjeksiyon() {
+            @Override public BigDecimal getCiro() { return ciro; }
+            @Override public BigDecimal getMaliyet() { return maliyet; }
+        };
+    }
+
+    @Test
+    void karAnalizi_ozetKirilimlariVeMaliyetsizKalemSayisiniHesaplar() {
+        when(faturaKalemRepository.karAnaliziOzet(eq(1L), eq(Fatura.FaturaTur.SATIS),
+                eq(Fatura.FaturaDurum.KESILDI), any(), any()))
+                .thenReturn(karOzeti(new BigDecimal("10000.00"), new BigDecimal("6000.00")));
+        when(faturaKalemRepository.maliyetsizKalemSayisi(eq(1L), any(), any(), any(), any()))
+                .thenReturn(3L);
+        when(faturaKalemRepository.karAnaliziUrunler(eq(1L), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(karSatiri(11L, "Ürün A", new BigDecimal("1000.00"), new BigDecimal("400.00"))));
+        when(faturaKalemRepository.karAnaliziCariler(eq(1L), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(karSatiri(21L, "Cari A", new BigDecimal("2000.00"), new BigDecimal("1500.00"))));
+
+        DashboardKarAnaliziDTO sonuc = dashboardService.karAnaliziGetir(1L, "ADMIN", "BU_AY");
+
+        assertEquals("BU_AY", sonuc.getDonem().getKod());
+        assertEquals(0, sonuc.getOzet().getCiro().compareTo(new BigDecimal("10000.00")));
+        assertEquals(0, sonuc.getOzet().getMaliyet().compareTo(new BigDecimal("6000.00")));
+        assertEquals(0, sonuc.getOzet().getKar().compareTo(new BigDecimal("4000.00")));
+        assertEquals(0, sonuc.getOzet().getMarj().compareTo(new BigDecimal("40.0")));
+        assertEquals(3L, sonuc.getOzet().getMaliyetsizKalem());
+
+        assertEquals(1, sonuc.getUrunler().size());
+        var urun = sonuc.getUrunler().get(0);
+        assertEquals(11L, urun.getStokId());
+        assertEquals("Ürün A", urun.getAd());
+        assertEquals(0, urun.getCiro().compareTo(new BigDecimal("1000.00")));
+        assertEquals(0, urun.getMaliyet().compareTo(new BigDecimal("400.00")));
+        assertEquals(0, urun.getKar().compareTo(new BigDecimal("600.00")));
+        assertEquals(0, urun.getMarj().compareTo(new BigDecimal("60.0")));
+
+        assertEquals(1, sonuc.getCariler().size());
+        var cari = sonuc.getCariler().get(0);
+        assertEquals(21L, cari.getCariId());
+        assertEquals("Cari A", cari.getAd());
+        assertEquals(0, cari.getKar().compareTo(new BigDecimal("500.00")));
+        assertEquals(0, cari.getMarj().compareTo(new BigDecimal("25.0")));
+    }
+
+    @Test
+    void karAnalizi_dortDonemAraliginiKullanir() {
+        LocalDate bugun = LocalDate.now();
+        LocalDate ayBas = bugun.withDayOfMonth(1);
+        LocalDate aySon = bugun.withDayOfMonth(bugun.lengthOfMonth());
+        LocalDate gecenAyBas = bugun.minusMonths(1).withDayOfMonth(1);
+        LocalDate gecenAySon = gecenAyBas.withDayOfMonth(gecenAyBas.lengthOfMonth());
+        int ilkAy = ((bugun.getMonthValue() - 1) / 3) * 3 + 1;
+        LocalDate ceyrekBas = LocalDate.of(bugun.getYear(), ilkAy, 1);
+        LocalDate ceyrekSon = ceyrekBas.plusMonths(3).minusDays(1);
+        LocalDate yilBas = LocalDate.of(bugun.getYear(), 1, 1);
+        LocalDate yilSon = LocalDate.of(bugun.getYear(), 12, 31);
+
+        var basCap = org.mockito.ArgumentCaptor.forClass(LocalDate.class);
+        var bitCap = org.mockito.ArgumentCaptor.forClass(LocalDate.class);
+
+        var buAy = dashboardService.karAnaliziGetir(1L, "USER", "BU_AY");
+        var gecenAy = dashboardService.karAnaliziGetir(1L, "USER", "gecen_ay");
+        var buCeyrek = dashboardService.karAnaliziGetir(1L, "USER", "BU_CEYREK");
+        var buYil = dashboardService.karAnaliziGetir(1L, "USER", "BU_YIL");
+
+        verify(faturaKalemRepository, times(4)).karAnaliziOzet(eq(1L),
+                eq(Fatura.FaturaTur.SATIS), eq(Fatura.FaturaDurum.KESILDI),
+                basCap.capture(), bitCap.capture());
+        assertEquals(List.of(ayBas, gecenAyBas, ceyrekBas, yilBas), basCap.getAllValues());
+        assertEquals(List.of(aySon, gecenAySon, ceyrekSon, yilSon), bitCap.getAllValues());
+
+        assertEquals("Bu Ay", buAy.getDonem().getEtiket());
+        assertEquals("GECEN_AY", gecenAy.getDonem().getKod());
+        assertEquals("Geçen Ay", gecenAy.getDonem().getEtiket());
+        assertEquals("Bu Çeyrek", buCeyrek.getDonem().getEtiket());
+        assertEquals("Bu Yıl", buYil.getDonem().getEtiket());
+    }
+
+    @Test
+    void karAnalizi_urunVeCariIcinEnFazlaOnSatirIster() {
+        dashboardService.karAnaliziGetir(1L, "USER", "BU_AY");
+
+        verify(faturaKalemRepository).karAnaliziUrunler(eq(1L), any(), any(), any(), any(),
+                eq(PageRequest.of(0, 10)));
+        verify(faturaKalemRepository).karAnaliziCariler(eq(1L), any(), any(), any(), any(),
+                eq(PageRequest.of(0, 10)));
+    }
+
+    @Test
+    void karAnalizi_bosVerideSifirlarVeNullMarjDoner() {
+        DashboardKarAnaliziDTO sonuc = dashboardService.karAnaliziGetir(1L, "USER", "BU_AY");
+
+        assertEquals(0, sonuc.getOzet().getCiro().compareTo(BigDecimal.ZERO));
+        assertEquals(0, sonuc.getOzet().getMaliyet().compareTo(BigDecimal.ZERO));
+        assertEquals(0, sonuc.getOzet().getKar().compareTo(BigDecimal.ZERO));
+        assertNull(sonuc.getOzet().getMarj());
+        assertEquals(0L, sonuc.getOzet().getMaliyetsizKalem());
+        assertTrue(sonuc.getUrunler().isEmpty());
+        assertTrue(sonuc.getCariler().isEmpty());
+    }
+
+    @Test
+    void karAnalizi_ciroSifirsaMarjNullDoner() {
+        when(faturaKalemRepository.karAnaliziOzet(eq(1L), any(), any(), any(), any()))
+                .thenReturn(karOzeti(BigDecimal.ZERO, BigDecimal.ZERO));
+        when(faturaKalemRepository.karAnaliziUrunler(eq(1L), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(karSatiri(11L, "Bedelsiz", BigDecimal.ZERO, BigDecimal.ZERO)));
+
+        DashboardKarAnaliziDTO sonuc = dashboardService.karAnaliziGetir(1L, "USER", "BU_AY");
+
+        assertEquals(0, sonuc.getOzet().getKar().compareTo(BigDecimal.ZERO));
+        assertNull(sonuc.getOzet().getMarj());
+        assertNull(sonuc.getUrunler().get(0).getMarj());
+    }
+
+    @Test
+    void karAnalizi_maliyetNullsaSifirKabulEdilir() {
+        when(faturaKalemRepository.karAnaliziUrunler(eq(1L), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(karSatiri(11L, "Maliyetsiz", new BigDecimal("500.00"), null)));
+        when(faturaKalemRepository.karAnaliziCariler(eq(1L), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(karSatiri(21L, "Cari", null, null)));
+
+        DashboardKarAnaliziDTO sonuc = dashboardService.karAnaliziGetir(1L, "USER", "BU_AY");
+
+        var urun = sonuc.getUrunler().get(0);
+        assertEquals(0, urun.getMaliyet().compareTo(BigDecimal.ZERO));
+        assertEquals(0, urun.getKar().compareTo(new BigDecimal("500.00")));
+        assertEquals(0, urun.getMarj().compareTo(new BigDecimal("100.0")));
+
+        var cari = sonuc.getCariler().get(0);
+        assertEquals(0, cari.getCiro().compareTo(BigDecimal.ZERO));
+        assertEquals(0, cari.getKar().compareTo(BigDecimal.ZERO));
+        assertNull(cari.getMarj());
+    }
+
+    @Test
+    void karAnalizi_adsizUrunVeCariIcinVarsayilanEtiketKullanir() {
+        when(faturaKalemRepository.karAnaliziUrunler(eq(1L), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(karSatiri(11L, null, BigDecimal.TEN, BigDecimal.ONE),
+                        karSatiri(12L, "  ", BigDecimal.TEN, BigDecimal.ONE)));
+        when(faturaKalemRepository.karAnaliziCariler(eq(1L), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(karSatiri(21L, null, BigDecimal.TEN, BigDecimal.ONE)));
+
+        DashboardKarAnaliziDTO sonuc = dashboardService.karAnaliziGetir(1L, "USER", "BU_AY");
+
+        assertEquals("(Ürün adı yok)", sonuc.getUrunler().get(0).getAd());
+        assertEquals("(Ürün adı yok)", sonuc.getUrunler().get(1).getAd());
+        assertEquals("(Cari adı yok)", sonuc.getCariler().get(0).getAd());
+    }
+
+    @Test
+    void karAnalizi_repoSirasiniKorur() {
+        when(faturaKalemRepository.karAnaliziUrunler(eq(1L), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(
+                        karSatiri(1L, "En kârlı", new BigDecimal("1000"), new BigDecimal("100")),
+                        karSatiri(2L, "İkinci", new BigDecimal("1000"), new BigDecimal("500")),
+                        karSatiri(3L, "Üçüncü", new BigDecimal("1000"), new BigDecimal("900"))));
+
+        DashboardKarAnaliziDTO sonuc = dashboardService.karAnaliziGetir(1L, "USER", "BU_AY");
+
+        assertEquals(List.of("En kârlı", "İkinci", "Üçüncü"),
+                sonuc.getUrunler().stream().map(DashboardKarAnaliziDTO.UrunDTO::getAd).toList());
+        assertEquals(900, sonuc.getUrunler().get(0).getKar().intValue());
+        assertEquals(100, sonuc.getUrunler().get(2).getKar().intValue());
+    }
+
+    @Test
+    void karAnalizi_tenantYoksaBusinessExceptionFirlatir() {
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> dashboardService.karAnaliziGetir(null, "USER", "BU_AY"));
+        verifyNoInteractions(faturaKalemRepository);
+    }
+
+    @Test
+    void karAnalizi_gecersizDonemBusinessExceptionFirlatir() {
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> dashboardService.karAnaliziGetir(1L, "USER", "DUN"));
+        verifyNoInteractions(faturaKalemRepository);
     }
 }

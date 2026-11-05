@@ -5,6 +5,7 @@ import com.raspel.erp.dto.sistem.DashboardDTO;
 import com.raspel.erp.dto.sistem.DashboardGorevDTO;
 import com.raspel.erp.dto.sistem.DashboardGrafikDTO;
 import com.raspel.erp.dto.sistem.DashboardIcgoruDTO;
+import com.raspel.erp.dto.sistem.DashboardKarAnaliziDTO;
 import com.raspel.erp.dto.sistem.DashboardOzetDTO;
 import com.raspel.erp.dto.sistem.DashboardTercihDTO;
 import com.raspel.erp.dto.sistem.DashboardVadeDTO;
@@ -110,6 +111,18 @@ public class DashboardController {
     @Operation(summary = "Kural tabanlı içgörüler", description = "Ciro hedefi, vadesi geçen fatura, kritik stok ve likidite trendi kurallarını döndürür")
     public ResponseEntity<List<DashboardIcgoruDTO>> icgorulerGetir(HttpServletRequest request) {
         return ResponseEntity.ok(dashboardService.icgorulerGetir(sirketId(request)));
+    }
+
+    /**
+     * Dönem kâr analizi: özet (ciro/maliyet/kâr/marj + maliyetsiz kalem) ve en
+     * kârlı 10 ürün/cari. Dönem verilmezse {@code BU_AY}.
+     */
+    @GetMapping("/kar-analizi")
+    @Operation(summary = "Dönem kâr analizi", description = "Kesilmiş satış faturalarından ürün ve cari bazlı kâr/marj analizini döndürür")
+    public ResponseEntity<DashboardKarAnaliziDTO> karAnaliziGetir(
+            HttpServletRequest request,
+            @RequestParam(defaultValue = "BU_AY") String donem) {
+        return ResponseEntity.ok(dashboardService.karAnaliziGetir(sirketId(request), aktifRol(), donem));
     }
 
     // ------------------------------------------------------------------

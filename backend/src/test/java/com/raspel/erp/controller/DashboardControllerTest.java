@@ -6,6 +6,7 @@ import com.raspel.erp.dto.sistem.DashboardAkisDTO;
 import com.raspel.erp.dto.sistem.DashboardGorevDTO;
 import com.raspel.erp.dto.sistem.DashboardGrafikDTO;
 import com.raspel.erp.dto.sistem.DashboardIcgoruDTO;
+import com.raspel.erp.dto.sistem.DashboardKarAnaliziDTO;
 import com.raspel.erp.dto.sistem.DashboardOzetDTO;
 import com.raspel.erp.dto.sistem.DashboardTercihDTO;
 import com.raspel.erp.dto.sistem.DashboardVadeDTO;
@@ -273,6 +274,82 @@ class DashboardControllerTest {
         mockMvc.perform(get("/api/dashboard/icgoruler").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].seviye").value("KRITIK"));
+    }
+
+    @Test
+    void karAnalizi_donemParametresiniIletirVeKirilimlariDoner() throws Exception {
+        when(dashboardService.karAnaliziGetir(1L, "USER", "BU_YIL")).thenReturn(
+                DashboardKarAnaliziDTO.builder()
+                        .donem(DashboardKarAnaliziDTO.DonemDTO.builder()
+                                .kod("BU_YIL")
+                                .baslangic(LocalDate.of(2026, 1, 1))
+                                .bitis(LocalDate.of(2026, 12, 31))
+                                .etiket("Bu Yıl")
+                                .build())
+                        .ozet(DashboardKarAnaliziDTO.OzetDTO.builder()
+                                .ciro(BigDecimal.valueOf(10000))
+                                .maliyet(BigDecimal.valueOf(6000))
+                                .kar(BigDecimal.valueOf(4000))
+                                .marj(BigDecimal.valueOf(40.0))
+                                .maliyetsizKalem(3L)
+                                .build())
+                        .urunler(List.of(DashboardKarAnaliziDTO.UrunDTO.builder()
+                                .stokId(11L).ad("Ürün A")
+                                .ciro(BigDecimal.valueOf(1000))
+                                .maliyet(BigDecimal.valueOf(400))
+                                .kar(BigDecimal.valueOf(600))
+                                .marj(BigDecimal.valueOf(60.0))
+                                .build()))
+                        .cariler(List.of(DashboardKarAnaliziDTO.CariDTO.builder()
+                                .cariId(21L).ad("Cari A")
+                                .ciro(BigDecimal.valueOf(2000))
+                                .maliyet(BigDecimal.valueOf(1500))
+                                .kar(BigDecimal.valueOf(500))
+                                .marj(BigDecimal.valueOf(25.0))
+                                .build()))
+                        .build());
+
+        mockMvc.perform(get("/api/dashboard/kar-analizi")
+                        .param("donem", "BU_YIL")
+                        .requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.donem.kod").value("BU_YIL"))
+                .andExpect(jsonPath("$.donem.etiket").value("Bu Yıl"))
+                .andExpect(jsonPath("$.ozet.ciro").value(10000))
+                .andExpect(jsonPath("$.ozet.maliyet").value(6000))
+                .andExpect(jsonPath("$.ozet.kar").value(4000))
+                .andExpect(jsonPath("$.ozet.marj").value(40.0))
+                .andExpect(jsonPath("$.ozet.maliyetsizKalem").value(3))
+                .andExpect(jsonPath("$.urunler[0].stokId").value(11))
+                .andExpect(jsonPath("$.urunler[0].ad").value("Ürün A"))
+                .andExpect(jsonPath("$.urunler[0].kar").value(600))
+                .andExpect(jsonPath("$.cariler[0].cariId").value(21))
+                .andExpect(jsonPath("$.cariler[0].ad").value("Cari A"))
+                .andExpect(jsonPath("$.cariler[0].marj").value(25.0));
+
+        verify(dashboardService).karAnaliziGetir(1L, "USER", "BU_YIL");
+    }
+
+    @Test
+    void karAnalizi_donemYoksaVarsayilanBuAyiKullanir() throws Exception {
+        when(dashboardService.karAnaliziGetir(1L, "USER", "BU_AY"))
+                .thenReturn(DashboardKarAnaliziDTO.builder()
+                        .donem(DashboardKarAnaliziDTO.DonemDTO.builder().kod("BU_AY").build())
+                        .build());
+
+        mockMvc.perform(get("/api/dashboard/kar-analizi").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.donem.kod").value("BU_AY"));
+
+        verify(dashboardService).karAnaliziGetir(1L, "USER", "BU_AY");
+    }
+
+    @Test
+    void karAnalizi_sirketYoksa400Doner() throws Exception {
+        mockMvc.perform(get("/api/dashboard/kar-analizi"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(dashboardService);
     }
 
     @Test
