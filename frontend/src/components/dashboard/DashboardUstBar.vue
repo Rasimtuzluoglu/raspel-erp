@@ -17,10 +17,11 @@
         > · {{ t('dashboard.sonGuncellemeKisa', { zaman: sonGuncelleme }) }}</span>
         <span
           class="ust-canli"
-          :class="{ 'ust-canli--kapali': !canli }"
+          :class="canliDurumSinifi"
+          data-test="canli-durum"
         >
           <span class="canli-nokta" />
-          {{ canli ? t('dashboard.canli') : t('dashboard.cevrimdisiVeri') }}
+          {{ canliMetni }}
         </span>
       </p>
     </div>
@@ -194,7 +195,7 @@
         />
       </button>
 
-      <!-- Otomatik yenileme anahtari (60 sn, yalniz sekme gorunurken). -->
+      <!-- Canli guncelleme anahtari: STOMP aboneligi; kopukken 60 sn yedek polling. -->
       <button
         type="button"
         class="ust-buton ust-buton--ikon ust-oto"
@@ -268,6 +269,7 @@ const props = defineProps({
   kullaniciAd: { type: String, default: '' },
   sirketAd: { type: String, default: '' },
   canli: { type: Boolean, default: true },
+  bagli: { type: Boolean, default: true },
   sonGuncelleme: { type: String, default: '' },
   yenileniyor: { type: Boolean, default: false },
   duzenModu: { type: Boolean, default: false },
@@ -306,8 +308,18 @@ const DONEM_SECENEKLERI = [
   { kod: 'BU_YIL', anahtar: 'dashboard.donemBuYil' }
 ]
 
-const selamlama = computed(() => {
-  const saat = new Date().getHours()
+// Canli mod gostergesi: bagliyken yesil nabiz, kopukken amber "yeniden baglaniyor".
+const canliDurumSinifi = computed(() => {
+  if (!props.canli) return 'ust-canli--kapali'
+  return props.bagli ? '' : 'ust-canli--bekliyor'
+})
+
+const canliMetni = computed(() => {
+  if (!props.canli) return t('dashboard.cevrimdisiVeri')
+  return props.bagli ? t('dashboard.canli') : t('dashboard.yenidenBaglaniyor')
+})
+
+const selamlama = computed(() => {  const saat = new Date().getHours()
   if (saat < 6) return t('dashboard.iyiGeceler')
   if (saat < 12) return t('dashboard.gunaydin')
   if (saat < 18) return t('dashboard.iyiGunler')
@@ -556,6 +568,23 @@ onBeforeUnmount(() => {
 }
 .ust-canli--kapali {
   color: var(--warning);
+}
+.ust-canli--bekliyor {
+  color: var(--warning);
+}
+.ust-canli--bekliyor .canli-nokta {
+  animation: canliNabizBekliyor 1.8s infinite;
+}
+@keyframes canliNabizBekliyor {
+  0% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
 }
 .canli-nokta {
   width: 6px;

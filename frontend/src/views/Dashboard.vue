@@ -6,7 +6,8 @@
     <DashboardUstBar
       :kullanici-ad="kullaniciAd"
       :sirket-ad="sirketAd"
-      :canli="canli"
+      :canli="otoYenile"
+      :bagli="canliBagli"
       :son-guncelleme="sonGuncelleme"
       :yenileniyor="yenileniyor"
       :duzen-modu="duzenModu"
@@ -485,7 +486,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useDashboardStore } from '../stores/dashboardStore.js'
@@ -511,7 +512,7 @@ import DashboardVadeTakvimi from '../components/dashboard/DashboardVadeTakvimi.v
 import DashboardKarAnalizi from '../components/dashboard/DashboardKarAnalizi.vue'
 import DashboardNotlarDrawer from '../components/dashboard/DashboardNotlarDrawer.vue'
 import { useDashboardGrafikleri } from '../composables/useDashboardGrafikleri.js'
-import { useDashboardOtoYenileme } from '../composables/useDashboardOtoYenileme.js'
+import { useDashboardCanli } from '../composables/useDashboardCanli.js'
 import { formatCurrency } from '../utils/format.js'
 import {
   BOLGE_SAG,
@@ -724,7 +725,9 @@ const kullaniciAd = computed(
 )
 const sirketAd = computed(() => authStore.sirketAdi || dashboardStore.ozet?.hero?.sirketAd || '')
 
-const canli = computed(() => dashboardStore.ozet?.hero?.canli !== false)
+const sirketIdVar = computed(
+  () => authStore.sirketId !== null && authStore.sirketId !== undefined && authStore.sirketId !== ''
+)
 
 const ozetYukleniyor = computed(() => dashboardStore.ozetYukleniyor)
 const gorevlerYukleniyor = computed(() => dashboardStore.gorevlerYukleniyor)
@@ -859,8 +862,131 @@ const yenile = async () => {
   }
 }
 
-// Otomatik yenileme: 60 sn, yalniz sekme gorunurken (tercih cihazda saklanir).
-const { aktif: otoYenile, ayarla: otoYenileAyarla } = useDashboardOtoYenileme(() => yenile())
+// --- Canli mod -------------------------------------------------------------
+// Tek STOMP baglantisi uzerinden gelen dashboard olaylari. Canli mod kapaliysa
+// abonelik ve yedek polling calismaz. Baglanti kopukken useDashboardCanli
+// icindeki 60 sn yedek polling devreye girer.
+const canli = useDashboardCanli({
+  sirketId: computed(() => authStore.sirketId),
+  yedekYenile: () => yenile()
+})
+
+const otoYenile = canli.aktif
+const otoYenileAyarla = (deger) => canli.ayarla(deger)
+
+// Sirket baglami yokken (or. test/izole kullanim) gosterge notr "Canli" kalir.
+const canliBagli = computed(() => {
+  if (!canli.aktif.value) return false
+  if (!sirketIdVar.value) return true
+  return canli.bagli.value
+})
+
+const CANLI_DEBOUNCE_MS = 800
+const CANLI_GRAFIK_ARALIK_MS = 5_000
+const CANLI_GRAFIK_TURLERI = new Set(['FATURA', 'SIPARIS', 'STOK', 'MASRAF', 'ONAY'])
+
+let canliZamanlayici = null
+let canliSuruyor = false
+let canliBekliyor = false
+let canliGrafikBekliyor = false
+let canliGrafikSon = 0
+
+const sekmeGizli = () =>
+  typeof document !== 'undefined' && document.visibilityState === 'hidden'
+
+const canliZamanlayiciTemizle = () => {
+  if (canliZamanlayici === null) return
+  clearTimeout(canliZamanlayici)
+  canliZamanlayici = null
+}
+
+const canliTazele = async () => {
+  if (!canli.aktif.value) return
+  if (sekmeGizli()) {
+    canliBekliyor = true
+    return
+  }
+  // Manuel yenileme veya devam eden canli yenileme varsa birlestir.
+  if (yenileniyor.value || canliSuruyor) {
+    canliBekliyor = true
+    return
+  }
+
+  const grafikIsteniyor =
+    canliGrafikBekliyor && Date.now() - canliGrafikSon >= CANLI_GRAFIK_ARALIK_MS
+  canliGrafikBekliyor = false
+  canliBekliyor = false
+  canliSuruyor = true
+
+  const isler = [dashboardStore.getOzet(donem.value), dashboardStore.getAkis()]
+  if (grafikIsteniyor) {
+    canliGrafikSon = Date.now()
+    isler.push(dashboardStore.getGrafikler())
+  }
+
+  try {
+    await Promise.all(isler)
+    guncellemeZamaniGuncelle()
+    duyur(t('dashboard.canliGuncellendi'))
+  } finally {
+    canliSuruyor = false
+    if (canliBekliyor) {
+      canliBekliyor = false
+      canliTazele()
+    }
+  }
+}
+
+const canliOlayGeldi = (olay) => {
+  if (!olay || !canli.aktif.value) return
+  if (olay.tur && CANLI_GRAFIK_TURLERI.has(olay.tur)) canliGrafikBekliyor = true
+  if (sekmeGizli()) {
+    canliBekliyor = true
+    return
+  }
+  canliZamanlayiciTemizle()
+  canliZamanlayici = setTimeout(() => {
+    canliZamanlayici = null
+    canliTazele()
+  }, CANLI_DEBOUNCE_MS)
+}
+
+// Sekme gorunur olunca bekleyen canli yenilemeyi hemen uygula.
+const gorunurlukDegisti = () => {
+  if (typeof document === 'undefined' || document.visibilityState !== 'visible') return
+  if (!canli.aktif.value || !canliBekliyor) return
+  canliBekliyor = false
+  canliZamanlayiciTemizle()
+  canliTazele()
+}
+
+watch(canli.sonOlay, (olay) => {
+  if (olay) canliOlayGeldi(olay)
+})
+
+// Yeniden baglanmada kacirilan olaylar icin tam yenileme yapilir.
+watch(canli.yenidenBaglandi, (yeni, eski) => {
+  if (!(yeni > eski) || !canli.aktif.value) return
+  canliBekliyor = false
+  canliGrafikBekliyor = false
+  canliZamanlayiciTemizle()
+  yenile()
+})
+
+// Manuel yenileme bitince birlesik bekleyen canli tazelemeyi calistir.
+watch(yenileniyor, (deger) => {
+  if (deger || !canliBekliyor || !canli.aktif.value) return
+  canliBekliyor = false
+  canliTazele()
+})
+
+// Canli mod kapatilinca bekleyen isleri temizle.
+watch(canli.aktif, (acik) => {
+  if (acik) return
+  canliZamanlayiciTemizle()
+  canliBekliyor = false
+  canliGrafikBekliyor = false
+})
 
 /** Donem secimi: KPI'lari secilen donem icin yeniden yukler ve tercihi saklar. */
 const donemDegistir = async (yeni) => {
@@ -918,10 +1044,20 @@ onMounted(async () => {
     router.replace('/saha-portali')
     return
   }
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', gorunurlukDegisti)
+  }
   onboardingGoster.value = !localStorage.getItem('raspel_erp_onboarding_atlandi')
   // Tercih okumasi kritik yolu bloklamaz; rol varsayilani ile hemen cizilir.
   duzeniYukle()
   await yenile()
+})
+
+onBeforeUnmount(() => {
+  canliZamanlayiciTemizle()
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('visibilitychange', gorunurlukDegisti)
+  }
 })
 </script>
 

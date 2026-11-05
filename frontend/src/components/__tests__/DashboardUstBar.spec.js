@@ -236,6 +236,33 @@ describe('DashboardUstBar — kişisel not rozeti', () => {
   })
 })
 
+describe('DashboardUstBar — canli gostergesi', () => {
+  it('bagliyken yesil "Canli" gostergesi sunar', () => {
+    const wrapper = mountEt({ canli: true, bagli: true })
+    const durum = wrapper.find('[data-test="canli-durum"]')
+    expect(durum.exists()).toBe(true)
+    expect(durum.text()).toBe(i18n.global.t('dashboard.canli'))
+    expect(durum.classes()).not.toContain('ust-canli--bekliyor')
+    wrapper.unmount()
+  })
+
+  it('kopukken amber "Yeniden baglaniyor" gostergesi sunar', () => {
+    const wrapper = mountEt({ canli: true, bagli: false })
+    const durum = wrapper.find('[data-test="canli-durum"]')
+    expect(durum.text()).toBe(i18n.global.t('dashboard.yenidenBaglaniyor'))
+    expect(durum.classes()).toContain('ust-canli--bekliyor')
+    wrapper.unmount()
+  })
+
+  it('canli mod kapaliyken cevrimdisi gostergesi sunar', () => {
+    const wrapper = mountEt({ canli: false, bagli: false })
+    const durum = wrapper.find('[data-test="canli-durum"]')
+    expect(durum.text()).toBe(i18n.global.t('dashboard.cevrimdisiVeri'))
+    expect(durum.classes()).toContain('ust-canli--kapali')
+    wrapper.unmount()
+  })
+})
+
 describe('DashboardUstBar — Excel ve yazdırma', () => {
   beforeEach(() => {
     vi.clearAllMocks()

@@ -251,7 +251,7 @@ describe('Dashboard — bildirim zili ve yardımcı paneller', () => {
     wrapper.unmount()
   })
 
-  it('otomatik yenileme anahtarı tercihi cihaza yazar ve 60 sn zamanlayıcı kurar', async () => {
+  it('canli mod anahtari tercihi cihaza yazar ve 60 sn yedek zamanlayici kurar', async () => {
     const sayac = vi.spyOn(globalThis, 'setInterval')
     const temizle = vi.spyOn(globalThis, 'clearInterval')
     const wrapper = mountEt()
@@ -261,34 +261,36 @@ describe('Dashboard — bildirim zili ve yardımcı paneller', () => {
     const taban = altmisSn()
 
     const anahtar = wrapper.find('[data-test="oto-yenileme"]')
-    expect(anahtar.attributes('aria-checked')).toBe('false')
-
-    await anahtar.trigger('click')
-    await nextTick()
-    expect(localStorage.getItem('raspel_dashboard_oto')).toBe('1')
+    // Canli mod varsayilan olarak aciktir.
     expect(anahtar.attributes('aria-checked')).toBe('true')
-    expect(altmisSn()).toBe(taban + 1)
 
     await anahtar.trigger('click')
     await nextTick()
-    expect(localStorage.getItem('raspel_dashboard_oto')).toBe('0')
+    expect(localStorage.getItem('raspel_dashboard_canli')).toBe('0')
     expect(anahtar.attributes('aria-checked')).toBe('false')
     expect(temizle).toHaveBeenCalled()
+
+    await anahtar.trigger('click')
+    await nextTick()
+    expect(localStorage.getItem('raspel_dashboard_canli')).toBe('1')
+    expect(anahtar.attributes('aria-checked')).toBe('true')
+    expect(altmisSn()).toBe(taban + 1)
     wrapper.unmount()
     sayac.mockRestore()
     temizle.mockRestore()
   })
 
-  it('cihazda açık tercih varsa yüklemede zamanlayıcı kurulur', async () => {
+  it('cihazda acik canli tercih varsa yuklemede zamanlayici kurulur', async () => {
     const sayac = vi.spyOn(globalThis, 'setInterval')
     const altmisSn = () => sayac.mock.calls.filter(([, ms]) => ms === 60000).length
 
+    localStorage.setItem('raspel_dashboard_canli', '0')
     const temel = mountEt()
     await flushPromises()
     const taban = altmisSn()
     temel.unmount()
 
-    localStorage.setItem('raspel_dashboard_oto', '1')
+    localStorage.setItem('raspel_dashboard_canli', '1')
     const wrapper = mountEt()
     await flushPromises()
 

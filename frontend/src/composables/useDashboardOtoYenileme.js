@@ -1,18 +1,25 @@
-import { onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, unref, watch } from 'vue'
 
 /**
- * Anasayfa otomatik yenilemesi.
+ * Anasayfa yedek yenileme zamanlayicisi.
  *
  * Davranis sozlesmesi:
  *  - Tercih `localStorage`ta tutulur (`raspel_dashboard_oto` = '1' | '0').
  *  - Acikken `aralikMs` (varsayilan 60 sn) boyunca bir kez `yenile()` cagrilir.
  *  - Yalnizca sekme gorunurken yenilenir; arka plandaki sekme istek uretmez.
+ *  - `etkin` verilirse zamanlayici yalnizca `etkin === true` iken calisir.
+ *    Canli STOMP baglantisinda polling'i durdurmak icin kullanilir.
+ *  - `baslangic: true` verilirse cihaz tercihi okunmaz (canli modun yedek
+ *    katmani her zaman aktiftir).
  *  - Bilesen kaldirilinca zamanlayici temizlenir (sizinti yok).
  */
 export const OTO_YENILEME_ANAHTAR = 'raspel_dashboard_oto'
 export const OTO_YENILEME_ARALIK_MS = 60_000
 
-export function useDashboardOtoYenileme(yenile, { aralikMs = OTO_YENILEME_ARALIK_MS } = {}) {
+export function useDashboardOtoYenileme(
+  yenile,
+  { aralikMs = OTO_YENILEME_ARALIK_MS, etkin, baslangic } = {}
+) {
   const oku = () => {
     try {
       return localStorage.getItem(OTO_YENILEME_ANAHTAR) === '1'
@@ -21,7 +28,11 @@ export function useDashboardOtoYenileme(yenile, { aralikMs = OTO_YENILEME_ARALIK
     }
   }
 
-  const aktif = ref(oku())
+  const aktif = ref(baslangic === true ? true : oku())
+  const etkinMi = computed(() => {
+    if (typeof etkin === 'undefined') return true
+    return Boolean(typeof etkin === 'function' ? etkin() : unref(etkin))
+  })
   let zamanlayici = null
 
   const durdur = () => {
@@ -33,6 +44,7 @@ export function useDashboardOtoYenileme(yenile, { aralikMs = OTO_YENILEME_ARALIK
 
   const baslat = () => {
     durdur()
+    if (!etkinMi.value) return
     zamanlayici = setInterval(() => {
       if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
       if (typeof yenile === 'function') yenile()
@@ -51,10 +63,15 @@ export function useDashboardOtoYenileme(yenile, { aralikMs = OTO_YENILEME_ARALIK
     aktif.value = yeni
   }
 
-  // `aktif` degisince zamanlayici tek noktadan kurulur/kaldirilir; cift
-  // zamanlayici olusmaz.
+  // `aktif` veya `etkin` degisince zamanlayici tek noktadan kurulur/kaldirilir;
+  // cift zamanlayici olusmaz.
   watch(aktif, (deger) => {
     if (deger) baslat()
+    else durdur()
+  })
+
+  watch(etkinMi, () => {
+    if (aktif.value) baslat()
     else durdur()
   })
 
@@ -62,5 +79,5 @@ export function useDashboardOtoYenileme(yenile, { aralikMs = OTO_YENILEME_ARALIK
 
   onBeforeUnmount(durdur)
 
-  return { aktif, ayarla, baslat, durdur, aralikMs }
+  return { aktif, ayarla, baslat, durdur, aralikMs, etkin: etkinMi }
 }
