@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
+import { nextTick } from 'vue'
 import i18n from '../../i18n.js'
 import Dashboard from '../Dashboard.vue'
 import { dashboardAPI, excelAPI } from '../../api/index.js'
+import { __sonOlay, __bagli } from '../../composables/useDashboardCanli.js'
 
 const { routerPush } = vi.hoisted(() => ({ routerPush: vi.fn() }))
 
@@ -28,11 +30,16 @@ vi.mock('../../stores/authStore.js', () => ({
 
 vi.mock('../../composables/useDashboardCanli.js', async () => {
   const { ref } = await import('vue')
+  const sonOlay = ref(null)
+  const bagli = ref(true)
   return {
+    CANLI_YENILEME_GECIKME_MS: 2000,
+    __sonOlay: sonOlay,
+    __bagli: bagli,
     useDashboardCanli: () => ({
       aktif: ref(true),
-      bagli: ref(true),
-      sonOlay: ref(null),
+      bagli,
+      sonOlay,
       yenidenBaglandi: ref(0),
       ayarla: vi.fn()
     })
@@ -124,12 +131,18 @@ const kokpitVerisi = () => ({
   }
 })
 
-const mountDashboard = () => mount(Dashboard, {
-  global: {
-    plugins: [i18n],
-    stubs: { 'router-link': RouterLinkStub }
-  }
-})
+const mountEdilenler = []
+
+const mountDashboard = () => {
+  const wrapper = mount(Dashboard, {
+    global: {
+      plugins: [i18n],
+      stubs: { 'router-link': RouterLinkStub }
+    }
+  })
+  mountEdilenler.push(wrapper)
+  return wrapper
+}
 
 describe('Dashboard kokpiti', () => {
   beforeEach(() => {
@@ -137,6 +150,8 @@ describe('Dashboard kokpiti', () => {
     localStorage.clear()
     vi.clearAllMocks()
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    __sonOlay.value = null
+    __bagli.value = true
     dashboardAPI.kokpit.mockResolvedValue({ data: kokpitVerisi() })
     dashboardAPI.tercihGetir.mockResolvedValue({ data: { duzen: null } })
     dashboardAPI.tercihKaydet.mockResolvedValue({ data: { duzen: null } })
@@ -144,6 +159,8 @@ describe('Dashboard kokpiti', () => {
   })
 
   afterEach(() => {
+    mountEdilenler.splice(0).forEach((wrapper) => wrapper.unmount())
+    vi.useRealTimers()
     vi.restoreAllMocks()
   })
 
@@ -242,5 +259,46 @@ describe('Dashboard kokpiti', () => {
 
     expect(dashboardAPI.tercihKaydet).toHaveBeenCalled()
     expect(wrapper.find('[data-test="kokpit-ozellestirme"]').exists()).toBe(false)
+  })
+
+  it('stompOlayiKokpitiYeniler', async () => {
+    vi.useFakeTimers()
+    mountDashboard()
+    await flushPromises()
+    dashboardAPI.kokpit.mockClear()
+
+    __sonOlay.value = { tur: 'FATURA', mesaj: 'Yeni fatura', zaman: new Date().toISOString() }
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(2000)
+
+    expect(dashboardAPI.kokpit).toHaveBeenCalledTimes(1)
+  })
+
+  it('kisaArdisikOlaylarTekIstekAtar', async () => {
+    vi.useFakeTimers()
+    mountDashboard()
+    await flushPromises()
+    dashboardAPI.kokpit.mockClear()
+
+    __sonOlay.value = { tur: 'FATURA' }
+    await nextTick()
+    __sonOlay.value = { tur: 'SIPARIS' }
+    await nextTick()
+    __sonOlay.value = { tur: 'TAHSILAT' }
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(2000)
+
+    expect(dashboardAPI.kokpit).toHaveBeenCalledTimes(1)
+  })
+
+  it('baglantiKopukkenKokpitHataVermez', async () => {
+    const wrapper = mountDashboard()
+    await flushPromises()
+    __bagli.value = false
+    await nextTick()
+
+    expect(wrapper.find('[data-test="canli-durum"]').text()).toContain('Bağlantı yok')
+    expect(wrapper.find('[data-test="nakit-bolumu"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="kokpit-hata"]').exists()).toBe(false)
   })
 })

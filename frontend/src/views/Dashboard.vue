@@ -93,13 +93,13 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
 import { useKokpitStore } from '../stores/kokpitStore.js'
 import { KOKPIT_BOLUMLERI } from '../stores/kokpitStore.js'
-import { useDashboardCanli } from '../composables/useDashboardCanli.js'
+import { CANLI_YENILEME_GECIKME_MS, useDashboardCanli } from '../composables/useDashboardCanli.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { excelAPI } from '../api/index.js'
 import { formatDateTime } from '../utils/format.js'
@@ -154,12 +154,31 @@ const canli = useDashboardCanli({
 })
 const canliGosterge = computed(() => canli.aktif.value && canli.bagli.value)
 
+// Canlı olaylarını 2 saniyelik tek pencereye indirger; art arda gelen
+// STOMP mesajları tek kokpit isteği üretir.
+let canliZamanlayici = null
+const canliTazele = () => {
+  if (!canli.aktif.value) return
+  if (canliZamanlayici !== null) clearTimeout(canliZamanlayici)
+  canliZamanlayici = setTimeout(() => {
+    canliZamanlayici = null
+    if (canli.aktif.value) kokpitStore.getKokpit()
+  }, CANLI_YENILEME_GECIKME_MS)
+}
+
 watch(
   () => canli.sonOlay.value,
   (olay) => {
-    if (olay && canli.aktif.value) yenile()
+    if (olay) canliTazele()
   }
 )
+
+onBeforeUnmount(() => {
+  if (canliZamanlayici !== null) {
+    clearTimeout(canliZamanlayici)
+    canliZamanlayici = null
+  }
+})
 
 const canliDegistir = () => {
   canli.ayarla(!canli.aktif.value)
@@ -201,6 +220,10 @@ const paraBirimiDegistir = (kod) => {
 }
 
 const yenile = async () => {
+  if (canliZamanlayici !== null) {
+    clearTimeout(canliZamanlayici)
+    canliZamanlayici = null
+  }
   await kokpitStore.getKokpit()
   if (!kokpitStore.hata) {
     duyuru.value = t('dashboard.canliGuncellendi')

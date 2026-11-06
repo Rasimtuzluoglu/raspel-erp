@@ -2570,3 +2570,21 @@ body {
 .app-container .mobil-alt-menu .mam-item.aktif span {
   color: var(--text-primary);
 }
+
+/* ==========================================================================
+   Finans kokpiti: erişilebilirlik ve hareket azaltma
+   ========================================================================== */
+.kokpit-sayfa :is(a, button, select, input, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kokpit-sayfa *,
+  .kokpit-sayfa *::before,
+  .kokpit-sayfa *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

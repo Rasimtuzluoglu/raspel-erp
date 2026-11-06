@@ -16,6 +16,9 @@ import { useDashboardOtoYenileme, OTO_YENILEME_ARALIK_MS } from './useDashboardO
  */
 export const CANLI_ANAHTAR = 'raspel_dashboard_canli'
 
+/** Kokpit canlı yenilemesinde ardışık STOMP olaylarını birleştirme penceresi. */
+export const CANLI_YENILEME_GECIKME_MS = 2000
+
 const canliTercihiOku = () => {
   try {
     // Varsayilan aciktir; yalnizca acikca '0' yazildiysa kapali sayilir.
