@@ -75,6 +75,7 @@ public class KurulumService {
 
         Sirket sirket = sirketRepository.save(Sirket.builder()
                 .ad(dto.getAd().trim())
+                .kod(kodUret(dto.getAd()))
                 .vergiNo(dto.getVergiNo().trim())
                 .vergiDairesi(dto.getVergiDairesi())
                 .adres(dto.getAdres())
@@ -106,5 +107,22 @@ public class KurulumService {
                 .username(dto.getAdminUsername().trim())
                 .password(dto.getAdminPassword())
                 .build());
+    }
+
+    /** Ilk kurulumda sirket kodu: ad slug'i; rezerve/ksa ise firma- oneki. */
+    private String kodUret(String ad) {
+        String slug = ad == null ? "" : ad.trim().toLowerCase(java.util.Locale.ROOT)
+                .replace('ç', 'c').replace('ğ', 'g').replace('ı', 'i')
+                .replace('ö', 'o').replace('ş', 's').replace('ü', 'u');
+        slug = slug.replaceAll("[^a-z0-9]+", "-").replaceAll("^-+|-+$", "");
+        if (slug.length() < 2 || java.util.Set.of(
+                "api", "giris", "admin", "app", "www", "durum", "qr-onay", "sistem", "destek")
+                .contains(slug)) {
+            slug = "firma-" + slug;
+        }
+        if (slug.length() > 60) {
+            slug = slug.substring(0, 60).replaceAll("-+$", "");
+        }
+        return slug;
     }
 }

@@ -19,6 +19,10 @@ public class Sirket {
     @Column(nullable = false, length = 200)
     private String ad;
 
+    /** Giris ekraninda kullanilan benzersiz, kisa sirket kodu (slug). */
+    @Column(length = 60)
+    private String kod;
+
     @Column(name = "vergi_no", length = 50)
     private String vergiNo;
 

@@ -16,6 +16,7 @@ CREATE SCHEMA IF NOT EXISTS ticaret;
 CREATE TABLE IF NOT EXISTS sistem.sirket (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     ad VARCHAR(200) NOT NULL,
+    kod VARCHAR(60),
     vergi_no VARCHAR(50),
     vergi_dairesi VARCHAR(100),
     adres VARCHAR(500),
@@ -37,4 +38,20 @@ CREATE TABLE IF NOT EXISTS sistem.ip_whitelist (
     aciklama VARCHAR(255),
     durum VARCHAR(20) NOT NULL DEFAULT 'AKTIF',
     ekleme_tarihi DATE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sistem.passkey (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    kullanici_id BIGINT NOT NULL,
+    credential_id VARCHAR(255) NOT NULL,
+    etiket VARCHAR(100) NOT NULL,
+    attested_credential_data TEXT NOT NULL,
+    counter BIGINT NOT NULL DEFAULT 0,
+    uv_initialized BOOLEAN NOT NULL DEFAULT TRUE,
+    backup_eligible BOOLEAN,
+    backed_up BOOLEAN,
+    transports VARCHAR(255),
+    user_handle VARCHAR(255),
+    olusturma_tarihi TIMESTAMP NOT NULL,
+    son_kullanma_tarihi TIMESTAMP
 );

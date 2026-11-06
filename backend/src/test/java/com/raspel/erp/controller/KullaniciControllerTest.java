@@ -115,7 +115,8 @@ class KullaniciControllerTest {
 
     @Test
     void shouldLogin() throws Exception {
-        var request = new LoginRequest("admin", "pass", "Test Company", null, false);
+        var request = LoginRequest.builder()
+                .username("admin").password("pass").companyName("Test Company").rememberMe(false).build();
         var response = LoginResponse.builder().id(1L).username("admin").token("jwt-token").build();
         when(kullaniciService.giris(any(LoginRequest.class))).thenReturn(response);
 
@@ -128,7 +129,8 @@ class KullaniciControllerTest {
 
     @Test
     void shouldLoginWithInvalidCredentials() throws Exception {
-        var request = new LoginRequest("admin", "wrong", null, null, false);
+        var request = LoginRequest.builder()
+                .username("admin").password("wrong").rememberMe(false).build();
         when(kullaniciService.giris(any(LoginRequest.class)))
                 .thenThrow(new BusinessException("Kullanıcı adı veya şifre hatalı"));
 

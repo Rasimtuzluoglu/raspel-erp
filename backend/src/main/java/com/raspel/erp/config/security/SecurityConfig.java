@@ -60,6 +60,15 @@ public class SecurityConfig {
                         "/api/kullanicilar/sifre-sifirlama-talebi",
                         "/api/kullanicilar/sifre-sifirlama-onayla",
                         "/api/kullanicilar/cikis").permitAll()
+                .requestMatchers("/api/durum").permitAll()
+                // Passkey parolasiz giris uclari (kayit/liste/silme oturum ister).
+                .requestMatchers("/api/kullanicilar/passkey/giris",
+                        "/api/kullanicilar/passkey/giris/**").permitAll()
+                // QR oturum onayi: olusturma/poll/tamamla public; onay/red oturum ister.
+                .requestMatchers(HttpMethod.POST, "/api/kullanicilar/qr-oturum",
+                        "/api/kullanicilar/giris-qr-tamamla").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/kullanicilar/qr-oturum/*",
+                        "/api/kullanicilar/qr-oturum/*/gorsel").permitAll()
                 .requestMatchers("/api/kurulum/**").permitAll()
                 // Şirket logosu giriş ekranında (oturum öncesi) gösterilir; public.
                 .requestMatchers("/api/uploads/sirket-logos/**").permitAll()

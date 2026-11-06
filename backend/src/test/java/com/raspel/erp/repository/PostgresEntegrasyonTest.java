@@ -100,7 +100,8 @@ class PostgresEntegrasyonTest {
 
     /** Tenant FK nedeniyle cari/stok kaydetmeden once sirket satiri gerekir. */
     private Long sirketOlustur(String ad) {
-        return sirketRepository.save(Sirket.builder().ad(ad).aktif(true).build()).getId();
+        String kod = "test-" + java.util.UUID.randomUUID().toString().substring(0, 8);
+        return sirketRepository.save(Sirket.builder().ad(ad).kod(kod).aktif(true).build()).getId();
     }
 
     @Test

@@ -135,6 +135,45 @@ Yanıt: `{ "content": [...], "totalElements": 123, "totalPages": 3, ... }`
 | 409 | Veri çakışması (mükerrer kayıt) |
 | 429 | Rate limit aşıldı |
 
+## Giriş, Passkey ve QR
+
+### Giriş
+`POST /api/kullanicilar/giris`
+```json
+{
+  "username": "admin",
+  "password": "••••••",
+  "sirketKodu": "abc-holding",
+  "rememberMe": false
+}
+```
+- `sirketKodu` isteğe bağlıdır; girilirse yalnızca o şirket döner ve tek şirket varsa seçim ekranı atlanır.
+- 2FA açıksa `twoFactorGerekli: true` ve `girisToken` döner.
+
+### Passkey
+| Metot | Yol | Açıklama |
+|---|---|---|
+| POST | `/api/kullanicilar/passkey/kayit/secenekler` | Kayıt seçenekleri (parola onayı) |
+| POST | `/api/kullanicilar/passkey/kayit` | Passkey kaydı |
+| GET | `/api/kullanicilar/passkeyler` | Kullanıcının passkey'leri |
+| DELETE | `/api/kullanicilar/passkeyler/{id}` | Passkey sil |
+| POST | `/api/kullanicilar/passkey/giris/secenekler` | Parolasız giriş seçenekleri |
+| POST | `/api/kullanicilar/passkey/giris` | Parolasız giriş |
+| DELETE | `/api/kullanicilar/{id}/passkeyler` | ADMIN: tümünü sıfırla |
+
+### QR oturum onayı
+| Metot | Yol | Açıklama |
+|---|---|---|
+| POST | `/api/kullanicilar/qr-oturum` | `{girisToken}` ile QR oluştur |
+| GET | `/api/kullanicilar/qr-oturum/{token}` | Durum / kalan süre |
+| GET | `/api/kullanicilar/qr-oturum/{token}/gorsel` | QR PNG |
+| POST | `/api/kullanicilar/qr-oturum/{token}/onayla` | Telefondan onayla |
+| POST | `/api/kullanicilar/qr-oturum/{token}/reddet` | Telefondan reddet |
+| POST | `/api/kullanicilar/giris-qr-tamamla` | Masaüstünde girişi bitir |
+
+### Sistem durumu
+`GET /api/durum` (public) → `{ "durum": "UP", "surum": "1.36.0", "zaman": "..." }`
+
 ## WebSocket Bildirimleri
 
 - Adres: `ws://localhost:8081/ws` (STOMP)

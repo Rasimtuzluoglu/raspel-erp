@@ -60,6 +60,10 @@ public class LoginRateLimitFilter implements Filter {
                 || uri.endsWith("/kullanicilar/giris-sirket")
                 || uri.endsWith("/kullanicilar/sifre-sifirlama-talebi")
                 || uri.endsWith("/kullanicilar/sifre-sifirlama-onayla")
+                || uri.endsWith("/kullanicilar/passkey/giris")
+                || uri.endsWith("/kullanicilar/passkey/giris/secenekler")
+                || uri.endsWith("/kullanicilar/qr-oturum")
+                || uri.endsWith("/kullanicilar/giris-qr-tamamla")
                 // Ilk kurulum ucu da korunur: anonim erise acik oldugu icin
                 // admin hesabini ilk ele gecirme denemelerini sinirlar.
                 || uri.endsWith("/kurulum/baslat");

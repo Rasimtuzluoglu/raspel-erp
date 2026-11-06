@@ -5,6 +5,7 @@ import com.raspel.erp.entity.sistem.Sirket;
 import com.raspel.erp.repository.sistem.SirketRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -20,6 +21,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.service.sistem.SirketService;
 
 @ExtendWith(MockitoExtension.class)
@@ -130,5 +132,63 @@ class SirketServiceTest {
 
         assertEquals(json, kayitli);
         assertEquals(json, sirketService.posFisAyarlariGetir(1L));
+    }
+
+    @Test
+    void olustur_addanBenzersizKodUretir() {
+        when(sirketRepository.existsByKodIgnoreCase("yeni-sirket")).thenReturn(false);
+        when(sirketRepository.save(any(Sirket.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SirketDTO dto = SirketDTO.builder().ad("Yeni Şirket").build();
+        SirketDTO sonuc = sirketService.olustur(dto);
+
+        assertEquals("yeni-sirket", sonuc.getKod());
+    }
+
+    @Test
+    void olustur_kodCakismasindaSonEkEkler() {
+        when(sirketRepository.existsByKodIgnoreCase("yeni-sirket")).thenReturn(true);
+        when(sirketRepository.existsByKodIgnoreCase("yeni-sirket-2")).thenReturn(false);
+        when(sirketRepository.save(any(Sirket.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SirketDTO sonuc = sirketService.olustur(SirketDTO.builder().ad("Yeni Şirket").build());
+
+        assertEquals("yeni-sirket-2", sonuc.getKod());
+    }
+
+    @Test
+    void olustur_gecersizKoduReddeder() {
+        SirketDTO dto = SirketDTO.builder().ad("Test").kod("Büyük Harf").build();
+        assertThrows(BusinessException.class, () -> sirketService.olustur(dto));
+        verify(sirketRepository, never()).save(any(Sirket.class));
+    }
+
+    @Test
+    void olustur_rezerveKoduReddeder() {
+        SirketDTO dto = SirketDTO.builder().ad("Test").kod("admin").build();
+        assertThrows(BusinessException.class, () -> sirketService.olustur(dto));
+    }
+
+    @Test
+    void guncelle_koduGunceller() {
+        Sirket existing = createSirket(1L);
+        existing.setKod("eski-kod");
+        when(sirketRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(sirketRepository.existsByKodIgnoreCaseAndIdNot("yeni-kod", 1L)).thenReturn(false);
+        when(sirketRepository.save(any(Sirket.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SirketDTO sonuc = sirketService.guncelle(1L, SirketDTO.builder().kod("yeni-kod").build());
+
+        assertEquals("yeni-kod", sonuc.getKod());
+    }
+
+    @Test
+    void guncelle_baskaSirketinKodunuReddeder() {
+        Sirket existing = createSirket(1L);
+        when(sirketRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(sirketRepository.existsByKodIgnoreCaseAndIdNot("baskasinin", 1L)).thenReturn(true);
+
+        assertThrows(BusinessException.class,
+                () -> sirketService.guncelle(1L, SirketDTO.builder().kod("baskasinin").build()));
     }
 }

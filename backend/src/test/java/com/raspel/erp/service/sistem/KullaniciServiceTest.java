@@ -6,6 +6,7 @@ import com.raspel.erp.dto.sistem.LoginRequest;
 import com.raspel.erp.dto.sistem.LoginResponse;
 import com.raspel.erp.dto.sistem.TwoFactorGirisRequest;
 import com.raspel.erp.entity.sistem.Kullanici;
+import com.raspel.erp.entity.sistem.Sirket;
 import com.raspel.erp.repository.sistem.KullaniciRepository;
 import com.raspel.erp.repository.sistem.SirketRepository;
 import com.raspel.erp.util.TotpUtil;
@@ -910,5 +911,139 @@ Kullanici pasif = createKullanici(2L);
 
         assertNotNull(kullaniciService.giris(com.raspel.erp.dto.sistem.LoginRequest.builder()
                 .username("admin").password("dogru").build()));
+    }
+
+    @Test
+    void giris_sirketKoduIleYalnizTekSirketiDoner() {
+        Kullanici k = createKullanici(1L);
+        k.setPassword("encoded");
+        k.setSirketId(5L);
+        when(kullaniciRepository.findByUsername("testuser1")).thenReturn(Optional.of(k));
+        when(passwordEncoder.matches("pass", "encoded")).thenReturn(true);
+
+        Sirket s = new Sirket();
+        s.setId(5L);
+        s.setAd("RasPel");
+        s.setKod("raspel");
+        s.setAktif(true);
+        when(sirketRepository.findByKodIgnoreCase("raspel")).thenReturn(Optional.of(s));
+        when(sirketRepository.findById(5L)).thenReturn(Optional.of(s));
+
+        LoginResponse resp = kullaniciService.giris(LoginRequest.builder()
+                .username("testuser1").password("pass").sirketKodu("raspel").build());
+
+        assertEquals(1, resp.getSirketler().size());
+        assertEquals("raspel", resp.getSirketler().get(0).getKod());
+        assertNull(resp.getToken());
+    }
+
+    @Test
+    void giris_gecersizSirketKoduGenelHataDoner() {
+        Kullanici k = createKullanici(1L);
+        k.setPassword("encoded");
+        when(kullaniciRepository.findByUsername("testuser1")).thenReturn(Optional.of(k));
+        when(passwordEncoder.matches("pass", "encoded")).thenReturn(true);
+        when(sirketRepository.findByKodIgnoreCase("yok")).thenReturn(Optional.empty());
+
+        assertThrows(BusinessException.class, () -> kullaniciService.giris(LoginRequest.builder()
+                .username("testuser1").password("pass").sirketKodu("yok").build()));
+    }
+
+    @Test
+    void giris_uyeOlmadigiSirketKodunuReddeder() {
+        Kullanici k = createKullanici(1L);
+        k.setPassword("encoded");
+        k.setSirketId(5L);
+        when(kullaniciRepository.findByUsername("testuser1")).thenReturn(Optional.of(k));
+        when(passwordEncoder.matches("pass", "encoded")).thenReturn(true);
+
+        Sirket baska = new Sirket();
+        baska.setId(6L);
+        baska.setAd("Baska");
+        baska.setKod("baska");
+        baska.setAktif(true);
+        when(sirketRepository.findByKodIgnoreCase("baska")).thenReturn(Optional.of(baska));
+
+        assertThrows(BusinessException.class, () -> kullaniciService.giris(LoginRequest.builder()
+                .username("testuser1").password("pass").sirketKodu("baska").build()));
+    }
+
+    @Test
+    void girisSirket_sirketKoduylaUyusmayanSecimiReddeder() {
+        Kullanici k = createKullanici(1L);
+        k.setPassword("encoded");
+        k.setSirketId(5L);
+        when(kullaniciRepository.findByUsername("testuser1")).thenReturn(Optional.of(k));
+        when(passwordEncoder.matches("pass", "encoded")).thenReturn(true);
+
+        Sirket s = new Sirket();
+        s.setId(5L);
+        s.setAd("RasPel");
+        s.setKod("raspel");
+        s.setAktif(true);
+        when(sirketRepository.findByKodIgnoreCase("raspel")).thenReturn(Optional.of(s));
+        when(sirketRepository.findById(5L)).thenReturn(Optional.of(s));
+
+        LoginResponse pending = kullaniciService.giris(LoginRequest.builder()
+                .username("testuser1").password("pass").sirketKodu("raspel").build());
+
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
+        assertThrows(BusinessException.class,
+                () -> kullaniciService.girisSirket(pending.getGirisToken(), 6L));
+        verify(jwtUtil, never()).generateToken(any(), any(), any());
+    }
+
+    @Test
+    void passkeyGirisCevabi_ikiFaktorIstemezVeSirketFiltreler() {
+        Kullanici k = createKullanici(1L);
+        k.setSirketId(5L);
+        k.setTwoFactorEnabled(true);
+
+        Sirket s = new Sirket();
+        s.setId(5L);
+        s.setAd("RasPel");
+        s.setKod("raspel");
+        s.setAktif(true);
+        when(sirketRepository.findByKodIgnoreCase("raspel")).thenReturn(Optional.of(s));
+        when(sirketRepository.findById(5L)).thenReturn(Optional.of(s));
+
+        LoginResponse resp = kullaniciService.passkeyGirisCevabi(k, "raspel");
+
+        assertFalse(Boolean.TRUE.equals(resp.getTwoFactorGerekli()));
+        assertNotNull(resp.getGirisToken());
+        assertEquals(1, resp.getSirketler().size());
+    }
+
+    @Test
+    void qrIleGirisTamamla_totpOlmadanDogrulanmisTokenDoner() {
+        Kullanici k = createKullanici(1L);
+        k.setPassword("encoded");
+        k.setSirketId(5L);
+        k.setTwoFactorEnabled(true);
+        k.setTwoFactorSecret("JBSWY3DPEHPK3PXP");
+        when(kullaniciRepository.findByUsername("testuser1")).thenReturn(Optional.of(k));
+        when(passwordEncoder.matches("pass", "encoded")).thenReturn(true);
+
+        Sirket s = new Sirket();
+        s.setId(5L);
+        s.setAd("RasPel");
+        s.setKod("raspel");
+        s.setAktif(true);
+        when(sirketRepository.findById(5L)).thenReturn(Optional.of(s));
+
+        LoginResponse pending = kullaniciService.giris(LoginRequest.builder()
+                .username("testuser1").password("pass").build());
+
+        when(kullaniciRepository.findById(1L)).thenReturn(Optional.of(k));
+        LoginResponse resp = kullaniciService.qrIleGirisTamamla(pending.getGirisToken());
+
+        assertFalse(Boolean.TRUE.equals(resp.getTwoFactorGerekli()));
+        assertNotNull(resp.getGirisToken());
+        assertNotEquals(pending.getGirisToken(), resp.getGirisToken());
+    }
+
+    @Test
+    void bekleyenKullaniciId_gecersizTokenReddeder() {
+        assertThrows(BusinessException.class, () -> kullaniciService.bekleyenKullaniciId("yok"));
     }
 }

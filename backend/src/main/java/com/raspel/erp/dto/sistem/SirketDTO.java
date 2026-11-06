@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 public class SirketDTO {
     private Long id;
     private String ad;
+    private String kod;
     private String vergiNo;
     private String vergiDairesi;
     private String adres;

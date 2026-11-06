@@ -21,7 +21,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -67,6 +69,7 @@ public class SirketService {
     public SirketDTO olustur(SirketDTO dto) {
         Sirket s = Sirket.builder()
                 .ad(dto.getAd())
+                .kod(kodHazirla(dto.getKod(), dto.getAd(), null))
                 .vergiNo(dto.getVergiNo())
                 .vergiDairesi(dto.getVergiDairesi())
                 .adres(dto.getAdres())
@@ -97,6 +100,11 @@ public class SirketService {
             }
             s.setAd(dto.getAd());
             s.setSonAdGuncellemeTarihi(LocalDateTime.now());
+        }
+        if (dto.getKod() != null && !dto.getKod().isBlank()) {
+            s.setKod(kodHazirla(dto.getKod(), s.getAd(), s.getId()));
+        } else if (s.getKod() == null || s.getKod().isBlank()) {
+            s.setKod(kodHazirla(null, s.getAd(), s.getId()));
         }
         if (dto.getVergiNo() != null) s.setVergiNo(dto.getVergiNo());
         if (dto.getVergiDairesi() != null) s.setVergiDairesi(dto.getVergiDairesi());
@@ -293,9 +301,60 @@ public class SirketService {
         }
     }
 
+    private static final Set<String> REZERVE_KODLAR = Set.of(
+            "api", "giris", "admin", "app", "www", "durum", "qr-onay", "sistem", "destek");
+    private static final Pattern KOD_DESENI = Pattern.compile("^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$");
+
+    /**
+     * Sirket kodunu normalize eder, dogrular ve benzersizligini garanti eder.
+     * Bos istekte addan slug uretilir; cakismada otomatik son ek eklenir.
+     */
+    private String kodHazirla(String istenen, String ad, Long id) {
+        boolean otomatik = istenen == null || istenen.isBlank();
+        String kod = otomatik ? slug(ad) : istenen.trim().toLowerCase(Locale.ROOT);
+        kod = kod.replaceAll("-{2,}", "-").replaceAll("^-+|-+$", "");
+        if (kod.length() < 2) {
+            kod = "sirket" + (id != null ? "-" + id : "");
+        }
+        if (kod.length() > 60) {
+            kod = kod.substring(0, 60).replaceAll("-+$", "");
+        }
+        if (REZERVE_KODLAR.contains(kod)) {
+            throw new BusinessException("Bu şirket kodu kullanılamaz");
+        }
+        if (!KOD_DESENI.matcher(kod).matches()) {
+            throw new BusinessException(
+                    "Şirket kodu yalnızca küçük harf, rakam ve tire içerebilir (2-60 karakter)");
+        }
+        boolean var = id == null
+                ? sirketRepository.existsByKodIgnoreCase(kod)
+                : sirketRepository.existsByKodIgnoreCaseAndIdNot(kod, id);
+        if (var) {
+            if (!otomatik) {
+                throw new BusinessException("Bu şirket kodu zaten kullanılıyor");
+            }
+            String temel = kod.length() > 50 ? kod.substring(0, 50) : kod;
+            for (int i = 2; i <= 99; i++) {
+                String aday = temel + "-" + i;
+                if (!sirketRepository.existsByKodIgnoreCase(aday)) {
+                    return aday;
+                }
+            }
+            throw new BusinessException("Şirket kodu üretilemedi, lütfen elle giriniz");
+        }
+        return kod;
+    }
+
+    private String slug(String ad) {
+        String ham = ad == null ? "" : ad.trim().toLowerCase(Locale.ROOT);
+        ham = ham.replace('ç', 'c').replace('ğ', 'g').replace('ı', 'i')
+                .replace('ö', 'o').replace('ş', 's').replace('ü', 'u');
+        return ham.replaceAll("[^a-z0-9]+", "-").replaceAll("^-+|-+$", "");
+    }
+
     private SirketDTO entityToDTO(Sirket s) {
         return SirketDTO.builder()
-                .id(s.getId()).ad(s.getAd())
+                .id(s.getId()).ad(s.getAd()).kod(s.getKod())
                 .vergiNo(s.getVergiNo()).vergiDairesi(s.getVergiDairesi())
                 .adres(s.getAdres()).telefon(s.getTelefon())
                 .email(s.getEmail()).webSite(s.getWebSite())

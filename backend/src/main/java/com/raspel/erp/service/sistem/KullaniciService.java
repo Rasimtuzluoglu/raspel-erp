@@ -111,6 +111,8 @@ public class KullaniciService {
     private final ConcurrentMap<String, long[]> bekleyenGirislerBellek = new ConcurrentHashMap<>();
     private static final long GIRIS_TOKEN_GECERLILIK_MS = 5 * 60 * 1000;
     private static final String GIRIS_REDIS_PREFIX = "giris:bekleyen:";
+    private static final String GIRIS_SIRKET_PREFIX = "giris:sirket:";
+    private final ConcurrentMap<String, Long> istenenSirketlerBellek = new ConcurrentHashMap<>();
 
     private void bekleyenKaydet(String token, long kullaniciId, long zaman) {
         bekleyenKaydet(token, kullaniciId, zaman, true);
@@ -155,6 +157,42 @@ public class KullaniciService {
             // Redis'e erişilemezse bellek kaydı aşağıda siliniyor
         }
         bekleyenGirislerBellek.remove(token);
+    }
+
+    /** Girişte seçilen şirket kodunu token'a bağlar (5 dk). */
+    private void istenenSirketKaydet(String token, Long sirketId) {
+        if (sirketId == null) return;
+        try {
+            if (redisTemplate != null) {
+                redisTemplate.opsForValue().set(GIRIS_SIRKET_PREFIX + token,
+                        String.valueOf(sirketId), Duration.ofMillis(GIRIS_TOKEN_GECERLILIK_MS));
+                return;
+            }
+        } catch (Exception e) {
+            log.warn("Redis erişilemedi, seçilen şirket bellekte tutulacak: {}", e.getMessage());
+        }
+        istenenSirketlerBellek.put(token, sirketId);
+    }
+
+    private Long istenenSirketGetir(String token) {
+        try {
+            if (redisTemplate != null) {
+                String val = redisTemplate.opsForValue().get(GIRIS_SIRKET_PREFIX + token);
+                if (val != null) return Long.parseLong(val);
+            }
+        } catch (Exception e) {
+            log.warn("Redis erişilemedi, seçilen şirket bellekten okunacak: {}", e.getMessage());
+        }
+        return istenenSirketlerBellek.get(token);
+    }
+
+    private void istenenSirketSil(String token) {
+        try {
+            if (redisTemplate != null) redisTemplate.delete(GIRIS_SIRKET_PREFIX + token);
+        } catch (Exception e) {
+            // yoksay
+        }
+        istenenSirketlerBellek.remove(token);
     }
 
     public Page<KullaniciDTO> tumunuGetir(Long sirketId, Pageable pageable) {
@@ -635,7 +673,12 @@ public class KullaniciService {
         // 2FA aktifse token "henuz dogrulanmadi" olarak isaretlenir; giris-sirket bu token ile
         // JWT uretemez. JWT ancak giris-2fa adimiyla uretilen dogrulanmis token ile alinir.
         bekleyenKaydet(girisToken, k.getId(), System.currentTimeMillis(), !twoFactorAktif);
-        List<com.raspel.erp.dto.sistem.SirketDTO> sirketler = getSirketlerForKullanici(k);
+
+        // Istege bagli sirket kodu: coz, uyeligi dogrula ve secimi token'a bagla.
+        Long istenenSirketId = sirketKoduCoz(k, req.getSirketKodu());
+        istenenSirketKaydet(girisToken, istenenSirketId);
+        List<com.raspel.erp.dto.sistem.SirketDTO> sirketler =
+                sirketListesiFiltrele(getSirketlerForKullanici(k), istenenSirketId);
 
         return LoginResponse.builder()
                 .id(k.getId())
@@ -648,6 +691,37 @@ public class KullaniciService {
                 .girisToken(girisToken)
                 .sirketler(twoFactorAktif ? null : sirketler)
                 .build();
+    }
+
+    /**
+     * Istege bagli sirket kodunu cozer ve kullanicinin erisimini dogrular.
+     * Hatali kod, pasif sirket veya uye olunmayan sirket icin genel giris hatasi
+     * dondurulur; boylece tenant enumerasyonu engellenir.
+     */
+    private Long sirketKoduCoz(Kullanici k, String sirketKodu) {
+        if (sirketKodu == null || sirketKodu.isBlank()) return null;
+        Sirket s = sirketRepository.findByKodIgnoreCase(sirketKodu.trim())
+                .orElseThrow(() -> new BusinessException(GIRIS_HATASI));
+        if (s.getAktif() != null && !s.getAktif()) {
+            throw new BusinessException(GIRIS_HATASI);
+        }
+        boolean admin = "ADMIN".equals(k.getRole());
+        boolean uye = admin
+                || (k.getSirketId() != null && k.getSirketId().equals(s.getId()))
+                || (k.getSirketler() != null
+                    && k.getSirketler().stream().anyMatch(x -> x.getId().equals(s.getId())));
+        if (!uye) {
+            throw new BusinessException(GIRIS_HATASI);
+        }
+        return s.getId();
+    }
+
+    private List<com.raspel.erp.dto.sistem.SirketDTO> sirketListesiFiltrele(
+            List<com.raspel.erp.dto.sistem.SirketDTO> sirketler, Long sirketId) {
+        if (sirketId == null) return sirketler;
+        return sirketler.stream()
+                .filter(s -> s.getId() != null && s.getId().equals(sirketId))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -673,8 +747,98 @@ public class KullaniciService {
         return false;
     }
 
-    public LoginResponse giris2faTamamla(TwoFactorGirisRequest req) {
-        if (req == null || req.getGirisToken() == null || req.getGirisToken().isBlank()) {
+    /**
+     * Passkey dogrulamasi sonrasi sirket secimine hazir, dogrulanmis giris cevabi.
+     * Passkey guclu kimlik sayildigi icin TOTP istenmez.
+     */
+    public LoginResponse passkeyGirisCevabi(Kullanici k, String sirketKodu) {
+        Long istenenSirketId = sirketKoduCoz(k, sirketKodu);
+        String girisToken = UUID.randomUUID().toString();
+        bekleyenKaydet(girisToken, k.getId(), System.currentTimeMillis(), true);
+        istenenSirketKaydet(girisToken, istenenSirketId);
+        List<com.raspel.erp.dto.sistem.SirketDTO> sirketler =
+                sirketListesiFiltrele(getSirketlerForKullanici(k), istenenSirketId);
+        if (istenenSirketId != null && sirketler.isEmpty()) {
+            throw new BusinessException(GIRIS_HATASI);
+        }
+        return LoginResponse.builder()
+                .id(k.getId())
+                .username(k.getUsername())
+                .displayName(k.getDisplayName())
+                .avatarUrl(k.getAvatarUrl())
+                .role(k.getRole()).sahaKullanici(k.getSahaKullanici())
+                .personelId(personelIdBul(k))
+                .twoFactorGerekli(false)
+                .girisToken(girisToken)
+                .sirketler(sirketler)
+                .build();
+    }
+
+    /** QR onay akisi icin bekleyen giris kaydinin kullanici kimligi. */
+    public Long bekleyenKullaniciId(String girisToken) {
+        long[] kayit = bekleyenGetir(girisToken);
+        if (kayit == null) {
+            throw new BusinessException("Giriş oturumu bulunamadı, tekrar giriş yapınız");
+        }
+        if (System.currentTimeMillis() - kayit[1] > GIRIS_TOKEN_GECERLILIK_MS) {
+            bekleyenSil(girisToken);
+            throw new BusinessException("Giriş kodunun süresi doldu, tekrar giriş yapınız");
+        }
+        return kayit[0];
+    }
+
+    /** QR onayi yalnizca 2FA acik ve henuz dogrulanmamis girisler icin. */
+    public boolean bekleyenIkiFaktorAktif(String girisToken) {
+        Long kullaniciId = bekleyenKullaniciId(girisToken);
+        Kullanici k = kullaniciRepository.findById(kullaniciId)
+                .orElseThrow(() -> new BusinessException("Kullanıcı bulunamadı"));
+        return Boolean.TRUE.equals(k.getTwoFactorEnabled());
+    }
+
+    /** QR onayi sonrasi dogrulanmis giris cevabini uretir (TOTP'siz 2FA). */
+    public LoginResponse qrIleGirisTamamla(String girisToken) {
+        long[] kayit = bekleyenGetir(girisToken);
+        if (kayit == null) {
+            throw new BusinessException("Giriş oturumu bulunamadı, tekrar giriş yapınız");
+        }
+        if (System.currentTimeMillis() - kayit[1] > GIRIS_TOKEN_GECERLILIK_MS) {
+            bekleyenSil(girisToken);
+            throw new BusinessException("Giriş kodunun süresi doldu, tekrar giriş yapınız");
+        }
+        Kullanici k = kullaniciRepository.findById(kayit[0])
+                .orElseThrow(() -> new BusinessException("Kullanıcı bulunamadı"));
+        if (!Boolean.TRUE.equals(k.getActive())) {
+            throw new BusinessException("Bu kullanıcı aktif değil");
+        }
+        if (!Boolean.TRUE.equals(k.getTwoFactorEnabled())) {
+            throw new BusinessException("2FA aktif değil");
+        }
+        Long istenenSirketId = istenenSirketGetir(girisToken);
+        bekleyenSil(girisToken);
+        istenenSirketSil(girisToken);
+
+        String yeniToken = UUID.randomUUID().toString();
+        bekleyenKaydet(yeniToken, k.getId(), System.currentTimeMillis(), true);
+        istenenSirketKaydet(yeniToken, istenenSirketId);
+        List<com.raspel.erp.dto.sistem.SirketDTO> sirketler =
+                sirketListesiFiltrele(getSirketlerForKullanici(k), istenenSirketId);
+        if (istenenSirketId != null && sirketler.isEmpty()) {
+            throw new BusinessException(GIRIS_HATASI);
+        }
+        return LoginResponse.builder()
+                .id(k.getId())
+                .username(k.getUsername())
+                .displayName(k.getDisplayName())
+                .avatarUrl(k.getAvatarUrl())
+                .role(k.getRole()).sahaKullanici(k.getSahaKullanici())
+                .personelId(personelIdBul(k))
+                .twoFactorGerekli(false)
+                .girisToken(yeniToken)
+                .sirketler(sirketler)
+                .build();
+    }
+
+    public LoginResponse giris2faTamamla(TwoFactorGirisRequest req) {        if (req == null || req.getGirisToken() == null || req.getGirisToken().isBlank()) {
             throw new BusinessException("Giriş oturumu bulunamadı, tekrar giriş yapınız");
         }
         long[] kayit = bekleyenGetir(req.getGirisToken());
@@ -708,9 +872,12 @@ public class KullaniciService {
         bekleyenSil(req.getGirisToken());
         String yeniToken = UUID.randomUUID().toString();
         bekleyenKaydet(yeniToken, k.getId(), System.currentTimeMillis());
+        Long istenenSirketId = istenenSirketGetir(req.getGirisToken());
+        istenenSirketKaydet(yeniToken, istenenSirketId);
         girisSayaci("basarili_2fa");
 
-        List<com.raspel.erp.dto.sistem.SirketDTO> sirketler = getSirketlerForKullanici(k);
+        List<com.raspel.erp.dto.sistem.SirketDTO> sirketler =
+                sirketListesiFiltrele(getSirketlerForKullanici(k), istenenSirketId);
         return LoginResponse.builder()
                 .id(k.getId())
                 .username(k.getUsername())
@@ -738,7 +905,9 @@ public class KullaniciService {
             bekleyenSil(girisToken);
             throw new BusinessException("Şirket seçim süresi doldu, tekrar giriş yapınız");
         }
+        Long istenenSirketId = istenenSirketGetir(girisToken);
         bekleyenSil(girisToken);
+        istenenSirketSil(girisToken);
 
         Kullanici k = kullaniciRepository.findById(kullaniciId)
                 .orElseThrow(() -> new BusinessException("Kullanıcı bulunamadı"));
@@ -751,6 +920,12 @@ public class KullaniciService {
             throw new BusinessException("İki adımlı doğrulama gerekli. Lütfen doğrulama kodunu giriniz.");
         }
 
+        if (istenenSirketId != null) {
+            if (sirketId != null && !istenenSirketId.equals(sirketId)) {
+                throw new BusinessException("Seçilen şirket, girişte belirtilen şirket koduyla uyuşmuyor");
+            }
+            sirketId = istenenSirketId;
+        }
         if (sirketId == null) {
             sirketId = k.getSirketId();
         }
@@ -795,7 +970,7 @@ public class KullaniciService {
 
     private com.raspel.erp.dto.sistem.SirketDTO sirketToDTO(Sirket s) {
         return com.raspel.erp.dto.sistem.SirketDTO.builder()
-                .id(s.getId()).ad(s.getAd()).vergiNo(s.getVergiNo())
+                .id(s.getId()).ad(s.getAd()).kod(s.getKod()).vergiNo(s.getVergiNo())
                 .tur(s.getTur()).yil(s.getYil()).logoUrl(s.getLogoUrl())
                 .build();
     }

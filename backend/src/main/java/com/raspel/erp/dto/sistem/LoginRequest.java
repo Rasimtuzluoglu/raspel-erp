@@ -16,6 +16,9 @@ public class LoginRequest {
 
     private String companyName;
 
+    /** Giris ekraninda istege bagli sirket kodu (slug). */
+    private String sirketKodu;
+
     private Long sirketId;
 
     /** true ise kalıcı cookie (beni hatırla), aksi halde oturum cookie'si. */

@@ -11,4 +11,7 @@ import java.util.List;
 public interface SirketRepository extends JpaRepository<Sirket, Long> {
     List<Sirket> findByAktifTrue();
     Sirket findFirstByAktifTrueOrderByIdAsc();
+    java.util.Optional<Sirket> findByKodIgnoreCase(String kod);
+    boolean existsByKodIgnoreCase(String kod);
+    boolean existsByKodIgnoreCaseAndIdNot(String kod, Long id);
 }
