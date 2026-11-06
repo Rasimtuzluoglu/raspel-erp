@@ -9,9 +9,11 @@ import com.raspel.erp.dto.sistem.DashboardKarAnaliziDTO;
 import com.raspel.erp.dto.sistem.DashboardOzetDTO;
 import com.raspel.erp.dto.sistem.DashboardTercihDTO;
 import com.raspel.erp.dto.sistem.DashboardVadeDTO;
+import com.raspel.erp.dto.sistem.KokpitDTO;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.service.sistem.DashboardService;
 import com.raspel.erp.service.sistem.DashboardTercihService;
+import com.raspel.erp.service.sistem.KokpitService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * Dashboard Controller
@@ -45,6 +49,9 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
     private final DashboardTercihService dashboardTercihService;
+    private final KokpitService kokpitService;
+
+    private static final Set<String> GECERLI_DONEMLER = Set.of("BU_AY", "GECEN_AY", "BU_CEYREK", "BU_YIL");
 
     // ------------------------------------------------------------------
     // Legacy uç — payload DEĞİŞMEZ
@@ -72,6 +79,27 @@ public class DashboardController {
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         return ResponseEntity.ok(dashboardService.ozetGetir(
                 sirketId, kullaniciId, kullaniciAdi(request), aktifRol(), donem));
+    }
+
+    /**
+     * Finans kokpiti: tek istekte özet KPI'lar, kritik durum şeridi ve dört
+     * finans bölümü. {@code donem} boş/geçersizse {@code BU_AY} kullanılır.
+     */
+    @GetMapping("/kokpit")
+    @Operation(summary = "Finans kokpiti", description = "Özet, kritik durum, nakit, alacak/verecek, kâr/marj ve fatura/sipariş bölümlerini tek yanıtta döndürür")
+    public ResponseEntity<KokpitDTO> kokpitGetir(
+            HttpServletRequest request,
+            @RequestParam(defaultValue = "BU_AY") String donem) {
+        return ResponseEntity.ok(kokpitService.kokpitGetir(
+                sirketId(request), aktifRol(), gecerliDonem(donem)));
+    }
+
+    private String gecerliDonem(String donem) {
+        if (donem == null || donem.isBlank()) {
+            return "BU_AY";
+        }
+        String kod = donem.trim().toUpperCase(Locale.ROOT);
+        return GECERLI_DONEMLER.contains(kod) ? kod : "BU_AY";
     }
 
     /**

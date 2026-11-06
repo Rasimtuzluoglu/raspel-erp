@@ -16,6 +16,7 @@ import com.raspel.erp.repository.ticaret.FaturaRepository;
 import com.raspel.erp.service.finans.CariHesapService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,6 +71,7 @@ public class KokpitService {
      * @param donem    BU_AY | GECEN_AY | BU_CEYREK | BU_YIL; boş/geçersizde BU_AY
      */
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "kokpit", key = "#sirketId + ':' + #rol + ':' + #donem")
     public KokpitDTO kokpitGetir(Long sirketId, String rol, String donem) {
         if (sirketId == null) {
             throw new BusinessException("Şirket bilgisi bulunamadı");
