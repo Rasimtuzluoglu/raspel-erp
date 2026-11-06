@@ -584,5 +584,12 @@ watch(
   .hizli-satir {
     grid-template-columns: minmax(0, 1fr);
   }
+  .hizli-kapat,
+  .hizli-buton {
+    min-height: 44px;
+  }
+  .hizli-girdi {
+    height: 40px;
+  }
 }
 </style>

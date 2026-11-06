@@ -155,7 +155,7 @@ const { t } = useI18n()
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .hizli-islem {
-    min-height: 42px;
+    min-height: 44px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -556,5 +556,9 @@ watch(
     width: 100%;
     margin-left: 0;
   }
+  .onay-kapat,
+  .onay-buton {
+    min-height: 44px;
+  }
 }
 </style>
