@@ -241,6 +241,8 @@
                 </template>
               </Card>
 
+              <PasskeyYonetimi />
+
               <Card class="ayar-kart">
                 <template #title>
                   <div class="baslik-satir">
@@ -782,6 +784,7 @@ import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import FisYazdirmaAyarlari from '../components/FisYazdirmaAyarlari.vue'
 import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
 import PasswordChangeModal from '../components/PasswordChangeModal.vue'
+import PasskeyYonetimi from '../components/PasskeyYonetimi.vue'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
 import { formatTarihKisa as formatTarih, formatTarihSaat } from '../utils/format.js'

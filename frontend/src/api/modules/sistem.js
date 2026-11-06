@@ -87,6 +87,14 @@ export const kurulumAPI = {
   }
 }
 
+// Genel (public) sistem durumu: giriş alt bilgisi ve /durum sayfası kullanır.
+// Ayrıntı sızdırmaz; yalnızca { durum, surum, zaman } döner.
+export const durumAPI = {
+  durum() {
+    return apiClient.get('/durum')
+  }
+}
+
 export const sohbetAPI = {
   sonMesajlar() {
     return apiClient.get('/sohbet')

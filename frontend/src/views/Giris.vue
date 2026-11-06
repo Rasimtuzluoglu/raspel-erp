@@ -2,637 +2,105 @@
   <div
     class="giris-sayfasi"
     :class="{ 'pwa-modu': pwaModu }"
-    :style="parallax"
   >
-    <!-- Sinematik sahne: CSS mesh katmanlari (canvas / agir blur yok) -->
+    <!-- Sakin, statik sahne: CSS mesh + ince grid (blur/canvas yok) -->
     <div
-      class="sahne-arka"
+      class="giris-sahne"
       aria-hidden="true"
     >
-      <div class="sahne-mesh" />
-      <div class="sahne-grid" />
-      <div class="sahne-parilti p1" />
-      <div class="sahne-parilti p2" />
+      <span class="giris-mesh" />
+      <span class="giris-grid" />
     </div>
 
-    <!-- Giris yapiliyor: sirket logolu markali karsilama (logo sicramasini onler).
-         Altindaki tum icerik `inert` ile etkilesime kapanir; bu katmanin kendisi
-         de olaylari yutar, boylece karsilama surece hicbir tiklamayla iptal olmaz. -->
-    <Transition name="gy-fade">
-      <div
-        v-if="girisYapiliyor"
-        class="giris-yukleniyor"
-        role="status"
-        aria-live="polite"
-        :aria-busy="!karsilamaHazir"
-        @click.prevent.stop
-        @pointerdown.prevent.stop
-        @pointerup.prevent.stop
-        @mousedown.prevent.stop
-        @mouseup.prevent.stop
-        @contextmenu.prevent.stop
-      >
-        <div class="gy-kutu">
-          <div
-            class="gy-logo-halka"
-            :class="{ 'gy-hazir': karsilamaHazir }"
-          >
-            <img
-              :src="sirketLogo || markaLogoIcon"
-              class="gy-logo"
-              alt="RasPel"
-            >
-            <Transition name="gy-tik">
-              <span
-                v-if="karsilamaHazir"
-                class="gy-tik"
-              >
-                <i class="pi pi-check" />
-              </span>
-            </Transition>
-          </div>
-          <div class="gy-metin">
-            <span
-              v-if="karsilamaSirketAdi"
-              class="gy-sirket"
-            >{{ karsilamaSirketAdi }}</span>
-            <span
-              v-if="karsilamaKullaniciAdi"
-              class="gy-selam"
-            >{{ $t('giris.welcomeUser', { ad: karsilamaKullaniciAdi }) }}</span>
-            <span class="gy-durum">{{ karsilamaHazir ? $t('giris.yonlendiriliyor') : $t('giris.girisYapiliyor') }}</span>
-          </div>
-          <div class="gy-cubuk">
-            <span
-              class="gy-cubuk-dolgu"
-              :style="{ width: karsilamaIlerleme + '%' }"
-            />
-          </div>
-        </div>
-      </div>
-    </Transition>
+    <!-- Marka açılışı: her ziyarette, atlanabilir -->
+    <GirisAcilis
+      v-if="acilisAktif"
+      @bitti="acilisBitti"
+    />
 
     <div
-      class="giris-split-wrapper"
-      :inert="girisYapiliyor || undefined"
+      class="giris-yerlesim"
+      :inert="acilisAktif || undefined"
     >
-      <!-- SOL BÖLÜM: Kurumsal Hero & Özellik Vitrini (Masaüstü) -->
-      <GirisHeroPaneli
-        :rotate-index="rotateIndex"
-        :rotate-items="rotateItems"
-      />
+      <!-- Masaüstü: statik marka paneli -->
+      <GirisMarkaPaneli class="giris-marka-alani" />
 
-      <!-- SAĞ BÖLÜM: Odaklanmış Cam Efektli Giriş Formu -->
-      <div class="giris-form-alani">
-        <div class="giris-kutu">
-          <!-- Mobil kompakt hero (<960px) -->
-          <div class="giris-mobil-hero">
-            <div class="mobil-mark">
-              <img
-                :src="markaLogoIcon"
-                alt="RasPel"
-              >
-            </div>
-            <div class="mobil-metin">
-              <h1 class="mobil-title">
-                RasPel ERP
-              </h1>
-              <p class="mobil-tagline">
-                {{ $t('giris.mobileTagline') }}
-              </p>
-            </div>
-            <!-- PWA/mobil vitrin: donen deger onerisi -->
-            <p class="mobil-rotate">
-              <i class="pi pi-bolt" /> {{ rotateItems[rotateIndex] }}
-            </p>
-            <div class="mobil-chips">
-              <span><i class="pi pi-sparkles" /> {{ $t('giris.previewTabAi') }}</span>
-              <span><i class="pi pi-file-check" /> {{ $t('giris.previewTabInvoice') }}</span>
-              <span><i class="pi pi-box" /> {{ $t('giris.previewTabStock') }}</span>
-              <span><i class="pi pi-chart-bar" /> {{ $t('giris.previewTabProfit') }}</span>
-            </div>
-            <!-- Tablet/genis mobil PWA: urun vitrini gorunsun -->
-            <div class="mobil-preview">
-              <LoginPreview />
-            </div>
-            <div class="mobil-chips mobil-trust">
-              <span><i class="pi pi-shield" /> {{ $t('giris.trustKvkk') }}</span>
-              <span><i class="pi pi-lock" /> {{ $t('giris.trustSsl') }}</span>
-              <span><i class="pi pi-key" /> {{ $t('giris.trust2fa') }}</span>
-            </div>
-          </div>
-
-          <div class="giris-logo">
-            <div
-              v-if="sirketLogo"
-              class="marka-logolar"
-            >
-              <img
-                :src="markaLogoIcon"
-                class="marka-mini-logo"
-                alt="RasPel"
-              >
-              <div class="logo-icon">
-                <img
-                  :src="sirketLogo"
-                  class="sirket-logo"
-                  alt="logo"
-                >
-              </div>
-            </div>
-            <img
-              v-else
-              :src="markaLogoFull"
-              class="marka-tam-logo"
-              alt="RasPel ERP"
-            >
-            <h2 v-if="sirketLogo">
-              RasPel ERP
-            </h2>
-            <p class="alt-baslik">
-              {{ $t('giris.subtitle') }}
-            </p>
-          </div>
-
-          <p class="giris-selam">
-            {{ selamlama }}<span
-              v-if="sonSirketAd"
-              class="son-sirket"
-            > · {{ $t('giris.lastCompany') }}: <strong>{{ sonSirketAd }}</strong></span>
-          </p>
-
-          <div class="giris-form">
-            <transition name="shake">
-              <div
-                v-if="hata"
-                class="hata-kutu"
-              >
-                <i class="pi pi-exclamation-circle" /> {{ hata }}
-              </div>
-            </transition>
-
-            <!-- Adim 0: Ilk Kurulum -->
-            <KurulumAdimi
-              v-if="kurulumAdimi"
-              v-model:ad="kurulumForm.ad"
-              v-model:vergi-no="kurulumForm.vergiNo"
-              v-model:vergi-dairesi="kurulumForm.vergiDairesi"
-              v-model:telefon="kurulumForm.telefon"
-              v-model:email="kurulumForm.email"
-              v-model:admin-username="kurulumForm.adminUsername"
-              v-model:admin-display-name="kurulumForm.adminDisplayName"
-              v-model:admin-password="kurulumForm.adminPassword"
-              :yukleniyor="kurulumYukleniyor"
-              @baslat="kurulumBaslat"
-            />
-
-            <!-- Adim 2: 2FA -->
-            <div v-else-if="ikiFaktorAdimi">
-              <div class="iki-fa-ikon">
-                <i class="pi pi-shield" />
-              </div>
-              <h2 class="iki-fa-baslik">
-                {{ $t('giris.twoFactorTitle') }}
-              </h2>
-              <p class="iki-fa-alt">
-                {{ $t('giris.twoFactorHint') }}
-              </p>
-              <div class="form-grup">
-                <div class="input-wrapper kod-wrapper">
-                  <i class="pi pi-key" />
-                  <InputText
-                    v-model="ikiFaktorKod"
-                    placeholder="••••••"
-                    inputmode="numeric"
-                    maxlength="6"
-                    class="kod-input"
-                    @keyup="e => e.key === 'Enter' && ikiFaktorDogrula()"
-                  />
-                </div>
-              </div>
-              <Button
-                :label="$t('giris.verify')"
-                icon="pi pi-shield"
-                :loading="authStore?.loading || false"
-                class="giris-buton"
-                @click="ikiFaktorDogrula"
-              />
-              <div class="geri-satir">
-                <button
-                  type="button"
-                  class="geri-link"
-                  @click="geriDon"
-                >
-                  &larr; {{ $t('giris.back') }}
-                </button>
-              </div>
-            </div>
-
-            <!-- Adim 3: Sirket Secimi -->
-            <div v-else-if="sirketSecimAdimi">
-              <div class="sirket-secim-ikon">
-                <i class="pi pi-building" />
-              </div>
-              <h2 class="iki-fa-baslik">
-                {{ $t('giris.selectCompany') }}
-              </h2>
-              <p class="iki-fa-alt">
-                {{ $t('giris.selectCompanyHint') }}
-              </p>
-              <div
-                v-if="sirketler && sirketler.length > 0"
-                class="sirket-listesi"
-              >
-                <template
-                  v-for="(grup, grupAdi) in gruplanmisSirketler"
-                  :key="grupAdi"
-                >
-                  <div
-                    v-if="Object.keys(gruplanmisSirketler).length > 1"
-                    class="sirket-grup-baslik"
-                  >
-                    <i class="pi pi-folder" />
-                    <span>{{ grupAdi }}</span>
-                  </div>
-                  <button
-                    v-for="s in grup"
-                    :key="s.id"
-                    class="sirket-secim-kart"
-                    :class="{ 'son-secilen': s.id === sonSecilenSirketId }"
-                    @click="sirketSecVeGirisYap(s)"
-                  >
-                    <span class="sirket-kart-avatar">
-                      <i class="pi pi-building" />
-                    </span>
-                    <span class="sirket-kart-bilgi">
-                      <span class="sirket-kart-ad">{{ s.ad }}</span>
-                      <span class="sirket-kart-vkn">VKN: {{ s.vergiNo || '-' }}</span>
-                    </span>
-                    <span class="sirket-kart-sag">
-                      <span
-                        v-if="s.tur && s.tur !== 'DIGER'"
-                        class="sirket-tur-badge"
-                        :class="'tur-' + (s.tur || '').toLowerCase()"
-                      >
-                        {{ s.tur === 'RESMI' ? 'Resmi' : s.tur === 'GAYRIRESMI' ? 'Gayriresmi' : s.tur }}
-                      </span>
-                      <span
-                        v-if="s.yil"
-                        class="sirket-yil-badge"
-                      >{{ s.yil }}</span>
-                      <i
-                        v-if="s.id === sonSecilenSirketId"
-                        class="pi pi-star-fill son-secilen-yildiz"
-                      />
-                      <i class="pi pi-arrow-right sirket-kart-ok" />
-                    </span>
-                  </button>
-                </template>
-              </div>
-              <p
-                v-else
-                class="sirket-yok"
-              >
-                {{ $t('giris.noCompany') }}
-              </p>
-              <div class="geri-satir">
-                <button
-                  type="button"
-                  class="geri-link"
-                  @click="tumAdimlariSifirla"
-                >
-                  &larr; {{ $t('giris.loginAgain') }}
-                </button>
-              </div>
-            </div>
-
-            <!-- Adim 1: Normal Kullanici Girişi -->
-            <div v-else>
-              <div class="form-grup">
-                <label>{{ $t('auth.username') }}</label>
-                <div class="input-wrapper">
-                  <i class="pi pi-user" />
-                  <InputText
-                    ref="kullaniciInput"
-                    v-model="username"
-                    :placeholder="$t('auth.username')"
-                    @keyup="onUsernameKeyup"
-                    @keydown="klavyeKontrol"
-                  />
-                </div>
-              </div>
-
-              <div class="form-grup">
-                <div class="label-row">
-                  <label>{{ $t('auth.password') }}</label>
-                  <span
-                    v-if="capsLockAcik"
-                    class="caps-lock-uyari"
-                  >
-                    <i class="pi pi-arrow-circle-up" /> {{ $t('giris.capsLockOn') }}
-                  </span>
-                </div>
-                <div class="input-wrapper">
-                  <i class="pi pi-lock" />
-                  <InputText
-                    ref="sifreInput"
-                    v-model="password"
-                    :type="sifreGorunur ? 'text' : 'password'"
-                    placeholder="••••••"
-                    @keyup="onPasswordKeyup"
-                    @keydown="klavyeKontrol"
-                  />
-                  <button
-                    type="button"
-                    class="sifre-toggle"
-                    tabindex="-1"
-                    :aria-label="sifreGorunur ? $t('giris.sifreyiGizle') : $t('giris.sifreyiGoster')"
-                    @click="sifreGorunur = !sifreGorunur"
-                  >
-                    <i :class="sifreGorunur ? 'pi pi-eye-slash' : 'pi pi-eye'" />
-                  </button>
-                </div>
-              </div>
-
-              <div class="beni-hatirla">
-                <Checkbox
-                  v-model="beniHatirla"
-                  :binary="true"
-                  input-id="beniHatirla"
-                />
-                <label for="beniHatirla">{{ $t('giris.rememberMe') }}</label>
-              </div>
-
-              <Button
-                :label="$t('auth.login')"
-                icon="pi pi-sign-in"
-                :loading="authStore?.loading || girisYapiliyor"
-                :disabled="girisYapiliyor"
-                class="giris-buton"
-                @click="girisYap"
-              />
-
-              <!-- Hızlı Demo Rolleri -->
-              <div class="hizli-roller">
-                <span class="hizli-rol-etiket">{{ $t('giris.quickFill') }}:</span>
-                <button
-                  type="button"
-                  class="rol-chip"
-                  @click="hizliRolDoldur('admin')"
-                >
-                  <i class="pi pi-user-plus" /> {{ $t('giris.quickRoleAdmin') }}
-                </button>
-                <button
-                  type="button"
-                  class="rol-chip"
-                  @click="hizliRolDoldur('muhasebe')"
-                >
-                  <i class="pi pi-calculator" /> {{ $t('giris.quickRoleAccountant') }}
-                </button>
-              </div>
-
-              <div class="giris-alt-linkler">
-                <button
-                  type="button"
-                  class="geri-link"
-                  @click="sifremiUnuttumAdimi = true"
-                >
-                  {{ $t('giris.forgotPassword') }}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Sifremi Unuttum -->
-          <div
-            v-if="sifremiUnuttumAdimi && !ikiFaktorAdimi && !sirketSecimAdimi && !kurulumAdimi"
-            class="sifre-sifirla-panel"
+      <main class="giris-icerik">
+        <!-- Mobil/tablet: kompakt marka -->
+        <div class="giris-mobil-marka">
+          <img
+            :src="markaLogo"
+            alt=""
+            class="giris-mobil-logo"
+            width="38"
+            height="38"
           >
-            <div class="sifirla-ust">
-              <i class="pi pi-envelope" />
-              <h3>{{ $t('giris.forgotTitle') }}</h3>
-              <button
-                type="button"
-                class="geri-link"
-                @click="sifremiUnuttumAdimi = false"
-              >
-                &larr; {{ $t('giris.backToLogin') }}
-              </button>
-            </div>
-            <p>{{ $t('giris.forgotHint') }}</p>
-            <div class="sifirla-form">
-              <InputText
-                v-model="sifirlaUsername"
-                :placeholder="$t('giris.usernamePlaceholder')"
-                class="w-full"
-                :disabled="sifirlaGonderiliyor"
-                @keyup.enter="sifreSifirlamaTalepEt"
-              />
-              <Button
-                :label="$t('giris.forgotSendLink')"
-                icon="pi pi-send"
-                :loading="sifirlaGonderiliyor"
-                @click="sifreSifirlamaTalepEt"
-              />
-            </div>
-            <Message
-              v-if="sifirlaMesaj"
-              severity="success"
-              :closable="false"
-            >
-              {{ sifirlaMesaj }}
-            </Message>
-            <Message
-              v-if="sifirlaHata"
-              severity="error"
-              :closable="false"
-            >
-              {{ sifirlaHata }}
-            </Message>
-          </div>
-
-          <!-- Kart Altı Güvenlik Mikro Rozetleri (Mobil & Genel) -->
-          <div class="form-guvenlik-rozetleri">
-            <span><i class="pi pi-shield" /> {{ $t('giris.miniSecuritySsl') }}</span>
-            <span><i class="pi pi-lock" /> {{ $t('giris.miniSecurity2fa') }}</span>
-            <span><i class="pi pi-database" /> {{ $t('giris.miniSecurityCloud') }}</span>
-          </div>
-
-          <div class="giris-footer">
-            <ThemeSwitcher />
-            <span>{{ $t('giris.copyright') }}</span>
+          <div class="giris-mobil-metin">
+            <span class="giris-mobil-ad">RasPel ERP</span>
+            <p class="giris-mobil-vaat">
+              {{ t('giris.mobileTagline') }}
+            </p>
           </div>
         </div>
-      </div>
+
+        <GirisFormKarti
+          :sirket-logo="sirketLogo"
+          :son-sirket-ad="sonSirketAd"
+          @giris-basarili="girisBasarili"
+        />
+
+        <GirisAltBilgi />
+      </main>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watchEffect } from 'vue'
-import { useRouter } from 'vue-router'
+import { nextTick, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useMouse, usePreferredReducedMotion, useIntervalFn, useThrottleFn } from '@vueuse/core'
 import { useAuthStore } from '../stores/authStore.js'
-import { kurulumAPI, kullaniciAPI } from '../api/index.js'
-import ThemeSwitcher from '../components/ThemeSwitcher.vue'
-import KurulumAdimi from '../components/KurulumAdimi.vue'
-import LoginPreview from '../components/LoginPreview.vue'
-import GirisHeroPaneli from '../components/GirisHeroPaneli.vue'
+import GirisAcilis from '../components/GirisAcilis.vue'
+import GirisMarkaPaneli from '../components/GirisMarkaPaneli.vue'
+import GirisFormKarti from '../components/GirisFormKarti.vue'
+import GirisAltBilgi from '../components/GirisAltBilgi.vue'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const { t } = useI18n()
 
-const markaLogoIcon = '/logo-icon.png'
-const markaLogoFull = '/logo-full.png'
-
-const kullaniciInput = ref(null)
-const sifreInput = ref(null)
-
-const username = ref('')
-const password = ref('')
-const hata = ref('')
-const sirketLogo = ref('')
-const sirketler = ref([])
-const sifreGorunur = ref(false)
-const beniHatirla = ref(false)
-const capsLockAcik = ref(false)
-
-const ikiFaktorAdimi = ref(false)
-const sirketSecimAdimi = ref(false)
-const ikiFaktorKod = ref('')
-const girisToken = ref('')
-// Sirket secilip oturum acilirken gosterilen markali karsilama durumu.
-const girisYapiliyor = ref(false)
-// Markali karsilama aninin minimum gosterim suresi (ag hizindan bagimsiz).
-// Sirket logosu musteriye "ozel" hissettirecek kadar gorunur ama bekletmez.
-const KARSILAMA_MIN_MS = 1500
-// Basari tikinden sonra yonlendirme oncesi kisa bekleme.
-const KARSILAMA_CIKIS_MS = 300
-const karsilamaSirketAdi = ref('')
-const karsilamaKullaniciAdi = ref('')
-const karsilamaIlerleme = ref(0)
-const karsilamaHazir = ref(false)
-
-const sifirlaUsername = ref('')
-const sifirlaGonderiliyor = ref(false)
-const sifirlaMesaj = ref('')
-const sifirlaHata = ref('')
-
-// PWA (standalone/fullscreen) modunda mi?
+const acilisAktif = ref(true)
 const pwaModu = ref(false)
+const sirketLogo = ref('')
+const sonSirketAd = ref('')
+const markaLogo = '/logo-icon.png'
 
-const sifreSifirlamaTalepEt = async () => {
-  sifirlaMesaj.value = ''
-  sifirlaHata.value = ''
-  if (!sifirlaUsername.value.trim()) {
-    sifirlaHata.value = t('giris.forgotUsernameRequired')
-    return
-  }
-  sifirlaGonderiliyor.value = true
+const acilisBitti = async () => {
+  acilisAktif.value = false
+  await nextTick()
   try {
-    const r = await kullaniciAPI.sifreSifirlamaTalebi({ username: sifirlaUsername.value.trim() })
-    sifirlaMesaj.value = r.data?.message || t('giris.forgotLinkSent')
-  } catch (err) {
-    sifirlaHata.value = err.response?.data?.message || t('giris.forgotSendFailed')
-  } finally {
-    sifirlaGonderiliyor.value = false
+    const alan = document.querySelector('[data-test="giris-username"]')
+    if (alan && !alan.value) alan.focus()
+  } catch {
+    /* yoksay */
   }
 }
 
-const sonSecilenSirketId = ref(Number(localStorage.getItem('raspel_erp_son_sirket')) || null)
-const sonSirketAd = ref(localStorage.getItem('raspel_erp_son_sirket_ad') || '')
-
-// Hareket azaltma tercihi ve fare parallax (yalnizca transform/opacity, throttle'li)
-const azHareket = usePreferredReducedMotion()
-const hareketAzalt = computed(() => azHareket.value === 'reduce')
-const { x: hamX, y: hamY } = useMouse()
-const fareX = ref(0)
-const fareY = ref(0)
-// Mousemove'u 40ms'te bir isleyerek gereksiz stil hesabini onler (performans).
-const fareGuncelle = useThrottleFn((x, y) => {
-  fareX.value = x
-  fareY.value = y
-}, 40)
-watchEffect(() => fareGuncelle(hamX.value, hamY.value))
-
-const parallax = computed(() => {
-  if (hareketAzalt.value || typeof window === 'undefined') return {}
-  const w = window.innerWidth || 1
-  const h = window.innerHeight || 1
-  const dx = (fareX.value - w / 2) / (w / 2)
-  const dy = (fareY.value - h / 2) / (h / 2)
-  return {
-    '--px': `${(dx * 6).toFixed(2)}px`,
-    '--py': `${(dy * 6).toFixed(2)}px`,
-    '--pxs': `${(dx * 14).toFixed(2)}px`,
-    '--pys': `${(dy * 14).toFixed(2)}px`
+const hedefYol = () => {
+  const hedef = route.query.redirect
+  if (typeof hedef === 'string' && hedef.startsWith('/') && !hedef.startsWith('//')) {
+    return hedef
   }
-})
+  return '/'
+}
 
-// Saate gore selamlama
-const selamlama = computed(() => {
-  const saat = new Date().getHours()
-  if (saat < 12) return t('giris.greetingMorning')
-  if (saat < 18) return t('giris.greetingAfternoon')
-  return t('giris.greetingEvening')
-})
+const girisBasarili = async () => {
+  await router.push(hedefYol())
+}
 
-// Hero basligi altinda donen deger onerileri
-const rotateIndex = ref(0)
-const rotateItems = computed(() => [
-  t('giris.heroRotate1'),
-  t('giris.heroRotate2'),
-  t('giris.heroRotate3'),
-  t('giris.heroRotate4')
-])
-useIntervalFn(() => {
-  if (hareketAzalt.value) return
-  rotateIndex.value = (rotateIndex.value + 1) % rotateItems.value.length
-}, 2800)
-
-const gruplanmisSirketler = computed(() => {
-  const gruplar = {}
-  sirketler.value.forEach(s => {
-    let grupAdi = t('giris.bagimsizFirmalar')
-    if (s.parentId) {
-      const parent = sirketler.value.find(p => p.id === s.parentId)
-      grupAdi = parent ? parent.ad : `Grup ${s.parentId}`
-    } else {
-      const hasChildren = sirketler.value.some(c => c.parentId === s.id)
-      grupAdi = hasChildren ? s.ad : t('giris.bagimsizFirmalar')
-    }
-    if (!gruplar[grupAdi]) {
-      gruplar[grupAdi] = []
-    }
-    gruplar[grupAdi].push(s)
-  })
-  
-  if (Object.keys(gruplar).length === 1 && gruplar[t('giris.bagimsizFirmalar')]) {
-    gruplar[t('giris.firmalar')] = gruplar[t('giris.bagimsizFirmalar')]
-    delete gruplar[t('giris.bagimsizFirmalar')]
-  }
-  return gruplar
-})
-
-const kurulumAdimi = ref(false)
-const kurulumYukleniyor = ref(false)
-const kurulumForm = ref({
-  ad: '',
-  vergiNo: '',
-  vergiDairesi: '',
-  telefon: '',
-  email: '',
-  adminUsername: '',
-  adminDisplayName: '',
-  adminPassword: ''
-})
-
-const sifremiUnuttumAdimi = ref(false)
-
-onMounted(async () => {
-  // PWA (yuklenmis uygulama) modunda mi? Tanitim/vitrin ve safe-area buna gore ayarlanir.
+onMounted(() => {
+  // PWA (yüklenmiş uygulama) modunda mı? Safe-area boşlukları buna göre ayarlanır.
   try {
     pwaModu.value = window.matchMedia('(display-mode: standalone)').matches
       || window.matchMedia('(display-mode: fullscreen)').matches
@@ -640,16 +108,18 @@ onMounted(async () => {
   } catch {
     pwaModu.value = false
   }
+
+  sonSirketAd.value = localStorage.getItem('raspel_erp_son_sirket_ad') || ''
+  sirketLogo.value = localStorage.getItem('raspel_erp_son_sirket_logo') || ''
+
   if (authStore.isLoggedIn) {
-    router.push('/')
+    acilisAktif.value = false
+    router.push(hedefYol())
     return
   }
-  beniHatirla.value = localStorage.getItem('raspel_erp_beni_hatirla') === 'true'
-  await kurulumDurumKontrol()
 
-  // Giris sonrasi gecisi hizlandirmak icin Dashboard chunk'i bos zamaninda onden
-  // yuklenir; kullanici "Giris"e bastiginda sayfa aninda acilir. Veri tasarrufu
-  // modunda veya yavas baglantida atlanir.
+  // Giriş sonrası geçişi hızlandırmak için Dashboard chunk'ı boş zamanda önden
+  // yüklenir. Veri tasarrufu modunda veya yavaş bağlantıda atlanır.
   try {
     const tasarruf = navigator.connection && navigator.connection.saveData === true
     if (!tasarruf) {
@@ -660,1280 +130,180 @@ onMounted(async () => {
     /* yoksay */
   }
 })
-
-const klavyeKontrol = (event) => {
-  if (event && typeof event.getModifierState === 'function') {
-    capsLockAcik.value = event.getModifierState('CapsLock')
-  }
-}
-
-const onUsernameKeyup = (event) => {
-  klavyeKontrol(event)
-  if (event.key === 'Enter') {
-    odaklanSifre()
-  }
-}
-
-const onPasswordKeyup = (event) => {
-  klavyeKontrol(event)
-  if (event.key === 'Enter') {
-    girisYap()
-  }
-}
-
-const hizliRolDoldur = (rol) => {
-  username.value = rol
-  odaklanSifre()
-}
-
-const kurulumDurumKontrol = async () => {
-  try {
-    const res = await kurulumAPI.durum()
-    kurulumAdimi.value = !!res.data?.kurulumGerekli
-  } catch {
-    /* backend erisilemiyorsa giris formu gosterilir */
-  }
-}
-
-const kurulumBaslat = async () => {
-  hata.value = ''
-  const f = kurulumForm.value
-  if (!f.ad.trim() || !f.vergiNo.trim()) {
-    hata.value = t('kurulum.companyRequired')
-    return
-  }
-  if (!f.adminUsername.trim() || !f.adminPassword) {
-    hata.value = t('kurulum.credentialsRequired')
-    return
-  }
-  kurulumYukleniyor.value = true
-  try {
-    const sonuc = await kurulumAPI.baslat({ ...f })
-    girisToken.value = sonuc.data?.girisToken
-    sirketler.value = sonuc.data?.sirketler || []
-    if (sirketler.value.length === 1) {
-      await sirketSecVeGirisYap(sirketler.value[0])
-      return
-    }
-    kurulumAdimi.value = false
-    sirketSecimAdimi.value = true
-  } catch (err) {
-    hata.value = err.response?.data?.message || t('kurulum.failed')
-  } finally {
-    kurulumYukleniyor.value = false
-  }
-}
-
-const odaklanSifre = () => sifreInput.value?.$el?.querySelector('input')?.focus()
-
-const girisYap = async () => {
-  hata.value = ''
-  if (!username.value.trim() || !password.value.trim()) {
-    hata.value = t('giris.emptyCredentials')
-    return
-  }
-  try {
-    localStorage.setItem('raspel_erp_beni_hatirla', beniHatirla.value ? 'true' : 'false')
-    const sonuc = await authStore.girisYap(username.value, password.value, beniHatirla.value)
-    if (sonuc?.twoFactorGerekli) {
-      girisToken.value = sonuc.girisToken
-      ikiFaktorAdimi.value = true
-      return
-    }
-    girisToken.value = sonuc.girisToken
-    sirketler.value = sonuc.sirketler || []
-    if (sirketler.value.length === 1) {
-      await sirketSecVeGirisYap(sirketler.value[0])
-      return
-    }
-    sirketSecimAdimi.value = true
-  } catch (err) {
-    hata.value = err.response?.data?.message || t('giris.loginFailed')
-  }
-}
-
-/** Karsilama katmanini sifirlar (hata veya tekrar deneme durumunda). */
-const karsilamaSifirla = () => {
-  girisYapiliyor.value = false
-  karsilamaSirketAdi.value = ''
-  karsilamaKullaniciAdi.value = ''
-  karsilamaIlerleme.value = 0
-  karsilamaHazir.value = false
-}
-
-const sirketSecVeGirisYap = async (sirket) => {
-  hata.value = ''
-  sirketLogo.value = sirket.logoUrl || ''
-  authStore.sirketLogosunuAyarla(sirket.logoUrl || '')
-  // Markali karsilama: logo + sirket adi + kullanici selami ile "hos geldiniz" anı.
-  karsilamaSirketAdi.value = sirket.ad || ''
-  karsilamaKullaniciAdi.value = ''
-  karsilamaHazir.value = false
-  karsilamaIlerleme.value = 0
-  girisYapiliyor.value = true
-  const baslangic = Date.now()
-  // Ilk faz: cubuk hizla dolup yavaslar (bekleme hissini azaltir).
-  setTimeout(() => {
-    if (girisYapiliyor.value && !karsilamaHazir.value) karsilamaIlerleme.value = 85
-  }, 60)
-  try {
-    await authStore.girisSirket(girisToken.value, sirket.id, beniHatirla.value)
-    karsilamaKullaniciAdi.value = authStore.kullanici?.displayName || ''
-    localStorage.setItem('raspel_erp_son_sirket', sirket.id)
-    if (sirket.ad) localStorage.setItem('raspel_erp_son_sirket_ad', sirket.ad)
-    // Minimum gosterim suresi dolana kadar bekle; azaltilmis hareket tercihinde kisa tut.
-    const minSure = hareketAzalt.value ? 700 : KARSILAMA_MIN_MS
-    const kalan = minSure - (Date.now() - baslangic)
-    if (kalan > 0) await new Promise((r) => setTimeout(r, kalan))
-    // Basari fazi: cubuk %100 + tik; kisa bir "hos geldiniz" anindan sonra yonlendir.
-    karsilamaIlerleme.value = 100
-    karsilamaHazir.value = true
-    await new Promise((r) => setTimeout(r, KARSILAMA_CIKIS_MS))
-    await router.push('/')
-  } catch (err) {
-    karsilamaSifirla()
-    hata.value = err.response?.data?.message || t('giris.companySelectFailed')
-  }
-}
-
-const ikiFaktorDogrula = async () => {
-  hata.value = ''
-  if (!ikiFaktorKod.value.trim()) {
-    hata.value = t('giris.invalidCode')
-    return
-  }
-  try {
-    const sonuc = await authStore.giris2fa(girisToken.value, ikiFaktorKod.value.trim(), beniHatirla.value)
-    girisToken.value = sonuc.girisToken
-    sirketler.value = sonuc.sirketler || []
-    ikiFaktorAdimi.value = false
-    if (sirketler.value.length === 1) {
-      await sirketSecVeGirisYap(sirketler.value[0])
-      return
-    }
-    sirketSecimAdimi.value = true
-  } catch (err) {
-    hata.value = err.response?.data?.message || t('giris.verifyFailed')
-  }
-}
-
-const geriDon = () => {
-  ikiFaktorAdimi.value = false
-  ikiFaktorKod.value = ''
-  girisToken.value = ''
-}
-const tumAdimlariSifirla = () => {
-  ikiFaktorAdimi.value = false
-  sirketSecimAdimi.value = false
-  ikiFaktorKod.value = ''
-  girisToken.value = ''
-  sirketler.value = []
-}
 </script>
 
 <style scoped>
 .giris-sayfasi {
+  /* Faz 1 görsel dil tokenları (spec §3.1) */
   --giris-aksan: var(--accent, #14b8a6);
-  --giris-aksan-koyu: #0d9488;
   --giris-aksan-parlak: #2dd4bf;
-  --giris-tint-05: rgba(16, 185, 129, 0.05);
-  --giris-tint-08: rgba(16, 185, 129, 0.08);
-  --giris-tint-14: rgba(16, 185, 129, 0.14);
-  --giris-tint-15: rgba(16, 185, 129, 0.15);
-  --giris-tint-16: rgba(16, 185, 129, 0.16);
-  --giris-tint-18: rgba(16, 185, 129, 0.18);
-  --giris-tint-20: rgba(16, 185, 129, 0.20);
-  --giris-tint-22: rgba(16, 185, 129, 0.22);
-  --giris-tint-25: rgba(16, 185, 129, 0.25);
-  --giris-tint-26: rgba(16, 185, 129, 0.26);
-  --giris-tint-28: rgba(16, 185, 129, 0.28);
-  --giris-tint-30: rgba(16, 185, 129, 0.30);
-  --giris-tint-35: rgba(16, 185, 129, 0.35);
-  --giris-tint-40: rgba(16, 185, 129, 0.40);
-  --giris-tint-50: rgba(16, 185, 129, 0.50);
-  --giris-tint-55: rgba(16, 185, 129, 0.55);
-  min-height: calc(100vh / var(--uyg-olcek));
-  min-height: calc(100dvh / var(--uyg-olcek));
+  --giris-aksan-koyu: #0d9488;
+  --giris-zemin-1: #070b10;
+  --giris-zemin-2: #0b1219;
+  --giris-yuzey: rgba(16, 24, 33, 0.78);
+  --giris-kenar: rgba(148, 163, 184, 0.14);
+  --giris-metin: #e8eef5;
+  --giris-metin-2: #9fb0c0;
+  --giris-metin-3: #6f8294;
+  --giris-radius: 18px;
+
+  /* Giriş her zaman koyu kalır: tema açık olsa bile form ve ilk kurulum
+     sihirbazı okunaklı olsun. */
+  --text-primary: #e8eef5;
+  --text-secondary: #9fb0c0;
+  --text-muted: #6f8294;
+  --bg-primary: #0b1219;
+  --bg-card: #101821;
+  --border: rgba(148, 163, 184, 0.18);
+  --primary-color: #14b8a6;
+
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at 50% 0%, #0a1620 0%, #0b0f14 62%);
-  overflow-x: hidden;
-  /* Uzun icerik (ilk kurulum) dikeyde kaydirilabilsin. */
-  overflow-y: auto;
-  padding:
-    calc(30px + env(safe-area-inset-top))
-    calc(20px + env(safe-area-inset-right))
-    calc(30px + env(safe-area-inset-bottom))
-    calc(20px + env(safe-area-inset-left));
   width: 100%;
   max-width: 100%;
+  min-height: calc(100vh / var(--uyg-olcek));
+  min-height: calc(100dvh / var(--uyg-olcek));
+  padding:
+    calc(24px + env(safe-area-inset-top))
+    calc(20px + env(safe-area-inset-right))
+    calc(24px + env(safe-area-inset-bottom))
+    calc(20px + env(safe-area-inset-left));
+  background: linear-gradient(180deg, var(--giris-zemin-1) 0%, var(--giris-zemin-2) 100%);
+  color: var(--giris-metin);
+  overflow-x: hidden;
+  overflow-y: auto;
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Aksan rengi dinamik (kullanici/sirket secimi) ise renk tonlarini color-mix ile turet. */
-@supports (color: color-mix(in srgb, red, blue)) {
-  .giris-sayfasi {
-    --giris-aksan-koyu: color-mix(in srgb, var(--giris-aksan) 82%, #000000);
-    --giris-aksan-parlak: color-mix(in srgb, var(--giris-aksan) 70%, #ffffff);
-    --giris-tint-05: color-mix(in srgb, var(--giris-aksan) 5%, transparent);
-    --giris-tint-08: color-mix(in srgb, var(--giris-aksan) 8%, transparent);
-    --giris-tint-14: color-mix(in srgb, var(--giris-aksan) 14%, transparent);
-    --giris-tint-15: color-mix(in srgb, var(--giris-aksan) 15%, transparent);
-    --giris-tint-16: color-mix(in srgb, var(--giris-aksan) 16%, transparent);
-    --giris-tint-18: color-mix(in srgb, var(--giris-aksan) 18%, transparent);
-    --giris-tint-20: color-mix(in srgb, var(--giris-aksan) 20%, transparent);
-    --giris-tint-22: color-mix(in srgb, var(--giris-aksan) 22%, transparent);
-    --giris-tint-25: color-mix(in srgb, var(--giris-aksan) 25%, transparent);
-    --giris-tint-26: color-mix(in srgb, var(--giris-aksan) 26%, transparent);
-    --giris-tint-28: color-mix(in srgb, var(--giris-aksan) 28%, transparent);
-    --giris-tint-30: color-mix(in srgb, var(--giris-aksan) 30%, transparent);
-    --giris-tint-35: color-mix(in srgb, var(--giris-aksan) 35%, transparent);
-    --giris-tint-40: color-mix(in srgb, var(--giris-aksan) 40%, transparent);
-    --giris-tint-50: color-mix(in srgb, var(--giris-aksan) 50%, transparent);
-    --giris-tint-55: color-mix(in srgb, var(--giris-aksan) 55%, transparent);
-    background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--giris-aksan) 10%, #0b0f14) 0%, #0b0f14 62%);
-  }
-}
-
-/* Company Selection */
-.sirket-grup-baslik {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin: 12px 4px 2px;
-}
-.sirket-secim-kart {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 12px 14px;
-  text-align: left;
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: border-color 0.18s, background 0.18s, transform 0.18s, box-shadow 0.18s;
-}
-.sirket-secim-kart:hover {
-  border-color: var(--giris-aksan);
-  background: var(--giris-tint-08);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px var(--giris-tint-15);
-}
-.sirket-secim-kart:focus-visible {
-  outline: 2px solid var(--giris-aksan);
-  outline-offset: 2px;
-}
-.sirket-kart-avatar {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--giris-aksan), var(--giris-aksan-koyu));
-  color: var(--accent-contrast, #ffffff);
-  font-size: 17px;
-  box-shadow: 0 4px 12px var(--giris-tint-25);
-}
-.sirket-kart-bilgi {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-.sirket-kart-ad {
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.sirket-kart-vkn {
-  font-size: 11.5px;
-  color: var(--text-muted);
-}
-.sirket-kart-sag {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-.sirket-kart-ok {
-  color: var(--text-muted);
-  font-size: 12px;
-  transition: color 0.18s, transform 0.18s;
-}
-.sirket-secim-kart:hover .sirket-kart-ok {
-  color: var(--giris-aksan);
-  transform: translateX(2px);
-}
-.sirket-tur-badge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 12px;
-  background: rgba(148, 163, 184, 0.15);
-  color: var(--text-secondary);
-}
-.tur-resmi {
-  background: var(--giris-tint-15);
-  color: var(--giris-aksan);
-  border: 1px solid var(--giris-tint-30);
-}
-.tur-gayriresmi {
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
-.sirket-yil-badge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 12px;
-  background: var(--giris-tint-15);
-  color: var(--giris-aksan);
-  border: 1px solid var(--giris-tint-30);
-}
-.son-secilen-yildiz {
-  color: #f59e0b;
-  font-size: 14px;
-}
-.sirket-secim-kart.son-secilen {
-  border-color: var(--giris-tint-50);
-  background: var(--giris-tint-05);
-  box-shadow: 0 0 0 1px var(--giris-tint-30) inset;
-}
-.sirket-listesi::-webkit-scrollbar {
-  width: 6px;
-}
-.sirket-listesi::-webkit-scrollbar-thumb {
-  background: var(--giris-tint-30);
-  border-radius: 3px;
-}
-
-[data-theme='light'] .giris-sayfasi {
-  background: radial-gradient(circle at 50% 0%, #ffffff 0%, #eef2f6 100%);
-}
-
-/* Sinematik sahne katmanlari (tamamen composited; canvas / agir blur yok) */
-.sahne-arka {
+.giris-sahne {
   position: absolute;
   inset: 0;
-  overflow: hidden;
   pointer-events: none;
   z-index: 0;
+  overflow: hidden;
 }
-.sahne-mesh {
+
+.giris-mesh {
   position: absolute;
-  inset: -30%;
+  inset: -18%;
   background:
-    radial-gradient(38% 45% at 22% 20%, var(--giris-tint-30), transparent 70%),
-    radial-gradient(42% 48% at 82% 26%, var(--giris-tint-26), transparent 72%),
-    radial-gradient(46% 50% at 68% 82%, var(--giris-tint-16), transparent 74%),
-    radial-gradient(40% 42% at 12% 78%, var(--giris-tint-16), transparent 72%);
-  transform: rotate(0deg);
-  animation: sahneDon 90s linear infinite;
-  will-change: transform;
+    radial-gradient(38% 44% at 20% 18%, rgba(20, 184, 166, 0.14), transparent 70%),
+    radial-gradient(42% 46% at 82% 24%, rgba(45, 212, 191, 0.09), transparent 72%),
+    radial-gradient(44% 48% at 66% 84%, rgba(13, 148, 136, 0.1), transparent 74%);
 }
-.sahne-grid {
+
+.giris-grid {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
-  background-size: 46px 46px;
-  -webkit-mask-image: radial-gradient(circle at 50% 40%, #000 0%, transparent 78%);
-  mask-image: radial-gradient(circle at 50% 40%, #000 0%, transparent 78%);
-  opacity: 0.6;
-}
-.sahne-parilti {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-}
-.sahne-parilti.p1 {
-  width: 46vw;
-  height: 46vw;
-  max-width: 720px;
-  max-height: 720px;
-  top: -12%;
-  left: -8%;
-  background: radial-gradient(circle, var(--giris-tint-22), transparent 62%);
-  animation: parildama 16s ease-in-out infinite alternate;
-}
-.sahne-parilti.p2 {
-  width: 40vw;
-  height: 40vw;
-  max-width: 620px;
-  max-height: 620px;
-  bottom: -14%;
-  right: -6%;
-  background: radial-gradient(circle, var(--giris-tint-20), transparent 62%);
-  animation: parildama 20s ease-in-out infinite alternate -6s;
-}
-@keyframes sahneDon {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-@keyframes parildama {
-  from { transform: scale(1); opacity: 0.9; }
-  to { transform: scale(1.12); opacity: 0.6; }
+    linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+  background-size: 52px 52px;
+  -webkit-mask-image: radial-gradient(circle at 50% 42%, #000 0%, transparent 78%);
+  mask-image: radial-gradient(circle at 50% 42%, #000 0%, transparent 78%);
+  opacity: 0.7;
 }
 
-/* Split Screen Wrapper */
-.giris-split-wrapper {
+.giris-yerlesim {
   position: relative;
   z-index: 1;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
+  align-items: center;
+  gap: clamp(32px, 5vw, 64px);
   width: 100%;
-  max-width: min(1180px, 100%);
-  min-width: 0;
-  max-height: calc(100dvh / var(--uyg-olcek) - 40px);
-  background: rgba(15, 23, 42, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 28px;
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.65);
-  overflow: hidden;
-  animation: sahneGiris 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-/* Karsilama sirasinda form/hero tamamen etkilesime kapanir. `inert` destekleyen
-   tarayicilarda zaten fare + klavye engelli; bu kural desteklemeyenler icin yedek. */
-.giris-split-wrapper[inert] {
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-select: none;
-  filter: saturate(0.85);
-}
-@keyframes sahneGiris {
-  from { opacity: 0; transform: translateY(20px) scale(0.985); }
-  to { opacity: 1; transform: none; }
-}
-
-[data-theme='light'] .giris-split-wrapper {
-  background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(226, 232, 240, 0.8);
-  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.08);
-}
-
-/* SOL: Hero & Vitrin */
-.giris-hero-alani {
-  flex: 1.15;
-  padding: 26px 34px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  justify-content: safe center;
-  overflow-y: auto;
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-  scrollbar-width: thin;
-}
-
-[data-theme='light'] .giris-hero-alani {
-  background: linear-gradient(135deg, rgba(245, 247, 250, 0.9) 0%, rgba(238, 242, 246, 0.95) 100%);
-  border-right-color: rgba(226, 232, 240, 0.9);
-}
-
-
-/* SAĞ: Form Alanı */
-.giris-form-alani {
-  flex: 0.95;
-  padding: 44px 40px;
-  display: flex;
-  /* Icerik alandan uzun oldugunda 'safe center' sayesinde ustten kirpilmaz ve
-     kaydirma dogru calisir; kisa icerikte dikey ortalanir. */
-  align-items: safe center;
-  justify-content: center;
-  overflow-y: auto;
-  max-height: calc(100dvh / var(--uyg-olcek) - 40px);
-  scrollbar-width: thin;
-}
-.giris-kutu {
-  width: 100%;
-  max-width: 400px;
-}
-
-.giris-logo {
-  text-align: center;
-  margin-bottom: 24px;
-}
-.logo-icon {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, var(--giris-aksan), var(--giris-aksan-koyu));
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 14px;
-  box-shadow: 0 8px 24px var(--giris-tint-35);
-  overflow: hidden;
-}
-.sirket-logo {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.marka-tam-logo {
-  display: block;
-  width: 170px;
-  max-width: 62%;
-  height: auto;
-  margin: 0 auto 4px;
-}
-.marka-logolar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 6px;
-}
-.marka-mini-logo {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-}
-.giris-logo h2 {
-  color: var(--text-primary);
-  font-size: 22px;
-  margin: 0 0 4px;
-  font-weight: 700;
-}
-.alt-baslik {
-  color: var(--text-secondary);
-  font-size: 13px;
-  margin: 0;
-}
-
-.giris-form {
-  background: rgba(30, 41, 59, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  padding: 24px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-[data-theme='light'] .giris-form {
-  background: #ffffff;
-  border-color: rgba(226, 232, 240, 0.9);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.04);
-}
-
-.form-grup {
-  margin-bottom: 15px;
-}
-.label-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-.form-grup label {
-  display: block;
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
-}
-
-.caps-lock-uyari {
-  font-size: 11px;
-  font-weight: 600;
-  color: #f59e0b;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  animation: pulse-slow 1.5s infinite;
-}
-
-@keyframes pulse-slow {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
-.input-wrapper {
-  position: relative;
-}
-.input-wrapper > i {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-  font-size: 16px;
-  z-index: 2;
-  pointer-events: none;
-  transition: color 0.2s ease;
-}
-.input-wrapper :deep(.p-inputtext) {
-  width: 100%;
-  padding: 12px 14px 12px 40px !important;
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  color: var(--text-primary);
-  font-size: 14.5px;
-  min-height: 46px;
-  transition: all 0.2s ease;
-}
-.input-wrapper :deep(.p-inputtext:focus) {
-  border-color: var(--giris-aksan) !important;
-  box-shadow: 0 0 0 4px var(--giris-tint-22) !important;
-  outline: none;
-}
-.input-wrapper:focus-within > i {
-  color: var(--giris-aksan);
-}
-.kod-input {
-  text-align: center !important;
-  letter-spacing: 2px;
-  font-size: 18px;
-  font-family: monospace;
-  padding-right: 14px !important;
-}
-
-.sifre-toggle {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 16px;
-  z-index: 2;
-  padding: 4px;
-  border-radius: 6px;
-  transition: color 0.2s;
-}
-.sifre-toggle:hover {
-  color: var(--text-primary);
-}
-
-.beni-hatirla {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 14px;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.giris-buton {
-  width: 100%;
-  padding: 12px;
-  margin-top: 4px;
-  background: linear-gradient(135deg, var(--giris-aksan), var(--giris-aksan-koyu));
-  border: none;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--accent-contrast, #ffffff);
-  transition: all 0.2s ease;
-}
-.giris-buton:hover {
-  background: linear-gradient(135deg, var(--giris-aksan-koyu), var(--giris-aksan-koyu));
-  transform: translateY(-1px);
-  box-shadow: 0 6px 22px var(--giris-tint-40);
-}
-
-/* Dokunmatik: 300ms gecikme ve cift-dokunma zoom'unu engelle */
-.giris-buton,
-.rol-chip,
-.sirket-secim-kart,
-.sifre-toggle,
-.geri-satir a,
-.giris-alt-linkler a {
-  touch-action: manipulation;
-}
-
-/* Hızlı Roller */
-.hizli-roller {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px dashed rgba(148, 163, 184, 0.15);
-}
-.hizli-rol-etiket {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 600;
-}
-.rol-chip {
-  padding: 4px 10px;
-  background: var(--giris-tint-08);
-  border: 1px solid var(--giris-tint-20);
-  border-radius: 14px;
-  color: var(--text-primary);
-  font-size: 11.5px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: all 0.15s;
-}
-.rol-chip:hover {
-  background: var(--giris-tint-20);
-  border-color: var(--giris-aksan);
-  transform: translateY(-1px);
-}
-.rol-chip i {
-  font-size: 10px;
-  color: var(--giris-aksan);
-}
-
-.giris-alt-linkler {
-  text-align: center;
-  margin-top: 12px;
-}
-.giris-alt-linkler a {
-  color: var(--text-muted);
-  font-size: 13px;
-  cursor: pointer;
-  transition: color 0.15s;
-}
-.giris-alt-linkler a:hover {
-  color: var(--giris-aksan);
-}
-
-/* Hata Kutusu */
-.hata-kutu {
-  margin-bottom: 16px;
-  padding: 12px 14px;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  border-radius: 12px;
-  color: #fca5a5;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 500;
-}
-.hata-kutu i {
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-/* Shake Animation */
-.shake-enter-active {
-  animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-}
-@keyframes shake {
-  10%, 90% { transform: translate3d(-1px, 0, 0); }
-  20%, 80% { transform: translate3d(2px, 0, 0); }
-  30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
-  40%, 60% { transform: translate3d(3px, 0, 0); }
-}
-
-/* Form Altı Mikro Güvenlik Rozetleri */
-.form-guvenlik-rozetleri {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 14px;
-  margin-top: 18px;
-  font-size: 11px;
-  color: var(--text-muted);
-}
-.form-guvenlik-rozetleri span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.form-guvenlik-rozetleri i {
-  font-size: 10px;
-  color: var(--giris-aksan);
-}
-
-.giris-footer {
-  text-align: center;
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(148, 163, 184, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-}
-.giris-footer span {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-/* 2FA & Kurulum */
-.iki-fa-ikon,
-.sirket-secim-ikon {
-  width: 54px;
-  height: 54px;
-  margin: 0 auto 12px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.iki-fa-ikon {
-  background: linear-gradient(135deg, var(--giris-aksan), var(--giris-aksan-koyu));
-  box-shadow: 0 6px 20px var(--giris-tint-30);
-}
-.sirket-secim-ikon {
-  background: linear-gradient(135deg, var(--giris-aksan), var(--giris-aksan-koyu));
-  box-shadow: 0 6px 20px var(--giris-tint-30);
-}
-.iki-fa-ikon i,
-.sirket-secim-ikon i {
-  font-size: 24px;
-  color: var(--accent-contrast, #ffffff);
-}
-.iki-fa-baslik {
-  text-align: center;
-  color: var(--text-primary);
-  font-size: 17px;
-  margin: 0 0 4px;
-}
-.iki-fa-alt {
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 12.5px;
-  margin: 0 0 16px;
-}
-.geri-satir {
-  text-align: center;
-  margin-top: 14px;
-}
-.geri-satir a,
-.geri-link {
-  color: var(--text-muted);
-  font-size: 13px;
-  cursor: pointer;
-}
-.geri-link {
-  border: none;
-  background: none;
-  padding: 6px 8px;
-  font-family: inherit;
-  border-radius: 6px;
-}
-.geri-link:focus-visible {
-  outline: 2px solid var(--giris-aksan);
-  outline-offset: 2px;
-}
-.geri-satir a:hover,
-.geri-link:hover {
-  color: var(--text-primary);
-}
-
-.sirket-listesi {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 340px;
-  overflow-y: auto;
-  padding: 4px 6px 4px 4px;
-  margin: 0 -6px 2px -4px;
-}
-.sirket-yok {
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 13px;
-  padding: 16px 0;
-}
-
-.sifre-sifirla-panel {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 20px;
-  margin-top: 14px;
-}
-.sifirla-ust {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-.sifirla-ust i {
-  font-size: 20px;
-  color: var(--primary-color);
-}
-.sifirla-ust h3 {
-  margin: 0;
-  font-size: 15px;
-  color: var(--text-primary);
-  flex: 1;
-}
-.sifirla-ust a {
-  color: var(--text-muted);
-  font-size: 12.5px;
-  cursor: pointer;
-}
-.sifirla-ust a:hover {
-  color: var(--text-primary);
-}
-.sifre-sifirla-panel p {
-  font-size: 12.5px;
-  color: var(--text-secondary);
-  margin: 0;
-  line-height: 1.4;
-}
-
-/* Mobil kompakt hero */
-.giris-mobil-hero {
-  display: none;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-.mobil-mark {
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.mobil-mark img {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-}
-.mobil-metin {
-  flex: 1;
+  max-width: 1120px;
   min-width: 0;
 }
-.mobil-title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--text-primary);
+
+.giris-marka-alani {
+  min-width: 0;
 }
-.mobil-tagline {
-  margin: 2px 0 0;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-.mobil-chips {
+
+.giris-icerik {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  width: 100%;
-}
-.mobil-chips span {
-  display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  gap: 5px;
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  background: rgba(148, 163, 184, 0.08);
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  border-radius: 14px;
-  padding: 4px 9px;
-}
-.mobil-chips i {
-  color: var(--giris-aksan);
-  font-size: 10px;
-}
-.mobil-rotate {
+  justify-self: end;
   width: 100%;
-  margin: 2px 0 0;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--giris-aksan, var(--accent));
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.mobil-rotate i {
-  font-size: 11px;
-}
-/* Urun vitrini yalnizca tablet/genis mobilde (dar ekranda chips yeterli). */
-.mobil-preview {
-  display: none;
-  width: 100%;
-}
-.mobil-preview :deep(.login-preview) {
   max-width: 420px;
-  margin: 4px auto 0;
+  min-width: 0;
 }
 
-/* Selamlama + son firma */
-.giris-selam {
-  text-align: center;
-  font-size: 12.5px;
-  color: var(--text-muted);
-  margin: -8px 0 14px;
-}
-.son-sirket {
-  color: var(--text-secondary);
-}
-.son-sirket strong {
-  color: var(--text-primary);
-  font-weight: 600;
+.giris-mobil-marka {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 16px;
 }
 
-/* Hareket azaltma tercihi (erisilebilirlik) */
-@media (prefers-reduced-motion: reduce) {
-  .sahne-mesh,
-  .sahne-parilti {
-    animation: none;
-  }
-  .giris-split-wrapper {
-    animation: none;
-  }
-  .caps-lock-uyari {
-    animation: none;
-  }
-  :deep(.hero-preview-wrap) {
-    transform: none;
-    transition: none;
-  }
-  :deep(.rotate-fade-enter-active),
-  :deep(.rotate-fade-leave-active) {
-    transition: none;
-  }
-  .gy-kutu,
-  .gy-logo,
-  .gy-logo-halka {
-    animation: none;
-  }
-  .gy-cubuk-dolgu {
-    transition: none;
-  }
+.giris-mobil-logo {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
-/* Responsive Düzen */
+.giris-mobil-metin {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
 
-/* Kisa ekranlar: hero'yu sikistir, tum icerik kaydirmadan gorunsun */
+.giris-mobil-ad {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--giris-metin);
+}
 
+.giris-mobil-vaat {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--giris-metin-2);
+}
 
+/* <960px: tek kolon; marka paneli yerine kompakt logo + vaat */
 @media (max-width: 960px) {
-  .giris-hero-alani {
+  .giris-yerlesim {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 440px;
+    gap: 0;
+  }
+  .giris-marka-alani {
     display: none;
   }
-  .giris-mobil-hero {
+  .giris-icerik {
+    justify-self: center;
+  }
+  .giris-mobil-marka {
     display: flex;
   }
-  /* Mobil hero zaten marka gosteriyor; formdaki buyuk logo tekrarini kaldir.
-     (Sirket logosu varsa korunur.) */
-  .giris-logo .marka-tam-logo,
-  .giris-logo .marka-mini-logo,
-  .giris-logo h2 {
-    display: none;
-  }
-  .giris-split-wrapper {
-    max-width: 480px;
-    border-radius: 20px;
-    max-height: none;
-  }
-  .giris-form-alani {
-    padding: 32px 24px;
-    max-height: none;
-    overflow-y: visible;
+  .giris-sayfasi {
     align-items: flex-start;
-  }
-  /* iOS: odaklaninca otomatik zoom'u engelle (16px alti zoom tetikler) */
-  .input-wrapper :deep(.p-inputtext) {
-    font-size: 16px;
+    padding-top: calc(20px + env(safe-area-inset-top));
   }
 }
-
-/* Tablet / genis mobil (PWA dahil): urun vitrini gorunsun. */
-@media (min-width: 560px) and (max-width: 960px) {
-  .mobil-preview {
-    display: block;
-  }
-}
-
-/* Yuklenmis PWA: durum cubugu/notch icin safe-area boslugu. */
-.giris-sayfasi.pwa-modu {
-  padding-top: calc(12px + env(safe-area-inset-top));
-  padding-bottom: calc(12px + env(safe-area-inset-bottom));
-}
-
-/* Cok kisa ekranlar: vitrin yerine baslik + guven rozetleri kalsin. */
 
 @media (max-width: 480px) {
   .giris-sayfasi {
     padding:
       calc(16px + env(safe-area-inset-top))
-      calc(12px + env(safe-area-inset-right))
-      calc(16px + env(safe-area-inset-bottom))
-      calc(12px + env(safe-area-inset-left));
-  }
-  .giris-form {
-    padding: 18px;
-  }
-  .kurulum-iki-kolon {
-    flex-direction: column;
-    gap: 0;
+      calc(14px + env(safe-area-inset-right))
+      calc(20px + env(safe-area-inset-bottom))
+      calc(14px + env(safe-area-inset-left));
   }
 }
 
-/* Giris yapiliyor katmani: sirket logolu markali karsilama.
-   Not: pointer-events burada ACIK kalmalidir; katman click/pointer olaylarini
-   yutarak arkadaki icerige tiklamayi engeller. Kapatma yalnizca hata ya da
-   basarili yonlendirme ile mumkun. */
-.giris-yukleniyor {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background:
-    radial-gradient(60% 60% at 50% 42%, var(--giris-tint-30, rgba(20, 184, 166, 0.3)), transparent 70%),
-    var(--bg-header, rgba(10, 14, 20, 0.86));
-  backdrop-filter: blur(8px);
-  pointer-events: auto;
-  touch-action: none;
-  overscroll-behavior: contain;
-  user-select: none;
-  -webkit-user-select: none;
-  cursor: progress;
-}
-.gy-kutu {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  padding: 30px 40px 26px;
-  border-radius: 20px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  box-shadow: var(--elev-2, 0 8px 24px rgba(0, 0, 0, 0.35));
-  color: var(--text-primary);
-  text-align: center;
-  animation: gyKutuGiris 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.gy-logo-halka {
-  position: relative;
-  width: 112px;
-  height: 112px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(circle at 50% 45%, var(--giris-tint-20, rgba(20, 184, 166, 0.2)), transparent 70%);
-  box-shadow:
-    0 0 0 1px var(--giris-tint-30, rgba(20, 184, 166, 0.3)),
-    0 10px 30px var(--giris-tint-25, rgba(20, 184, 166, 0.25));
-  animation: gyHalkaNabiz 2.2s ease-in-out infinite;
-  transition: box-shadow 0.3s ease;
-}
-.gy-logo-halka.gy-hazir {
-  animation: none;
-  box-shadow:
-    0 0 0 2px var(--giris-aksan, #14b8a6),
-    0 10px 30px var(--giris-tint-35, rgba(20, 184, 166, 0.35));
-}
-.gy-logo {
-  width: 76px;
-  height: 76px;
-  object-fit: contain;
-  border-radius: 16px;
-  animation: gyLogoGiris 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.gy-tik {
-  position: absolute;
-  right: -2px;
-  bottom: -2px;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--giris-aksan, #14b8a6);
-  color: var(--accent-contrast, #ffffff);
-  box-shadow: 0 4px 12px var(--giris-tint-40, rgba(20, 184, 166, 0.4));
-}
-.gy-tik i {
-  font-size: 14px;
-  font-weight: 700;
-}
-.gy-metin {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.gy-sirket {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--text-primary);
-  max-width: 260px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.gy-selam {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--giris-aksan, var(--accent));
-}
-.gy-durum {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-.gy-cubuk {
-  width: 180px;
-  height: 4px;
-  border-radius: 999px;
-  background: var(--giris-tint-15, rgba(20, 184, 166, 0.15));
-  overflow: hidden;
-}
-.gy-cubuk-dolgu {
-  display: block;
-  height: 100%;
-  width: 0;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--giris-aksan, #14b8a6), var(--giris-aksan-parlak, #2dd4bf));
-  transition: width 1.4s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.gy-fade-enter-active,
-.gy-fade-leave-active {
-  transition: opacity 0.25s ease;
-}
-.gy-fade-enter-from,
-.gy-fade-leave-to {
-  opacity: 0;
-}
-.gy-tik-enter-active {
-  animation: gyTikGiris 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-@keyframes gyKutuGiris {
-  from { opacity: 0; transform: translateY(12px) scale(0.97); }
-  to { opacity: 1; transform: none; }
-}
-@keyframes gyLogoGiris {
-  from { opacity: 0; transform: scale(0.85); }
-  to { opacity: 1; transform: scale(1); }
-}
-@keyframes gyHalkaNabiz {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.045); }
-}
-@keyframes gyTikGiris {
-  from { opacity: 0; transform: scale(0.6); }
-  to { opacity: 1; transform: scale(1); }
+/* Yüklenmiş PWA: durum çubuğu/notch için ek boşluk */
+.giris-sayfasi.pwa-modu {
+  padding-top: calc(12px + env(safe-area-inset-top));
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
 }
 </style>

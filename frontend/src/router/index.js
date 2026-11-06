@@ -15,9 +15,21 @@ const routes = [
     meta: { requiresAuth: false }
   },
   {
+    path: '/qr-onay/:token',
+    name: 'QrOnay',
+    component: () => import('../views/QrOnay.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/sifre-sifirla',
     name: 'SifreSifirla',
     component: () => import('../views/SifreSifirla.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/durum',
+    name: 'Durum',
+    component: () => import('../views/Durum.vue'),
     meta: { requiresAuth: false }
   },
   {
@@ -378,7 +390,8 @@ const routes = [
     path: '/yasal',
     name: 'YasalMetinler',
     component: () => import('../views/YasalMetinler.vue'),
-    meta: { requiresAuth: true }
+    // Kullanım şartları/KVKK giriş ekranından da erişilebilir olmalı.
+    meta: { requiresAuth: false }
   },
   {
     path: '/kullanim-sartlari',
@@ -529,9 +542,12 @@ router.beforeEach((to, from, next) => {
       '/ajanda',
       '/belgeler',
       '/notlar',
-      '/hesap-ayarlari'
+      '/hesap-ayarlari',
+      '/durum',
+      '/yasal'
     ]
-    if (!sahaIzinli.includes(to.path) && !to.path.startsWith('/profil')) {
+    if (!sahaIzinli.includes(to.path) && !to.path.startsWith('/profil')
+        && !to.path.startsWith('/qr-onay')) {
       next('/yetki-reddi')
     } else {
       next()
@@ -544,9 +560,12 @@ router.beforeEach((to, from, next) => {
       '/sohbet',
       '/notlar',
       '/belgeler',
-      '/hesap-ayarlari'
+      '/hesap-ayarlari',
+      '/durum',
+      '/yasal'
     ]
-    if (!driverIzinli.includes(to.path) && !to.path.startsWith('/profil')) {
+    if (!driverIzinli.includes(to.path) && !to.path.startsWith('/profil')
+        && !to.path.startsWith('/qr-onay')) {
       next('/yetki-reddi')
     } else if (to.path === '/') {
       next('/teslimatlar')

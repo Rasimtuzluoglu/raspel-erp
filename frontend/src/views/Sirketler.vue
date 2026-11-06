@@ -31,6 +31,10 @@
         sortable
       />
       <Column
+        field="kod"
+        :header="t('sirketler.kod')"
+      />
+      <Column
         field="vergiNo"
         :header="t('sirketler.vergiNo')"
       />
@@ -122,6 +126,18 @@
             v-model="form.ad"
             class="w-full"
           />
+        </div>
+
+        <div class="field">
+          <label>{{ t('sirketler.kod') }}</label>
+          <InputText
+            v-model="form.kod"
+            class="w-full"
+            data-test="sirket-kod"
+            autocomplete="organization"
+            :placeholder="t('sirketler.kodPlaceholder')"
+          />
+          <small class="field-ipucu">{{ t('sirketler.kodIpucu') }}</small>
         </div>
         
         <div
@@ -385,6 +401,7 @@ const kaydediliyor = ref(false)
 const seciliId = ref(null)
 const form = ref({
   ad: '',
+  kod: '',
   vergiNo: '',
   vergiDairesi: '',
   adres: '',
@@ -439,6 +456,7 @@ const dialogAc = (data) => {
     ? { ...data }
     : {
         ad: '',
+        kod: '',
         tur: 'DIGER',
         yil: new Date().getFullYear(),
         parentId: null,
@@ -573,6 +591,11 @@ const sil = (data) => {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
+}
+.field-ipucu {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--text-muted);
 }
 .w-full {
   width: 100%;

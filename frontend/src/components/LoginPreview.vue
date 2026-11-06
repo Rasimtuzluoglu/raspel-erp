@@ -1,8 +1,5 @@
 <template>
-  <div
-    ref="kokEl"
-    class="login-preview"
-  >
+  <div class="login-preview">
     <!-- Sahte uygulama penceresi (tarayici cercevesi) -->
     <div class="preview-window">
       <div class="preview-chrome">
@@ -318,13 +315,6 @@
       </button>
     </div>
 
-    <div
-      class="preview-progress"
-      aria-hidden="true"
-    >
-      <span :style="{ width: ilerleme + '%' }" />
-    </div>
-
     <transition
       name="preview-fade"
       mode="out-in"
@@ -345,32 +335,11 @@
 </template>
 
 <script setup>
-import { ref, computed, watchEffect } from 'vue'
-import { useElementHover, useIntervalFn, usePreferredReducedMotion } from '@vueuse/core'
+import { ref } from 'vue'
 
 const markaLogo = '/logo-icon.png'
 
-const sekmeler = ['dashboard', 'invoice', 'stock', 'production', 'profit', 'ai']
 const aktif = ref('dashboard')
-const kokEl = ref(null)
-
-const aktifIndex = computed(() => Math.max(0, sekmeler.indexOf(aktif.value)))
-const ilerleme = computed(() => ((aktifIndex.value + 1) / sekmeler.length) * 100)
-
-const hover = useElementHover(kokEl)
-const azHareket = usePreferredReducedMotion()
-const hareketAzalt = computed(() => azHareket.value === 'reduce')
-
-const { pause, resume } = useIntervalFn(() => {
-  const i = sekmeler.indexOf(aktif.value)
-  aktif.value = sekmeler[(i + 1) % sekmeler.length]
-}, 4500)
-
-// Fare uzerindeyken veya hareket azaltma tercihinde otomatik gezinmeyi durdur.
-watchEffect(() => {
-  if (hareketAzalt.value || hover.value) pause()
-  else resume()
-})
 
 const sec = (id) => {
   aktif.value = id
@@ -391,7 +360,6 @@ const sec = (id) => {
   border: 1px solid rgba(148, 163, 184, 0.22);
   box-shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.7);
   overflow: hidden;
-  backdrop-filter: blur(6px);
 }
 [data-theme='light'] .preview-window {
   background: rgba(255, 255, 255, 0.92);
@@ -546,12 +514,7 @@ const sec = (id) => {
   display: block;
 }
 .mock-chart-line {
-  stroke-dasharray: 620;
-  stroke-dashoffset: 620;
-  animation: cizgi 1.6s ease forwards;
-}
-@keyframes cizgi {
-  to { stroke-dashoffset: 0; }
+  stroke-dasharray: none;
 }
 .mock-rows {
   display: flex;
@@ -822,28 +785,6 @@ const sec = (id) => {
   min-height: 10px;
   border-radius: 6px 6px 0 0;
   background: linear-gradient(180deg, var(--giris-aksan-parlak, #34d399), var(--giris-tint-25, rgba(16, 185, 129,0.25)));
-  transform-origin: bottom;
-  animation: barYuksekligi 0.6s ease;
-}
-@keyframes barYuksekligi {
-  from { transform: scaleY(0); }
-  to { transform: scaleY(1); }
-}
-
-/* İlerleme göstergesi */
-.preview-progress {
-  height: 3px;
-  border-radius: 3px;
-  margin-top: 10px;
-  background: rgba(148, 163, 184, 0.15);
-  overflow: hidden;
-}
-.preview-progress span {
-  display: block;
-  height: 100%;
-  border-radius: 3px;
-  background: linear-gradient(90deg, var(--giris-aksan, #14b8a6), var(--giris-aksan-parlak, #34d399));
-  transition: width 0.4s ease;
 }
 
 @media (max-width: 520px) {
@@ -880,16 +821,6 @@ const sec = (id) => {
 
 /* Hareket azaltma tercihi */
 @media (prefers-reduced-motion: reduce) {
-  .mock-chart-line {
-    stroke-dashoffset: 0;
-    animation: none;
-  }
-  .mock-bars span {
-    animation: none;
-  }
-  .preview-progress span {
-    transition: none;
-  }
   .preview-fade-enter-active,
   .preview-fade-leave-active {
     transition: none;

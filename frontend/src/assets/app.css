@@ -798,6 +798,11 @@ img {
   padding: 0;
   overflow: visible;
 }
+/* Genel (oturumsuz) yasal sayfa: giriş yerleşimi sıfır padding kullandığı için
+   KVKK/kullanım şartları bağlantısı kenara yapışmasın. */
+.main-content.giris-sayfasi .yasal-page {
+  padding: 20px 14px 28px;
+}
 
 .sidebar-credit {
   font-size: 10px;

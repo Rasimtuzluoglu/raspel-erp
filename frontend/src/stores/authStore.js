@@ -115,10 +115,17 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const girisYap = async (username, password, rememberMe) => {
+  const girisYap = async (username, password, rememberMe, sirketKodu) => {
     loading.value = true
     try {
-      const res = await kullaniciAPI.giris({ username, password, rememberMe: rememberMe === true })
+      const kod = typeof sirketKodu === 'string' ? sirketKodu.trim() : ''
+      const res = await kullaniciAPI.giris({
+        username,
+        password,
+        rememberMe: rememberMe === true,
+        // Boş kod gönderilmez; backend kod yoksa tüm üyelikleri döndürür.
+        sirketKodu: kod || undefined
+      })
       return res.data
     } catch (err) {
       cikisYap()

@@ -42,6 +42,7 @@ export { personelAPI, personelIzinAPI, puantajAPI, maasBordroAPI, vardiyaAPI, pe
 export {
   kullaniciAPI,
   kurulumAPI,
+  durumAPI,
   sohbetAPI,
   sohbetOdaAPI,
   ajandaAPI,
@@ -72,4 +73,7 @@ export { uploadAPI, backupAPI, excelAPI, importAPI, pdfAPI, belgeAPI } from './m
 export { veriAktarimAPI } from './modules/veriAktarim.js'
 
 export { pushAPI } from './modules/push.js'
+
+export { passkeyAPI } from './modules/passkey.js'
+export { qrOturumAPI } from './modules/qr.js'
 
