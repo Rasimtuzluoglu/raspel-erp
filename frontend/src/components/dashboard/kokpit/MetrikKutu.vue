@@ -73,6 +73,7 @@ const props = defineProps({
   paraBirimi: { type: String, default: 'TRY' },
   altEtiket: { type: String, default: '' },
   kritikEtiket: { type: String, default: 'Kritik' },
+  degisimEtiketi: { type: String, default: '' },
   dataTest: { type: String, default: 'metrik-kutu' }
 })
 
@@ -124,7 +125,10 @@ const sparklineVar = computed(() =>
 
 const ariaLabel = computed(() => {
   const parcalar = [`${props.etiket}: ${bicimliDeger.value}`]
-  if (degisimVar.value) parcalar.push(`${props.altEtiket || 'Değişim'} ${degisimMetni.value}`)
+  const degisimEtiketi = props.altEtiket || props.degisimEtiketi
+  if (degisimVar.value && degisimEtiketi) {
+    parcalar.push(`${degisimEtiketi} ${degisimMetni.value}`)
+  }
   return parcalar.join(', ')
 })
 </script>

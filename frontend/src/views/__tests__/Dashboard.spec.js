@@ -17,6 +17,9 @@ vi.mock('../../api/index.js', () => ({
   },
   excelAPI: {
     dashboard: vi.fn()
+  },
+  dovizAPI: {
+    getKurlar: vi.fn().mockResolvedValue({ data: [] })
   }
 }))
 
@@ -300,5 +303,16 @@ describe('Dashboard kokpiti', () => {
     expect(wrapper.find('[data-test="canli-durum"]').text()).toContain('Bağlantı yok')
     expect(wrapper.find('[data-test="nakit-bolumu"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="kokpit-hata"]').exists()).toBe(false)
+  })
+
+  it('paraBirimiDegisinceTutarlarDonusturulur', async () => {
+    const wrapper = mountDashboard()
+    await flushPromises()
+
+    await wrapper.find('[data-test="para-birimi"]').setValue('USD')
+    await nextTick()
+
+    expect(localStorage.getItem('raspel_dashboard_para_birimi')).toBe('USD')
+    expect(wrapper.find('[data-test="finans-ozet-bandi"]').text()).toContain('$')
   })
 })

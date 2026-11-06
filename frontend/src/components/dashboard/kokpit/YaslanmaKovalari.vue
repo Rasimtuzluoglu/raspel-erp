@@ -12,7 +12,7 @@
         class="pi pi-chart-bar"
         aria-hidden="true"
       />
-      <span>{{ bosMetin }}</span>
+      <span>{{ bosMetin || '—' }}</span>
     </div>
 
     <template v-else>
@@ -66,7 +66,7 @@ import { formatPara } from '../../../utils/format.js'
 const props = defineProps({
   kovalar: { type: Array, default: () => [] },
   paraBirimi: { type: String, default: 'TRY' },
-  bosMetin: { type: String, default: 'Yaşlandırma verisi yok' },
+  bosMetin: { type: String, default: '' },
   adetEtiketi: { type: String, default: 'adet' }
 })
 
