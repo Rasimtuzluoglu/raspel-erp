@@ -77,9 +77,9 @@ describe('Faz2 — Global yoğunluk', () => {
   it('dokunma hedefleri yalnız kaba işaretçide', () => {
     expect(appCss).toMatch(/@media \(max-width: 900px\) and \(hover: none\) and \(pointer: coarse\)/)
   })
-  it('pano üst barı sade ve hizalı (hero kaldırıldı)', () => {
-    const ustBar = oku('components/dashboard/DashboardUstBar.vue')
-    expect(ustBar).toMatch(/\.ust-bar \{[\s\S]*?min-height:\s*64px/)
-    expect(ustBar).toMatch(/\.ust-selam \{[\s\S]*?font-size:\s*17px/)
+  it('kokpit üst filtresi sade ve yapışkan', () => {
+    const filtre = oku('components/dashboard/kokpit/KokpitGlobalFiltre.vue')
+    expect(filtre).toMatch(/\.kokpit-filtre \{[\s\S]*?position:\s*sticky/)
+    expect(filtre).toMatch(/\.kokpit-baslik \{[\s\S]*?font-size:\s*18px/)
   })
 })
