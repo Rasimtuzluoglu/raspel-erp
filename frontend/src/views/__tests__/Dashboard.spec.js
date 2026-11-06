@@ -136,6 +136,7 @@ describe('Dashboard kokpiti', () => {
     setActivePinia(createPinia())
     localStorage.clear()
     vi.clearAllMocks()
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
     dashboardAPI.kokpit.mockResolvedValue({ data: kokpitVerisi() })
     dashboardAPI.tercihGetir.mockResolvedValue({ data: { duzen: null } })
     dashboardAPI.tercihKaydet.mockResolvedValue({ data: { duzen: null } })
@@ -224,5 +225,22 @@ describe('Dashboard kokpiti', () => {
     await flushPromises()
 
     expect(excelAPI.dashboard).toHaveBeenCalledWith({ donem: 'BU_AY' })
+  })
+
+  it('ozellestirmePaneliBolumGizlerVeKaydeder', async () => {
+    const wrapper = mountDashboard()
+    await flushPromises()
+
+    await wrapper.find('[data-test="kokpit-ozellestir"]').trigger('click')
+    expect(wrapper.find('[data-test="kokpit-ozellestirme"]').exists()).toBe(true)
+
+    await wrapper.find('[data-test="ozellestirme-gorunurluk-karMarj"]').setValue(false)
+    expect(wrapper.find('[data-test="kokpit-bolum-karMarj"]').exists()).toBe(false)
+
+    await wrapper.find('[data-test="ozellestirme-kaydet"]').trigger('click')
+    await flushPromises()
+
+    expect(dashboardAPI.tercihKaydet).toHaveBeenCalled()
+    expect(wrapper.find('[data-test="kokpit-ozellestirme"]').exists()).toBe(false)
   })
 })

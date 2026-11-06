@@ -77,6 +77,18 @@
         />
       </div>
     </div>
+
+    <KokpitOzellestirme
+      v-if="ozellestirmeAcik"
+      :bolumler="KOKPIT_BOLUMLERI"
+      :gorunur-bolumler="kokpitStore.gorunurBolumler"
+      :kaydediliyor="kokpitStore.tercihKaydediliyor"
+      @kapat="ozellestirmeAcik = false"
+      @gorunurluk-degistir="bolumGorunurlukDegistir"
+      @sira-degistir="bolumSirala"
+      @sifirla="bolumleriSifirla"
+      @kaydet="tercihiKaydet"
+    />
   </div>
 </template>
 
@@ -86,6 +98,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
 import { useKokpitStore } from '../stores/kokpitStore.js'
+import { KOKPIT_BOLUMLERI } from '../stores/kokpitStore.js'
 import { useDashboardCanli } from '../composables/useDashboardCanli.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { excelAPI } from '../api/index.js'
@@ -97,6 +110,7 @@ import NakitBolumu from '../components/dashboard/kokpit/NakitBolumu.vue'
 import AlacakVerecekBolumu from '../components/dashboard/kokpit/AlacakVerecekBolumu.vue'
 import KarMarjBolumu from '../components/dashboard/kokpit/KarMarjBolumu.vue'
 import FaturaSiparisBolumu from '../components/dashboard/kokpit/FaturaSiparisBolumu.vue'
+import KokpitOzellestirme from '../components/dashboard/kokpit/KokpitOzellestirme.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -196,6 +210,32 @@ const yenile = async () => {
 const detayaGit = (hedef) => {
   if (!hedef?.route) return
   router.push({ path: hedef.route, query: hedef.query || {} })
+}
+
+// --- Özelleştirme ------------------------------------------------------------
+const bolumGorunurlukDegistir = (anahtar, gorunur) => {
+  kokpitStore.bolumGorunurlukDegistir(anahtar, gorunur)
+}
+
+const bolumSirala = (sira) => {
+  kokpitStore.bolumSirala(sira)
+}
+
+const bolumleriSifirla = async () => {
+  try {
+    await kokpitStore.tercihiSifirla()
+  } catch {
+    toastBildirim.hata(t('dashboard.kokpitOzellestirmeKaydedilemedi'))
+  }
+}
+
+const tercihiKaydet = async () => {
+  try {
+    await kokpitStore.tercihKaydet()
+    ozellestirmeAcik.value = false
+  } catch {
+    toastBildirim.hata(t('dashboard.kokpitOzellestirmeKaydedilemedi'))
+  }
 }
 
 // --- Excel / PDF -------------------------------------------------------------

@@ -6649,6 +6649,7 @@
     "kokpitOzellestirmeKaydet": "Save",
     "kokpitOzellestirmeKapat": "Close",
     "kokpitOzellestirmeEnAzBir": "At least one section must remain visible.",
+    "kokpitOzellestirmeKaydedilemedi": "Layout could not be saved.",
     "excelIndir": "Download Excel",
     "excelIndirildi": "Excel downloaded.",
     "excelHata": "Excel could not be downloaded.",
