@@ -124,13 +124,16 @@ describe('kâr/marj ve fatura/sipariş bölümleri', () => {
       props: { veri: faturaVeri, paraBirimi: 'TRY' }
     })
 
+    await wrapper.find('[data-test="fatura-tahsilat"]').trigger('click')
+    expect(wrapper.emitted('detay')[0][0]).toEqual({ route: '/tahsilat', query: {} })
+
     await wrapper.find('[data-test="fatura-detay"]').trigger('click')
-    expect(wrapper.emitted('detay')[0][0].route).toBe('/tahsilat')
+    expect(wrapper.emitted('detay')[1][0].route).toBe('/tahsilat')
 
     await wrapper.find('[data-test="pipeline-kova-KESILDI"]').trigger('click')
-    expect(wrapper.emitted('detay')[1][0]).toEqual({ route: '/faturalar', query: { durum: 'KESILDI' } })
+    expect(wrapper.emitted('detay')[2][0]).toEqual({ route: '/faturalar', query: { durum: 'KESILDI' } })
 
     await wrapper.find('[data-test="vadesi-gecen-tablo"] tbody tr').trigger('click')
-    expect(wrapper.emitted('detay')[2][0].query.no).toBe('FTR-1')
+    expect(wrapper.emitted('detay')[3][0].query.no).toBe('FTR-1')
   })
 })

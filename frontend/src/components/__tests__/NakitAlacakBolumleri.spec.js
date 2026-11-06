@@ -108,6 +108,12 @@ describe('nakit ve alacak/verecek bölümleri', () => {
     expect(alacakWrapper.emitted('detay')[0][0].route).toBe('/cari-hesaplar')
 
     await alacakWrapper.find('[data-test="borclular-tablo"] tbody tr').trigger('click')
+    expect(alacakWrapper.emitted('detay')[1][0].route).toBe('/tahsilat')
     expect(alacakWrapper.emitted('detay')[1][0].query.cariId).toBe('1')
+
+    await alacakWrapper.find('[data-test="borclu-tahsilat"]').trigger('click')
+    expect(alacakWrapper.emitted('detay')[2][0].route).toBe('/tahsilat')
+    expect(alacakWrapper.emitted('detay')[2][0].query.cariId).toBe('1')
+    expect(alacakWrapper.emitted('detay')).toHaveLength(3)
   })
 })

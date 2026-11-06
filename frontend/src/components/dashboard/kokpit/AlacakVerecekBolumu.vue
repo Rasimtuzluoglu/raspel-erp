@@ -50,14 +50,29 @@
       <div class="alacak-tablo">
         <span class="alacak-bolum-baslik">{{ t('dashboard.kokpitAlacakVerecekBorclular') }}</span>
         <MiniTablo
-          :kolonlar="cariKolonlari"
+          :kolonlar="borcluKolonlari"
           :satirlar="borclular"
           :bos-metin="t('dashboard.kokpitAlacakVerecekBos')"
           :para-birimi="paraBirimi"
           :baslik="t('dashboard.kokpitAlacakVerecekBorclular')"
           data-test="borclular-tablo"
-          @satir-sec="cariDetay"
-        />
+          @satir-sec="borcluDetay"
+        >
+          <template #hucre-islem="{ satir }">
+            <button
+              type="button"
+              class="alacak-hizli-islem"
+              data-test="borclu-tahsilat"
+              @click.stop="borcluDetay(satir)"
+            >
+              <i
+                class="pi pi-wallet"
+                aria-hidden="true"
+              />
+              {{ t('dashboard.kokpitTahsilat') }}
+            </button>
+          </template>
+        </MiniTablo>
       </div>
       <div class="alacak-tablo">
         <span class="alacak-bolum-baslik">{{ t('dashboard.kokpitAlacakVerecekTedarikciler') }}</span>
@@ -143,10 +158,24 @@ const cariKolonlari = [
   { anahtar: 'tutar', etiket: t('dashboard.kokpitAlacakVerecekTutar'), hiza: 'sag', bicim: 'para' }
 ]
 
+const borcluKolonlari = [
+  ...cariKolonlari,
+  { anahtar: 'islem', etiket: '', hiza: 'sag' }
+]
+
 const kappaSec = (kova) => {
   emit('detay', {
     route: '/cari-hesaplar',
     query: { yaslanma: kova.anahtar }
+  })
+}
+
+const borcluDetay = (satir) => {
+  if (!satir?.cariId) return
+  // Tahsilat ekranı cariId ile açıldığında tahsilat giriş diyaloğunu açar.
+  emit('detay', {
+    route: '/tahsilat',
+    query: { cariId: String(satir.cariId) }
   })
 }
 
@@ -234,6 +263,28 @@ const cariDetay = (satir) => {
   flex-direction: column;
   gap: 3px;
   min-width: 0;
+}
+.alacak-hizli-islem {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 5px;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-xs);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 9.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.alacak-hizli-islem:hover,
+.alacak-hizli-islem:focus-visible {
+  background: var(--accent-soft-strong);
+}
+.alacak-hizli-islem:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 @media (max-width: 760px) {
   .alacak-tablolar {

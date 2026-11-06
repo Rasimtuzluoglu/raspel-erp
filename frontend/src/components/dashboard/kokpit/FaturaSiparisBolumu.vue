@@ -7,6 +7,21 @@
     :hata="hata"
     data-test="fatura-siparis-bolumu"
   >
+    <template #ust>
+      <button
+        type="button"
+        class="fatura-hizli-islem"
+        data-test="fatura-tahsilat"
+        @click="emit('detay', { route: '/tahsilat', query: {} })"
+      >
+        <i
+          class="pi pi-wallet"
+          aria-hidden="true"
+        />
+        {{ t('dashboard.kokpitTahsilat') }}
+      </button>
+    </template>
+
     <div class="fatura-ozet">
       <div class="fatura-stat fatura-stat--kritik">
         <span class="fatura-stat-etiket">{{ t('dashboard.kokpitFaturaSiparisVadesiGecen') }}</span>
@@ -189,6 +204,28 @@ const faturaDetay = (satir) => {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
+}
+.fatura-hizli-islem {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 6px;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-xs);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.fatura-hizli-islem:hover,
+.fatura-hizli-islem:focus-visible {
+  background: var(--accent-soft-strong);
+}
+.fatura-hizli-islem:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 .fatura-stat {
   display: flex;
