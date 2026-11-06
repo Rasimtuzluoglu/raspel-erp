@@ -12,6 +12,7 @@ import com.raspel.erp.dto.sistem.DashboardTercihDTO;
 import com.raspel.erp.dto.sistem.DashboardVadeDTO;
 import com.raspel.erp.service.sistem.DashboardService;
 import com.raspel.erp.service.sistem.DashboardTercihService;
+import com.raspel.erp.service.sistem.KokpitService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +53,9 @@ class DashboardControllerTest {
 
     @MockBean
     private DashboardTercihService dashboardTercihService;
+
+    @MockBean
+    private KokpitService kokpitService;
 
     @AfterEach
     void temizle() {
