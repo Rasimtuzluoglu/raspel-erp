@@ -164,48 +164,61 @@
         </button>
       </div>
 
-      <ul
-        v-else-if="notlar.length"
-        class="notlar-liste"
-        data-test="not-liste"
-      >
-        <li
-          v-for="not in notlar"
-          :key="not.id"
-          class="notlar-oge"
-          :data-test="`not-oge-${not.id}`"
+      <template v-else-if="notlar.length">
+        <ul
+          class="notlar-liste"
+          data-test="not-liste"
         >
-          <div class="notlar-icerik-alan">
-            <span class="notlar-baslik">{{ not.baslik }}</span>
-            <p
-              v-if="not.icerik"
-              class="notlar-metin"
-            >
-              {{ not.icerik }}
-            </p>
-            <div class="notlar-alt">
-              <span class="notlar-tarih">{{ tarihMetni(not.olusturmaTarihi) }}</span>
-              <span
-                v-if="not.onemDerecesi && not.onemDerecesi !== 'NORMAL'"
-                class="notlar-onem"
-                :class="`notlar-onem--${not.onemDerecesi.toLowerCase()}`"
-              >{{ onemAdi(not.onemDerecesi) }}</span>
+          <li
+            v-for="not in notlar"
+            :key="not.id"
+            class="notlar-oge"
+            :data-test="`not-oge-${not.id}`"
+          >
+            <div class="notlar-icerik-alan">
+              <span class="notlar-baslik">{{ not.baslik }}</span>
+              <p
+                v-if="not.icerik"
+                class="notlar-metin"
+              >
+                {{ not.icerik }}
+              </p>
+              <div class="notlar-alt">
+                <span class="notlar-tarih">{{ tarihMetni(not.olusturmaTarihi) }}</span>
+                <span
+                  v-if="not.onemDerecesi && not.onemDerecesi !== 'NORMAL'"
+                  class="notlar-onem"
+                  :class="`notlar-onem--${not.onemDerecesi.toLowerCase()}`"
+                >{{ onemAdi(not.onemDerecesi) }}</span>
+              </div>
             </div>
-          </div>
-        </li>
-      </ul>
+          </li>
+        </ul>
 
-      <p
+        <div class="notlar-bosluk">
+          <i
+            class="pi pi-pencil"
+            aria-hidden="true"
+          />
+          <p>{{ t('dashboard.notlarIpucu') }}</p>
+        </div>
+      </template>
+
+      <div
         v-else
-        class="notlar-bos"
-        data-test="notlar-bos"
+        class="notlar-bos-alan"
       >
-        <i
-          class="pi pi-clipboard"
-          aria-hidden="true"
-        />
-        {{ t('dashboard.notlarBos') }}
-      </p>
+        <p
+          class="notlar-bos"
+          data-test="notlar-bos"
+        >
+          <i
+            class="pi pi-clipboard"
+            aria-hidden="true"
+          />
+          {{ t('dashboard.notlarBos') }}
+        </p>
+      </div>
     </aside>
   </div>
 </template>
@@ -590,6 +603,50 @@ watch(
 .notlar-bos i {
   font-size: 15px;
   color: var(--accent);
+}
+
+/* Kisa listede kalan alani bos birakma: ince bir not defteri ipucu. */
+.notlar-bosluk {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 2px;
+  padding: 16px;
+  overflow: hidden;
+  color: var(--text-muted);
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 31px,
+      rgba(148, 163, 184, 0.07) 31px 32px
+    );
+}
+.notlar-bosluk i {
+  font-size: 22px;
+  opacity: 0.35;
+}
+.notlar-bosluk p {
+  margin: 0;
+  max-width: 240px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  opacity: 0.8;
+}
+.notlar-bos-alan {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 @media (prefers-reduced-motion: reduce) {
