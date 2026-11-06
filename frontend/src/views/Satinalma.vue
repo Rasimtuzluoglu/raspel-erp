@@ -481,6 +481,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -492,6 +493,7 @@ import { useI18n } from 'vue-i18n'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { t } = useI18n()
+const route = useRoute()
 
 const talepler = ref([])
 const siparisler = ref([])
@@ -534,6 +536,7 @@ const stokSecildi = (form, kalem) => {
 
 onMounted(async () => {
   await Promise.all([talepleriYukle(), siparisleriYukle(), carieleriYukle(), stoklariYukle()])
+  if (route?.query?.yeni === '1') talepDialogAc()
 })
 
 const stoklariYukle = async () => {

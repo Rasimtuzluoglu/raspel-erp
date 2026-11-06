@@ -221,6 +221,7 @@ public class KokpitDTO {
     @Builder
     public static class VadesiGecenFaturaDTO {
         private Long faturaId;
+        private Long cariId;
         private String faturaNumarasi;
         private String cariAd;
         private LocalDate vadeTarihi;

@@ -8,11 +8,22 @@
     data-test="fatura-siparis-bolumu"
   >
     <template #ust>
+      <router-link
+        to="/faturalar?yeni=1"
+        class="bolum-hizli-link"
+        data-test="fatura-yeni-link"
+      >
+        {{ t('dashboard.yeniFatura') }}
+        <i
+          class="pi pi-arrow-up-right"
+          aria-hidden="true"
+        />
+      </router-link>
       <button
         type="button"
         class="fatura-hizli-islem"
         data-test="fatura-tahsilat"
-        @click="emit('detay', { route: '/tahsilat', query: {} })"
+        @click="emit('hizli-islem', 'tahsilat')"
       >
         <i
           class="pi pi-wallet"
@@ -77,7 +88,23 @@
         :baslik="t('dashboard.kokpitFaturaSiparisVadesiGecen')"
         data-test="vadesi-gecen-tablo"
         @satir-sec="faturaDetay"
-      />
+      >
+        <template #hucre-islem="{ satir }">
+          <button
+            v-if="satir.cariId"
+            type="button"
+            class="fatura-satir-tahsilat"
+            :data-test="`fatura-satir-tahsilat-${satir.faturaId}`"
+            :aria-label="t('dashboard.kokpitTahsilat')"
+            @click.stop="emit('hizli-islem', 'tahsilat', satir.cariId)"
+          >
+            <i
+              class="pi pi-wallet"
+              aria-hidden="true"
+            />
+          </button>
+        </template>
+      </MiniTablo>
     </div>
 
     <template #alt>
@@ -112,7 +139,7 @@ const props = defineProps({
   paraBirimi: { type: String, default: 'TRY' }
 })
 
-const emit = defineEmits(['detay'])
+const emit = defineEmits(['detay', 'hizli-islem'])
 const { t, te } = useI18n()
 
 const veriDegeri = computed(() => props.veri || {})
@@ -174,7 +201,8 @@ const vadeKolonlari = [
   { anahtar: 'faturaNumarasi', etiket: t('dashboard.kokpitFaturaSiparisFaturaNo') },
   { anahtar: 'cariAd', etiket: t('dashboard.kokpitFaturaSiparisCari'), mobilGizle: true },
   { anahtar: 'vadeTarihi', etiket: t('dashboard.kokpitFaturaSiparisVade'), bicim: 'tarih', mobilGizle: true },
-  { anahtar: 'kalanTutar', etiket: t('dashboard.kokpitFaturaSiparisKalan'), hiza: 'sag', bicim: 'para' }
+  { anahtar: 'kalanTutar', etiket: t('dashboard.kokpitFaturaSiparisKalan'), hiza: 'sag', bicim: 'para' },
+  { anahtar: 'islem', etiket: '', hiza: 'sag' }
 ]
 
 const durumDetay = (kova) => {
@@ -218,6 +246,48 @@ const faturaDetay = (satir) => {
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
+}
+.bolum-hizli-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.bolum-hizli-link:hover,
+.bolum-hizli-link:focus-visible {
+  color: var(--accent-hover);
+}
+.bolum-hizli-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.bolum-hizli-link i {
+  font-size: 8px;
+}
+.fatura-satir-tahsilat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-xs);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 9px;
+  cursor: pointer;
+}
+.fatura-satir-tahsilat:hover,
+.fatura-satir-tahsilat:focus-visible {
+  background: var(--accent-soft-strong);
+}
+.fatura-satir-tahsilat:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 .fatura-hizli-islem:hover,
 .fatura-hizli-islem:focus-visible {

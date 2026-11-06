@@ -88,6 +88,7 @@ class KokpitServiceTest {
         assertEquals(2L, kokpit.getKarMarj().getMaliyetsizKalem());
 
         assertEquals(1, kokpit.getFaturaSiparis().getVadesiGecenFaturalar().size());
+        assertEquals(10L, kokpit.getFaturaSiparis().getVadesiGecenFaturalar().get(0).getCariId());
         assertEquals(1, kokpit.getFaturaSiparis().getSiparisDurumlari().size());
 
         verify(dashboardService).karAnaliziGetir(1L, "ADMIN", "BU_AY");

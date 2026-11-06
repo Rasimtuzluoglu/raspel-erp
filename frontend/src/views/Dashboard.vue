@@ -18,6 +18,14 @@
       @ozellestir="ozellestirmeAcik = true"
     />
 
+    <KokpitHizliIslemler
+      :bekleyen-onay="bekleyenOnaySayisi"
+      :onay-gorebilir="onayGorebilir"
+      @tahsilat="hizliTahsilatAc('TAHSILAT')"
+      @odeme="hizliTahsilatAc('ODEME')"
+      @onaylar="onayDialogAcik = true"
+    />
+
     <p
       class="sr-only"
       role="status"
@@ -56,6 +64,7 @@
       :ogeler="kritikDurum"
       :yukleniyor="ilkYukleme"
       :para-birimi="kokpitStore.paraBirimi"
+      @oge-sec="kritikOgeSec"
     />
 
     <div
@@ -74,6 +83,7 @@
           :yukleniyor="ilkYukleme"
           :para-birimi="kokpitStore.paraBirimi"
           @detay="detayaGit"
+          @hizli-islem="hizliIslem"
         />
       </div>
     </div>
@@ -88,6 +98,19 @@
       @sira-degistir="bolumSirala"
       @sifirla="bolumleriSifirla"
       @kaydet="tercihiKaydet"
+    />
+
+    <KokpitTahsilatDialog
+      v-model:visible="hizliTahsilatAcik"
+      :tur="hizliTahsilatTur"
+      :cari-id="hizliTahsilatCariId"
+      @kaydedildi="hizliIslemKaydedildi"
+    />
+
+    <KokpitOnayDialog
+      v-if="onayGorebilir"
+      v-model:visible="onayDialogAcik"
+      @guncellendi="hizliIslemKaydedildi"
     />
   </div>
 </template>
@@ -105,6 +128,9 @@ import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { excelAPI } from '../api/index.js'
 import { formatDateTime } from '../utils/format.js'
 import KokpitGlobalFiltre from '../components/dashboard/kokpit/KokpitGlobalFiltre.vue'
+import KokpitHizliIslemler from '../components/dashboard/kokpit/KokpitHizliIslemler.vue'
+import KokpitTahsilatDialog from '../components/dashboard/kokpit/KokpitTahsilatDialog.vue'
+import KokpitOnayDialog from '../components/dashboard/kokpit/KokpitOnayDialog.vue'
 import FinansOzetBandi from '../components/dashboard/kokpit/FinansOzetBandi.vue'
 import KritikDurumSeridi from '../components/dashboard/kokpit/KritikDurumSeridi.vue'
 import NakitBolumu from '../components/dashboard/kokpit/NakitBolumu.vue'
@@ -122,6 +148,10 @@ const toastBildirim = useToastBildirim()
 
 const ozellestirmeAcik = ref(false)
 const duyuru = ref('')
+const hizliTahsilatAcik = ref(false)
+const hizliTahsilatTur = ref('TAHSILAT')
+const hizliTahsilatCariId = ref(null)
+const onayDialogAcik = ref(false)
 
 const kokpit = computed(() => kokpitStore.kokpit)
 const gosterilenKokpit = computed(() =>
@@ -132,6 +162,16 @@ const kritikDurum = computed(() =>
   Array.isArray(gosterilenKokpit.value?.kritikDurum) ? gosterilenKokpit.value.kritikDurum : []
 )
 const ilkYukleme = computed(() => kokpitStore.yukleniyor && !kokpit.value)
+const onayGorebilir = computed(() => {
+  const rol = authStore.kullanici?.role
+  return rol === 'ADMIN' || rol === 'MUHASEBE'
+})
+const bekleyenOnaySayisi = computed(() => {
+  const oge = (gosterilenKokpit.value?.kritikDurum || []).find(
+    (kritik) => kritik.anahtar === 'bekleyenOnay'
+  )
+  return Number(oge?.adet) || 0
+})
 
 const BILESENLER = {
   nakit: NakitBolumu,
@@ -367,6 +407,45 @@ const yenile = async () => {
 const detayaGit = (hedef) => {
   if (!hedef?.route) return
   router.push({ path: hedef.route, query: hedef.query || {} })
+}
+
+// --- Hızlı işlemler ----------------------------------------------------------
+const hizliTahsilatAc = (tur = 'TAHSILAT', cariId = null) => {
+  hizliTahsilatTur.value = tur === 'ODEME' ? 'ODEME' : 'TAHSILAT'
+  const sayi = Number(cariId)
+  hizliTahsilatCariId.value = cariId != null && Number.isFinite(sayi) ? sayi : null
+  hizliTahsilatAcik.value = true
+}
+
+const hizliIslem = (tip, cariId = null) => {
+  if (tip === 'tahsilat') {
+    hizliTahsilatAc('TAHSILAT', cariId)
+  } else if (tip === 'odeme') {
+    hizliTahsilatAc('ODEME', cariId)
+  }
+}
+
+const kritikOgeSec = (oge) => {
+  switch (oge?.anahtar) {
+    case 'vadesiGecen':
+      hizliTahsilatAc('TAHSILAT')
+      break
+    case 'bekleyenOnay':
+      if (onayGorebilir.value) onayDialogAcik.value = true
+      break
+    case 'kritikStok':
+      router.push({ path: '/satinalma', query: { yeni: '1' } })
+      break
+    case 'likiditeTrendi':
+      router.push({ path: '/kasa' })
+      break
+    default:
+      if (oge?.hedef?.route) detayaGit(oge.hedef)
+  }
+}
+
+const hizliIslemKaydedildi = () => {
+  yenile()
 }
 
 // --- Özelleştirme ------------------------------------------------------------

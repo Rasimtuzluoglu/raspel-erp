@@ -15,6 +15,18 @@
         {{ t('dashboard.kokpitAlacakVerecekNet') }}:
         <strong class="gizli-veri">{{ formatPara(net, paraBirimi) }}</strong>
       </span>
+      <button
+        type="button"
+        class="bolum-hizli-buton"
+        data-test="alacak-tahsilat-hizli"
+        @click="emit('hizli-islem', 'tahsilat')"
+      >
+        <i
+          class="pi pi-wallet"
+          aria-hidden="true"
+        />
+        {{ t('dashboard.kokpitTahsilat') }}
+      </button>
     </template>
 
     <div class="alacak-ozet">
@@ -120,7 +132,7 @@ const props = defineProps({
   paraBirimi: { type: String, default: 'TRY' }
 })
 
-const emit = defineEmits(['detay'])
+const emit = defineEmits(['detay', 'hizli-islem'])
 const { t, te } = useI18n()
 
 const veriDegeri = computed(() => props.veri || {})
@@ -200,6 +212,28 @@ const cariDetay = (satir) => {
 }
 .alacak-net--negatif strong {
   color: var(--danger);
+}
+.bolum-hizli-buton {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 6px;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-xs);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.bolum-hizli-buton:hover,
+.bolum-hizli-buton:focus-visible {
+  background: var(--accent-soft-strong);
+}
+.bolum-hizli-buton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 .alacak-ozet {
   display: grid;

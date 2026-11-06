@@ -18,6 +18,17 @@
         />
         {{ trendMetni }}
       </span>
+      <router-link
+        to="/kasa"
+        class="bolum-hizli-link"
+        data-test="nakit-kasa-link"
+      >
+        {{ t('dashboard.kokpitNakitKasa') }}
+        <i
+          class="pi pi-arrow-up-right"
+          aria-hidden="true"
+        />
+      </router-link>
     </template>
 
     <div class="nakit-ozet">
@@ -225,6 +236,27 @@ const dagitimEtiketi = computed(() =>
 }
 .nakit-trend--notr {
   color: var(--text-muted);
+}
+.bolum-hizli-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.bolum-hizli-link:hover,
+.bolum-hizli-link:focus-visible {
+  color: var(--accent-hover);
+}
+.bolum-hizli-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.bolum-hizli-link i {
+  font-size: 8px;
 }
 .nakit-ozet {
   display: grid;

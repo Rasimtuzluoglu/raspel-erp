@@ -41,6 +41,7 @@ const faturaVeri = {
   vadesiGecenAdet: 3,
   vadesiGecenFaturalar: Array.from({ length: 10 }, (_, index) => ({
     faturaId: index + 1,
+    cariId: index + 1,
     faturaNumarasi: `FTR-${index + 1}`,
     cariAd: `Cari ${index + 1}`,
     vadeTarihi: '2026-10-01',
@@ -118,6 +119,16 @@ describe('kâr/marj ve fatura/sipariş bölümleri', () => {
     expect(wrapper.text()).not.toContain('FTR-10')
   })
 
+  it('faturaSatirindanHizliTahsilatAcilir', async () => {
+    const wrapper = mount(FaturaSiparisBolumu, {
+      ...mountOptions,
+      props: { veri: faturaVeri, paraBirimi: 'TRY' }
+    })
+
+    await wrapper.find('[data-test="fatura-satir-tahsilat-1"]').trigger('click')
+    expect(wrapper.emitted('hizli-islem')[0]).toEqual(['tahsilat', 1])
+  })
+
   it('bolumDetayOlayiHedefTasiyor', async () => {
     const wrapper = mount(FaturaSiparisBolumu, {
       ...mountOptions,
@@ -125,15 +136,15 @@ describe('kâr/marj ve fatura/sipariş bölümleri', () => {
     })
 
     await wrapper.find('[data-test="fatura-tahsilat"]').trigger('click')
-    expect(wrapper.emitted('detay')[0][0]).toEqual({ route: '/tahsilat', query: {} })
+    expect(wrapper.emitted('hizli-islem')[0][0]).toBe('tahsilat')
 
     await wrapper.find('[data-test="fatura-detay"]').trigger('click')
-    expect(wrapper.emitted('detay')[1][0].route).toBe('/tahsilat')
+    expect(wrapper.emitted('detay')[0][0].route).toBe('/tahsilat')
 
     await wrapper.find('[data-test="pipeline-kova-KESILDI"]').trigger('click')
-    expect(wrapper.emitted('detay')[2][0]).toEqual({ route: '/faturalar', query: { durum: 'KESILDI' } })
+    expect(wrapper.emitted('detay')[1][0]).toEqual({ route: '/faturalar', query: { durum: 'KESILDI' } })
 
     await wrapper.find('[data-test="vadesi-gecen-tablo"] tbody tr').trigger('click')
-    expect(wrapper.emitted('detay')[3][0].query.no).toBe('FTR-1')
+    expect(wrapper.emitted('detay')[2][0].query.no).toBe('FTR-1')
   })
 })

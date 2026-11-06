@@ -602,6 +602,7 @@ public class KokpitService {
                     .stream()
                     .map(f -> KokpitDTO.VadesiGecenFaturaDTO.builder()
                             .faturaId(f.getId())
+                            .cariId(f.getCariHesap() != null ? f.getCariHesap().getId() : null)
                             .faturaNumarasi(f.getFaturaNumarasi())
                             .cariAd(f.getCariHesap() != null ? f.getCariHesap().getAd() : null)
                             .vadeTarihi(f.getVadeTarihi())

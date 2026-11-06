@@ -14,14 +14,14 @@
     </template>
 
     <template v-else-if="ogeler.length > 0">
-      <component
-        :is="hedef(oge) ? 'router-link' : 'div'"
+      <button
         v-for="oge in ogeler"
         :key="oge.anahtar"
-        :to="hedef(oge) || undefined"
+        type="button"
         class="kritik-serit-oge"
         :class="[seviyeSinifi(oge.seviye), { 'kritik-serit-oge--link': !!hedef(oge) }]"
         :data-test="`kritik-oge-${oge.anahtar}`"
+        @click="emit('oge-sec', oge)"
       >
         <i
           class="kritik-serit-ikon"
@@ -33,7 +33,7 @@
           <strong class="kritik-serit-deger">{{ degerMetni(oge) }}</strong>
         </span>
         <span class="kritik-serit-rozet">{{ seviyeEtiketi(oge.seviye) }}</span>
-      </component>
+      </button>
     </template>
 
     <p
@@ -61,6 +61,7 @@ const props = defineProps({
 })
 
 const { t, te } = useI18n()
+const emit = defineEmits(['oge-sec'])
 
 const ANAHTARLAR = {
   vadesiGecen: 'dashboard.kokpitKritikSeritVadesiGecen',
@@ -148,13 +149,17 @@ const degerMetni = (oge) => {
   border-radius: var(--radius-sm);
   background: var(--bg-card);
   color: inherit;
+  font: inherit;
+  text-align: left;
   text-decoration: none;
+  cursor: pointer;
 }
-.kritik-serit-oge--link:hover,
-.kritik-serit-oge--link:focus-visible {
+.kritik-serit-oge:hover,
+.kritik-serit-oge:focus-visible {
   border-color: var(--accent-border);
+  background: var(--bg-secondary);
 }
-.kritik-serit-oge--link:focus-visible {
+.kritik-serit-oge:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }

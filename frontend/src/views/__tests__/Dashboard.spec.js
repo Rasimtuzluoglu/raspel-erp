@@ -20,6 +20,17 @@ vi.mock('../../api/index.js', () => ({
   },
   dovizAPI: {
     getKurlar: vi.fn().mockResolvedValue({ data: [] })
+  },
+  hareketAPI: {
+    create: vi.fn().mockResolvedValue({ data: {} })
+  },
+  onaylarAPI: {
+    bekleyen: vi.fn().mockResolvedValue({ data: { content: [] } }),
+    karar: vi.fn().mockResolvedValue({ data: {} })
+  },
+  cariHesapAPI: {
+    filtreli: vi.fn().mockResolvedValue({ data: [] }),
+    getById: vi.fn().mockResolvedValue({ data: null })
   }
 }))
 
@@ -314,5 +325,29 @@ describe('Dashboard kokpiti', () => {
 
     expect(localStorage.getItem('raspel_dashboard_para_birimi')).toBe('USD')
     expect(wrapper.find('[data-test="finans-ozet-bandi"]').text()).toContain('$')
+  })
+
+  it('hizliIslemBarindanTahsilatDialogAcar', async () => {
+    const wrapper = mountDashboard()
+    await flushPromises()
+
+    await wrapper.find('[data-test="hizli-tahsilat"]').trigger('click')
+    expect(wrapper.find('[data-test="hizli-tahsilat-katman"]').exists()).toBe(true)
+  })
+
+  it('kritikOgedenTahsilatDialogAcar', async () => {
+    const wrapper = mountDashboard()
+    await flushPromises()
+
+    await wrapper.find('[data-test="kritik-oge-vadesiGecen"]').trigger('click')
+    expect(wrapper.find('[data-test="hizli-tahsilat-katman"]').exists()).toBe(true)
+  })
+
+  it('hizliOnayDialogAcar', async () => {
+    const wrapper = mountDashboard()
+    await flushPromises()
+
+    await wrapper.find('[data-test="hizli-onaylar"]').trigger('click')
+    expect(wrapper.find('[data-test="kokpit-onay-katman"]').exists()).toBe(true)
   })
 })

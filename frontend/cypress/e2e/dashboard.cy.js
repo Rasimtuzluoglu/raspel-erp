@@ -196,12 +196,13 @@ describe('Anasayfa finans kokpiti', () => {
     })
   })
 
-  it('kokpit-kritik-serit-detay: kritik öğe tahsilata gider', () => {
+  it('kokpit-kritik-serit-detay: kritik öğe tahsilat diyaloğunu açar', () => {
     cy.viewport(1440, 900)
     anasayfaAc()
 
     cy.get('[data-test="kritik-oge-vadesiGecen"]').click()
-    cy.url().should('include', '/tahsilat')
+    cy.get('[data-test="hizli-tahsilat-katman"]').should('be.visible')
+    cy.get('[data-test="hizli-tahsilat-kapat"]').click()
   })
 
   it('kokpit-ozellestirme: bölüm gizlenir ve düzen kaydedilir', () => {
@@ -228,6 +229,21 @@ describe('Anasayfa finans kokpiti', () => {
     cy.get('[data-test="kokpit-yenile"]').click()
     cy.wait('@kokpit')
     cy.get('[data-test="finans-ozet-bandi"]').should('be.visible')
+  })
+
+  it('kokpit-hizli-islemler: tahsilat ve onay diyalogları açılır', () => {
+    cy.viewport(1440, 900)
+    anasayfaAc()
+
+    cy.get('[data-test="hizli-tahsilat"]').click()
+    cy.get('[data-test="hizli-tahsilat-katman"]').should('be.visible')
+    cy.get('[data-test="hizli-tahsilat-kapat"]').click()
+    cy.get('[data-test="hizli-tahsilat-katman"]').should('not.exist')
+
+    cy.get('[data-test="hizli-onaylar"]').click()
+    cy.get('[data-test="kokpit-onay-katman"]').should('be.visible')
+    cy.get('[data-test="kokpit-onay-kapat"]').click()
+    cy.get('[data-test="kokpit-onay-katman"]').should('not.exist')
   })
 
   it('kokpit-390px: yatay taşma yok, bölümler tek kolon', () => {

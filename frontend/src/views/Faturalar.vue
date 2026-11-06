@@ -1030,6 +1030,9 @@ onMounted(async () => {
       seciliCariNesnesi.value = cari
       form.value.cariHesapId = cariId
     }
+  } else if (route?.query?.yeni === '1') {
+    // Kokpitten "Yeni Fatura" kısayolu: doğrudan oluşturma diyaloğunu aç.
+    openCreateDialog()
   }
   // Fatura numarasından derin bağlantı: /faturalar?no=FTR-... -> ilgili fatura detayına git
   if (route.query.no) {

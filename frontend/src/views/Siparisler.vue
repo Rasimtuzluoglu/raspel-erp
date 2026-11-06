@@ -214,6 +214,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -224,6 +225,7 @@ import { formatCurrency, getLocalDateString } from '../utils/format.js'
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { t } = useI18n()
+const route = useRoute()
 
 const siparisler = ref([])
 const cariler = ref([])
@@ -244,6 +246,7 @@ onMounted(async () => {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('siparisler.hataYukleme'))
   }
   yukleniyor.value = false
+  if (route?.query?.yeni === '1') dialogAc()
 })
 
 const personeller = ref([])

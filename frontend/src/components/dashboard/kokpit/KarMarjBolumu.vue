@@ -7,6 +7,21 @@
     :hata="hata"
     data-test="kar-marj-bolumu"
   >
+    <template #ust>
+      <router-link
+        v-if="veriVar"
+        to="/raporlar"
+        class="bolum-hizli-link"
+        data-test="kar-rapor-link"
+      >
+        {{ t('dashboard.raporlar') }}
+        <i
+          class="pi pi-arrow-up-right"
+          aria-hidden="true"
+        />
+      </router-link>
+    </template>
+
     <div
       v-if="!veriVar"
       class="kar-bos"
@@ -227,6 +242,27 @@ const cariDetay = (satir) => {
   border-radius: var(--radius-sm);
   font-size: 12px;
   color: var(--text-muted);
+}
+.bolum-hizli-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.bolum-hizli-link:hover,
+.bolum-hizli-link:focus-visible {
+  color: var(--accent-hover);
+}
+.bolum-hizli-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.bolum-hizli-link i {
+  font-size: 8px;
 }
 .kar-ozet {
   display: grid;

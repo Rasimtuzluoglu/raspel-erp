@@ -385,6 +385,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
@@ -402,6 +403,7 @@ import { useI18n } from 'vue-i18n'
 
 const toast = useToast()
 const toastBildirim = useToastBildirim()
+const route = useRoute()
 const confirm = useConfirm()
 const authStore = useAuthStore()
 const { t } = useI18n()
@@ -545,7 +547,10 @@ const yukle = async () => {
   ozetYukle()
 }
 
-onMounted(yukle)
+onMounted(async () => {
+  await yukle()
+  if (route?.query?.yeni === '1') dialogAc()
+})
 
 const filtreDegisti = () => {
   sayfa.value = 0

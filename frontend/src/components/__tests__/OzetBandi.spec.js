@@ -95,14 +95,15 @@ describe('kokpit üst bandı', () => {
     expect(uyari.find('.kritik-serit-ikon').classes()).toContain('pi-exclamation-triangle')
   })
 
-  it('kritikOgeTiklanincaHedefeGider', () => {
+  it('kritikOgeSecimOlayiYayar', async () => {
     const wrapper = mount(KritikDurumSeridi, {
       ...mountOptions,
       props: { ogeler: kritikOgeler, paraBirimi: 'TRY' }
     })
 
-    const vadesiGecen = wrapper.find('[data-test="kritik-oge-vadesiGecen"]')
-    expect(vadesiGecen.attributes('data-to')).toContain('/tahsilat')
+    await wrapper.find('[data-test="kritik-oge-vadesiGecen"]').trigger('click')
+    expect(wrapper.emitted('oge-sec')[0][0].anahtar).toBe('vadesiGecen')
+    expect(wrapper.emitted('oge-sec')[0][0].hedef.route).toBe('/tahsilat')
   })
 
   it('kritikSeritBosDurumuGosterir', () => {
