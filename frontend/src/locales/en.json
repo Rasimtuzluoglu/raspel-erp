@@ -6572,6 +6572,7 @@
     "kokpitAdet": "items",
     "kokpitFaturaAdet": "invoices",
     "kokpitTumunuGor": "View all",
+    "kokpitAd": "Name",
     "kokpitKritikSeritVadesiGecen": "Overdue Invoices",
     "kokpitKritikSeritKritikStok": "Critical Stock",
     "kokpitKritikSeritBekleyenOnay": "Pending Approvals",
