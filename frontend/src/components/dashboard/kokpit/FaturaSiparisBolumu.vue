@@ -52,10 +52,36 @@
     </div>
 
     <div
+      class="fatura-performans"
+      data-test="fatura-tahsilat-performansi"
+    >
+      <div class="fatura-performans-ust">
+        <span>{{ t('dashboard.kokpitFaturaSiparisTahsilatPerformansi') }}</span>
+        <strong>{{ tahsilatOraniMetni }}</strong>
+      </div>
+      <div class="fatura-performans-bar">
+        <span :style="{ width: `${tahsilatOraniDegeri}%` }" />
+      </div>
+    </div>
+
+    <div
       class="fatura-pipeline"
       data-test="fatura-pipeline"
     >
       <span class="fatura-bolum-baslik">{{ t('dashboard.kokpitFaturaSiparisDurumlar') }}</span>
+      <div
+        v-if="durumToplamAdet > 0"
+        class="fatura-durum-bar"
+        role="img"
+        :aria-label="t('dashboard.kokpitFaturaSiparisDurumlar')"
+      >
+        <span
+          v-for="kova in durumBarKovalari"
+          :key="`durum-bar-${kova.anahtar}`"
+          :class="durumRenkSinifi(kova.anahtar)"
+          :style="{ width: `${durumOrani(kova)}%` }"
+        />
+      </div>
       <PipelineKovalari
         :kovalar="durumlar"
         :para-birimi="paraBirimi"
@@ -156,6 +182,10 @@ const tahsilatOraniMetni = computed(() => {
   return `${deger.toLocaleString('tr-TR', { maximumFractionDigits: 1 })}%`
 })
 
+const tahsilatOraniDegeri = computed(() =>
+  Math.min(100, Math.max(0, Number(veriDegeri.value.tahsilatOrani) || 0))
+)
+
 const siparisDurumAnahtarlari = {
   TEKLIF: 'dashboard.siparisDurumTeklif',
   SIPARIS: 'dashboard.siparisDurumSiparis',
@@ -176,6 +206,35 @@ const durumlar = computed(() =>
     }
   })
 )
+
+const durumBarKovalari = computed(() => {
+  const cekirdek = new Set(['TASLAK', 'TEKLIF', 'KESILDI', 'IPTAL'])
+  return durumlar.value.filter((kova) => cekirdek.has(kova.anahtar))
+})
+
+const durumToplamAdet = computed(() =>
+  durumBarKovalari.value.reduce((toplam, kova) => toplam + (Number(kova.adet) || 0), 0)
+)
+
+const durumOrani = (kova) => {
+  if (durumToplamAdet.value <= 0) return 0
+  return ((Number(kova.adet) || 0) / durumToplamAdet.value) * 100
+}
+
+const durumRenkSinifi = (anahtar) => {
+  switch (anahtar) {
+    case 'VADESI_GECEN':
+      return 'fatura-durum-bar--kritik'
+    case 'TAHSIL_EDILDI':
+      return 'fatura-durum-bar--olumlu'
+    case 'KESILDI':
+      return 'fatura-durum-bar--ana'
+    case 'TEKLIF':
+      return 'fatura-durum-bar--bilgi'
+    default:
+      return 'fatura-durum-bar--notr'
+  }
+}
 
 const siparisDurumlari = computed(() =>
   (Array.isArray(veriDegeri.value.siparisDurumlari) ? veriDegeri.value.siparisDurumlari : []).map((kova) => {
@@ -334,6 +393,69 @@ const faturaDetay = (satir) => {
   white-space: nowrap;
   font-size: 10px;
   color: var(--text-muted);
+}
+.fatura-performans {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-muted);
+}
+.fatura-performans-ust {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+.fatura-performans-ust strong {
+  font-size: 12px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.fatura-performans-bar {
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--bg-secondary);
+}
+.fatura-performans-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--success));
+  transition: width var(--dur-base) var(--ease-standard);
+}
+.fatura-durum-bar {
+  display: flex;
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--bg-muted);
+}
+.fatura-durum-bar span {
+  height: 100%;
+  min-width: 1px;
+}
+.fatura-durum-bar--notr {
+  background: var(--text-muted);
+}
+.fatura-durum-bar--bilgi {
+  background: var(--info);
+}
+.fatura-durum-bar--ana {
+  background: var(--accent);
+}
+.fatura-durum-bar--kritik {
+  background: var(--danger);
+}
+.fatura-durum-bar--olumlu {
+  background: var(--success);
 }
 .fatura-pipeline,
 .fatura-vadesi-gecen {

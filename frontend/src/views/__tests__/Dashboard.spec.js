@@ -142,7 +142,16 @@ const kokpitVerisi = () => ({
     tahsilatOrani: 70,
     siparisDurumlari: [],
     hedef: { route: '/tahsilat', query: {} }
-  }
+  },
+  icgoruler: [
+    {
+      seviye: 'WARN',
+      baslik: 'Vadesi geçen faturalar var',
+      mesaj: '3 faturanın vadesi geçmiş; tahsilat önerilir.',
+      route: '/tahsilat',
+      ikon: 'pi pi-exclamation-triangle'
+    }
+  ]
 })
 
 const mountEdilenler = []
@@ -349,5 +358,15 @@ describe('Dashboard kokpiti', () => {
 
     await wrapper.find('[data-test="hizli-onaylar"]').trigger('click')
     expect(wrapper.find('[data-test="kokpit-onay-katman"]').exists()).toBe(true)
+  })
+
+  it('yoneticiIcgoruSeridiniGosterir', async () => {
+    const wrapper = mountDashboard()
+    await flushPromises()
+
+    const serit = wrapper.find('[data-test="kokpit-icgoruler"]')
+    expect(serit.exists()).toBe(true)
+    expect(serit.text()).toContain('Vadesi geçen faturalar var')
+    expect(wrapper.find('[data-test="kokpit-icgoru-0"]').exists()).toBe(true)
   })
 })

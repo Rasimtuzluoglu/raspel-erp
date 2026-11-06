@@ -4,8 +4,16 @@ import i18n from '../../i18n.js'
 import KarMarjBolumu from '../dashboard/kokpit/KarMarjBolumu.vue'
 import FaturaSiparisBolumu from '../dashboard/kokpit/FaturaSiparisBolumu.vue'
 
+const RouterLinkStub = {
+  props: ['to'],
+  template: '<a :data-to="JSON.stringify(to)"><slot /></a>'
+}
+
 const mountOptions = {
-  global: { plugins: [i18n] }
+  global: {
+    plugins: [i18n],
+    stubs: { 'router-link': RouterLinkStub }
+  }
 }
 
 const kalemler = (onEk) => Array.from({ length: 6 }, (_, index) => ({
@@ -65,10 +73,34 @@ describe('kâr/marj ve fatura/sipariş bölümleri', () => {
 
     expect(wrapper.find('[data-test="kar-trend-grafik"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="kar-marj-grafik"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="kar-marj-gauge"]').exists()).toBe(true)
     expect(wrapper.findAll('[data-test="kar-urunler-tablo"] tbody tr')).toHaveLength(5)
     expect(wrapper.findAll('[data-test="kar-cariler-tablo"] tbody tr')).toHaveLength(5)
     expect(wrapper.text()).toContain('100.000,00')
     expect(wrapper.text()).toContain('30%')
+  })
+
+  it('karBolumuBosVeridePremiumBosDurumGosterir', () => {
+    const wrapper = mount(KarMarjBolumu, {
+      ...mountOptions,
+      props: {
+        veri: {
+          ciro: 0,
+          maliyet: 0,
+          kar: 0,
+          marj: null,
+          trend: [],
+          urunler: [],
+          cariler: [],
+          maliyetsizKalem: 0,
+          hedef: { route: '/raporlar', query: {} }
+        },
+        paraBirimi: 'TRY'
+      }
+    })
+
+    expect(wrapper.find('[data-test="kar-bos-premium"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Kâr/marj verisi henüz oluşmadı')
   })
 
   it('karBolumuYetkisizRoldeBosDurumGosterir', () => {
@@ -105,6 +137,8 @@ describe('kâr/marj ve fatura/sipariş bölümleri', () => {
     expect(wrapper.find('[data-test="siparis-pipeline"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('70%')
     expect(wrapper.text()).toContain('3 fatura')
+    expect(wrapper.find('[data-test="fatura-tahsilat-performansi"]').exists()).toBe(true)
+    expect(wrapper.find('.fatura-durum-bar').exists()).toBe(true)
   })
 
   it('faturaBolumuVadesiGecenIlkSekizGosterir', () => {

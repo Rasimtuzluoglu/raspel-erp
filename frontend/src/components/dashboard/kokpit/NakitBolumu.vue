@@ -84,6 +84,28 @@
       </div>
     </div>
 
+    <div
+      class="nakit-saglik"
+      :class="{ 'nakit-saglik--risk': projeksiyonRiskli }"
+      data-test="nakit-saglik"
+    >
+      <span class="nakit-saglik-rozet">
+        <i
+          :class="projeksiyonRiskli ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle'"
+          aria-hidden="true"
+        />
+        {{ projeksiyonRiskli ? t('dashboard.kokpitNakitRisk') : t('dashboard.kokpitNakitSaglikli') }}
+      </span>
+      <span class="nakit-saglik-metin">
+        {{ t('dashboard.kokpitNakitNet30') }}:
+        <strong :class="{ 'negatif': net30 < 0 }">{{ formatPara(net30, paraBirimi) }}</strong>
+      </span>
+      <span class="nakit-saglik-metin">
+        {{ t('dashboard.kokpitNakitTahminiKapanis') }}:
+        <strong :class="{ 'negatif': tahminiBitis < 0 }">{{ formatPara(tahminiBitis, paraBirimi) }}</strong>
+      </span>
+    </div>
+
     <div class="nakit-grafik-ust">
       <span class="nakit-grafik-baslik">{{ t('dashboard.kokpitNakitGunlukAkis') }}</span>
       <span
@@ -129,6 +151,16 @@
         :aria-label="t('dashboard.kokpitNakitProjeksiyon')"
         data-test="nakit-projeksiyon-grafik"
       />
+      <MiniTablo
+        v-if="projeksiyonGunleri.length > 0"
+        :kolonlar="projeksiyonKolonlari"
+        :satirlar="projeksiyonGunleri"
+        :bos-metin="t('dashboard.kokpitNakitBos')"
+        :para-birimi="paraBirimi"
+        :secilebilir="false"
+        :baslik="t('dashboard.kokpitNakitProjeksiyon')"
+        data-test="nakit-projeksiyon-tablo"
+      />
     </div>
 
     <template #alt>
@@ -153,6 +185,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FinansKarti from './FinansKarti.vue'
 import MikroGrafik from './MikroGrafik.vue'
+import MiniTablo from './MiniTablo.vue'
 import { formatPara } from '../../../utils/format.js'
 
 const props = defineProps({
@@ -189,6 +222,27 @@ const projeksiyonSeri = computed(() => {
   const gunler = Array.isArray(projeksiyon.value.gunluk) ? projeksiyon.value.gunluk : []
   return gunler.map((gun) => Number(gun.kumulatif) || 0)
 })
+const tahminiBitis = computed(() => Number(projeksiyon.value.tahminiBitisBakiyesi) || 0)
+const net30 = computed(() =>
+  (Number(projeksiyon.value.toplamBeklenenGiris) || 0) -
+  (Number(projeksiyon.value.toplamBeklenenCikis) || 0)
+)
+const projeksiyonRiskli = computed(() => tahminiBitis.value < 0)
+const projeksiyonGunleri = computed(() => {
+  const gunler = Array.isArray(projeksiyon.value.gunluk) ? projeksiyon.value.gunluk : []
+  return gunler.slice(0, 4)
+})
+const projeksiyonKolonlari = computed(() => [
+  { anahtar: 'tarih', etiket: t('dashboard.kokpitNakitTarih'), bicim: 'tarih' },
+  { anahtar: 'net', etiket: t('dashboard.kokpitNakitNet'), hiza: 'sag', bicim: 'para' },
+  {
+    anahtar: 'kumulatif',
+    etiket: t('dashboard.kokpitNakitKumulatif'),
+    hiza: 'sag',
+    bicim: 'para',
+    mobilGizle: true
+  }
+])
 const hedef = computed(() => nakit.value.hedef || { route: '/kasa', query: {} })
 
 const kasaOrani = computed(() => {
@@ -328,6 +382,43 @@ const dagitimEtiketi = computed(() =>
 }
 .nakit-dagilim-etiketler i {
   font-size: 9px;
+}
+.nakit-saglik {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px 10px;
+  padding: 7px 8px;
+  border: 1px solid var(--success-border);
+  border-radius: var(--radius-sm);
+  background: var(--success-soft);
+}
+.nakit-saglik--risk {
+  border-color: var(--danger-border);
+  background: var(--danger-soft);
+}
+.nakit-saglik-rozet {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--success);
+}
+.nakit-saglik--risk .nakit-saglik-rozet {
+  color: var(--danger);
+}
+.nakit-saglik-metin {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+.nakit-saglik-metin strong {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.nakit-saglik-metin strong.negatif {
+  color: var(--danger);
 }
 .nakit-grafik-ust {
   display: flex;

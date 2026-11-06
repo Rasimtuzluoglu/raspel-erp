@@ -32,6 +32,8 @@ public class KokpitDTO {
     /** Yalnızca ADMIN/MUHASEBE rollerinde dolar; diğer rollerde null. */
     private KarMarjDTO karMarj;
     private FaturaSiparisDTO faturaSiparis;
+    /** Kural tabanlı yönetici içgörüleri (en fazla 3). */
+    private List<DashboardIcgoruDTO> icgoruler;
 
     @Data
     @NoArgsConstructor

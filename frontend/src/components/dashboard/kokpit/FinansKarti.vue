@@ -93,8 +93,12 @@ const { azaltHareket } = useHareketAzaltma()
   padding: 13px 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  background: var(--bg-card);
-  box-shadow: var(--elev-1);
+  background:
+    radial-gradient(420px 130px at 100% 0%, rgba(20, 184, 166, 0.07), transparent 70%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 34%),
+    var(--bg-card);
+  box-shadow: var(--elev-1), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  isolation: isolate;
   transition:
     border-color var(--dur-base) var(--ease-standard),
     box-shadow var(--dur-base) var(--ease-standard);

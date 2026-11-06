@@ -45,6 +45,43 @@
     </div>
 
     <div
+      class="alacak-performans"
+      data-test="alacak-tahsilat-performansi"
+    >
+      <div class="alacak-performans-ust">
+        <span>{{ t('dashboard.kokpitAlacakVerecekTahsilatPerformansi') }}</span>
+        <strong>{{ tahsilatOraniMetni }}</strong>
+      </div>
+      <div class="alacak-performans-bar">
+        <span :style="{ width: `${tahsilatOraniDegeri}%` }" />
+      </div>
+    </div>
+
+    <div
+      v-if="enBuyukBorclu"
+      class="alacak-oncelik"
+      data-test="alacak-oncelik"
+    >
+      <i
+        class="pi pi-bolt"
+        aria-hidden="true"
+      />
+      <span class="alacak-oncelik-metin">
+        {{ t('dashboard.kokpitAlacakVerecekOncelik') }}:
+        <strong>{{ enBuyukBorclu.ad }}</strong>
+        <span class="alacak-oncelik-tutar gizli-veri">{{ formatPara(enBuyukBorclu.tutar, paraBirimi) }}</span>
+      </span>
+      <button
+        type="button"
+        class="alacak-oncelik-buton"
+        data-test="alacak-oncelik-tahsilat"
+        @click="borcluDetay(enBuyukBorclu)"
+      >
+        {{ t('dashboard.kokpitTahsilat') }}
+      </button>
+    </div>
+
+    <div
       class="alacak-bolum"
       data-test="alacak-yaslanma"
     >
@@ -144,6 +181,10 @@ const net = computed(() => {
 })
 const borclular = computed(() => Array.isArray(veriDegeri.value.borclular) ? veriDegeri.value.borclular : [])
 const tedarikciler = computed(() => Array.isArray(veriDegeri.value.tedarikciler) ? veriDegeri.value.tedarikciler : [])
+const enBuyukBorclu = computed(() => borclular.value[0] || null)
+const tahsilatOraniDegeri = computed(() =>
+  Math.min(100, Math.max(0, Number(veriDegeri.value.tahsilatOrani) || 0))
+)
 const hedef = computed(() => veriDegeri.value.hedef || { route: '/cari-hesaplar', query: {} })
 
 const tahsilatOraniMetni = computed(() => {
@@ -274,6 +315,93 @@ const cariDetay = (satir) => {
   font-weight: 700;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
+}
+.alacak-performans {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-muted);
+}
+.alacak-performans-ust {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+.alacak-performans-ust strong {
+  font-size: 12px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.alacak-performans-bar {
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--bg-secondary);
+}
+.alacak-performans-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--success));
+  transition: width var(--dur-base) var(--ease-standard);
+}
+.alacak-oncelik {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-sm);
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: 10.5px;
+}
+.alacak-oncelik i {
+  flex-shrink: 0;
+  font-size: 11px;
+}
+.alacak-oncelik-metin {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+.alacak-oncelik-metin strong {
+  color: var(--text-primary);
+}
+.alacak-oncelik-tutar {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+.alacak-oncelik-buton {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 2px 6px;
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--warning);
+  font-size: 9.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.alacak-oncelik-buton:hover,
+.alacak-oncelik-buton:focus-visible {
+  background: var(--warning);
+  color: var(--accent-contrast);
+}
+.alacak-oncelik-buton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 .alacak-bolum {
   display: flex;

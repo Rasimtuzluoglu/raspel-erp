@@ -3,6 +3,7 @@ package com.raspel.erp.service.sistem;
 import com.raspel.erp.dto.sistem.DashboardDTO;
 import com.raspel.erp.dto.sistem.DashboardGorevDTO;
 import com.raspel.erp.dto.sistem.DashboardGrafikDTO;
+import com.raspel.erp.dto.sistem.DashboardIcgoruDTO;
 import com.raspel.erp.dto.sistem.DashboardKarAnaliziDTO;
 import com.raspel.erp.dto.sistem.DashboardOzetDTO;
 import com.raspel.erp.dto.sistem.KokpitDTO;
@@ -90,6 +91,8 @@ class KokpitServiceTest {
         assertEquals(1, kokpit.getFaturaSiparis().getVadesiGecenFaturalar().size());
         assertEquals(10L, kokpit.getFaturaSiparis().getVadesiGecenFaturalar().get(0).getCariId());
         assertEquals(1, kokpit.getFaturaSiparis().getSiparisDurumlari().size());
+        assertEquals(1, kokpit.getIcgoruler().size());
+        assertEquals("Vadesi geçen faturalar var", kokpit.getIcgoruler().get(0).getBaslik());
 
         verify(dashboardService).karAnaliziGetir(1L, "ADMIN", "BU_AY");
     }
@@ -203,6 +206,8 @@ class KokpitServiceTest {
         assertTrue(kokpit.getFaturaSiparis().getDurumlar().stream()
                 .allMatch(k -> k.getAdet() == 0L && k.getTutar().compareTo(BigDecimal.ZERO) == 0));
         assertTrue(kokpit.getFaturaSiparis().getVadesiGecenFaturalar().isEmpty());
+        assertNotNull(kokpit.getIcgoruler());
+        assertTrue(kokpit.getIcgoruler().isEmpty());
     }
 
     @Test
@@ -355,6 +360,15 @@ class KokpitServiceTest {
                         .cariHesap(CariHesap.builder().id(10L).ad("Müşteri A").build())
                         .vadeTarihi(LocalDate.now().minusDays(12))
                         .kalanTutar(new BigDecimal("4000")).build()));
+
+        when(dashboardService.icgorulerGetir(1L)).thenReturn(List.of(
+                DashboardIcgoruDTO.builder()
+                        .seviye("WARN")
+                        .baslik("Vadesi geçen faturalar var")
+                        .mesaj("4 faturanın vadesi geçmiş.")
+                        .route("/tahsilat")
+                        .ikon("pi pi-exclamation-triangle")
+                        .build()));
 
         when(dashboardService.karAnaliziGetir(1L, "ADMIN", "BU_AY"))
                 .thenReturn(DashboardKarAnaliziDTO.builder()

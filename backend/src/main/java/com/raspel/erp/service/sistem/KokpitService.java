@@ -3,6 +3,7 @@ package com.raspel.erp.service.sistem;
 import com.raspel.erp.dto.sistem.DashboardDTO;
 import com.raspel.erp.dto.sistem.DashboardGorevDTO;
 import com.raspel.erp.dto.sistem.DashboardGrafikDTO;
+import com.raspel.erp.dto.sistem.DashboardIcgoruDTO;
 import com.raspel.erp.dto.sistem.DashboardKarAnaliziDTO;
 import com.raspel.erp.dto.sistem.DashboardOzetDTO;
 import com.raspel.erp.dto.sistem.KokpitDTO;
@@ -92,6 +93,8 @@ public class KokpitService {
         BigDecimal alacak = sifirla(cariHesapService.toplamNegatifBakiyeGetir(sirketId)).abs();
         BigDecimal verecek = sifirla(cariHesapService.toplamPozitifBakiyeGetir(sirketId));
         BigDecimal tahsilatOrani = tahsilatOrani(sirketId);
+        List<DashboardIcgoruDTO> icgoruler = guvenliListe(
+                () -> dashboardService.icgorulerGetir(sirketId));
 
         return KokpitDTO.builder()
                 .donem(donemDTO(ozet, cozulenDonem))
@@ -103,6 +106,7 @@ public class KokpitService {
                         ? karMarjBolumu(sirketId, rolDegeri, cozulenDonem, grafikler) : null)
                 .faturaSiparis(faturaSiparisBolumu(sirketId, grafikler, vadesiGecenTutar,
                         vadesiGecenAdet, tahsilatOrani))
+                .icgoruler(icgoruler)
                 .build();
     }
 

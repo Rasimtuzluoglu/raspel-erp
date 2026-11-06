@@ -4,8 +4,16 @@ import i18n from '../../i18n.js'
 import NakitBolumu from '../dashboard/kokpit/NakitBolumu.vue'
 import AlacakVerecekBolumu from '../dashboard/kokpit/AlacakVerecekBolumu.vue'
 
+const RouterLinkStub = {
+  props: ['to'],
+  template: '<a :data-to="JSON.stringify(to)"><slot /></a>'
+}
+
 const mountOptions = {
-  global: { plugins: [i18n] }
+  global: {
+    plugins: [i18n],
+    stubs: { 'router-link': RouterLinkStub }
+  }
 }
 
 const nakitVeri = {
@@ -54,6 +62,8 @@ describe('nakit ve alacak/verecek bölümleri', () => {
     expect(wrapper.find('[data-test="nakit-gunluk-grafik"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="nakit-projeksiyon"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="nakit-sparkline"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="nakit-saglik"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="nakit-projeksiyon-tablo"]').exists()).toBe(true)
   })
 
   it('nakitBolumuBosVerideSifirGosterir', () => {
@@ -90,6 +100,19 @@ describe('nakit ve alacak/verecek bölümleri', () => {
     expect(wrapper.find('[data-test="borclular-tablo"]').text()).toContain('5.000,00')
     expect(wrapper.find('[data-test="tedarikciler-tablo"]').text()).toContain('Tedarikçi A')
     expect(wrapper.find('[data-test="tedarikciler-tablo"]').text()).toContain('3.000,00')
+    expect(wrapper.find('[data-test="alacak-tahsilat-performansi"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="alacak-oncelik"]').exists()).toBe(true)
+  })
+
+  it('alacakOncelikKartiHizliTahsilatAcar', async () => {
+    const wrapper = mount(AlacakVerecekBolumu, {
+      ...mountOptions,
+      props: { veri: alacakVeri, paraBirimi: 'TRY' }
+    })
+
+    await wrapper.find('[data-test="alacak-oncelik-tahsilat"]').trigger('click')
+    expect(wrapper.emitted('detay')[0][0].route).toBe('/tahsilat')
+    expect(wrapper.emitted('detay')[0][0].query.cariId).toBe('1')
   })
 
   it('bolumDetayOlayiHedefTasiyor', async () => {

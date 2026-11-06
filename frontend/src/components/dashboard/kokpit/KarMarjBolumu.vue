@@ -34,6 +34,41 @@
       <span>{{ t('dashboard.kokpitKarMarjYetkisiz') }}</span>
     </div>
 
+    <div
+      v-else-if="veriBos"
+      class="kar-bos-premium"
+      data-test="kar-bos-premium"
+    >
+      <span class="kar-bos-ikon">
+        <i
+          class="pi pi-chart-line"
+          aria-hidden="true"
+        />
+      </span>
+      <div class="kar-bos-metin">
+        <strong>{{ t('dashboard.kokpitKarMarjBosPremium') }}</strong>
+        <span>{{ t('dashboard.kokpitKarMarjBosPremiumAlt') }}</span>
+      </div>
+      <div class="kar-bos-eylemler">
+        <router-link
+          to="/faturalar?yeni=1"
+          class="kar-bos-buton kar-bos-buton--ana"
+        >
+          <i
+            class="pi pi-file-plus"
+            aria-hidden="true"
+          />
+          {{ t('dashboard.yeniFatura') }}
+        </router-link>
+        <router-link
+          to="/raporlar"
+          class="kar-bos-buton"
+        >
+          {{ t('dashboard.raporlar') }}
+        </router-link>
+      </div>
+    </div>
+
     <template v-else>
       <div class="kar-ozet">
         <div class="kar-stat">
@@ -51,6 +86,24 @@
         <div class="kar-stat">
           <span class="kar-stat-etiket">{{ t('dashboard.kokpitKarMarjMarj') }}</span>
           <strong class="kar-stat-deger">{{ marjMetni }}</strong>
+        </div>
+      </div>
+
+      <div
+        class="kar-gauge"
+        :class="marjSinifi"
+        data-test="kar-marj-gauge"
+      >
+        <div class="kar-gauge-ust">
+          <span>{{ t('dashboard.kokpitKarMarjMarjSagligi') }}</span>
+          <strong>{{ marjMetni }}</strong>
+        </div>
+        <div class="kar-gauge-bar">
+          <span :style="{ width: `${marjOrani}%` }" />
+        </div>
+        <div class="kar-gauge-alt">
+          <span>{{ t('dashboard.kokpitKarMarjMaliyetOrani') }}: {{ maliyetOraniMetni }}</span>
+          <span v-if="maliyetsizKalem > 0">{{ t('dashboard.kokpitKarMarjMaliyetsizKalem', { n: maliyetsizKalem }) }}</span>
         </div>
       </div>
 
@@ -177,13 +230,29 @@ const kar = computed(() => {
   return Number.isFinite(deger) ? deger : ciro.value - maliyet.value
 })
 const maliyetsizKalem = computed(() => Number(props.veri?.maliyetsizKalem) || 0)
+const marjDegeri = computed(() => {
+  const deger = Number(props.veri?.marj)
+  if (Number.isFinite(deger)) return deger
+  return ciro.value > 0 ? (kar.value / ciro.value) * 100 : null
+})
+const marjOrani = computed(() => Math.min(100, Math.max(0, marjDegeri.value ?? 0)))
+const marjSinifi = computed(() => {
+  if (marjDegeri.value === null) return 'kar-gauge--notr'
+  if (marjDegeri.value < 10) return 'kar-gauge--risk'
+  if (marjDegeri.value < 20) return 'kar-gauge--uyari'
+  return 'kar-gauge--iyi'
+})
+const maliyetOrani = computed(() => (ciro.value > 0 ? (maliyet.value / ciro.value) * 100 : null))
 
 const marjMetni = computed(() => {
-  if (props.veri?.marj === null || props.veri?.marj === undefined) return '—'
-  const deger = Number(props.veri.marj)
-  if (!Number.isFinite(deger)) return '—'
-  return `${deger.toLocaleString('tr-TR', { maximumFractionDigits: 1 })}%`
+  if (marjDegeri.value === null) return '—'
+  return `${marjDegeri.value.toLocaleString('tr-TR', { maximumFractionDigits: 1 })}%`
 })
+const maliyetOraniMetni = computed(() =>
+  maliyetOrani.value === null
+    ? '—'
+    : `${maliyetOrani.value.toLocaleString('tr-TR', { maximumFractionDigits: 1 })}%`
+)
 
 const trend = computed(() => Array.isArray(props.veri?.trend) ? props.veri.trend : [])
 const trendSerileri = computed(() => [
@@ -210,6 +279,9 @@ const urunler = computed(() =>
 )
 const cariler = computed(() =>
   (Array.isArray(props.veri?.cariler) ? props.veri.cariler : []).slice(0, 5)
+)
+const veriBos = computed(() =>
+  ciro.value === 0 && urunler.value.length === 0 && cariler.value.length === 0
 )
 
 const kalemKolonlari = [
@@ -241,6 +313,141 @@ const cariDetay = (satir) => {
   border: 1px dashed var(--border);
   border-radius: var(--radius-sm);
   font-size: 12px;
+  color: var(--text-muted);
+}
+.kar-bos-premium {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 230px;
+  padding: 22px 16px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  background:
+    radial-gradient(360px 120px at 50% 0%, var(--accent-soft), transparent 70%),
+    var(--bg-muted);
+  text-align: center;
+}
+.kar-bos-ikon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--accent-border);
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 17px;
+}
+.kar-bos-metin {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 340px;
+}
+.kar-bos-metin strong {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.kar-bos-metin span {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+.kar-bos-eylemler {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+.kar-bos-buton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.kar-bos-buton:hover,
+.kar-bos-buton:focus-visible {
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+.kar-bos-buton--ana {
+  border-color: var(--accent-border);
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+.kar-bos-buton--ana:hover,
+.kar-bos-buton--ana:focus-visible {
+  background: var(--accent-hover);
+  color: var(--accent-contrast);
+}
+.kar-bos-buton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.kar-gauge {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-muted);
+}
+.kar-gauge-ust {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+.kar-gauge-ust strong {
+  font-size: 12px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.kar-gauge-bar {
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--bg-secondary);
+}
+.kar-gauge-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--success);
+  transition: width var(--dur-base) var(--ease-standard);
+}
+.kar-gauge--uyari .kar-gauge-bar span {
+  background: var(--warning);
+}
+.kar-gauge--risk .kar-gauge-bar span {
+  background: var(--danger);
+}
+.kar-gauge--notr .kar-gauge-bar span {
+  background: var(--text-muted);
+}
+.kar-gauge-alt {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 10px;
+  font-size: 10px;
   color: var(--text-muted);
 }
 .bolum-hizli-link {

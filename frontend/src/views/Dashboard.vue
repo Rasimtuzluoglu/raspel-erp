@@ -100,6 +100,11 @@
       @kaydet="tercihiKaydet"
     />
 
+    <KokpitIcgoruler
+      :icgoruler="icgoruler"
+      :yukleniyor="ilkYukleme"
+    />
+
     <KokpitTahsilatDialog
       v-model:visible="hizliTahsilatAcik"
       :tur="hizliTahsilatTur"
@@ -138,6 +143,7 @@ import AlacakVerecekBolumu from '../components/dashboard/kokpit/AlacakVerecekBol
 import KarMarjBolumu from '../components/dashboard/kokpit/KarMarjBolumu.vue'
 import FaturaSiparisBolumu from '../components/dashboard/kokpit/FaturaSiparisBolumu.vue'
 import KokpitOzellestirme from '../components/dashboard/kokpit/KokpitOzellestirme.vue'
+import KokpitIcgoruler from '../components/dashboard/kokpit/KokpitIcgoruler.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -160,6 +166,9 @@ const gosterilenKokpit = computed(() =>
 const kpi = computed(() => (Array.isArray(gosterilenKokpit.value?.ozet) ? gosterilenKokpit.value.ozet : []))
 const kritikDurum = computed(() =>
   Array.isArray(gosterilenKokpit.value?.kritikDurum) ? gosterilenKokpit.value.kritikDurum : []
+)
+const icgoruler = computed(() =>
+  Array.isArray(gosterilenKokpit.value?.icgoruler) ? gosterilenKokpit.value.icgoruler : []
 )
 const ilkYukleme = computed(() => kokpitStore.yukleniyor && !kokpit.value)
 const onayGorebilir = computed(() => {
