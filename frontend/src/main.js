@@ -45,6 +45,7 @@ const SatirEylemleri = defineAsyncComponent(() => import('./components/SatirEyle
 
 import permissionDirective from './directives/permission.js'
 import tabloEtiketDirective, { initTabloEtiketleri } from './directives/tabloEtiket.js'
+import { overlayZoomFixBaslat } from './utils/overlayZoomFix.js'
 
 import 'primeicons/primeicons.css'
 import 'primeflex/primeflex.css'
@@ -175,6 +176,8 @@ window.addEventListener('unhandledrejection', (event) => {
 })
 
 app.mount('#app')
+
+overlayZoomFixBaslat()
 
 initTabloEtiketleri()
 

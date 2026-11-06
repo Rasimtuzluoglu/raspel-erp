@@ -56,13 +56,15 @@
         class="filtre-alani"
         @change="yukle"
       />
-      <span class="arama-kutu">
+      <IconField class="arama-kutu">
+        <InputIcon class="pi pi-search" />
         <InputText
           v-model="arama"
           :placeholder="t('sifreKasasi.aramaPlaceholder')"
+          class="w-full"
           @input="aramaGecikmeli"
         />
-      </span>
+      </IconField>
     </div>
 
     <div class="kasa-icerik">

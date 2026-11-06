@@ -50,12 +50,15 @@
         class="filtre-alani"
         @change="yukle"
       />
-      <InputText
-        v-model="arama"
-        :placeholder="t('kitaplik.aramaPlaceholder')"
-        class="arama-kutu"
-        @input="aramaGecikmeli"
-      />
+      <IconField class="arama-kutu">
+        <InputIcon class="pi pi-search" />
+        <InputText
+          v-model="arama"
+          :placeholder="t('kitaplik.aramaPlaceholder')"
+          class="w-full"
+          @input="aramaGecikmeli"
+        />
+      </IconField>
     </div>
 
     <div class="kitaplik-icerik">

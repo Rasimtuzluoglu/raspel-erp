@@ -1186,6 +1186,8 @@ const talepReddet = async (t) => {
 .arama-kutu > i {
   position: absolute;
   left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--text-muted);
   pointer-events: none;
 }

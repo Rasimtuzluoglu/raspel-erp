@@ -17,35 +17,6 @@
             class="doviz-notu"
           >{{ t('raporlar.exportParaBirimiNotu') }}</small>
         </div>
-        <div class="rapor-arama">
-          <AutoComplete
-            v-model="raporArama"
-            :suggestions="raporOnerileri"
-            option-label="ad"
-            :placeholder="t('raporlar.raporAra')"
-            :dropdown="true"
-            :force-selection="true"
-            class="rapor-arama-girdi"
-            @complete="raporAra"
-            @item-select="raporSec"
-          >
-            <template #option="slotProps">
-              <div class="arama-secenek">
-                <i :class="slotProps.option.ikon || 'pi pi-chart-bar'" />
-                <span class="arama-secenek-ad">{{ slotProps.option.ad }}</span>
-                <small
-                  v-if="slotProps.option.grup"
-                  class="arama-secenek-grup"
-                >{{ slotProps.option.grup }}</small>
-              </div>
-            </template>
-            <template #empty>
-              <div class="arama-bos">
-                {{ t('raporlar.aramaBos') }}
-              </div>
-            </template>
-          </AutoComplete>
-        </div>
       </template>
     </PageHeader>
 
@@ -995,8 +966,6 @@ const { t } = useI18n()
 
 const router = useRouter()
 
-const raporArama = ref(null)
-const raporOnerileri = ref([])
 const RAPOR_SEKMELERI = computed(() => [
   { key: 'cariEkstre', index: 0, ad: t('raporlar.cariEkstre'), ikon: 'pi pi-file', grup: t('raporlar.grupFinans') },
   { key: 'gelirGider', index: 1, ad: t('raporlar.gelirGiderOzeti'), ikon: 'pi pi-chart-line', grup: t('raporlar.grupFinans') },
@@ -1007,9 +976,7 @@ const RAPOR_SEKMELERI = computed(() => [
   { key: 'urunKarlilik', index: 6, ad: t('raporlar.urunKarliligi'), ikon: 'pi pi-box', grup: t('raporlar.grupStok') },
   { key: 'nakitAkisi', index: 7, ad: t('raporlar.nakitAkisi'), ikon: 'pi pi-wallet', grup: t('raporlar.grupGenel') },
   { key: 'pivot', index: 8, ad: t('raporlar.pivotTablo'), ikon: 'pi pi-table', grup: t('raporlar.grupGenel') },
-  { key: 'temsilci', index: 9, ad: t('raporlar.temsilciPerformans'), ikon: 'pi pi-user', grup: t('raporlar.grupGenel') },
-  { key: 'karlilikAnalizi', ad: t('nav.karlilikAnalizi'), ikon: 'pi pi-chart-pie', grup: t('raporlar.grupGenel'), path: '/raporlar/karlilik-analizi' },
-  { key: 'faturaGecmis', ad: t('nav.faturaGecmisRaporu'), ikon: 'pi pi-history', grup: t('raporlar.grupGenel'), path: '/raporlar/fatura-gecmis' }
+  { key: 'temsilci', index: 9, ad: t('raporlar.temsilciPerformans'), ikon: 'pi pi-user', grup: t('raporlar.grupGenel') }
 ])
 
 // Sol dikey rapor menüsü: grup + ikon. (Sekme indeksleri TabView ile birebir.)
@@ -1040,22 +1007,6 @@ const RAPOR_NAV_GRUPLARI = computed(() => [
     ]
   }
 ])
-
-const raporAra = (e) => {
-  const q = (e?.query || '').toLowerCase()
-  raporOnerileri.value = RAPOR_SEKMELERI.value.filter((r) => !q || r.ad.toLowerCase().includes(q))
-}
-
-const raporSec = (e) => {
-  const secili = e?.value
-  if (!secili) return
-  if (secili.path) {
-    router.push(secili.path)
-  } else {
-    aktifSekme.value = secili.index
-  }
-  raporArama.value = null
-}
 
 const FAVORI_ANAHTAR = 'raspel_favori_raporlar'
 const aktifSekme = ref(0)
@@ -1886,12 +1837,6 @@ import { formatTarih as formatDate, getLocalDateString, vadeRiskSinifi } from '.
   height: 240px;
   max-width: 360px;
 }
-.rapor-arama-girdi {
-  width: 220px;
-}
-.rapor-arama-girdi :deep(input) {
-  width: 100%;
-}
 
 /* Mobil: filtreler tek kolona iner, tablolar yatay kaydirilir, grafik kisalir. */
 @media (max-width: 640px) {
@@ -1900,9 +1845,6 @@ import { formatTarih as formatDate, getLocalDateString, vadeRiskSinifi } from '.
     align-items: stretch;
   }
   .rapor-filtre .form-group {
-    width: 100%;
-  }
-  .rapor-arama-girdi {
     width: 100%;
   }
   .rapor-grafik {
@@ -1914,29 +1856,5 @@ import { formatTarih as formatDate, getLocalDateString, vadeRiskSinifi } from '.
 }
 .rapor-sonuc :deep(.p-datatable-table-container) {
   overflow-x: auto;
-}
-.arama-secenek {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.arama-secenek > i {
-  color: var(--accent);
-  font-size: 13px;
-}
-.arama-secenek-ad {
-  flex: 1;
-  min-width: 0;
-}
-.arama-secenek-grup {
-  color: var(--text-muted);
-  font-size: 11px;
-  white-space: nowrap;
-}
-.arama-bos {
-  padding: 8px 4px;
-  color: var(--text-muted);
-  font-size: 12px;
-  text-align: center;
 }
 </style>

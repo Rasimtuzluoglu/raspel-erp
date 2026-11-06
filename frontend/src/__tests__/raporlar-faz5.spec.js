@@ -52,9 +52,7 @@ describe('Raporlar revizyonu', () => {
     expect(raporlar).toMatch(/p-datatable-table-container\)\s*\{[\s\S]{0,40}overflow-x: auto/)
   })
 
-  it('arama: ikon/grup + boş sonuç; a11y favori', () => {
-    expect(raporlar).toMatch(/<template #option="slotProps">/)
-    expect(raporlar).toMatch(/raporlar\.aramaBos/)
+  it('a11y: favori butonu rol ve aria-pressed tasir', () => {
     expect(raporlar).toMatch(/role="button"/)
     expect(raporlar).toMatch(/:aria-pressed="raporFavori\(b\.key\)/)
   })
