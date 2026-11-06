@@ -77,26 +77,38 @@
       </div>
 
       <template v-if="!qrPanelAcik">
-        <div class="gk-alan">
-          <label for="iki-faktor-kod">{{ t('giris.dogrulamaKodu') }}</label>
-          <input
-            id="iki-faktor-kod"
-            ref="ikiFaktorInput"
-            v-model="ikiFaktorKod"
-            data-test="iki-faktor-kod"
-            type="text"
-            inputmode="numeric"
-            autocomplete="one-time-code"
-            maxlength="6"
-            class="gk-input gk-input--kod"
+        <div class="gk-alan gk-alan--otp">
+          <span
+            id="iki-faktor-etiket"
+            class="gk-etiket"
+          >{{ t('giris.dogrulamaKodu') }}</span>
+          <div
+            class="gk-otp"
+            :class="{ 'gk-otp--hata': kodGecersiz }"
+            role="group"
+            aria-labelledby="iki-faktor-etiket"
             :aria-invalid="kodGecersiz ? 'true' : 'false'"
-            :aria-describedby="kodGecersiz ? 'giris-hata' : 'iki-faktor-ipucu'"
-            @input="kodGecersiz = false"
+            :aria-describedby="kodGecersiz ? 'giris-hata' : undefined"
           >
-          <small
-            id="iki-faktor-ipucu"
-            class="gk-ipucu"
-          >{{ t('giris.twoFactorHint') }}</small>
+            <input
+              v-for="(hane, i) in kodHaneleri"
+              :key="i"
+              :ref="(el) => kodInputKaydet(el, i)"
+              :data-test="i === 0 ? 'iki-faktor-kod' : `iki-faktor-kod-${i}`"
+              :value="hane"
+              :aria-label="`${t('giris.dogrulamaKodu')} ${i + 1}`"
+              type="text"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="1"
+              class="gk-otp-hane"
+              :class="{ 'gk-otp-hane--dolu': hane }"
+              @input="haneGuncelle(i, $event)"
+              @keydown="haneTus(i, $event)"
+              @paste="haneYapistir(i, $event)"
+              @focus="$event.target.select()"
+            >
+          </div>
         </div>
 
         <button
@@ -481,7 +493,9 @@ const authStore = useAuthStore()
 
 const kullaniciInput = ref(null)
 const sifreInput = ref(null)
-const ikiFaktorInput = ref(null)
+const kodHaneleri = ref(['', '', '', '', '', ''])
+const kodInputlari = ref([])
+const ikiFaktorKod = computed(() => kodHaneleri.value.join(''))
 
 const username = ref('')
 const password = ref('')
@@ -495,7 +509,6 @@ const alanHatasi = ref({ username: false, password: false })
 
 const ikiFaktorAdimi = ref(false)
 const qrPanelAcik = ref(false)
-const ikiFaktorKod = ref('')
 const kodGecersiz = ref(false)
 const sirketSecimAdimi = ref(false)
 const girisToken = ref('')
@@ -589,11 +602,70 @@ onMounted(async () => {
   await kurulumDurumKontrol()
 })
 
-// 2FA adımı açıldığında kodu doğrudan yazabilmek için odağı koda ver.
+const kodInputKaydet = (el, i) => {
+  if (el) kodInputlari.value[i] = el
+}
+
+const kodDagit = (baslangic, metin) => {
+  const rakamlar = String(metin || '').replace(/\D/g, '').slice(0, 6 - baslangic).split('')
+  rakamlar.forEach((rakam, k) => {
+    kodHaneleri.value[baslangic + k] = rakam
+  })
+  const son = Math.min(5, baslangic + Math.max(rakamlar.length, 1))
+  nextTick(() => kodInputlari.value[son]?.focus())
+}
+
+const haneGuncelle = (i, event) => {
+  kodGecersiz.value = false
+  const ham = String(event.target.value || '').replace(/\D/g, '')
+  if (!ham) {
+    kodHaneleri.value[i] = ''
+    event.target.value = ''
+    return
+  }
+  if (ham.length > 1) {
+    kodDagit(i, ham)
+    return
+  }
+  kodHaneleri.value[i] = ham
+  event.target.value = ham
+  if (i < 5) kodInputlari.value[i + 1]?.focus()
+}
+
+const haneTus = (i, event) => {
+  if (event.key === 'Backspace' && !kodHaneleri.value[i] && i > 0) {
+    event.preventDefault()
+    kodHaneleri.value[i - 1] = ''
+    kodInputlari.value[i - 1]?.focus()
+    return
+  }
+  if (event.key === 'ArrowLeft' && i > 0) {
+    event.preventDefault()
+    kodInputlari.value[i - 1]?.focus()
+  } else if (event.key === 'ArrowRight' && i < 5) {
+    event.preventDefault()
+    kodInputlari.value[i + 1]?.focus()
+  }
+}
+
+const haneYapistir = (i, event) => {
+  const metin = event.clipboardData?.getData('text') || ''
+  if (!metin.replace(/\D/g, '')) return
+  event.preventDefault()
+  kodGecersiz.value = false
+  kodDagit(i, metin)
+}
+
+const kodTemizle = () => {
+  kodHaneleri.value = ['', '', '', '', '', '']
+  kodGecersiz.value = false
+}
+
+// 2FA adımı açıldığında kodu doğrudan yazabilmek için odağı ilk haneye ver.
 watch(ikiFaktorAdimi, async (aktif) => {
   if (!aktif) return
   await nextTick()
-  ikiFaktorInput.value?.focus()
+  kodInputlari.value[0]?.focus()
 })
 
 const sifreSifirlamaTalepEt = async () => {
@@ -719,13 +791,13 @@ const sirketSecVeGirisYap = async (sirket) => {
 
 const ikiFaktorDogrula = async () => {
   hata.value = ''
-  if (!ikiFaktorKod.value.trim()) {
+  if (ikiFaktorKod.value.length !== 6) {
     kodGecersiz.value = true
     hata.value = t('giris.invalidCode')
     return
   }
   try {
-    const sonuc = await authStore.giris2fa(girisToken.value, ikiFaktorKod.value.trim(), beniHatirla.value)
+    const sonuc = await authStore.giris2fa(girisToken.value, ikiFaktorKod.value, beniHatirla.value)
     girisToken.value = sonuc.girisToken
     sirketler.value = sonuc.sirketler || []
     ikiFaktorAdimi.value = false
@@ -742,8 +814,7 @@ const ikiFaktorDogrula = async () => {
 const geriDon = () => {
   ikiFaktorAdimi.value = false
   qrPanelAcik.value = false
-  ikiFaktorKod.value = ''
-  kodGecersiz.value = false
+  kodTemizle()
   girisToken.value = ''
 }
 
@@ -763,8 +834,7 @@ const tumAdimlariSifirla = () => {
   ikiFaktorAdimi.value = false
   qrPanelAcik.value = false
   sirketSecimAdimi.value = false
-  ikiFaktorKod.value = ''
-  kodGecersiz.value = false
+  kodTemizle()
   girisToken.value = ''
   sirketler.value = []
 }
@@ -1000,11 +1070,63 @@ const tumAdimlariSifirla = () => {
   caret-color: #e8eef5;
 }
 
-.gk-input--kod {
-  text-align: center;
+.gk-alan--otp {
+  gap: 8px;
+}
+
+.gk-etiket {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.gk-otp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.gk-otp-hane {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 54px;
+  padding: 0;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 12px;
+  background: rgba(2, 12, 14, 0.45);
+  color: #e8eef5;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 18px;
-  letter-spacing: 0.24em;
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.gk-otp-hane--dolu {
+  border-color: rgba(20, 184, 166, 0.45);
+  background: rgba(20, 184, 166, 0.06);
+}
+
+.gk-otp-hane:focus-visible {
+  outline: none;
+  border-color: #2dd4bf;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.18);
+}
+
+.gk-otp--hata .gk-otp-hane {
+  border-color: var(--danger, #ef4444);
+}
+
+@media (max-width: 430px) {
+  .gk-otp {
+    gap: 6px;
+  }
+  .gk-otp-hane {
+    height: 48px;
+    border-radius: 10px;
+    font-size: 20px;
+  }
 }
 
 .gk-ipucu {

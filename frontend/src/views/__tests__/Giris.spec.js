@@ -106,6 +106,7 @@ const oturumYaniti = (sirketId = 1) => ({
 describe('Giris.vue', () => {
   beforeEach(() => {
     localStorage.clear()
+    sessionStorage.clear()
     i18n.global.locale.value = 'tr'
     document.documentElement.setAttribute('lang', 'tr')
     pushMock.mockReset()
@@ -179,6 +180,14 @@ describe('Giris.vue', () => {
     )
     expect(w.find('[data-test="sirket-secim"]').exists()).toBe(false)
     expect(pushMock).toHaveBeenCalledWith('/')
+  })
+
+  it('SW yenilemesinde açılış animasyonunu tekrar göstermez', async () => {
+    sessionStorage.setItem('raspel_sw_yenileme', '1')
+    const w = await mountGiris()
+
+    expect(w.find('[data-test="giris-acilis"]').exists()).toBe(false)
+    expect(sessionStorage.getItem('raspel_sw_yenileme')).toBeNull()
   })
 
   it('2FA gerektiğinde kod adımı gösterilir ve doğrulanır', async () => {

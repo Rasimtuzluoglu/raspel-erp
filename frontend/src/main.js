@@ -259,6 +259,8 @@ function guncellemeBildir() {
   // takili kalirsa tarayici eski arayuzu onbellekten servis edebiliyor; bu
   // durumda kaydi kaldirip bir kez yenileriz (dongu korumali).
   const SURUM_ANAHTARI = 'raspel_sw_surum_temizligi'
+  // Otomatik SW yenilemesinde giris animasyonu ikinci kez oynamasin.
+  const SW_YENILEME_ANAHTARI = 'raspel_sw_yenileme'
   navigator.serviceWorker.getRegistrations().then((kayitlar) => {
     let eskiSurumVar = false
     kayitlar.forEach((r) => {
@@ -271,6 +273,7 @@ function guncellemeBildir() {
     })
     if (eskiSurumVar && sessionStorage.getItem(SURUM_ANAHTARI) !== __APP_VERSION__) {
       sessionStorage.setItem(SURUM_ANAHTARI, __APP_VERSION__)
+      try { sessionStorage.setItem(SW_YENILEME_ANAHTARI, String(Date.now())) } catch { /* yoksay */ }
       window.location.reload()
     }
   }).catch(() => {})
@@ -294,6 +297,7 @@ function guncellemeBildir() {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (devralindi || !ilkKontrolcuVar) return
     devralindi = true
+    try { sessionStorage.setItem(SW_YENILEME_ANAHTARI, String(Date.now())) } catch { /* yoksay */ }
     window.location.reload()
   })
 })()

@@ -70,7 +70,21 @@ const route = useRoute()
 const authStore = useAuthStore()
 const { t } = useI18n()
 
-const acilisAktif = ref(true)
+const SW_YENILEME_ANAHTARI = 'raspel_sw_yenileme'
+const swYenilemesi = (() => {
+  try {
+    const ham = sessionStorage.getItem(SW_YENILEME_ANAHTARI)
+    if (ham) sessionStorage.removeItem(SW_YENILEME_ANAHTARI)
+    if (!ham) return false
+    if (ham === '1') return true
+    const zaman = Number(ham)
+    return Number.isFinite(zaman) && Date.now() - zaman < 15000
+  } catch {
+    return false
+  }
+})()
+
+const acilisAktif = ref(!swYenilemesi)
 const pwaModu = ref(false)
 const sirketLogo = ref('')
 const sonSirketAd = ref('')
