@@ -341,18 +341,6 @@ watch(
 /* Kabuk (.db-drawer-katman / .db-drawer / baslik) dashboard.css icinde. */
 .db-notlar-drawer {
   gap: 10px;
-  /*
-   * Notlar kisa bir liste oldugu icin paneli tam ekran yuksekligine germek
-   * altta buyuk bosluk birakiyordu. Icerik kadar yuksek, uzun listede
-   * max-height + overflow ile kaydirilabilir kalir.
-   */
-  height: auto;
-  max-height: calc(100dvh - 24px);
-  align-self: flex-start;
-  margin: 12px 0;
-  border: 1px solid var(--border);
-  border-right: 0;
-  border-radius: 14px 0 0 14px;
 }
 
 /* --- Ekleme alani -------------------------------------------------------- */
@@ -602,14 +590,6 @@ watch(
 .notlar-bos i {
   font-size: 15px;
   color: var(--accent);
-}
-
-@media (max-width: 600px) {
-  .db-notlar-drawer {
-    max-height: calc(100dvh - 16px);
-    margin: 8px 0;
-    border-radius: 12px 0 0 12px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
