@@ -358,6 +358,51 @@ class PostgresEntegrasyonTest {
     }
 
     @Test
+    void kokpitFaturaDurumDagilimiKesilmisFaturalariGruplar() {
+        Long sirket = sirketOlustur("Kokpit Firma");
+        CariHesap cari = cariHesapRepository.save(ornekCari(sirket, "Kokpit Cari"));
+        faturaRepository.save(Fatura.builder()
+                .faturaNumarasi("KOK-1").tarih(LocalDate.of(2026, 3, 1))
+                .tur(Fatura.FaturaTur.SATIS).durum(Fatura.FaturaDurum.KESILDI)
+                .cariHesap(cari)
+                .araToplam(BigDecimal.valueOf(100)).kdv(BigDecimal.valueOf(20))
+                .genelToplam(BigDecimal.valueOf(100))
+                .odenenTutar(BigDecimal.valueOf(60)).kalanTutar(BigDecimal.valueOf(40))
+                .odemeDurumu("KISMI").sirketId(sirket).build());
+        faturaRepository.save(Fatura.builder()
+                .faturaNumarasi("KOK-2").tarih(LocalDate.of(2026, 3, 2))
+                .tur(Fatura.FaturaTur.SATIS).durum(Fatura.FaturaDurum.TASLAK)
+                .cariHesap(cari)
+                .araToplam(BigDecimal.valueOf(50)).kdv(BigDecimal.valueOf(10))
+                .genelToplam(BigDecimal.valueOf(50)).kalanTutar(BigDecimal.valueOf(50))
+                .sirketId(sirket).build());
+        faturaRepository.save(Fatura.builder()
+                .faturaNumarasi("KOK-3").tarih(LocalDate.of(2026, 3, 3))
+                .tur(Fatura.FaturaTur.ALIS).durum(Fatura.FaturaDurum.KESILDI)
+                .cariHesap(cari)
+                .araToplam(BigDecimal.valueOf(999)).kdv(BigDecimal.ZERO)
+                .genelToplam(BigDecimal.valueOf(999)).kalanTutar(BigDecimal.valueOf(999))
+                .sirketId(sirket).build());
+
+        var satirlar = faturaRepository.kokpitFaturaDurumDagilimi(sirket);
+
+        assertEquals(2, satirlar.size(), "yalnızca satış faturaları gruplanmalı");
+        var kesildi = satirlar.stream()
+                .filter(s -> "KESILDI".equals(String.valueOf(s.get("durum"))))
+                .findFirst().orElseThrow();
+        assertEquals(1L, ((Number) kesildi.get("adet")).longValue());
+        assertEquals(0, new BigDecimal(String.valueOf(kesildi.get("tutar")))
+                .compareTo(BigDecimal.valueOf(100)));
+        assertEquals(0, faturaRepository.toplamKalanKesilmisSatis(sirket)
+                .compareTo(BigDecimal.valueOf(40)));
+        assertEquals(0, faturaRepository.toplamOdenenKesilmisSatis(sirket)
+                .compareTo(BigDecimal.valueOf(60)));
+        assertEquals(0, faturaRepository.toplamTahsilEdilenKesilmisSatis(sirket)
+                .compareTo(BigDecimal.ZERO));
+        assertEquals(0, faturaRepository.countOdenenKesilmisSatis(sirket));
+    }
+
+    @Test
     void cariHesap_tenantFiltreliSorguCalisir() {
         Long firmaAId = sirketOlustur("Firma A");
         Long firmaBId = sirketOlustur("Firma B");

@@ -408,4 +408,46 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
             "            OR lower(c.ad) LIKE :q ESCAPE '\\') " +
             "ORDER BY f.tarih DESC, f.id DESC")
     List<Fatura> atanabilirFaturalar(@Param("sirketId") Long sirketId, @Param("q") String q, Pageable pageable);
+
+    // ------------------------------------------------------------------
+    // Finans kokpiti: fatura pipeline ve tahsilat oranı agregasyonları
+    // ------------------------------------------------------------------
+
+    /**
+     * Kokpit fatura pipeline'ı: satış faturalarını durum bazında adet ve
+     * tutar olarak gruplar. Tüm fatura listesi belleğe alınmaz.
+     *
+     * <p>Dönen map anahtarları: {@code durum}, {@code adet}, {@code tutar}.
+     */
+    @Query("SELECT new map(f.durum as durum, COUNT(f) as adet, COALESCE(SUM(f.genelToplam), 0) as tutar) " +
+            "FROM Fatura f WHERE f.sirketId = :sirketId " +
+            "AND f.tur = com.raspel.erp.entity.ticaret.Fatura.FaturaTur.SATIS " +
+            "GROUP BY f.durum")
+    List<Map<String, Object>> kokpitFaturaDurumDagilimi(@Param("sirketId") Long sirketId);
+
+    /** Kesilmiş satış faturalarının kalan (tahsil edilecek) toplamı. */
+    @Query("SELECT COALESCE(SUM(f.kalanTutar), 0) FROM Fatura f WHERE f.sirketId = :sirketId " +
+            "AND f.tur = com.raspel.erp.entity.ticaret.Fatura.FaturaTur.SATIS " +
+            "AND f.durum = com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.KESILDI")
+    BigDecimal toplamKalanKesilmisSatis(@Param("sirketId") Long sirketId);
+
+    /** Kesilmiş satış faturalarında tahsil edilmiş toplam. */
+    @Query("SELECT COALESCE(SUM(f.odenenTutar), 0) FROM Fatura f WHERE f.sirketId = :sirketId " +
+            "AND f.tur = com.raspel.erp.entity.ticaret.Fatura.FaturaTur.SATIS " +
+            "AND f.durum = com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.KESILDI")
+    BigDecimal toplamOdenenKesilmisSatis(@Param("sirketId") Long sirketId);
+
+    /** Tamamen tahsil edilmiş kesilmiş satış fatura adedi. */
+    @Query("SELECT COUNT(f) FROM Fatura f WHERE f.sirketId = :sirketId " +
+            "AND f.tur = com.raspel.erp.entity.ticaret.Fatura.FaturaTur.SATIS " +
+            "AND f.durum = com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.KESILDI " +
+            "AND f.odemeDurumu = 'ODENDI'")
+    long countOdenenKesilmisSatis(@Param("sirketId") Long sirketId);
+
+    /** Tamamen tahsil edilmiş kesilmiş satış faturalarının toplam tutarı. */
+    @Query("SELECT COALESCE(SUM(f.genelToplam), 0) FROM Fatura f WHERE f.sirketId = :sirketId " +
+            "AND f.tur = com.raspel.erp.entity.ticaret.Fatura.FaturaTur.SATIS " +
+            "AND f.durum = com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.KESILDI " +
+            "AND f.odemeDurumu = 'ODENDI'")
+    BigDecimal toplamTahsilEdilenKesilmisSatis(@Param("sirketId") Long sirketId);
 }

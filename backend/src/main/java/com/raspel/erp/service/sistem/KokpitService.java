@@ -89,16 +89,18 @@ public class KokpitService {
 
         BigDecimal alacak = sifirla(cariHesapService.toplamNegatifBakiyeGetir(sirketId)).abs();
         BigDecimal verecek = sifirla(cariHesapService.toplamPozitifBakiyeGetir(sirketId));
+        BigDecimal tahsilatOrani = tahsilatOrani(sirketId);
 
         return KokpitDTO.builder()
                 .donem(donemDTO(ozet, cozulenDonem))
                 .ozet(kpiListesi(ozet, grafikler, alacak, verecek, vadesiGecenTutar, vadesiGecenAdet))
                 .kritikDurum(kritikDurumListesi(gorevler, ozet, vadesiGecenTutar, vadesiGecenAdet))
                 .nakit(nakitBolumu(sirketId, ozet, grafikler))
-                .alacakVerecek(alacakVerecekBolumu(sirketId, alacak, verecek))
+                .alacakVerecek(alacakVerecekBolumu(sirketId, alacak, verecek, tahsilatOrani))
                 .karMarj(KAR_ROLLERI.contains(rolDegeri)
                         ? karMarjBolumu(sirketId, rolDegeri, cozulenDonem, grafikler) : null)
-                .faturaSiparis(faturaSiparisBolumu(sirketId, grafikler, vadesiGecenTutar, vadesiGecenAdet))
+                .faturaSiparis(faturaSiparisBolumu(sirketId, grafikler, vadesiGecenTutar,
+                        vadesiGecenAdet, tahsilatOrani))
                 .build();
     }
 
@@ -344,7 +346,8 @@ public class KokpitService {
     // Alacak / verecek
     // ------------------------------------------------------------------
 
-    private KokpitDTO.AlacakVerecekDTO alacakVerecekBolumu(Long sirketId, BigDecimal alacak, BigDecimal verecek) {
+    private KokpitDTO.AlacakVerecekDTO alacakVerecekBolumu(Long sirketId, BigDecimal alacak,
+                                                          BigDecimal verecek, BigDecimal tahsilatOrani) {
         List<KokpitDTO.CariSatirDTO> borclular = cariSatirlari(sirketId, true);
         List<KokpitDTO.CariSatirDTO> tedarikciler = cariSatirlari(sirketId, false);
 
@@ -355,9 +358,28 @@ public class KokpitService {
                 .yaslanma(yaslanmaKovalari(sirketId))
                 .borclular(borclular)
                 .tedarikciler(tedarikciler)
-                .tahsilatOrani(null)
+                .tahsilatOrani(tahsilatOrani)
                 .hedef(hedef("/cari-hesaplar", null))
                 .build();
+    }
+
+    /**
+     * Genel tahsilat oranı: tahsil edilen / (tahsil edilen + kalan) × 100.
+     * Veri yoksa 0 döner; sıfıra bölme yapılmaz.
+     */
+    private BigDecimal tahsilatOrani(Long sirketId) {
+        try {
+            BigDecimal odenen = sifirla(faturaRepository.toplamOdenenKesilmisSatis(sirketId));
+            BigDecimal kalan = sifirla(faturaRepository.toplamKalanKesilmisSatis(sirketId));
+            BigDecimal toplam = odenen.add(kalan);
+            if (toplam.compareTo(BigDecimal.ZERO) == 0) {
+                return BigDecimal.ZERO;
+            }
+            return odenen.multiply(BigDecimal.valueOf(100)).divide(toplam, 1, RoundingMode.HALF_UP);
+        } catch (RuntimeException e) {
+            log.warn("Tahsilat oranı hesaplanamadı: {}", e.getMessage());
+            return BigDecimal.ZERO;
+        }
     }
 
     private List<KokpitDTO.CariSatirDTO> cariSatirlari(Long sirketId, boolean mutlak) {
@@ -479,7 +501,8 @@ public class KokpitService {
 
     private KokpitDTO.FaturaSiparisDTO faturaSiparisBolumu(Long sirketId, DashboardGrafikDTO grafikler,
                                                            BigDecimal vadesiGecenTutar,
-                                                           long vadesiGecenAdet) {
+                                                           long vadesiGecenAdet,
+                                                           BigDecimal tahsilatOrani) {
         List<KokpitDTO.KovaDTO> siparisDurumlari = grafikler != null && grafikler.getSiparisDurumlari() != null
                 ? grafikler.getSiparisDurumlari().stream()
                         .map(s -> KokpitDTO.KovaDTO.builder()
@@ -492,14 +515,80 @@ public class KokpitService {
                 : Collections.emptyList();
 
         return KokpitDTO.FaturaSiparisDTO.builder()
-                .durumlar(Collections.emptyList())
+                .durumlar(faturaDurumlari(sirketId, vadesiGecenTutar, vadesiGecenAdet))
                 .vadesiGecenTutar(sifirla(vadesiGecenTutar))
                 .vadesiGecenAdet(vadesiGecenAdet)
                 .vadesiGecenFaturalar(vadesiGecenFaturalar(sirketId))
-                .tahsilatOrani(null)
+                .tahsilatOrani(tahsilatOrani)
                 .siparisDurumlari(siparisDurumlari)
                 .hedef(hedef("/tahsilat", null))
                 .build();
+    }
+
+    /**
+     * Fatura pipeline kovaları. Durum dağılımı SQL agregasyonundan gelir;
+     * tüm fatura listesi belleğe alınmaz. Vadesi geçen ve tahsil edilen
+     * kovalar özet toplamlardan eklenir.
+     */
+    private List<KokpitDTO.KovaDTO> faturaDurumlari(Long sirketId, BigDecimal vadesiGecenTutar,
+                                                    long vadesiGecenAdet) {
+        Map<String, KokpitDTO.KovaDTO> kovalar = new LinkedHashMap<>();
+        try {
+            List<Map<String, Object>> satirlar = faturaRepository.kokpitFaturaDurumDagilimi(sirketId);
+            if (satirlar != null) {
+                for (Map<String, Object> satir : satirlar) {
+                    String durum = satir.get("durum") != null ? String.valueOf(satir.get("durum")) : "DIGER";
+                    long adet = sayi(satir.get("adet"));
+                    BigDecimal tutar = para(satir.get("tutar"));
+                    kovalar.put(durum, kova(durum, faturaDurumEtiketi(durum), tutar, adet));
+                }
+            }
+        } catch (RuntimeException e) {
+            log.warn("Fatura durum dağılımı alınamadı: {}", e.getMessage());
+        }
+
+        List<KokpitDTO.KovaDTO> liste = new ArrayList<>();
+        for (String anahtar : List.of("TASLAK", "TEKLIF", "KESILDI", "IPTAL")) {
+            KokpitDTO.KovaDTO mevcut = kovalar.get(anahtar);
+            liste.add(mevcut != null ? mevcut
+                    : kova(anahtar, faturaDurumEtiketi(anahtar), BigDecimal.ZERO, 0L));
+        }
+        if (vadesiGecenAdet > 0 || sifirla(vadesiGecenTutar).compareTo(BigDecimal.ZERO) > 0) {
+            liste.add(kova("VADESI_GECEN", "Vadesi Geçen", vadesiGecenTutar, vadesiGecenAdet));
+        }
+        long tahsilEdilenAdet = 0L;
+        BigDecimal tahsilEdilenTutar = BigDecimal.ZERO;
+        try {
+            tahsilEdilenAdet = faturaRepository.countOdenenKesilmisSatis(sirketId);
+            tahsilEdilenTutar = sifirla(faturaRepository.toplamTahsilEdilenKesilmisSatis(sirketId));
+        } catch (RuntimeException e) {
+            log.warn("Tahsil edilen fatura özeti alınamadı: {}", e.getMessage());
+        }
+        if (tahsilEdilenAdet > 0) {
+            liste.add(kova("TAHSIL_EDILDI", "Tahsil Edildi", tahsilEdilenTutar, tahsilEdilenAdet));
+        }
+        return liste;
+    }
+
+    private KokpitDTO.KovaDTO kova(String anahtar, String etiket, BigDecimal tutar, Long adet) {
+        return KokpitDTO.KovaDTO.builder()
+                .anahtar(anahtar)
+                .etiket(etiket)
+                .tutar(sifirla(tutar))
+                .adet(adet)
+                .build();
+    }
+
+    private String faturaDurumEtiketi(String durum) {
+        return switch (durum) {
+            case "TASLAK" -> "Taslak";
+            case "TEKLIF" -> "Teklif";
+            case "KESILDI" -> "Kesildi";
+            case "IPTAL" -> "İptal";
+            case "VADESI_GECEN" -> "Vadesi Geçen";
+            case "TAHSIL_EDILDI" -> "Tahsil Edildi";
+            default -> durum;
+        };
     }
 
     private List<KokpitDTO.VadesiGecenFaturaDTO> vadesiGecenFaturalar(Long sirketId) {
@@ -583,6 +672,28 @@ public class KokpitService {
 
     private BigDecimal sifirla(BigDecimal deger) {
         return deger != null ? deger : BigDecimal.ZERO;
+    }
+
+    /** JPQL toplam alanı sürüme göre Long/Integer/Double dönebilir. */
+    private BigDecimal para(Object deger) {
+        if (deger == null) return BigDecimal.ZERO;
+        if (deger instanceof BigDecimal bd) return bd;
+        if (deger instanceof Number n) return BigDecimal.valueOf(n.doubleValue());
+        try {
+            return new BigDecimal(String.valueOf(deger));
+        } catch (NumberFormatException e) {
+            return BigDecimal.ZERO;
+        }
+    }
+
+    private long sayi(Object deger) {
+        if (deger == null) return 0L;
+        if (deger instanceof Number n) return n.longValue();
+        try {
+            return Long.parseLong(String.valueOf(deger));
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
     }
 
     private LocalDate tarihCoz(String deger) {

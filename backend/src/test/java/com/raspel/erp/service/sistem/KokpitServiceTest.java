@@ -198,8 +198,47 @@ class KokpitServiceTest {
         assertTrue(kokpit.getKarMarj().getCariler().isEmpty());
 
         assertNotNull(kokpit.getFaturaSiparis());
-        assertTrue(kokpit.getFaturaSiparis().getDurumlar().isEmpty());
+        assertEquals(4, kokpit.getFaturaSiparis().getDurumlar().size());
+        assertTrue(kokpit.getFaturaSiparis().getDurumlar().stream()
+                .allMatch(k -> k.getAdet() == 0L && k.getTutar().compareTo(BigDecimal.ZERO) == 0));
         assertTrue(kokpit.getFaturaSiparis().getVadesiGecenFaturalar().isEmpty());
+    }
+
+    @Test
+    void faturaPipelineRepositoryAggregateKullanir() {
+        stubTemelVeri();
+        when(faturaRepository.kokpitFaturaDurumDagilimi(1L)).thenReturn(List.of(
+                Map.of("durum", "KESILDI", "adet", 10L, "tutar", new BigDecimal("10000")),
+                Map.of("durum", "TASLAK", "adet", 2L, "tutar", new BigDecimal("2000"))));
+        when(faturaRepository.toplamOdenenKesilmisSatis(1L)).thenReturn(new BigDecimal("7000"));
+        when(faturaRepository.toplamKalanKesilmisSatis(1L)).thenReturn(new BigDecimal("3000"));
+        when(faturaRepository.countOdenenKesilmisSatis(1L)).thenReturn(4L);
+        when(faturaRepository.toplamTahsilEdilenKesilmisSatis(1L)).thenReturn(new BigDecimal("5000"));
+
+        KokpitDTO kokpit = service.kokpitGetir(1L, "USER", "BU_AY");
+
+        verify(faturaRepository, times(1)).kokpitFaturaDurumDagilimi(1L);
+        verify(faturaRepository, never()).findBySirketIdOrderByTarihDesc(any());
+        verify(faturaRepository, never()).basliklariGetir(any());
+
+        List<KokpitDTO.KovaDTO> durumlar = kokpit.getFaturaSiparis().getDurumlar();
+        assertEquals(List.of("TASLAK", "TEKLIF", "KESILDI", "IPTAL", "TAHSIL_EDILDI"),
+                durumlar.stream().map(KokpitDTO.KovaDTO::getAnahtar).toList());
+        assertEquals(10L, durumlar.stream().filter(k -> "KESILDI".equals(k.getAnahtar()))
+                .findFirst().orElseThrow().getAdet());
+        assertEquals(0, kokpit.getFaturaSiparis().getTahsilatOrani().compareTo(new BigDecimal("70.0")));
+    }
+
+    @Test
+    void tahsilatOraniSifirCiroIleBolunmez() {
+        stubTemelVeri();
+        when(faturaRepository.toplamOdenenKesilmisSatis(1L)).thenReturn(BigDecimal.ZERO);
+        when(faturaRepository.toplamKalanKesilmisSatis(1L)).thenReturn(BigDecimal.ZERO);
+
+        KokpitDTO kokpit = service.kokpitGetir(1L, "USER", "BU_AY");
+
+        assertEquals(0, kokpit.getFaturaSiparis().getTahsilatOrani().compareTo(BigDecimal.ZERO));
+        assertEquals(0, kokpit.getAlacakVerecek().getTahsilatOrani().compareTo(BigDecimal.ZERO));
     }
 
     // ------------------------------------------------------------------
