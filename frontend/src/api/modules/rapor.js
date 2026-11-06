@@ -34,6 +34,10 @@ export const dashboardAPI = {
   karAnalizi(params) {
     return apiClient.get('/dashboard/kar-analizi', { params })
   },
+  // Finans kokpiti: tek istekte ozet, kritik durum ve dort finans bolumu.
+  kokpit(params) {
+    return apiClient.get('/dashboard/kokpit', { params })
+  },
   tercihGetir() {
     return apiClient.get('/dashboard/tercihler')
   },
