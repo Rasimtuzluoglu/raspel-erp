@@ -247,50 +247,103 @@
       novalidate
       @submit.prevent="girisYap"
     >
-      <!-- İsteğe bağlı, katlanabilir şirket kodu -->
-      <div class="gk-kod">
+      <!-- İsteğe bağlı, kademeli açılan şirket kodu -->
+      <div
+        class="gk-kod"
+        :class="{
+          'gk-kod--acik': sirketKoduAcik,
+          'gk-kod--etkin': sirketKoduVar && !sirketKoduAcik
+        }"
+      >
         <button
           type="button"
           class="gk-kod-ac"
           data-test="sirket-kodu-ac"
           :aria-expanded="sirketKoduAcik ? 'true' : 'false'"
           aria-controls="sirket-kodu-alan"
-          @click="sirketKoduAcik = !sirketKoduAcik"
+          @click="sirketKoduDegistir"
         >
-          <i
-            class="pi pi-building"
+          <span
+            class="gk-kod-ikon"
             aria-hidden="true"
-          />
-          <span>{{ sirketKoduAcik ? t('giris.sirketKoduKaldir') : t('giris.sirketKoduEkle') }}</span>
-          <i
-            class="pi"
-            :class="sirketKoduAcik ? 'pi-chevron-up' : 'pi-chevron-down'"
+          >
+            <i class="pi pi-building" />
+          </span>
+          <span class="gk-kod-metin">
+            <span class="gk-kod-baslik-satir">
+              <span class="gk-kod-baslik">{{ t('giris.sirketKodu') }}</span>
+              <span
+                v-if="sirketKoduVar && !sirketKoduAcik"
+                class="gk-kod-cip"
+                data-test="sirket-kodu-cip"
+              >
+                <i
+                  class="pi pi-check"
+                  aria-hidden="true"
+                />
+                {{ sirketKodu }}
+              </span>
+            </span>
+            <span class="gk-kod-alt">{{ sirketKoduAlt }}</span>
+          </span>
+          <span
+            class="gk-kod-ok"
+            :class="{ 'gk-kod-ok--acik': sirketKoduAcik }"
             aria-hidden="true"
-          />
+          >
+            <i class="pi pi-chevron-down" />
+          </span>
         </button>
 
         <Transition name="gk-ac">
           <div
             v-if="sirketKoduAcik"
             id="sirket-kodu-alan"
-            class="gk-alan gk-alan--kod"
+            class="gk-kod-panel"
           >
-            <label for="sirket-kodu">{{ t('giris.sirketKodu') }}</label>
-            <input
-              id="sirket-kodu"
-              v-model.trim="sirketKodu"
-              data-test="sirket-kodu"
-              type="text"
-              autocomplete="organization"
-              spellcheck="false"
-              class="gk-input"
-              :placeholder="t('giris.sirketKoduPlaceholder')"
-              aria-describedby="sirket-kodu-ipucu"
-            >
+            <div class="gk-kod-giris">
+              <i
+                class="pi pi-hashtag"
+                aria-hidden="true"
+              />
+              <input
+                id="sirket-kodu"
+                ref="sirketKoduInput"
+                v-model.trim="sirketKodu"
+                data-test="sirket-kodu"
+                type="text"
+                autocomplete="organization"
+                spellcheck="false"
+                class="gk-input gk-input--kod"
+                :aria-label="t('giris.sirketKodu')"
+                :placeholder="t('giris.sirketKoduPlaceholder')"
+                aria-describedby="sirket-kodu-ipucu"
+                @keydown.enter.prevent="kullaniciyaOdaklan"
+              >
+              <button
+                v-if="sirketKoduVar"
+                type="button"
+                class="gk-kod-temizle"
+                data-test="sirket-kodu-temizle"
+                :aria-label="t('giris.sirketKoduTemizle')"
+                @click="sirketKoduTemizle"
+              >
+                <i
+                  class="pi pi-times"
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
             <small
               id="sirket-kodu-ipucu"
-              class="gk-ipucu"
-            >{{ t('giris.sirketKoduIpucu') }}</small>
+              class="gk-kod-ipucu"
+            >
+              <i
+                class="pi pi-shield"
+                aria-hidden="true"
+              />
+              <span>{{ t('giris.sirketKoduGuvenli') }}</span>
+            </small>
           </div>
         </Transition>
       </div>
@@ -501,6 +554,31 @@ const username = ref('')
 const password = ref('')
 const sirketKodu = ref('')
 const sirketKoduAcik = ref(false)
+const sirketKoduInput = ref(null)
+const sirketKoduVar = computed(() => sirketKodu.value.trim().length > 0)
+const sirketKoduAlt = computed(() => (
+  sirketKoduVar.value && !sirketKoduAcik.value
+    ? t('giris.sirketKoduEtkinAlt')
+    : t('giris.sirketKoduIpucu')
+))
+
+const sirketKoduDegistir = async () => {
+  sirketKoduAcik.value = !sirketKoduAcik.value
+  if (sirketKoduAcik.value) {
+    await nextTick()
+    sirketKoduInput.value?.focus()
+  }
+}
+
+const sirketKoduTemizle = () => {
+  sirketKodu.value = ''
+  sirketKoduInput.value?.focus()
+}
+
+const kullaniciyaOdaklan = () => {
+  kullaniciInput.value?.focus()
+}
+
 const beniHatirla = ref(false)
 const sifreGorunur = ref(false)
 const capsLockAcik = ref(false)
@@ -1162,6 +1240,7 @@ const tumAdimlariSifirla = () => {
 .gk-goz:focus-visible,
 .gk-baglanti:focus-visible,
 .gk-kod-ac:focus-visible,
+.gk-kod-temizle:focus-visible,
 .gk-buton:focus-visible,
 .sirket-kart:focus-visible,
 .gk-hatirla input:focus-visible {
@@ -1256,45 +1335,234 @@ const tumAdimlariSifirla = () => {
   color: #2dd4bf;
 }
 
-/* Şirket kodu katlanır alanı */
+/* Şirket kodu: kademeli açılan premium alan */
 .gk-kod {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-bottom: 12px;
-  border-bottom: 1px dashed rgba(148, 163, 184, 0.16);
+  min-width: 0;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 14px;
+  background:
+    radial-gradient(120% 150% at 0% 0%, rgba(20, 184, 166, 0.1), transparent 58%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 58%),
+    rgba(7, 11, 16, 0.42);
+  transition:
+    border-color 180ms ease-out,
+    box-shadow 180ms ease-out,
+    background 180ms ease-out;
+}
+
+.gk-kod:hover {
+  border-color: rgba(148, 163, 184, 0.28);
+}
+
+.gk-kod--acik,
+.gk-kod--acik:hover {
+  border-color: rgba(20, 184, 166, 0.42);
+  box-shadow:
+    0 0 0 3px rgba(20, 184, 166, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.gk-kod--etkin {
+  border-color: rgba(20, 184, 166, 0.3);
+  background:
+    radial-gradient(120% 150% at 0% 0%, rgba(20, 184, 166, 0.14), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 58%),
+    rgba(7, 11, 16, 0.42);
 }
 
 .gk-kod-ac {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 58px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: #e8eef5;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gk-kod-ikon {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 10px;
-  align-self: flex-start;
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
   border-radius: 10px;
-  background: rgba(148, 163, 184, 0.06);
-  color: #9fb0c0;
-  font-family: inherit;
-  font-size: 12.5px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: border-color 160ms ease-out, color 160ms ease-out;
+  border: 1px solid rgba(20, 184, 166, 0.24);
+  background: linear-gradient(180deg, rgba(20, 184, 166, 0.22), rgba(20, 184, 166, 0.08));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #2dd4bf;
+  font-size: 14px;
 }
 
-.gk-kod-ac span {
+.gk-kod-metin {
+  display: flex;
   flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
-.gk-kod-ac:hover {
+.gk-kod-baslik-satir {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.gk-kod-baslik {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   color: #e8eef5;
-  border-color: rgba(20, 184, 166, 0.4);
 }
 
-.gk-kod-ac i:first-child {
+.gk-kod-cip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 2px 7px;
+  border: 1px solid rgba(45, 212, 191, 0.28);
+  border-radius: 999px;
+  background: rgba(20, 184, 166, 0.14);
+  color: #5eead4;
+  font-size: 10.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gk-kod-cip i {
+  flex-shrink: 0;
+  font-size: 9px;
+}
+
+.gk-kod-alt {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #6f8294;
+}
+
+.gk-kod--etkin .gk-kod-alt {
+  color: #8fa6b8;
+}
+
+.gk-kod-ok {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  color: #6f8294;
+  font-size: 11px;
+  transition:
+    transform 200ms ease-out,
+    color 160ms ease-out,
+    background 160ms ease-out;
+}
+
+.gk-kod-ac:hover .gk-kod-ok {
+  background: rgba(148, 163, 184, 0.1);
+  color: #e8eef5;
+}
+
+.gk-kod-ok--acik {
+  transform: rotate(180deg);
+  color: #2dd4bf;
+}
+
+.gk-kod-panel {
+  padding: 0 12px 12px;
+}
+
+.gk-kod-giris {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.gk-kod-giris > i {
+  position: absolute;
+  left: 13px;
+  color: #6f8294;
+  font-size: 14px;
+  pointer-events: none;
+  transition: color 160ms ease-out;
+}
+
+.gk-kod-giris:focus-within > i {
+  color: #2dd4bf;
+}
+
+.gk-input--kod {
+  min-height: 44px;
+  padding-left: 37px;
+  padding-right: 44px;
+  font-size: 13.5px;
+  letter-spacing: 0.01em;
+}
+
+.gk-kod-temizle {
+  position: absolute;
+  right: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #6f8294;
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 160ms ease-out, background 160ms ease-out;
+}
+
+.gk-kod-temizle:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #fca5a5;
+}
+
+.gk-kod-ipucu {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 7px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #6f8294;
+}
+
+.gk-kod-ipucu i {
+  flex-shrink: 0;
+  margin-top: 2px;
   color: #14b8a6;
-  font-size: 13px;
+  font-size: 11px;
+}
+
+.gk-kod-ipucu span {
+  min-width: 0;
 }
 
 .gk-ac-enter-active,
