@@ -123,8 +123,8 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, #070b10 0%, #0b1219 100%);
-  color: #e8eef5;
+  background: linear-gradient(180deg, var(--giris-zemin-1) 0%, var(--giris-zemin-2) 100%);
+  color: var(--giris-metin);
   overflow: hidden;
 }
 
@@ -138,7 +138,7 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: -20%;
   background:
-    radial-gradient(36% 42% at 24% 22%, rgba(20, 184, 166, 0.16), transparent 70%),
+    radial-gradient(36% 42% at 24% 22%, var(--giris-aksan-yumusak-2), transparent 70%),
     radial-gradient(40% 44% at 78% 28%, rgba(45, 212, 191, 0.1), transparent 72%),
     radial-gradient(44% 48% at 62% 82%, rgba(13, 148, 136, 0.12), transparent 74%);
 }
@@ -187,7 +187,7 @@ onBeforeUnmount(() => {
   max-width: 340px;
   font-size: 13.5px;
   line-height: 1.55;
-  color: #9fb0c0;
+  color: var(--giris-metin-2);
 }
 
 .ga-cubuk {
@@ -195,7 +195,7 @@ onBeforeUnmount(() => {
   height: 3px;
   margin-top: 12px;
   border-radius: 999px;
-  background: rgba(148, 163, 184, 0.18);
+  background: var(--giris-kenar-2);
   overflow: hidden;
 }
 
@@ -204,7 +204,7 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #0d9488, #2dd4bf);
+  background: linear-gradient(90deg, var(--giris-aksan-koyu), var(--giris-aksan-parlak));
   transform-origin: left center;
   animation-name: ga-ilerleme;
   animation-timing-function: linear;
@@ -222,10 +222,10 @@ onBeforeUnmount(() => {
   min-height: 44px;
   min-width: 44px;
   padding: 0 14px;
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  border: 1px solid var(--giris-kenar-4);
   border-radius: 999px;
-  background: rgba(16, 24, 33, 0.72);
-  color: #9fb0c0;
+  background: var(--giris-yuzey-2);
+  color: var(--giris-metin-2);
   font-family: inherit;
   font-size: 12.5px;
   font-weight: 600;
@@ -234,13 +234,13 @@ onBeforeUnmount(() => {
 }
 
 .ga-atla:hover {
-  color: #e8eef5;
-  border-color: rgba(45, 212, 191, 0.5);
-  background: rgba(20, 184, 166, 0.12);
+  color: var(--giris-metin);
+  border-color: var(--giris-aksan-kenar-2);
+  background: var(--giris-aksan-yumusak);
 }
 
 .ga-atla:focus-visible {
-  outline: 2px solid #14b8a6;
+  outline: 2px solid var(--giris-aksan);
   outline-offset: 2px;
 }
 

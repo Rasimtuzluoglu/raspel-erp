@@ -3,6 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import i18n from '../../i18n.js'
+import { useTheme } from '../../composables/useTheme.js'
 
 const {
   girisMock,
@@ -107,6 +108,7 @@ describe('Giris.vue', () => {
   beforeEach(() => {
     localStorage.clear()
     sessionStorage.clear()
+    useTheme().applyMode('dark')
     i18n.global.locale.value = 'tr'
     document.documentElement.setAttribute('lang', 'tr')
     pushMock.mockReset()
@@ -256,6 +258,25 @@ describe('Giris.vue', () => {
 
     const uyari = w.get('[role="alert"]')
     expect(uyari.text()).toContain('Kullanıcı adı veya şifre hatalı')
+  })
+
+  it('açık/koyu tema seçici temayı değiştirir ve tercihi saklar', async () => {
+    const w = await mountGiris()
+    await acilisiAtla(w)
+
+    const acik = w.get('[data-test="giris-tema-light"]')
+    const koyu = w.get('[data-test="giris-tema-dark"]')
+    expect(koyu.attributes('aria-pressed')).toBe('true')
+
+    await acik.trigger('click')
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+    expect(localStorage.getItem('raspel_erp_theme')).toBe('light')
+    expect(acik.attributes('aria-pressed')).toBe('true')
+    expect(koyu.attributes('aria-pressed')).toBe('false')
+
+    await koyu.trigger('click')
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
+    expect(localStorage.getItem('raspel_erp_theme')).toBe('dark')
   })
 
   it('dil değiştirici TR/EN çalışır', async () => {

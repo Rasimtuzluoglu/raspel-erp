@@ -129,9 +129,9 @@ onMounted(async () => {
   max-width: 420px;
   margin-top: 16px;
   padding-top: 12px;
-  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  border-top: 1px solid var(--giris-kenar);
   font-size: 11.5px;
-  color: #6f8294;
+  color: var(--giris-metin-3);
 }
 
 .gab-sol,
@@ -168,7 +168,7 @@ onMounted(async () => {
   border: none;
   border-radius: 7px;
   background: transparent;
-  color: #6f8294;
+  color: var(--giris-metin-3);
   font-family: inherit;
   font-size: 11.5px;
   font-weight: 700;
@@ -178,22 +178,22 @@ onMounted(async () => {
 }
 
 .gab-dil-btn:hover {
-  color: #e8eef5;
+  color: var(--giris-metin);
 }
 
 .gab-dil-btn.aktif {
-  color: #2dd4bf;
-  background: rgba(20, 184, 166, 0.12);
+  color: var(--giris-aksan-parlak);
+  background: var(--giris-aksan-yumusak);
 }
 
 .gab-dil-btn:focus-visible,
 .gab-baglanti:focus-visible {
-  outline: 2px solid #14b8a6;
+  outline: 2px solid var(--giris-aksan);
   outline-offset: 2px;
 }
 
 .gab-ayrac {
-  color: rgba(148, 163, 184, 0.4);
+  color: var(--giris-kenar-3);
 }
 
 .gab-baglanti {
@@ -203,14 +203,14 @@ onMounted(async () => {
   min-height: 44px;
   padding: 0 4px;
   border-radius: 6px;
-  color: #9fb0c0;
+  color: var(--giris-metin-2);
   text-decoration: none;
   font-weight: 600;
   transition: color 160ms ease-out;
 }
 
 .gab-baglanti:hover {
-  color: #2dd4bf;
+  color: var(--giris-aksan-parlak);
 }
 
 .gab-nokta {
@@ -218,18 +218,18 @@ onMounted(async () => {
   height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: #fbbf24;
+  background: var(--giris-uyari);
   box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.16);
 }
 
 .gab-durum--up .gab-nokta {
-  background: #34d399;
+  background: var(--giris-basari);
   box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.16);
 }
 
 .gab-surum {
   padding: 0 2px;
-  color: #6f8294;
+  color: var(--giris-metin-3);
   white-space: nowrap;
 }
 
@@ -237,7 +237,7 @@ onMounted(async () => {
   width: 100%;
   margin: 2px 0 0;
   font-size: 10.5px;
-  color: #6f8294;
+  color: var(--giris-metin-3);
 }
 
 @media (max-width: 480px) {

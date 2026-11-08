@@ -74,7 +74,7 @@ const markaLogo = '/logo-icon.png'
   flex-direction: column;
   gap: 18px;
   min-width: 0;
-  color: #e8eef5;
+  color: var(--giris-metin);
 }
 
 .gmp-marka {
@@ -102,7 +102,7 @@ const markaLogo = '/logo-icon.png'
   line-height: 36px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: #e8eef5;
+  color: var(--giris-metin);
 }
 
 .gmp-vaat {
@@ -110,7 +110,7 @@ const markaLogo = '/logo-icon.png'
   max-width: 46ch;
   font-size: 13.5px;
   line-height: 1.55;
-  color: #9fb0c0;
+  color: var(--giris-metin-2);
 }
 
 .gmp-degerler {
@@ -128,7 +128,7 @@ const markaLogo = '/logo-icon.png'
   gap: 10px;
   font-size: 13.5px;
   line-height: 1.55;
-  color: #c8d4df;
+  color: var(--giris-metin-2);
 }
 
 .gmp-degerler i {
@@ -139,9 +139,9 @@ const markaLogo = '/logo-icon.png'
   height: 30px;
   flex-shrink: 0;
   border-radius: 9px;
-  background: rgba(20, 184, 166, 0.12);
-  border: 1px solid rgba(20, 184, 166, 0.22);
-  color: #2dd4bf;
+  background: var(--giris-aksan-yumusak);
+  border: 1px solid var(--giris-aksan-yumusak-2);
+  color: var(--giris-aksan-parlak);
   font-size: 13px;
 }
 
@@ -156,12 +156,12 @@ const markaLogo = '/logo-icon.png'
   margin: 0;
   font-size: 12px;
   font-weight: 600;
-  color: #6f8294;
+  color: var(--giris-metin-3);
 }
 
 .gmp-guven i {
   font-size: 12px;
-  color: #14b8a6;
+  color: var(--giris-aksan);
 }
 
 @media (max-height: 760px) {

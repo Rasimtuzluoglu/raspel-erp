@@ -26,6 +26,45 @@
       <GirisMarkaPaneli class="giris-marka-alani" />
 
       <main class="giris-icerik">
+        <div
+          class="giris-tema-secim"
+          role="group"
+          :aria-label="t('theme.mode')"
+        >
+          <button
+            type="button"
+            class="giris-tema-btn"
+            :class="{ 'giris-tema-btn--aktif': !isDark }"
+            data-test="giris-tema-light"
+            :aria-label="t('theme.light')"
+            :title="t('theme.light')"
+            :aria-pressed="!isDark ? 'true' : 'false'"
+            @click="applyMode('light')"
+          >
+            <i
+              class="pi pi-sun"
+              aria-hidden="true"
+            />
+            <span>{{ t('theme.lightShort') }}</span>
+          </button>
+          <button
+            type="button"
+            class="giris-tema-btn"
+            :class="{ 'giris-tema-btn--aktif': isDark }"
+            data-test="giris-tema-dark"
+            :aria-label="t('theme.dark')"
+            :title="t('theme.dark')"
+            :aria-pressed="isDark ? 'true' : 'false'"
+            @click="applyMode('dark')"
+          >
+            <i
+              class="pi pi-moon"
+              aria-hidden="true"
+            />
+            <span>{{ t('theme.darkShort') }}</span>
+          </button>
+        </div>
+
         <!-- Mobil/tablet: kompakt marka -->
         <div class="giris-mobil-marka">
           <img
@@ -60,6 +99,7 @@ import { nextTick, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/authStore.js'
+import { useTheme } from '../composables/useTheme.js'
 import GirisAcilis from '../components/GirisAcilis.vue'
 import GirisMarkaPaneli from '../components/GirisMarkaPaneli.vue'
 import GirisFormKarti from '../components/GirisFormKarti.vue'
@@ -68,6 +108,7 @@ import GirisAltBilgi from '../components/GirisAltBilgi.vue'
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const { isDark, applyMode } = useTheme()
 const { t } = useI18n()
 
 const SW_YENILEME_ANAHTARI = 'raspel_sw_yenileme'
@@ -148,28 +189,51 @@ onMounted(() => {
 
 <style scoped>
 .giris-sayfasi {
-  /* Faz 1 görsel dil tokenları (spec §3.1) */
+  /* Giriş ekranı görsel dil tokenları — koyu ve açık tema buradan beslenir. */
   --giris-aksan: var(--accent, #14b8a6);
   --giris-aksan-parlak: #2dd4bf;
   --giris-aksan-koyu: #0d9488;
+  --giris-aksan-yumusak: rgba(20, 184, 166, 0.1);
+  --giris-aksan-yumusak-2: rgba(20, 184, 166, 0.15);
+  --giris-aksan-kenar: rgba(20, 184, 166, 0.3);
+  --giris-aksan-kenar-2: rgba(20, 184, 166, 0.45);
+  --giris-aksan-halka: rgba(20, 184, 166, 0.2);
+  --giris-buton-1: #14b8a6;
+  --giris-buton-2: #0d9488;
+  --giris-buton-metin: #04211d;
   --giris-zemin-1: #070b10;
   --giris-zemin-2: #0b1219;
   --giris-yuzey: rgba(16, 24, 33, 0.78);
+  --giris-yuzey-2: rgba(7, 11, 16, 0.72);
+  --giris-yuzey-3: rgba(7, 11, 16, 0.52);
+  --giris-yuzey-4: rgba(7, 11, 16, 0.42);
   --giris-kenar: rgba(148, 163, 184, 0.14);
+  --giris-kenar-2: rgba(148, 163, 184, 0.18);
+  --giris-kenar-3: rgba(148, 163, 184, 0.3);
+  --giris-kenar-4: rgba(148, 163, 184, 0.22);
+  --giris-hover: rgba(148, 163, 184, 0.1);
   --giris-metin: #e8eef5;
   --giris-metin-2: #9fb0c0;
   --giris-metin-3: #6f8294;
+  --giris-vurgu: rgba(255, 255, 255, 0.04);
+  --giris-vurgu-2: rgba(255, 255, 255, 0.08);
+  --giris-golge-renk: rgba(0, 0, 0, 0.45);
+  --giris-hata-metin: #fca5a5;
+  --giris-hata-yumusak: rgba(239, 68, 68, 0.12);
+  --giris-hata-kenar: rgba(239, 68, 68, 0.36);
+  --giris-uyari: #fbbf24;
+  --giris-uyari-yumusak: rgba(245, 158, 11, 0.14);
+  --giris-uyari-kenar: rgba(245, 158, 11, 0.3);
+  --giris-basari: #5eead4;
   --giris-radius: 18px;
 
-  /* Giriş her zaman koyu kalır: tema açık olsa bile form ve ilk kurulum
-     sihirbazı okunaklı olsun. */
-  --text-primary: #e8eef5;
-  --text-secondary: #9fb0c0;
-  --text-muted: #6f8294;
-  --bg-primary: #0b1219;
+  --text-primary: var(--giris-metin);
+  --text-secondary: var(--giris-metin-2);
+  --text-muted: var(--giris-metin-3);
+  --bg-primary: var(--giris-zemin-2);
   --bg-card: #101821;
-  --border: rgba(148, 163, 184, 0.18);
-  --primary-color: #14b8a6;
+  --border: var(--giris-kenar-2);
+  --primary-color: var(--giris-aksan);
 
   position: relative;
   display: flex;
@@ -190,6 +254,65 @@ onMounted(() => {
   overflow-y: auto;
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+[data-theme='light'] .giris-sayfasi {
+  --giris-aksan: #0d9488;
+  --giris-aksan-parlak: #0f766e;
+  --giris-aksan-koyu: #115e59;
+  --giris-aksan-yumusak: rgba(13, 148, 136, 0.09);
+  --giris-aksan-yumusak-2: rgba(13, 148, 136, 0.14);
+  --giris-aksan-kenar: rgba(13, 148, 136, 0.28);
+  --giris-aksan-kenar-2: rgba(13, 148, 136, 0.45);
+  --giris-aksan-halka: rgba(13, 148, 136, 0.16);
+  --giris-buton-1: #0d9488;
+  --giris-buton-2: #115e59;
+  --giris-buton-metin: #ffffff;
+  --giris-zemin-1: #f8fafc;
+  --giris-zemin-2: #eef2f7;
+  --giris-yuzey: rgba(255, 255, 255, 0.9);
+  --giris-yuzey-2: #ffffff;
+  --giris-yuzey-3: #f8fafc;
+  --giris-yuzey-4: #f1f5f9;
+  --giris-kenar: rgba(15, 23, 42, 0.1);
+  --giris-kenar-2: rgba(15, 23, 42, 0.14);
+  --giris-kenar-3: rgba(15, 23, 42, 0.24);
+  --giris-kenar-4: rgba(15, 23, 42, 0.18);
+  --giris-hover: rgba(15, 23, 42, 0.06);
+  --giris-metin: #0f172a;
+  --giris-metin-2: #475569;
+  --giris-metin-3: #64748b;
+  --giris-vurgu: rgba(255, 255, 255, 0.6);
+  --giris-vurgu-2: rgba(255, 255, 255, 0.9);
+  --giris-golge-renk: rgba(15, 23, 42, 0.12);
+  --giris-hata-metin: #b91c1c;
+  --giris-hata-yumusak: rgba(220, 38, 38, 0.08);
+  --giris-hata-kenar: rgba(220, 38, 38, 0.3);
+  --giris-uyari: #b45309;
+  --giris-uyari-yumusak: rgba(180, 83, 9, 0.1);
+  --giris-uyari-kenar: rgba(180, 83, 9, 0.28);
+  --giris-basari: #0f766e;
+
+  --text-primary: var(--giris-metin);
+  --text-secondary: var(--giris-metin-2);
+  --text-muted: var(--giris-metin-3);
+  --bg-primary: var(--giris-zemin-2);
+  --bg-card: #ffffff;
+  --border: var(--giris-kenar-2);
+  --primary-color: var(--giris-aksan);
+}
+
+[data-theme='light'] .giris-mesh {
+  background:
+    radial-gradient(38% 44% at 20% 18%, rgba(13, 148, 136, 0.12), transparent 70%),
+    radial-gradient(42% 46% at 82% 24%, rgba(15, 118, 110, 0.08), transparent 72%),
+    radial-gradient(44% 48% at 66% 84%, rgba(13, 148, 136, 0.08), transparent 74%);
+}
+
+[data-theme='light'] .giris-grid {
+  background-image:
+    linear-gradient(rgba(15, 23, 42, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.055) 1px, transparent 1px);
 }
 
 .giris-sahne {
@@ -247,6 +370,60 @@ onMounted(() => {
   min-width: 0;
 }
 
+.giris-tema-secim {
+  display: inline-flex;
+  align-self: flex-end;
+  gap: 2px;
+  margin-bottom: 10px;
+  padding: 3px;
+  border: 1px solid var(--giris-kenar-2);
+  border-radius: 999px;
+  background: var(--giris-yuzey-2);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+.giris-tema-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--giris-metin-3);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 160ms ease-out,
+    color 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+.giris-tema-btn i {
+  font-size: 11.5px;
+}
+
+.giris-tema-btn:hover {
+  background: var(--giris-hover);
+  color: var(--giris-metin);
+}
+
+.giris-tema-btn--aktif {
+  background: var(--giris-aksan-yumusak-2);
+  color: var(--giris-aksan-parlak);
+  box-shadow: inset 0 0 0 1px var(--giris-aksan-kenar);
+}
+
+.giris-tema-btn:focus-visible {
+  outline: 2px solid var(--giris-aksan);
+  outline-offset: 2px;
+}
+
 .giris-mobil-marka {
   display: none;
   align-items: center;
@@ -302,6 +479,18 @@ onMounted(() => {
   .giris-sayfasi {
     align-items: flex-start;
     padding-top: calc(20px + env(safe-area-inset-top));
+  }
+}
+
+@media (max-width: 520px) {
+  .giris-tema-btn {
+    width: 36px;
+    min-height: 34px;
+    padding: 0;
+  }
+
+  .giris-tema-btn span {
+    display: none;
   }
 }
 
