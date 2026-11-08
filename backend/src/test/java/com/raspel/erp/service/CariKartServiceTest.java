@@ -28,6 +28,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
@@ -93,31 +94,16 @@ class CariKartServiceTest {
                         .tarih(LocalDate.now()).tutar(new BigDecimal("500")).durum("TAMAMLANDI")
                         .sirketId(1L).build()));
 
-        when(notRepository.findByCariHesapIdOrderByOlusturmaTarihiDesc(1L)).thenReturn(List.of(
-                Not.builder().id(40L).baslik("Not").icerik("Görüşüldü").onemDerecesi("NORMAL")
-                        .olusturmaTarihi(LocalDateTime.now()).build()));
-
-        when(cariFirsatRepository.findBySirketIdAndCariHesapIdOrderByOlusturmaTarihiDesc(1L, 1L)).thenReturn(List.of(
-                CariFirsat.builder().id(50L).ad("Fırsat").durum("YENI").kaynak("WEB")
-                        .deger(new BigDecimal("15000")).tahminiKapanis(LocalDate.now().plusDays(10)).build()));
-
-        when(cariFiyatRepository.findByCariHesapIdOrderByStokId(1L)).thenReturn(List.of(
-                CariFiyat.builder().id(60L).cariHesapId(1L).stokId(5L).fiyat(new BigDecimal("99"))
-                        .sirketId(1L).build()));
+        when(notRepository.countBySirketIdAndCariHesapId(1L, 1L)).thenReturn(1L);
+        when(cariFirsatRepository.countBySirketIdAndCariHesapId(1L, 1L)).thenReturn(1L);
+        when(cariFiyatRepository.countBySirketIdAndCariHesapId(1L, 1L)).thenReturn(1L);
+        when(taksitRepository.countBySirketIdAndCariHesapId(1L, 1L)).thenReturn(1L);
 
         when(hareketRepository.cariTahsilatToplam(1L, 1L)).thenReturn(new BigDecimal("1000"));
         when(hareketRepository.findTop5BySirketIdAndCariHesapIdOrderByHareketTarihiDescIdDesc(1L, 1L))
                 .thenReturn(List.of(
                         Hareket.builder().id(70L).tur(Hareket.HareketTuru.TAHSILAT).tutar(new BigDecimal("1000")).build(),
                         Hareket.builder().id(71L).tur(Hareket.HareketTuru.ODEME).tutar(new BigDecimal("200")).build()));
-
-        when(stokRepository.findAllById(anyList())).thenReturn(List.of(
-                Stok.builder().id(5L).ad("Ürün 5").stokKodu("K-5").build()));
-
-        when(taksitRepository.findBySirketIdAndCariHesapIdOrderByVadeTarihiAsc(1L, 1L)).thenReturn(List.of(
-                com.raspel.erp.entity.finans.Taksit.builder().id(80L).planNo("TKS-80")
-                        .taksitNo(1).taksitSayisi(3).vadeTarihi(LocalDate.now().plusDays(10))
-                        .tutar(new BigDecimal("1000")).odemeDurumu("BEKLEMEDE").build()));
     }
 
     @Test
@@ -144,12 +130,14 @@ class CariKartServiceTest {
         assertEquals(new BigDecimal("1000"), kart.getOzet().getTahsilatToplam());
 
         assertEquals(2, kart.getSonFaturalar().size());
-        assertEquals(1, kart.getFirsatlar().size());
-        assertEquals(1, kart.getNotlar().size());
-        assertEquals(1, kart.getOzelFiyatlar().size());
-        assertEquals("Ürün 5", kart.getOzelFiyatlar().get(0).getStokAd());
-        assertEquals(1, kart.getTaksitler().size());
-        assertEquals("TKS-80", kart.getTaksitler().get(0).getPlanNo());
+        assertEquals(1, kart.getFirsatSayisi());
+        assertEquals(1, kart.getNotSayisi());
+        assertEquals(1, kart.getOzelFiyatSayisi());
+        assertEquals(1, kart.getTaksitSayisi());
+        assertTrue(kart.getFirsatlar().isEmpty());
+        assertTrue(kart.getNotlar().isEmpty());
+        assertTrue(kart.getOzelFiyatlar().isEmpty());
+        assertTrue(kart.getTaksitler().isEmpty());
     }
 
     @Test
@@ -190,6 +178,56 @@ class CariKartServiceTest {
         verify(iadeRepository).findTop5ByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(1L, 1L);
         verify(hareketRepository).cariTahsilatToplam(1L, 1L);
         verify(hareketRepository).findTop5BySirketIdAndCariHesapIdOrderByHareketTarihiDescIdDesc(1L, 1L);
+    }
+
+    @Test
+    void kartSekmeleriSayfaliVeSinirliGetirir() {
+        CariHesap cari = cari(new BigDecimal("10000"), new BigDecimal("-3000"));
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(cari));
+
+        when(notRepository.findBySirketIdAndCariHesapIdOrderByOlusturmaTarihiDesc(
+                eq(1L), eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(
+                        Not.builder().id(40L).baslik("Not").icerik("Görüşüldü")
+                                .onemDerecesi("NORMAL").olusturmaTarihi(LocalDateTime.now()).build())));
+        when(cariFirsatRepository.findBySirketIdAndCariHesapIdOrderByOlusturmaTarihiDesc(
+                eq(1L), eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(
+                        CariFirsat.builder().id(50L).ad("Fırsat").durum("YENI").kaynak("WEB")
+                                .deger(new BigDecimal("15000")).tahminiKapanis(LocalDate.now().plusDays(10)).build())));
+        when(cariFiyatRepository.findBySirketIdAndCariHesapIdOrderByStokId(
+                eq(1L), eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(
+                        CariFiyat.builder().id(60L).cariHesapId(1L).stokId(5L)
+                                .fiyat(new BigDecimal("99")).sirketId(1L).build())));
+        when(taksitRepository.findBySirketIdAndCariHesapIdOrderByVadeTarihiAsc(
+                eq(1L), eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(
+                        com.raspel.erp.entity.finans.Taksit.builder().id(80L).planNo("TKS-80")
+                                .taksitNo(1).taksitSayisi(3).vadeTarihi(LocalDate.now().plusDays(10))
+                                .tutar(new BigDecimal("1000")).odemeDurumu("BEKLEMEDE").build())));
+        when(stokRepository.findAllById(anyList())).thenReturn(List.of(
+                Stok.builder().id(5L).ad("Ürün 5").stokKodu("K-5").build()));
+
+        var notlar = cariKartService.notlar(1L, 1L, PageRequest.of(0, 100));
+        assertEquals(1, notlar.getTotalElements());
+        assertEquals("Not", notlar.getContent().get(0).getBaslik());
+
+        var firsatlar = cariKartService.firsatlar(1L, 1L, PageRequest.of(0, 10));
+        assertEquals(1, firsatlar.getTotalElements());
+        assertEquals("Fırsat", firsatlar.getContent().get(0).getAd());
+
+        var fiyatlar = cariKartService.ozelFiyatlar(1L, 1L, PageRequest.of(0, 10));
+        assertEquals(1, fiyatlar.getTotalElements());
+        assertEquals("Ürün 5", fiyatlar.getContent().get(0).getStokAd());
+
+        var taksitler = cariKartService.taksitler(1L, 1L, PageRequest.of(0, 10));
+        assertEquals(1, taksitler.getTotalElements());
+        assertEquals("TKS-80", taksitler.getContent().get(0).getPlanNo());
+
+        // Aşırı büyük sayfa istekleri 50 ile sınırlanır.
+        verify(notRepository).findBySirketIdAndCariHesapIdOrderByOlusturmaTarihiDesc(
+                eq(1L), eq(1L), argThat(p -> p.getPageSize() == 50));
     }
 
     @Test

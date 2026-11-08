@@ -74,16 +74,8 @@ public class CariKartService {
                 .findTop5ByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(cariId, tenantId);
         List<Iade> iadeler = iadeRepository
                 .findTop5ByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(cariId, tenantId);
-        List<Not> notlar = notRepository.findByCariHesapIdOrderByOlusturmaTarihiDesc(cariId);
-        List<CariFirsat> firsatlar = cariFirsatRepository
-                .findBySirketIdAndCariHesapIdOrderByOlusturmaTarihiDesc(tenantId, cariId);
-        List<CariFiyat> fiyatlar = cariFiyatRepository.findByCariHesapIdOrderByStokId(cariId);
         List<Hareket> hareketler = hareketRepository
                 .findTop5BySirketIdAndCariHesapIdOrderByHareketTarihiDescIdDesc(tenantId, cariId);
-        List<Taksit> taksitler = taksitRepository
-                .findBySirketIdAndCariHesapIdOrderByVadeTarihiAsc(tenantId, cariId);
-
-        Map<Long, Stok> stokMap = stokMapHazirla(fiyatlar);
 
         return CariKartDTO.builder()
                 .cariId(cari.getId())
@@ -100,15 +92,82 @@ public class CariKartService {
                         siparisRepository.cariSiparisOzet(cariId, tenantId),
                         iadeRepository.cariIadeOzet(cariId, tenantId),
                         hareketRepository.cariTahsilatToplam(cariId, tenantId)))
+                .notSayisi(notRepository.countBySirketIdAndCariHesapId(tenantId, cariId))
+                .firsatSayisi(cariFirsatRepository.countBySirketIdAndCariHesapId(tenantId, cariId))
+                .ozelFiyatSayisi(cariFiyatRepository.countBySirketIdAndCariHesapId(tenantId, cariId))
+                .taksitSayisi(taksitRepository.countBySirketIdAndCariHesapId(tenantId, cariId))
                 .sonFaturalar(faturalar.stream().map(this::faturaOzet).collect(Collectors.toList()))
                 .sonSiparisler(siparisler.stream().map(this::siparisOzet).collect(Collectors.toList()))
                 .sonIadeler(iadeler.stream().map(this::iadeOzet).collect(Collectors.toList()))
-                .firsatlar(firsatlar.stream().map(this::firsatOzet).collect(Collectors.toList()))
-                .notlar(notlar.stream().map(this::notOzet).collect(Collectors.toList()))
-                .ozelFiyatlar(fiyatlar.stream().map(f -> fiyatOzet(f, stokMap.get(f.getStokId()))).collect(Collectors.toList()))
-                .taksitler(taksitler.stream().map(this::taksitOzet).collect(Collectors.toList()))
+                .notlar(List.of())
+                .firsatlar(List.of())
+                .ozelFiyatlar(List.of())
+                .taksitler(List.of())
                 .sonHareketler(hareketler.stream().map(this::hareketOzet).collect(Collectors.toList()))
                 .build();
+    }
+
+    /** Cariyi tenant kontrolüyle yükler ve etkin şirket id'sini döndürür. */
+    private Long cariTenantId(Long cariId, Long sirketId) {
+        CariHesap cari = cariHesapRepository.findById(cariId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", cariId));
+        tenantChecker.check(cari.getSirketId(), "Cari Hesap");
+        Long tenantId = sirketId != null ? sirketId : cari.getSirketId();
+        if (tenantId == null) {
+            throw new ResourceNotFoundException("Cari Hesap", cariId);
+        }
+        return tenantId;
+    }
+
+    /** Sekme sayfalarında aşırı büyük istekleri engeller. */
+    private org.springframework.data.domain.Pageable sayfaSinirla(
+            org.springframework.data.domain.Pageable pageable) {
+        int sayfa = pageable != null ? pageable.getPageNumber() : 0;
+        int boyut = pageable != null ? pageable.getPageSize() : 10;
+        boyut = Math.min(Math.max(boyut, 1), 50);
+        org.springframework.data.domain.Sort sirala = pageable != null
+                ? pageable.getSort() : org.springframework.data.domain.Sort.unsorted();
+        return org.springframework.data.domain.PageRequest.of(sayfa, boyut, sirala);
+    }
+
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<CariKartDTO.NotOzet> notlar(
+            Long cariId, Long sirketId, org.springframework.data.domain.Pageable pageable) {
+        Long tenantId = cariTenantId(cariId, sirketId);
+        return notRepository
+                .findBySirketIdAndCariHesapIdOrderByOlusturmaTarihiDesc(
+                        tenantId, cariId, sayfaSinirla(pageable))
+                .map(this::notOzet);
+    }
+
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<CariKartDTO.FirsatOzet> firsatlar(
+            Long cariId, Long sirketId, org.springframework.data.domain.Pageable pageable) {
+        Long tenantId = cariTenantId(cariId, sirketId);
+        return cariFirsatRepository
+                .findBySirketIdAndCariHesapIdOrderByOlusturmaTarihiDesc(
+                        tenantId, cariId, sayfaSinirla(pageable))
+                .map(this::firsatOzet);
+    }
+
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<CariKartDTO.FiyatOzet> ozelFiyatlar(
+            Long cariId, Long sirketId, org.springframework.data.domain.Pageable pageable) {
+        Long tenantId = cariTenantId(cariId, sirketId);
+        org.springframework.data.domain.Page<CariFiyat> sayfa = cariFiyatRepository
+                .findBySirketIdAndCariHesapIdOrderByStokId(tenantId, cariId, sayfaSinirla(pageable));
+        Map<Long, Stok> stokMap = stokMapHazirla(sayfa.getContent());
+        return sayfa.map(f -> fiyatOzet(f, stokMap.get(f.getStokId())));
+    }
+
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<CariKartDTO.TaksitOzet> taksitler(
+            Long cariId, Long sirketId, org.springframework.data.domain.Pageable pageable) {
+        Long tenantId = cariTenantId(cariId, sirketId);
+        return taksitRepository
+                .findBySirketIdAndCariHesapIdOrderByVadeTarihiAsc(
+                        tenantId, cariId, sayfaSinirla(pageable))
+                .map(this::taksitOzet);
     }
 
     private CariKartDTO.HareketOzet hareketOzet(Hareket h) {

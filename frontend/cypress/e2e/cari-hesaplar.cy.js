@@ -61,6 +61,10 @@ const kartVerisi = {
   aktif: true,
   temsilciAd: 'Temsilci A',
   kredi: { krediLimiti: 500000, bakiye: 939737.5, kullanilabilirKredi: -439737.5, riskOrani: 187.95, limitAsimi: true },
+  notSayisi: 1,
+  firsatSayisi: 0,
+  ozelFiyatSayisi: 0,
+  taksitSayisi: 0,
   ozet: {
     faturaSayisi: 2,
     faturaToplam: 10000,
@@ -80,7 +84,7 @@ const kartVerisi = {
     { id: 70, tur: 'TAHSILAT', tarih: '2026-10-02', tutar: 2500, aciklama: 'Nakit tahsilat' }
   ],
   firsatlar: [],
-  notlar: [{ id: 40, baslik: 'Görüşme', icerik: 'Fiyat görüşüldü', olusturmaTarihi: '2026-10-03T10:00:00' }],
+  notlar: [],
   ozelFiyatlar: [],
   taksitler: []
 }
@@ -122,6 +126,14 @@ const apiMockla = () => {
 
   cy.intercept('GET', '**/api/cari-hesaplar/riskli', { statusCode: 200, body: [] }).as('riskli')
   cy.intercept('GET', '**/api/cari-hesaplar/*/kart', { statusCode: 200, body: kartVerisi }).as('kart')
+  cy.intercept('GET', '**/api/cari-hesaplar/*/kart/notlar*', {
+    statusCode: 200,
+    body: {
+      content: [{ id: 40, baslik: 'Görüşme', icerik: 'Fiyat görüşüldü', olusturmaTarihi: '2026-10-03T10:00:00' }],
+      totalElements: 1,
+      number: 0
+    }
+  }).as('kartNotlar')
   cy.intercept('GET', '**/api/cari-hesaplar/*/fiyatlar', { statusCode: 200, body: [] }).as('fiyatlar')
   cy.intercept('GET', '**/api/cari-hesaplar/*/adresler', { statusCode: 200, body: [] }).as('adresler')
   cy.intercept('GET', '**/api/kullanicilar*', { statusCode: 200, body: { content: [] } }).as('kullanicilar')
@@ -188,6 +200,9 @@ describe('Cari hesaplar', () => {
     cy.get('[data-test="cari-360-tahsilat"]').should('be.visible')
     cy.get('[data-test="cari-360-fatura"]').should('be.visible')
     cy.get('.p-dialog').contains('Faturalar').should('be.visible')
+    cy.get('.p-dialog .p-tabview-tab-header').contains('Notlar').click()
+    cy.wait('@kartNotlar').its('request.query.page').should('eq', '0')
+    cy.get('.p-dialog .p-datatable-tbody').contains('Görüşme').should('be.visible')
   })
 
   it('yeni cari formu zorunlu alanı satır içi doğrular', () => {

@@ -145,6 +145,46 @@ public class CariHesapController {
         return ResponseEntity.ok(cariKartService.kartGetir(id, sirketId));
     }
 
+    @GetMapping("/{id}/kart/notlar")
+    @Operation(summary = "Cari 360 notları", description = "Notları sayfalı getirir (lazy sekme)")
+    public ResponseEntity<Page<com.raspel.erp.dto.finans.CariKartDTO.NotOzet>> kartNotlar(
+            @PathVariable Long id,
+            @PageableDefault(size = 10) Pageable pageable,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(cariKartService.notlar(id, sirketId, pageable));
+    }
+
+    @GetMapping("/{id}/kart/firsatlar")
+    @Operation(summary = "Cari 360 fırsatları", description = "Fırsatları sayfalı getirir (lazy sekme)")
+    public ResponseEntity<Page<com.raspel.erp.dto.finans.CariKartDTO.FirsatOzet>> kartFirsatlar(
+            @PathVariable Long id,
+            @PageableDefault(size = 10) Pageable pageable,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(cariKartService.firsatlar(id, sirketId, pageable));
+    }
+
+    @GetMapping("/{id}/kart/fiyatlar")
+    @Operation(summary = "Cari 360 özel fiyatları", description = "Özel fiyatları sayfalı getirir (lazy sekme)")
+    public ResponseEntity<Page<com.raspel.erp.dto.finans.CariKartDTO.FiyatOzet>> kartFiyatlar(
+            @PathVariable Long id,
+            @PageableDefault(size = 10) Pageable pageable,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(cariKartService.ozelFiyatlar(id, sirketId, pageable));
+    }
+
+    @GetMapping("/{id}/kart/taksitler")
+    @Operation(summary = "Cari 360 taksitleri", description = "Taksitleri sayfalı getirir (lazy sekme)")
+    public ResponseEntity<Page<com.raspel.erp.dto.finans.CariKartDTO.TaksitOzet>> kartTaksitler(
+            @PathVariable Long id,
+            @PageableDefault(size = 10) Pageable pageable,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(cariKartService.taksitler(id, sirketId, pageable));
+    }
+
     @PostMapping
     @Operation(summary = "Yeni cari hesap oluştur", description = "Yeni bir cari hesap oluşturur")
     @PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE') or @yetkiKontrol.kontrol(authentication, 'CARI_WRITE')")

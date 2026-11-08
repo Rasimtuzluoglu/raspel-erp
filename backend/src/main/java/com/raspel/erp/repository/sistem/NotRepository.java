@@ -21,6 +21,12 @@ public interface NotRepository extends JpaRepository<Not, Long> {
      */
     List<Not> findBySirketIdAndCariHesapIdOrderByOlusturmaTarihiDesc(Long sirketId, Long cariHesapId);
 
+    /** Cari 360: notları sayfalı getirir (lazy sekme). */
+    Page<Not> findBySirketIdAndCariHesapIdOrderByOlusturmaTarihiDesc(
+            Long sirketId, Long cariHesapId, Pageable pageable);
+
+    long countBySirketIdAndCariHesapId(Long sirketId, Long cariHesapId);
+
     /** Kullanıcının kişisel notları: cari notlarını hariç tutar (gizlilik + kirlilik önleme). */
     Page<Not> findBySirketIdAndKullaniciIdAndCariHesapIdIsNullOrderByOlusturmaTarihiDesc(
             Long sirketId, Long kullaniciId, Pageable pageable);

@@ -1,6 +1,8 @@
 package com.raspel.erp.repository.finans;
 
 import com.raspel.erp.entity.finans.Taksit;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -24,6 +26,12 @@ public interface TaksitRepository extends JpaRepository<Taksit, Long>, JpaSpecif
             Long sirketId, LocalDate baslangic, LocalDate bitis);
 
     List<Taksit> findBySirketIdAndCariHesapIdOrderByVadeTarihiAsc(Long sirketId, Long cariHesapId);
+
+    /** Cari 360: taksitleri sayfalı getirir (lazy sekme). */
+    Page<Taksit> findBySirketIdAndCariHesapIdOrderByVadeTarihiAsc(
+            Long sirketId, Long cariHesapId, Pageable pageable);
+
+    long countBySirketIdAndCariHesapId(Long sirketId, Long cariHesapId);
 
     /** Plan detayı: bir plana ait kalemler (taksit sırasıyla). */
     List<Taksit> findBySirketIdAndPlanNoOrderByTaksitNoAsc(Long sirketId, String planNo);

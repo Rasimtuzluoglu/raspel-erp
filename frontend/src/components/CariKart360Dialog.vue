@@ -112,7 +112,10 @@
         />
       </div>
 
-      <TabView scrollable>
+      <TabView
+        v-model:active-index="aktifSekme"
+        scrollable
+      >
         <TabPanel :header="t('cariKart.ozet')">
           <div class="kart-ozet">
             <section class="kart-ozet-kutu">
@@ -191,6 +194,19 @@
                   <span class="kart-mini-metin">{{ n.baslik || n.icerik }}</span>
                 </li>
               </ul>
+              <p
+                v-else-if="kart.notSayisi > 0"
+                class="kart-bos"
+              >
+                {{ t('cariKart.notlarSekmesinde', { n: kart.notSayisi }) }}
+                <button
+                  type="button"
+                  class="kart-mini-link"
+                  @click="aktifSekme = 6"
+                >
+                  {{ t('cariKart.notlariGor') }}
+                </button>
+              </p>
               <p
                 v-else
                 class="kart-bos"
@@ -361,11 +377,16 @@
           </AppDataTable>
         </TabPanel>
 
-        <TabPanel :header="t('cariKart.firsatlar')">
+        <TabPanel :header="`${t('cariKart.firsatlar')} (${kart.firsatSayisi ?? 0})`">
           <AppDataTable
-            :value="kart.firsatlar"
-            :paginator="false"
+            :value="sayfalar.firsatlar.icerik"
+            :loading="sayfalar.firsatlar.yukleniyor"
+            :lazy="true"
+            :total-records="sayfalar.firsatlar.toplam"
+            :rows="sayfalar.firsatlar.boyut"
+            :paginator="true"
             :empty-message="t('cariKart.kayitYok')"
+            @page="(e) => sayfaDegisti('firsatlar', e)"
           >
             <Column
               field="ad"
@@ -398,11 +419,16 @@
           </AppDataTable>
         </TabPanel>
 
-        <TabPanel :header="t('cariKart.notlar')">
+        <TabPanel :header="`${t('cariKart.notlar')} (${kart.notSayisi ?? 0})`">
           <AppDataTable
-            :value="kart.notlar"
-            :paginator="false"
+            :value="sayfalar.notlar.icerik"
+            :loading="sayfalar.notlar.yukleniyor"
+            :lazy="true"
+            :total-records="sayfalar.notlar.toplam"
+            :rows="sayfalar.notlar.boyut"
+            :paginator="true"
             :empty-message="t('cariKart.kayitYok')"
+            @page="(e) => sayfaDegisti('notlar', e)"
           >
             <Column
               field="baslik"
@@ -423,11 +449,16 @@
           </AppDataTable>
         </TabPanel>
 
-        <TabPanel :header="t('cariKart.ozelFiyatlar')">
+        <TabPanel :header="`${t('cariKart.ozelFiyatlar')} (${kart.ozelFiyatSayisi ?? 0})`">
           <AppDataTable
-            :value="kart.ozelFiyatlar"
-            :paginator="false"
+            :value="sayfalar.ozelFiyatlar.icerik"
+            :loading="sayfalar.ozelFiyatlar.yukleniyor"
+            :lazy="true"
+            :total-records="sayfalar.ozelFiyatlar.toplam"
+            :rows="sayfalar.ozelFiyatlar.boyut"
+            :paginator="true"
             :empty-message="t('cariKart.kayitYok')"
+            @page="(e) => sayfaDegisti('ozelFiyatlar', e)"
           >
             <Column
               field="stokKodu"
@@ -448,11 +479,16 @@
           </AppDataTable>
         </TabPanel>
 
-        <TabPanel :header="t('cariKart.taksitler')">
+        <TabPanel :header="`${t('cariKart.taksitler')} (${kart.taksitSayisi ?? 0})`">
           <AppDataTable
-            :value="kart.taksitler"
-            :paginator="false"
+            :value="sayfalar.taksitler.icerik"
+            :loading="sayfalar.taksitler.yukleniyor"
+            :lazy="true"
+            :total-records="sayfalar.taksitler.toplam"
+            :rows="sayfalar.taksitler.boyut"
+            :paginator="true"
             :empty-message="t('cariKart.kayitYok')"
+            @page="(e) => sayfaDegisti('taksitler', e)"
           >
             <Column
               :header="t('cariKart.taksitNo')"
@@ -501,9 +537,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { cariHesapAPI } from '../api/index.js'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { formatCurrency, formatTarih as formatDate, formatTarihSaat as formatDateTime } from '../utils/format.js'
 
 const props = defineProps({
@@ -515,8 +552,76 @@ const props = defineProps({
 const emit = defineEmits(['update:visible', 'ekstre', 'adresler', 'tahsilat', 'fatura'])
 
 const { t } = useI18n()
+const toastBildirim = useToastBildirim()
 const kart = ref(null)
 const yukleniyor = ref(false)
+const aktifSekme = ref(0)
+
+const bosSayfa = () => ({
+  icerik: [],
+  toplam: 0,
+  no: 0,
+  boyut: 10,
+  yukleniyor: false,
+  yuklendi: false
+})
+
+/** Lazy yüklenen 360 sekmeleri. */
+const sayfalar = reactive({
+  firsatlar: bosSayfa(),
+  notlar: bosSayfa(),
+  ozelFiyatlar: bosSayfa(),
+  taksitler: bosSayfa()
+})
+
+const sayfaApi = {
+  firsatlar: (id, params) => cariHesapAPI.kartFirsatlar(id, params),
+  notlar: (id, params) => cariHesapAPI.kartNotlar(id, params),
+  ozelFiyatlar: (id, params) => cariHesapAPI.kartFiyatlar(id, params),
+  taksitler: (id, params) => cariHesapAPI.kartTaksitler(id, params)
+}
+
+const sayfalariSifirla = () => {
+  Object.keys(sayfalar).forEach((anahtar) => {
+    Object.assign(sayfalar[anahtar], bosSayfa())
+  })
+}
+
+const sayfaYukle = async (tur, no = 0) => {
+  const hedef = sayfalar[tur]
+  if (!hedef || !props.cariId) return
+  if (hedef.yuklendi && hedef.no === no) return
+  hedef.yukleniyor = true
+  try {
+    const r = await sayfaApi[tur](props.cariId, { page: no, size: hedef.boyut })
+    const veri = r.data || {}
+    hedef.icerik = veri.content || []
+    hedef.toplam = veri.totalElements || 0
+    hedef.no = veri.number ?? no
+    hedef.yuklendi = true
+  } catch {
+    toastBildirim.hata(t('common.error'))
+  } finally {
+    hedef.yukleniyor = false
+  }
+}
+
+const sayfaDegisti = (tur, event) => {
+  const hedef = sayfalar[tur]
+  if (!hedef) return
+  hedef.boyut = event?.rows || hedef.boyut
+  sayfaYukle(tur, event?.page || 0)
+}
+
+const sekmeYukle = (indeks) => {
+  const harita = { 5: 'firsatlar', 6: 'notlar', 7: 'ozelFiyatlar', 8: 'taksitler' }
+  const tur = harita[indeks]
+  if (!tur) return
+  const hedef = sayfalar[tur]
+  sayfaYukle(tur, hedef.yuklendi ? hedef.no : 0)
+}
+
+watch(aktifSekme, (indeks) => sekmeYukle(indeks))
 
 /** Liste satirindan avatar; kart API'sinde foto alani yok. */
 const avatarUrl = computed(() => props.cari?.fotoThumbUrl || props.cari?.fotoUrl || null)
@@ -575,7 +680,11 @@ const yukle = async () => {
 watch(
   () => props.visible,
   (v) => {
-    if (v) yukle()
+    if (v) {
+      sayfalariSifirla()
+      aktifSekme.value = 0
+      yukle()
+    }
   }
 )
 </script>
@@ -780,6 +889,16 @@ watch(
   padding: 8px 0;
   font-size: 12px;
   color: var(--text-muted);
+}
+.kart-mini-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
 }
 .kart-liste-notu {
   margin: 0 0 8px;

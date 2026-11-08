@@ -44,6 +44,18 @@ export const cariHesapAPI = {
   kart(id) {
     return apiClient.get(`/cari-hesaplar/${id}/kart`)
   },
+  kartNotlar(id, params) {
+    return apiClient.get(`/cari-hesaplar/${id}/kart/notlar`, { params })
+  },
+  kartFirsatlar(id, params) {
+    return apiClient.get(`/cari-hesaplar/${id}/kart/firsatlar`, { params })
+  },
+  kartFiyatlar(id, params) {
+    return apiClient.get(`/cari-hesaplar/${id}/kart/fiyatlar`, { params })
+  },
+  kartTaksitler(id, params) {
+    return apiClient.get(`/cari-hesaplar/${id}/kart/taksitler`, { params })
+  },
   riskliCariler() {
     return apiClient.get('/cari-hesaplar/riskli')
   },

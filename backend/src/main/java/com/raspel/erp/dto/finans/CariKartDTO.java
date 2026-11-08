@@ -27,6 +27,10 @@ public class CariKartDTO {
 
     private KrediDurumu kredi;
     private Ozet ozet;
+    private long notSayisi;
+    private long firsatSayisi;
+    private long ozelFiyatSayisi;
+    private long taksitSayisi;
     private List<FaturaOzet> sonFaturalar;
     private List<SiparisOzet> sonSiparisler;
     private List<IadeOzet> sonIadeler;

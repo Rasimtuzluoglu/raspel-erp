@@ -1,8 +1,12 @@
 import { describe, it, expect, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import PrimeVue from 'primevue/config'
+import ToastService from 'primevue/toastservice'
+import TabView from 'primevue/tabview'
+import TabPanel from 'primevue/tabpanel'
 import i18n from '../../i18n.js'
 import CariKart360Dialog from '../CariKart360Dialog.vue'
+import { cariHesapAPI } from '../../api/index.js'
 
 /**
  * FAZ 3 — Cari 360 penceresi kullanislilik sozlesmesi.
@@ -24,6 +28,10 @@ vi.mock('../../api/index.js', () => ({
         temsilciAd: 'Ali Veli',
         kredi: { krediLimiti: 10000, bakiye: 2500, kullanilabilirKredi: 7500, riskOrani: 25, limitAsimi: false },
         ozet: {},
+        notSayisi: 1,
+        firsatSayisi: 0,
+        ozelFiyatSayisi: 0,
+        taksitSayisi: 0,
         sonFaturalar: [],
         sonSiparisler: [],
         sonIadeler: [],
@@ -33,7 +41,13 @@ vi.mock('../../api/index.js', () => ({
         taksitler: [],
         sonHareketler: []
       }
-    })
+    }),
+    kartNotlar: vi.fn().mockResolvedValue({
+      data: { content: [{ id: 1, baslik: 'Görüşme', icerik: 'Detay' }], totalElements: 1, number: 0 }
+    }),
+    kartFirsatlar: vi.fn().mockResolvedValue({ data: { content: [], totalElements: 0, number: 0 } }),
+    kartFiyatlar: vi.fn().mockResolvedValue({ data: { content: [], totalElements: 0, number: 0 } }),
+    kartTaksitler: vi.fn().mockResolvedValue({ data: { content: [], totalElements: 0, number: 0 } })
   }
 }))
 
@@ -50,10 +64,29 @@ const stubs = {
 const kur = async (ekstraProps = {}) => {
   const w = mount(CariKart360Dialog, {
     props: { visible: false, cariId: 1, cari: { fotoThumbUrl: 'http://x/a.png' }, ...ekstraProps },
-    global: { plugins: [PrimeVue, i18n], stubs }
+    global: { plugins: [PrimeVue, ToastService, i18n], stubs }
   })
   await w.setProps({ visible: true })
   await new Promise((r) => setTimeout(r, 20))
+  return w
+}
+
+const kurGercekSekmeler = async () => {
+  const w = mount(CariKart360Dialog, {
+    props: { visible: false, cariId: 1, cari: { fotoThumbUrl: 'http://x/a.png' } },
+    global: {
+      plugins: [PrimeVue, ToastService, i18n],
+      components: { TabView, TabPanel },
+      stubs: {
+        Dialog: { template: '<div><slot /></div>' },
+        Button: { props: ['label'], template: '<button>{{ label }}<slot /></button>' },
+        Tag: { props: ['value'], template: '<span class="tag">{{ value }}</span>' },
+        AppDataTable: { template: '<div class="tablo"><slot /></div>' }
+      }
+    }
+  })
+  await w.setProps({ visible: true })
+  await flushPromises()
   return w
 }
 
@@ -96,5 +129,18 @@ describe('CariKart360Dialog — Faz3', () => {
     expect(btn).toBeTruthy()
     await btn.trigger('click')
     expect(w.emitted('adresler')).toBeTruthy()
+  })
+
+  it('Notlar sekmesi açılınca sayfalı istek atar', async () => {
+    const w = await kurGercekSekmeler()
+
+    const notlarSekmesi = w.findAll('.p-tabview-tab-header')
+      .find((a) => a.text().includes(i18n.global.t('cariKart.notlar')))
+    expect(notlarSekmesi).toBeTruthy()
+
+    await notlarSekmesi.trigger('click')
+    await flushPromises()
+
+    expect(cariHesapAPI.kartNotlar).toHaveBeenCalledWith(1, { page: 0, size: 10 })
   })
 })

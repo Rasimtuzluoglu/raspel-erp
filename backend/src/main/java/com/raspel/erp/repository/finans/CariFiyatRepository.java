@@ -1,6 +1,8 @@
 package com.raspel.erp.repository.finans;
 
 import com.raspel.erp.entity.finans.CariFiyat;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -17,6 +19,12 @@ public interface CariFiyatRepository extends JpaRepository<CariFiyat, Long> {
      * döndürüyordu; okuma yolunda tenant kontrolü atlandığında veri sızıyordu.
      */
     List<CariFiyat> findBySirketIdAndCariHesapIdOrderByStokId(Long sirketId, Long cariHesapId);
+
+    /** Cari 360: özel fiyatları sayfalı getirir (lazy sekme). */
+    Page<CariFiyat> findBySirketIdAndCariHesapIdOrderByStokId(
+            Long sirketId, Long cariHesapId, Pageable pageable);
+
+    long countBySirketIdAndCariHesapId(Long sirketId, Long cariHesapId);
 
     Optional<CariFiyat> findByCariHesapIdAndStokId(Long cariHesapId, Long stokId);
 

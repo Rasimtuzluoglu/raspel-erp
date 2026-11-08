@@ -5062,6 +5062,8 @@
     "degerBaslik": "Value",
     "tahminiKapanis": "Expected Close",
     "notlar": "Notes",
+    "notlarSekmesinde": "{n} notes in the Notes tab.",
+    "notlariGor": "View notes",
     "notBaslik": "Title",
     "icerik": "Content",
     "ozelFiyatlar": "Special Prices",
