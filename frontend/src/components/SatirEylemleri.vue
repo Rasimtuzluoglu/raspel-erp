@@ -174,45 +174,70 @@ const acToggle = async (e) => {
   const el = e?.currentTarget || e?.target || btnRef.value?.$el || btnRef.value
   const bosluk = 8
 
+  // Uygulama html uzerinde CSS `zoom` kullaniyor. getBoundingClientRect
+  // gorsel (zoomlanmis) koordinat dondururken fixed left/top CSS pikseli
+  // bekler; bu yuzden olcumu zoom oraniyla normalize ediyoruz.
+  const zoomOrani = (() => {
+    try {
+      const z = Number.parseFloat(getComputedStyle(document.documentElement).zoom)
+      return Number.isFinite(z) && z > 0 ? z : 1
+    } catch {
+      return 1
+    }
+  })()
+  const gorunurGenislik = window.innerWidth / zoomOrani
+  const gorunurYukseklik = window.innerHeight / zoomOrani
+
   const hesapla = () => {
     //Sabit konum: menu, satira degil listeye (tablo konteyneri) gore sag ustte acilir.
     if (props.sabitKonum) {
       const konteyner = rootEl.value?.closest?.('.table-container, .app-datatable-wrapper')
-      const kr = konteyner?.getBoundingClientRect?.()
-      if (kr && (kr.width || kr.height)) {
+      const ham = konteyner?.getBoundingClientRect?.()
+      if (ham && (ham.width || ham.height)) {
         const mw = menuRef.value?.offsetWidth || 220
-        let left = kr.right - mw - 8
-        left = Math.max(8, Math.min(left, window.innerWidth - mw - 8))
-        const top = Math.max(8, kr.top + 8)
+        let left = (ham.right / zoomOrani) - mw - bosluk
+        left = Math.max(bosluk, Math.min(left, gorunurGenislik - mw - bosluk))
+        const top = Math.max(bosluk, ham.top / zoomOrani + bosluk)
         menuStil.value = {
           position: 'fixed',
           left: `${left}px`,
           top: `${top}px`,
           visibility: 'visible',
-          maxHeight: `${Math.min(360, window.innerHeight - 2 * bosluk)}px`,
+          maxHeight: `${Math.min(360, gorunurYukseklik - 2 * bosluk)}px`,
           maxWidth: `calc(100vw - ${2 * bosluk}px)`
         }
         return true
       }
     }
-    const r = el?.getBoundingClientRect?.()
+    const ham = el?.getBoundingClientRect?.()
     // Eleman henuz yerlesmediyse (0 rect) hesaplamayi ertele
-    if (!r || (!r.width && !r.height)) return false
+    if (!ham || (!ham.width && !ham.height)) return false
+    const r = {
+      left: ham.left / zoomOrani,
+      right: ham.right / zoomOrani,
+      top: ham.top / zoomOrani,
+      bottom: ham.bottom / zoomOrani
+    }
     const mw = menuRef.value?.offsetWidth || 176
-    const mh = menuRef.value?.offsetHeight || 160
     // Sag kenara hizala; tasarsa sola kaydir, ekran disina cikarma
     let left = r.right - mw
     if (left < bosluk) left = r.left
-    if (left + mw > window.innerWidth - bosluk) left = window.innerWidth - mw - bosluk
+    if (left + mw > gorunurGenislik - bosluk) left = gorunurGenislik - mw - bosluk
     left = Math.max(bosluk, left)
-    const alttaYerVar = r.bottom + mh + bosluk <= window.innerHeight
-    const top = alttaYerVar ? r.bottom + 4 : Math.max(bosluk, r.top - mh - 4)
+
+    // Menu her zaman tetikleyiciye yakin kalsin: alt/ust bosluga gore acilir
+    // ve yuksekligi mevcut bosluga sigdirilir (uzun menuler kendi icinde kayar).
+    const altBosluk = gorunurYukseklik - r.bottom - 8
+    const ustBosluk = r.top - 8
+    const asagi = altBosluk >= 200 || altBosluk >= ustBosluk
+    const maxYukseklik = Math.max(140, Math.min(360, asagi ? altBosluk : ustBosluk))
+    const top = asagi ? r.bottom + 8 : Math.max(8, r.top - maxYukseklik - 8)
     menuStil.value = {
       position: 'fixed',
       left: `${left}px`,
       top: `${top}px`,
       visibility: 'visible',
-      maxHeight: `${Math.min(320, window.innerHeight - 2 * bosluk)}px`,
+      maxHeight: `${maxYukseklik}px`,
       maxWidth: `calc(100vw - ${2 * bosluk}px)`
     }
     return true

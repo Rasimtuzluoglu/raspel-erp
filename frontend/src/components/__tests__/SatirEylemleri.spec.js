@@ -144,6 +144,26 @@ describe('SatirEylemleri', () => {
     vi.restoreAllMocks()
   })
 
+  it('menuyu tiklanan uc noktanin hemen altina hizalar', async () => {
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+      right: 1212, left: 1176, top: 404, bottom: 443, width: 36, height: 39, x: 1176, y: 404, toJSON() {}
+    })
+    vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1280)
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(1000)
+
+    const wrapper = kur()
+    await wrapper.find('button').trigger('click')
+    const stil = wrapper.find('.eylem-menu').attributes('style') || ''
+    const left = Number((stil.match(/left:\s*([\d.]+)px/) || [])[1])
+    const top = Number((stil.match(/top:\s*([\d.]+)px/) || [])[1])
+
+    // Butonun sagina hizali ve altinda 8px boslukla acilir.
+    expect(left).toBeGreaterThan(900)
+    expect(left).toBeLessThan(1100)
+    expect(top).toBe(451)
+    vi.restoreAllMocks()
+  })
+
   it('olculemeyen (0 rect) butonda menuyu sol ustte acmaz', async () => {
     vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
       right: 0, left: 0, top: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0, toJSON() {}

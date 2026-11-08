@@ -25,8 +25,8 @@ describe('CariHesaplar satir menusu', () => {
     expect(src).toContain('cariEpostaGonder')
   })
 
-  it('menu sabit konum ve kayit basligi kullanir', () => {
-    expect(src).toContain('sabit-konum')
+  it('menu satir tetikleyicisine gore konumlanir ve kayit basligi kullanir', () => {
+    expect(src).not.toContain('sabit-konum')
     expect(src).toContain(':baslik=')
   })
 })

@@ -386,7 +386,6 @@
                 :gorunur="{ duzenle: false, cogalt: false, sil: false }"
                 :items="cariEylemleri(slotProps.data)"
                 :baslik="slotProps.data.ad"
-                sabit-konum
               />
             </div>
           </template>
@@ -498,7 +497,6 @@
             :gorunur="{ duzenle: false, cogalt: false, sil: false }"
             :items="cariEylemleri(c)"
             :baslik="c.ad"
-            sabit-konum
           />
         </div>
       </div>
