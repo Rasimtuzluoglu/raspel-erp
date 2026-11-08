@@ -13,6 +13,7 @@ import com.raspel.erp.entity.finans.CariHesap;
 import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.ticaret.FaturaRepository;
+import com.raspel.erp.repository.ticaret.VadeGunProjeksiyon;
 import com.raspel.erp.service.finans.CariHesapService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -87,6 +88,7 @@ class KokpitServiceTest {
         assertEquals(5, kokpit.getKarMarj().getCariler().size());
         assertEquals(2, kokpit.getKarMarj().getTrend().size());
         assertEquals(2L, kokpit.getKarMarj().getMaliyetsizKalem());
+        assertEquals(0, kokpit.getKarMarj().getNetKar().compareTo(new BigDecimal("25000")));
 
         assertEquals(1, kokpit.getFaturaSiparis().getVadesiGecenFaturalar().size());
         assertEquals(10L, kokpit.getFaturaSiparis().getVadesiGecenFaturalar().get(0).getCariId());
@@ -208,6 +210,9 @@ class KokpitServiceTest {
         assertTrue(kokpit.getFaturaSiparis().getVadesiGecenFaturalar().isEmpty());
         assertNotNull(kokpit.getIcgoruler());
         assertTrue(kokpit.getIcgoruler().isEmpty());
+        assertNotNull(kokpit.getTakvim());
+        assertEquals(14, kokpit.getTakvim().getGunler().size());
+        assertEquals(0, kokpit.getTakvim().getNet().compareTo(BigDecimal.ZERO));
     }
 
     @Test
@@ -245,6 +250,41 @@ class KokpitServiceTest {
 
         assertEquals(0, kokpit.getFaturaSiparis().getTahsilatOrani().compareTo(BigDecimal.ZERO));
         assertEquals(0, kokpit.getAlacakVerecek().getTahsilatOrani().compareTo(BigDecimal.ZERO));
+    }
+
+    @Test
+    void takvimTahsilatVeOdemeleriGunBazindaToplar() {
+        stubTemelVeri();
+        LocalDate bugun = LocalDate.now();
+
+        VadeGunProjeksiyon tahsilat = mock(VadeGunProjeksiyon.class);
+        when(tahsilat.getTarih()).thenReturn(bugun);
+        when(tahsilat.getAdet()).thenReturn(2L);
+        when(tahsilat.getTutar()).thenReturn(new BigDecimal("1500"));
+
+        VadeGunProjeksiyon odeme = mock(VadeGunProjeksiyon.class);
+        when(odeme.getTarih()).thenReturn(bugun);
+        when(odeme.getAdet()).thenReturn(1L);
+        when(odeme.getTutar()).thenReturn(new BigDecimal("500"));
+
+        when(faturaRepository.kokpitVadeGunOzeti(
+                eq(1L), eq(Fatura.FaturaTur.SATIS), any(), any(), any(), any()))
+                .thenReturn(List.of(tahsilat));
+        when(faturaRepository.kokpitVadeGunOzeti(
+                eq(1L), eq(Fatura.FaturaTur.ALIS), any(), any(), any(), any()))
+                .thenReturn(List.of(odeme));
+
+        KokpitDTO kokpit = service.kokpitGetir(1L, "USER", "BU_AY");
+
+        assertEquals(14, kokpit.getTakvim().getGunler().size());
+        var gun = kokpit.getTakvim().getGunler().get(0);
+        assertEquals(bugun, gun.getTarih());
+        assertEquals(0, gun.getGiris().compareTo(new BigDecimal("1500")));
+        assertEquals(0, gun.getCikis().compareTo(new BigDecimal("500")));
+        assertEquals(0, gun.getNet().compareTo(new BigDecimal("1000")));
+        assertEquals(2L, gun.getGirisAdet());
+        assertEquals(1L, gun.getCikisAdet());
+        assertEquals(0, kokpit.getTakvim().getNet().compareTo(new BigDecimal("1000")));
     }
 
     // ------------------------------------------------------------------

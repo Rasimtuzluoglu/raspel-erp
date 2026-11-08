@@ -105,6 +105,13 @@
       :yukleniyor="ilkYukleme"
     />
 
+    <KokpitNakitTakvimi
+      :projeksiyon="nakitProjeksiyon"
+      :takvim="nakitTakvim"
+      :yukleniyor="ilkYukleme"
+      :para-birimi="kokpitStore.paraBirimi"
+    />
+
     <KokpitTahsilatDialog
       v-model:visible="hizliTahsilatAcik"
       :tur="hizliTahsilatTur"
@@ -144,6 +151,7 @@ import KarMarjBolumu from '../components/dashboard/kokpit/KarMarjBolumu.vue'
 import FaturaSiparisBolumu from '../components/dashboard/kokpit/FaturaSiparisBolumu.vue'
 import KokpitOzellestirme from '../components/dashboard/kokpit/KokpitOzellestirme.vue'
 import KokpitIcgoruler from '../components/dashboard/kokpit/KokpitIcgoruler.vue'
+import KokpitNakitTakvimi from '../components/dashboard/kokpit/KokpitNakitTakvimi.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -170,6 +178,8 @@ const kritikDurum = computed(() =>
 const icgoruler = computed(() =>
   Array.isArray(gosterilenKokpit.value?.icgoruler) ? gosterilenKokpit.value.icgoruler : []
 )
+const nakitProjeksiyon = computed(() => gosterilenKokpit.value?.nakit?.projeksiyon || null)
+const nakitTakvim = computed(() => gosterilenKokpit.value?.takvim || null)
 const ilkYukleme = computed(() => kokpitStore.yukleniyor && !kokpit.value)
 const onayGorebilir = computed(() => {
   const rol = authStore.kullanici?.role
@@ -282,12 +292,29 @@ const paraBirimineCevir = (kaynak, birim, doviz) => {
     }
   }
 
+  if (veri.takvim) {
+    veri.takvim = {
+      ...veri.takvim,
+      toplamGiris: para(veri.takvim.toplamGiris),
+      toplamCikis: para(veri.takvim.toplamCikis),
+      net: para(veri.takvim.net),
+      gunler: (veri.takvim.gunler || []).map((gun) => ({
+        ...gun,
+        giris: para(gun.giris),
+        cikis: para(gun.cikis),
+        net: para(gun.net),
+        kumulatif: para(gun.kumulatif)
+      }))
+    }
+  }
+
   if (veri.karMarj) {
     veri.karMarj = {
       ...veri.karMarj,
       ciro: para(veri.karMarj.ciro),
       maliyet: para(veri.karMarj.maliyet),
       kar: para(veri.karMarj.kar),
+      netKar: para(veri.karMarj.netKar),
       trend: (veri.karMarj.trend || []).map((ay) => ({
         ...ay,
         ciro: para(ay.ciro),

@@ -107,6 +107,14 @@
         </div>
       </div>
 
+      <KarKoprusu
+        :ciro="ciro"
+        :maliyet="maliyet"
+        :brut-kar="kar"
+        :net-kar="netKar"
+        :para-birimi="paraBirimi"
+      />
+
       <div class="kar-trend">
         <div class="kar-trend-ust">
           <span class="kar-bolum-baslik">{{ t('dashboard.kokpitKarMarjTrend') }}</span>
@@ -210,6 +218,7 @@ import { useI18n } from 'vue-i18n'
 import FinansKarti from './FinansKarti.vue'
 import MikroGrafik from './MikroGrafik.vue'
 import MiniTablo from './MiniTablo.vue'
+import KarKoprusu from './KarKoprusu.vue'
 import { formatPara } from '../../../utils/format.js'
 
 const props = defineProps({
@@ -230,6 +239,11 @@ const kar = computed(() => {
   return Number.isFinite(deger) ? deger : ciro.value - maliyet.value
 })
 const maliyetsizKalem = computed(() => Number(props.veri?.maliyetsizKalem) || 0)
+const netKar = computed(() => {
+  if (props.veri?.netKar === null || props.veri?.netKar === undefined) return null
+  const deger = Number(props.veri.netKar)
+  return Number.isFinite(deger) ? deger : null
+})
 const marjDegeri = computed(() => {
   const deger = Number(props.veri?.marj)
   if (Number.isFinite(deger)) return deger

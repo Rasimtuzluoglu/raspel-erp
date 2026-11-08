@@ -183,6 +183,7 @@ describe('Anasayfa finans kokpiti', () => {
     cy.get('[data-test="kokpit-bolum-karMarj"]').should('be.visible')
     cy.get('[data-test="kokpit-bolum-faturaSiparis"]').should('be.visible')
     cy.get('[data-test="nakit-bolumu"]').should('be.visible')
+    cy.get('[data-test="nakit-takvimi"]').should('be.visible')
     yatayTasmaYok()
   })
 

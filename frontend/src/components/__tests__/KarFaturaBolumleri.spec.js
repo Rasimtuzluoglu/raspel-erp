@@ -29,6 +29,7 @@ const karVeri = {
   ciro: 100000,
   maliyet: 70000,
   kar: 30000,
+  netKar: 22000,
   marj: 30,
   maliyetsizKalem: 3,
   trend: [
@@ -74,6 +75,7 @@ describe('kâr/marj ve fatura/sipariş bölümleri', () => {
     expect(wrapper.find('[data-test="kar-trend-grafik"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="kar-marj-grafik"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="kar-marj-gauge"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="kar-koprusu"]').exists()).toBe(true)
     expect(wrapper.findAll('[data-test="kar-urunler-tablo"] tbody tr')).toHaveLength(5)
     expect(wrapper.findAll('[data-test="kar-cariler-tablo"] tbody tr')).toHaveLength(5)
     expect(wrapper.text()).toContain('100.000,00')

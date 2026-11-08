@@ -63,7 +63,7 @@ describe('nakit ve alacak/verecek bölümleri', () => {
     expect(wrapper.find('[data-test="nakit-projeksiyon"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="nakit-sparkline"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="nakit-saglik"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="nakit-projeksiyon-tablo"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="nakit-runway"]').exists()).toBe(true)
   })
 
   it('nakitBolumuBosVerideSifirGosterir', () => {

@@ -29,6 +29,7 @@ public class KokpitDTO {
     private List<KritikDurumDTO> kritikDurum;
     private NakitDTO nakit;
     private AlacakVerecekDTO alacakVerecek;
+    private TakvimDTO takvim;
     /** Yalnızca ADMIN/MUHASEBE rollerinde dolar; diğer rollerde null. */
     private KarMarjDTO karMarj;
     private FaturaSiparisDTO faturaSiparis;
@@ -140,6 +141,31 @@ public class KokpitDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
+    public static class TakvimDTO {
+        private List<TakvimGunDTO> gunler;
+        private BigDecimal toplamGiris;
+        private BigDecimal toplamCikis;
+        private BigDecimal net;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class TakvimGunDTO {
+        private LocalDate tarih;
+        private BigDecimal giris;
+        private BigDecimal cikis;
+        private BigDecimal net;
+        private BigDecimal kumulatif;
+        private Long girisAdet;
+        private Long cikisAdet;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class AlacakVerecekDTO {
         private BigDecimal alacakToplam;
         private BigDecimal verecekToplam;
@@ -171,6 +197,8 @@ public class KokpitDTO {
         private BigDecimal maliyet;
         private BigDecimal kar;
         private BigDecimal marj;
+        /** Dönem net kârı (diğer giderler sonrası); hesaplanamazsa null. */
+        private BigDecimal netKar;
         private List<KarTrendDTO> trend;
         private List<KarKalemDTO> urunler;
         private List<KarKalemDTO> cariler;

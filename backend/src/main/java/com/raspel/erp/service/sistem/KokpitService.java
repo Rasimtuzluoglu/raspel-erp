@@ -14,6 +14,7 @@ import com.raspel.erp.entity.ticaret.Fatura;
 import com.raspel.erp.exception.BusinessException;
 import com.raspel.erp.repository.finans.CariHesapRepository;
 import com.raspel.erp.repository.ticaret.FaturaRepository;
+import com.raspel.erp.repository.ticaret.VadeGunProjeksiyon;
 import com.raspel.erp.service.finans.CariHesapService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -102,8 +103,9 @@ public class KokpitService {
                 .kritikDurum(kritikDurumListesi(gorevler, ozet, vadesiGecenTutar, vadesiGecenAdet))
                 .nakit(nakitBolumu(sirketId, ozet, grafikler))
                 .alacakVerecek(alacakVerecekBolumu(sirketId, alacak, verecek, tahsilatOrani))
+                .takvim(takvimBolumu(sirketId))
                 .karMarj(KAR_ROLLERI.contains(rolDegeri)
-                        ? karMarjBolumu(sirketId, rolDegeri, cozulenDonem, grafikler) : null)
+                        ? karMarjBolumu(sirketId, rolDegeri, cozulenDonem, grafikler, ozet) : null)
                 .faturaSiparis(faturaSiparisBolumu(sirketId, grafikler, vadesiGecenTutar,
                         vadesiGecenAdet, tahsilatOrani))
                 .icgoruler(icgoruler)
@@ -439,11 +441,94 @@ public class KokpitService {
     }
 
     // ------------------------------------------------------------------
+    // Nakit takvimi
+    // ------------------------------------------------------------------
+
+    private KokpitDTO.TakvimDTO takvimBolumu(Long sirketId) {
+        LocalDate baslangic = LocalDate.now();
+        LocalDate bitis = baslangic.plusDays(13);
+        Map<LocalDate, TakvimGun> gunler = new LinkedHashMap<>();
+        for (int i = 0; i < 14; i++) {
+            gunler.put(baslangic.plusDays(i), new TakvimGun());
+        }
+
+        try {
+            List<VadeGunProjeksiyon> tahsilatlar = faturaRepository.kokpitVadeGunOzeti(
+                    sirketId, Fatura.FaturaTur.SATIS, Fatura.FaturaDurum.KESILDI,
+                    ODEME_KAPALI_DURUMLAR, baslangic, bitis);
+            if (tahsilatlar != null) {
+                for (VadeGunProjeksiyon satir : tahsilatlar) {
+                    TakvimGun gun = satir.getTarih() != null ? gunler.get(satir.getTarih()) : null;
+                    if (gun != null) {
+                        gun.giris = gun.giris.add(sifirla(satir.getTutar()));
+                        gun.girisAdet += satir.getAdet() != null ? satir.getAdet() : 0L;
+                    }
+                }
+            }
+        } catch (RuntimeException e) {
+            log.warn("Takvim tahsilatları alınamadı: {}", e.getMessage());
+        }
+
+        try {
+            List<VadeGunProjeksiyon> odemeler = faturaRepository.kokpitVadeGunOzeti(
+                    sirketId, Fatura.FaturaTur.ALIS, Fatura.FaturaDurum.KESILDI,
+                    ODEME_KAPALI_DURUMLAR, baslangic, bitis);
+            if (odemeler != null) {
+                for (VadeGunProjeksiyon satir : odemeler) {
+                    TakvimGun gun = satir.getTarih() != null ? gunler.get(satir.getTarih()) : null;
+                    if (gun != null) {
+                        gun.cikis = gun.cikis.add(sifirla(satir.getTutar()));
+                        gun.cikisAdet += satir.getAdet() != null ? satir.getAdet() : 0L;
+                    }
+                }
+            }
+        } catch (RuntimeException e) {
+            log.warn("Takvim ödemeleri alınamadı: {}", e.getMessage());
+        }
+
+        BigDecimal toplamGiris = BigDecimal.ZERO;
+        BigDecimal toplamCikis = BigDecimal.ZERO;
+        BigDecimal kumulatif = BigDecimal.ZERO;
+        List<KokpitDTO.TakvimGunDTO> liste = new ArrayList<>(14);
+        for (Map.Entry<LocalDate, TakvimGun> giris : gunler.entrySet()) {
+            TakvimGun gun = giris.getValue();
+            BigDecimal net = gun.giris.subtract(gun.cikis);
+            kumulatif = kumulatif.add(net);
+            toplamGiris = toplamGiris.add(gun.giris);
+            toplamCikis = toplamCikis.add(gun.cikis);
+            liste.add(KokpitDTO.TakvimGunDTO.builder()
+                    .tarih(giris.getKey())
+                    .giris(gun.giris)
+                    .cikis(gun.cikis)
+                    .net(net)
+                    .kumulatif(kumulatif)
+                    .girisAdet(gun.girisAdet)
+                    .cikisAdet(gun.cikisAdet)
+                    .build());
+        }
+
+        return KokpitDTO.TakvimDTO.builder()
+                .gunler(liste)
+                .toplamGiris(toplamGiris)
+                .toplamCikis(toplamCikis)
+                .net(toplamGiris.subtract(toplamCikis))
+                .build();
+    }
+
+    private static final class TakvimGun {
+        private BigDecimal giris = BigDecimal.ZERO;
+        private BigDecimal cikis = BigDecimal.ZERO;
+        private long girisAdet;
+        private long cikisAdet;
+    }
+
+    // ------------------------------------------------------------------
     // Kâr / marj
     // ------------------------------------------------------------------
 
     private KokpitDTO.KarMarjDTO karMarjBolumu(Long sirketId, String rol, String donem,
-                                                DashboardGrafikDTO grafikler) {
+                                                DashboardGrafikDTO grafikler,
+                                                DashboardOzetDTO ozetKokpit) {
         DashboardKarAnaliziDTO kar = dashboardService.karAnaliziGetir(sirketId, rol, donem);
         DashboardKarAnaliziDTO.OzetDTO ozet = kar != null ? kar.getOzet() : null;
 
@@ -475,11 +560,16 @@ public class KokpitService {
                 })
                 .toList();
 
+        DashboardOzetDTO.KarDTO netKarDto = ozetKokpit != null && ozetKokpit.getKpi() != null
+                ? ozetKokpit.getKpi().getKar() : null;
+        BigDecimal netKar = netKarDto != null ? netKarDto.getDeger() : null;
+
         return KokpitDTO.KarMarjDTO.builder()
                 .ciro(sifirla(ozet != null ? ozet.getCiro() : null))
                 .maliyet(sifirla(ozet != null ? ozet.getMaliyet() : null))
                 .kar(sifirla(ozet != null ? ozet.getKar() : null))
                 .marj(ozet != null ? ozet.getMarj() : null)
+                .netKar(netKar)
                 .trend(trend)
                 .urunler(urunler)
                 .cariler(cariler)

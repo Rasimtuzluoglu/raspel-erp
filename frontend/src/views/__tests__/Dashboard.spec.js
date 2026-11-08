@@ -110,7 +110,7 @@ const kokpitVerisi = () => ({
     trendYuzde: 4.2,
     sparkline: [1, 2, 3],
     gunlukAkis: [{ net: 100 }],
-    projeksiyon: { tahminiBitisBakiyesi: 140000, toplamBeklenenGiris: 5000, toplamBeklenenCikis: 3000, gunluk: [] },
+    projeksiyon: { tahminiBitisBakiyesi: 140000, toplamBeklenenGiris: 5000, toplamBeklenenCikis: 3000, gunSayisi: 30, gunluk: [{ tarih: '2026-11-06', giris: 100, cikis: 50, net: 50, kumulatif: 120000 }, { tarih: '2026-11-07', giris: 0, cikis: 0, net: 0, kumulatif: 120000 }] },
     hedef: { route: '/kasa', query: {} }
   },
   alacakVerecek: {
@@ -122,6 +122,15 @@ const kokpitVerisi = () => ({
     borclular: [],
     tedarikciler: [],
     hedef: { route: '/cari-hesaplar', query: {} }
+  },
+  takvim: {
+    toplamGiris: 100,
+    toplamCikis: 50,
+    net: 50,
+    gunler: [
+      { tarih: '2026-11-06', giris: 100, cikis: 50, net: 50, kumulatif: 50, girisAdet: 1, cikisAdet: 1 },
+      { tarih: '2026-11-07', giris: 0, cikis: 0, net: 0, kumulatif: 50, girisAdet: 0, cikisAdet: 0 }
+    ]
   },
   karMarj: {
     ciro: 100000,
@@ -199,6 +208,7 @@ describe('Dashboard kokpiti', () => {
     expect(wrapper.find('[data-test="kokpit-bolum-karMarj"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="kokpit-bolum-faturaSiparis"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="nakit-bolumu"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="nakit-takvimi"]').exists()).toBe(true)
   })
 
   it('donemDegisinceYeniIstekGider', async () => {

@@ -106,6 +106,24 @@
       </span>
     </div>
 
+    <div
+      class="nakit-runway"
+      :class="runwaySinifi"
+      data-test="nakit-runway"
+    >
+      <div class="nakit-runway-ust">
+        <span>{{ t('dashboard.kokpitNakitRunway') }}</span>
+        <span class="nakit-runway-durum">{{ runwayEtiketi }}</span>
+      </div>
+      <div class="nakit-runway-deger">
+        <strong>{{ runwayGun === null ? '—' : t('dashboard.kokpitNakitRunwayGun', { n: runwayGun }) }}</strong>
+        <span>{{ t('dashboard.kokpitNakitRunwayAlt') }}</span>
+      </div>
+      <div class="nakit-runway-bar">
+        <span :style="{ width: `${runwayOrani}%` }" />
+      </div>
+    </div>
+
     <div class="nakit-grafik-ust">
       <span class="nakit-grafik-baslik">{{ t('dashboard.kokpitNakitGunlukAkis') }}</span>
       <span
@@ -151,16 +169,6 @@
         :aria-label="t('dashboard.kokpitNakitProjeksiyon')"
         data-test="nakit-projeksiyon-grafik"
       />
-      <MiniTablo
-        v-if="projeksiyonGunleri.length > 0"
-        :kolonlar="projeksiyonKolonlari"
-        :satirlar="projeksiyonGunleri"
-        :bos-metin="t('dashboard.kokpitNakitBos')"
-        :para-birimi="paraBirimi"
-        :secilebilir="false"
-        :baslik="t('dashboard.kokpitNakitProjeksiyon')"
-        data-test="nakit-projeksiyon-tablo"
-      />
     </div>
 
     <template #alt>
@@ -185,7 +193,6 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FinansKarti from './FinansKarti.vue'
 import MikroGrafik from './MikroGrafik.vue'
-import MiniTablo from './MiniTablo.vue'
 import { formatPara } from '../../../utils/format.js'
 
 const props = defineProps({
@@ -228,21 +235,31 @@ const net30 = computed(() =>
   (Number(projeksiyon.value.toplamBeklenenCikis) || 0)
 )
 const projeksiyonRiskli = computed(() => tahminiBitis.value < 0)
-const projeksiyonGunleri = computed(() => {
-  const gunler = Array.isArray(projeksiyon.value.gunluk) ? projeksiyon.value.gunluk : []
-  return gunler.slice(0, 4)
+const ortalamaGunlukCikis = computed(() => {
+  const gunSayisi = Number(projeksiyon.value.gunSayisi) || 30
+  const toplamCikis = Number(projeksiyon.value.toplamBeklenenCikis) || 0
+  return gunSayisi > 0 ? toplamCikis / gunSayisi : 0
 })
-const projeksiyonKolonlari = computed(() => [
-  { anahtar: 'tarih', etiket: t('dashboard.kokpitNakitTarih'), bicim: 'tarih' },
-  { anahtar: 'net', etiket: t('dashboard.kokpitNakitNet'), hiza: 'sag', bicim: 'para' },
-  {
-    anahtar: 'kumulatif',
-    etiket: t('dashboard.kokpitNakitKumulatif'),
-    hiza: 'sag',
-    bicim: 'para',
-    mobilGizle: true
-  }
-])
+const runwayGun = computed(() => {
+  if (ortalamaGunlukCikis.value <= 0) return null
+  return Math.max(0, Math.round(toplam.value / ortalamaGunlukCikis.value))
+})
+const runwaySinifi = computed(() => {
+  if (runwayGun.value === null) return 'nakit-runway--notr'
+  if (runwayGun.value <= 15) return 'nakit-runway--risk'
+  if (runwayGun.value <= 30) return 'nakit-runway--uyari'
+  return 'nakit-runway--iyi'
+})
+const runwayEtiketi = computed(() => {
+  if (runwayGun.value === null) return t('dashboard.kokpitNakitRunwayBelirsiz')
+  if (runwayGun.value <= 15) return t('dashboard.kokpitNakitRunwayRisk')
+  if (runwayGun.value <= 30) return t('dashboard.kokpitNakitRunwayUyari')
+  return t('dashboard.kokpitNakitRunwaySaglikli')
+})
+const runwayOrani = computed(() => {
+  if (runwayGun.value === null) return 0
+  return Math.min(100, (runwayGun.value / 60) * 100)
+})
 const hedef = computed(() => nakit.value.hedef || { route: '/kasa', query: {} })
 
 const kasaOrani = computed(() => {
@@ -419,6 +436,86 @@ const dagitimEtiketi = computed(() =>
 }
 .nakit-saglik-metin strong.negatif {
   color: var(--danger);
+}
+.nakit-runway {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-muted);
+}
+.nakit-runway-ust {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.nakit-runway-durum {
+  padding: 1px 5px;
+  border-radius: var(--radius-pill);
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.nakit-runway--iyi .nakit-runway-durum {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.nakit-runway--uyari .nakit-runway-durum {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+.nakit-runway--risk .nakit-runway-durum {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.nakit-runway--notr .nakit-runway-durum {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+}
+.nakit-runway-deger {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.nakit-runway-deger strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.nakit-runway-deger span {
+  font-size: 9.5px;
+  color: var(--text-muted);
+}
+.nakit-runway-bar {
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--bg-secondary);
+}
+.nakit-runway-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--success);
+  transition: width var(--dur-base) var(--ease-standard);
+}
+.nakit-runway--uyari .nakit-runway-bar span {
+  background: var(--warning);
+}
+.nakit-runway--risk .nakit-runway-bar span {
+  background: var(--danger);
+}
+.nakit-runway--notr .nakit-runway-bar span {
+  background: var(--text-muted);
 }
 .nakit-grafik-ust {
   display: flex;

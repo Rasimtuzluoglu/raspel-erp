@@ -450,4 +450,20 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
             "AND f.durum = com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.KESILDI " +
             "AND f.odemeDurumu = 'ODENDI'")
     BigDecimal toplamTahsilEdilenKesilmisSatis(@Param("sirketId") Long sirketId);
+
+    /**
+     * Kokpit nakit takvimi: vadesi pencereye düşen açık faturaları gün bazında
+     * adet ve kalan tutar olarak toplar. Tüm fatura listesi belleğe alınmaz.
+     */
+    @Query("SELECT f.vadeTarihi AS tarih, COUNT(f) AS adet, COALESCE(SUM(f.kalanTutar), 0) AS tutar " +
+            "FROM Fatura f WHERE f.sirketId = :sirketId AND f.tur = :tur AND f.durum = :durum " +
+            "AND f.odemeDurumu NOT IN :odemeDurumlari AND f.kalanTutar > 0 " +
+            "AND f.vadeTarihi BETWEEN :baslangic AND :bitis " +
+            "GROUP BY f.vadeTarihi ORDER BY f.vadeTarihi ASC")
+    List<VadeGunProjeksiyon> kokpitVadeGunOzeti(@Param("sirketId") Long sirketId,
+                                                @Param("tur") Fatura.FaturaTur tur,
+                                                @Param("durum") Fatura.FaturaDurum durum,
+                                                @Param("odemeDurumlari") List<String> odemeDurumlari,
+                                                @Param("baslangic") java.time.LocalDate baslangic,
+                                                @Param("bitis") java.time.LocalDate bitis);
 }
