@@ -7,8 +7,8 @@ import CariKart360Dialog from '../CariKart360Dialog.vue'
 /**
  * FAZ 3 — Cari 360 penceresi kullanislilik sozlesmesi.
  *
- * 360 penceresi tek detay merkezidir: kimlik karti (avatar/ad/tur) + 4 KPI
- * hucresi + "Ekstre" ve "Adresler" aksiyonlari (ana bilesene event yayar).
+ * 360 penceresi tek detay merkezidir: kimlik karti (avatar/ad/tur) + 5 KPI
+ * hucresi + Tahsilat/Fatura/Ekstre/Adresler aksiyonlari (ana bilesene event yayar).
  */
 
 vi.mock('../../api/index.js', () => ({
@@ -58,12 +58,28 @@ const kur = async (ekstraProps = {}) => {
 }
 
 describe('CariKart360Dialog — Faz3', () => {
-  it('kimlik karti ve 4 KPI hucresi gosterilir', async () => {
+  it('kimlik karti ve 5 KPI hucresi gosterilir', async () => {
     const w = await kur()
     expect(w.find('.kart-kimlik-kart').exists()).toBe(true)
     expect(w.find('.kart-kimlik-kart').text()).toContain('ACME Ltd')
     expect(w.find('.kart-avatar').exists()).toBe(true)
-    expect(w.findAll('.kart-kpi .kpi-hucre')).toHaveLength(4)
+    expect(w.findAll('.kart-kpi .kpi-hucre')).toHaveLength(5)
+  })
+
+  it('Tahsilat butonu tahsilat olayi yayar', async () => {
+    const w = await kur()
+    const btn = w.findAll('button').find((b) => b.text().includes(i18n.global.t('cariHesaplar.tahsilat')))
+    expect(btn).toBeTruthy()
+    await btn.trigger('click')
+    expect(w.emitted('tahsilat')).toBeTruthy()
+  })
+
+  it('Yeni Fatura butonu fatura olayi yayar', async () => {
+    const w = await kur()
+    const btn = w.findAll('button').find((b) => b.text().includes(i18n.global.t('cariHesaplar.yeniFatura')))
+    expect(btn).toBeTruthy()
+    await btn.trigger('click')
+    expect(w.emitted('fatura')).toBeTruthy()
   })
 
   it('Ekstre butonu ekstre olayi yayar', async () => {

@@ -73,6 +73,13 @@ public class CariHesapController {
         return ResponseEntity.ok(cariHesapService.ozet(sirketId));
     }
     
+    @GetMapping("/etiketler")
+    @Operation(summary = "Cari etiketleri", description = "Filtre autocomplete'i için şirket bazlı benzersiz etiketleri getirir")
+    public ResponseEntity<List<String>> etiketler(HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(cariHesapService.etiketler(sirketId));
+    }
+
     @GetMapping("/riskli")
     @Operation(summary = "Kredi limitini aşan cariler",
             description = "Tanımlı kredi limitini borcuyla aşan carileri risk oranına göre listeler")

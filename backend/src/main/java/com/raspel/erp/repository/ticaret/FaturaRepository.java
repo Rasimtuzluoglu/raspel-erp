@@ -151,6 +151,14 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     @EntityGraph(attributePaths = {"cariHesap"})
     Page<Fatura> findByCariHesapIdAndSirketIdOrderByTarihDesc(Long cariHesapId, Long sirketId, Pageable pageable);
 
+    /** Cari 360: tüm faturaları belleğe almadan adet/toplam/kalan agregasyonu. */
+    @Query("SELECT new com.raspel.erp.dto.finans.CariFaturaOzet(" +
+            "COUNT(f), COALESCE(SUM(f.genelToplam), 0), COALESCE(SUM(f.kalanTutar), 0)) " +
+            "FROM Fatura f WHERE f.cariHesap.id = :cariId AND f.sirketId = :sirketId " +
+            "AND f.durum <> com.raspel.erp.entity.ticaret.Fatura.FaturaDurum.IPTAL")
+    com.raspel.erp.dto.finans.CariFaturaOzet cariFaturaOzet(@Param("cariId") Long cariId,
+                                                           @Param("sirketId") Long sirketId);
+
     /** Cari ekstre icin: kesilmis faturalar (tarih araliginda). */
     @EntityGraph(attributePaths = {"cariHesap"})
     List<Fatura> findByCariHesapIdAndDurumAndTarihBetweenOrderByTarihAscIdAsc(

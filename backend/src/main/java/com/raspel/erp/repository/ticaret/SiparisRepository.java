@@ -17,6 +17,14 @@ public interface SiparisRepository extends JpaRepository<Siparis, Long> {
     /** Faz 0.4: DRIVER rolu yalnizca kendine atanan siparisleri gorur. */
     Page<Siparis> findBySirketIdAndDriverIdOrderByTarihDesc(Long sirketId, Long driverId, Pageable pageable);
     List<Siparis> findByCariHesapId(Long cariHesapId);
+
+    /** Cari 360: sipariş adet/toplam agregasyonu. */
+    @Query("SELECT new com.raspel.erp.dto.finans.CariTutarOzet(COUNT(s), COALESCE(SUM(s.genelToplam), 0)) " +
+            "FROM Siparis s WHERE s.cariHesapId = :cariId AND s.sirketId = :sirketId")
+    com.raspel.erp.dto.finans.CariTutarOzet cariSiparisOzet(@Param("cariId") Long cariId,
+                                                            @Param("sirketId") Long sirketId);
+
+    List<Siparis> findTop5ByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(Long cariHesapId, Long sirketId);
     long countByTarih(LocalDate tarih);
     long countBySirketIdAndTarih(Long sirketId, LocalDate tarih);
     long countBySirketIdAndDurumNot(Long sirketId, String durum);

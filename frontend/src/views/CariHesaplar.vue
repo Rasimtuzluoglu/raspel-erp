@@ -62,10 +62,17 @@
         show-clear
         @change="filtreDegisti"
       />
-      <InputText
+      <AutoComplete
         v-model="filtreEtiket"
+        :suggestions="etiketOnerileri"
         :placeholder="t('cariHesaplar.etiketFiltre')"
         class="filtre-select"
+        input-class="w-full"
+        dropdown
+        data-test="cari-etiket-filtre"
+        @complete="etiketOner"
+        @focus="etiketOner({ query: filtreEtiket })"
+        @item-select="filtreEtiketAra"
         @keyup.enter="filtreEtiketAra"
         @blur="filtreEtiketAra"
       />
@@ -78,6 +85,15 @@
         @click="filtreleriTemizle"
       />
       <div class="cari-filtre-sag">
+        <Button
+          v-if="riskGorebilir"
+          :label="t('cariHesaplar.riskliFiltre')"
+          icon="pi pi-exclamation-triangle"
+          size="small"
+          class="p-button-outlined p-button-danger cari-riskli-btn"
+          data-test="cari-riskli"
+          @click="riskliCarilerAc"
+        />
         <TabloAyarlari
           tablo-key="cari"
           :kolonlar="kolonlar"
@@ -88,7 +104,29 @@
     </div>
 
     <div
-      v-if="loading"
+      v-if="aktifFiltreler.length > 0"
+      class="cari-aktif-filtreler"
+      data-test="cari-aktif-filtreler"
+    >
+      <span class="cari-aktif-etiket">{{ t('cariHesaplar.aktifFiltreler') }}</span>
+      <button
+        v-for="f in aktifFiltreler"
+        :key="f.tip"
+        type="button"
+        class="cari-filtre-cip"
+        :aria-label="`${f.etiket} — ${t('cariHesaplar.filtreKaldir')}`"
+        @click="filtreCipKaldir(f.tip)"
+      >
+        {{ f.etiket }}
+        <i
+          class="pi pi-times"
+          aria-hidden="true"
+        />
+      </button>
+    </div>
+
+    <div
+      v-if="loading && ilkYukleme"
       class="loading-iskelet"
       :aria-label="t('common.loading')"
     >
@@ -99,32 +137,67 @@
     </div>
 
     <div
-      v-if="!loading"
+      v-if="!ilkYukleme"
       class="cari-kpi"
     >
-      <KpiKart
-        :baslik="t('cariHesaplar.toplamCari')"
-        :deger="cariOzet.toplamKayit ?? cariHesapStore.toplamKayit"
-        :para-birimi="false"
-        ikon="pi pi-users"
-        renk="#14b8a6"
-      />
-      <KpiKart
-        :baslik="t('cariHesaplar.bizeAlacakli')"
-        :deger="cariOzet.alacakli ?? 0"
-        ikon="pi pi-arrow-down-left"
-        renk="#22c55e"
-      />
-      <KpiKart
-        :baslik="t('cariHesaplar.bizeBorclu')"
-        :deger="cariOzet.borclu ?? 0"
-        ikon="pi pi-arrow-up-right"
-        renk="#ef4444"
-      />
+      <button
+        type="button"
+        class="cari-kpi-tikla"
+        data-test="kpi-toplam"
+        :title="t('cariHesaplar.toplamCari')"
+        @click="filtreleriTemizle"
+      >
+        <KpiKart
+          :baslik="t('cariHesaplar.toplamCari')"
+          :deger="cariOzet.toplamKayit ?? cariHesapStore.toplamKayit"
+          :para-birimi="false"
+          ikon="pi pi-users"
+          renk="#14b8a6"
+        />
+      </button>
+      <button
+        type="button"
+        class="cari-kpi-tikla"
+        :class="{ 'cari-kpi-tikla--aktif': filtreBakiye === 'alacak' }"
+        data-test="kpi-alacak"
+        :aria-pressed="filtreBakiye === 'alacak' ? 'true' : 'false'"
+        :title="t('cariHesaplar.bizeAlacakli')"
+        @click="kpiBakiyeFiltre('alacak')"
+      >
+        <KpiKart
+          :baslik="t('cariHesaplar.bizeAlacakli')"
+          :deger="cariOzet.alacakli ?? 0"
+          ikon="pi pi-arrow-down-left"
+          renk="#22c55e"
+        />
+      </button>
+      <button
+        type="button"
+        class="cari-kpi-tikla"
+        :class="{ 'cari-kpi-tikla--aktif': filtreBakiye === 'borc' }"
+        data-test="kpi-borc"
+        :aria-pressed="filtreBakiye === 'borc' ? 'true' : 'false'"
+        :title="t('cariHesaplar.bizeBorclu')"
+        @click="kpiBakiyeFiltre('borc')"
+      >
+        <KpiKart
+          :baslik="t('cariHesaplar.bizeBorclu')"
+          :deger="cariOzet.borclu ?? 0"
+          ikon="pi pi-arrow-up-right"
+          renk="#ef4444"
+        />
+      </button>
     </div>
 
+    <p
+      v-if="!ilkYukleme && aktifFiltreler.length > 0"
+      class="cari-kpi-not"
+    >
+      {{ t('cariHesaplar.kpiTumCariNotu') }}
+    </p>
+
     <div
-      v-if="!loading"
+      v-if="!ilkYukleme"
       class="table-container"
     >
       <AppDataTable
@@ -132,20 +205,25 @@
         :value="cariHesapStore?.cariHesaplar || []"
         data-key="id"
         striped-rows
+        :loading="loading"
         :size="tabloYogunluk === 'compact' ? 'small' : 'normal'"
         :lazy="true"
         :total-records="cariHesapStore.toplamKayit"
         :rows="cariSayfaBoyutu"
         :paginator="true"
+        :sort-field="siralama.field"
+        :sort-order="siralama.order"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rows-per-page-options="[10, 20, 50]"
         :current-page-report-template="'{first} - {last} ({totalRecords} ' + $t('common.recordsWord') + ')'"
         gorunum-anahtari="cari-hesaplar"
         @page="cariSayfaDegisti"
+        @sort="cariSirala"
       >
         <Column
           selection-mode="multiple"
           header-style="width: 3rem"
+          class="cari-secim-kolon"
         />
         <Column
           v-if="kolonlar[0].visible"
@@ -158,6 +236,7 @@
           field="ad"
           :header="t('cariHesaplar.ad')"
           sortable
+          class="cari-ad-kolon"
           style="width: 240px"
         >
           <template #body="s">
@@ -182,6 +261,7 @@
           v-if="kolonlar[2].visible"
           field="tur"
           :header="t('cariHesaplar.tur')"
+          sortable
           style="width: 100px"
         >
           <template #body="s">
@@ -218,6 +298,7 @@
           v-if="kolonlar[5].visible"
           field="krediLimiti"
           :header="t('cariHesaplar.krediLimiti')"
+          sortable
           style="width: 120px"
         >
           <template #body="s">
@@ -228,6 +309,7 @@
           v-if="kolonlar[6].visible"
           field="odemeVadesi"
           :header="t('cariHesaplar.vadeGun')"
+          sortable
           style="width: 80px"
         />
         <Column
@@ -251,6 +333,7 @@
           field="bakiye"
           :header="t('cariHesaplar.bakiye')"
           class="sayisal"
+          sortable
           style="width: 140px"
         >
           <template #body="slotProps">
@@ -259,10 +342,10 @@
                  rozetiyle gösteriyordu. -->
             <span
               class="bakiye-rozet gizli-veri"
-              :class="borcluMu(slotProps.data.bakiye) ? 'borc' : 'alacak'"
-              :title="borcluMu(slotProps.data.bakiye) ? t('cariHesaplar.bizeBorclu') : t('cariHesaplar.bizeAlacakli')"
+              :class="odenecekMi(slotProps.data.bakiye) ? 'borc' : 'alacak'"
+              :title="odenecekMi(slotProps.data.bakiye) ? t('cariHesaplar.bizeBorclu') : t('cariHesaplar.bizeAlacakli')"
             >
-              <i :class="borcluMu(slotProps.data.bakiye) ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
+              <i :class="odenecekMi(slotProps.data.bakiye) ? 'pi pi-arrow-up-right' : 'pi pi-arrow-down-left'" />
               {{ formatCurrency(Math.abs(slotProps.data.bakiye || 0)) }}
             </span>
           </template>
@@ -286,21 +369,18 @@
         </Column>
         <Column
           :header="t('common.actions')"
-          style="width: 150px"
+          class="cari-islem-kolon"
+          style="width: 110px"
         >
           <template #body="slotProps">
             <div class="satir-islemler">
               <Button
-                icon="pi pi-file-plus"
+                icon="pi pi-money-bill"
                 class="p-button-rounded p-button-success p-button-sm"
-                :title="t('cariHesaplar.yeniFatura')"
-                @click="yeniFatura(slotProps.data)"
-              />
-              <Button
-                icon="pi pi-pencil"
-                class="p-button-rounded p-button-warning p-button-sm"
-                :title="t('common.edit')"
-                @click="editCariHesap(slotProps.data)"
+                :title="t('cariHesaplar.tahsilat')"
+                :aria-label="t('cariHesaplar.tahsilat')"
+                data-test="cari-tahsilat"
+                @click="tahsilatAc(slotProps.data)"
               />
               <SatirEylemleri
                 :gorunur="{ duzenle: false, cogalt: false, sil: false }"
@@ -356,7 +436,7 @@
 
     <!-- Kucuk ekran: tablo yerine kart listesi (CSS ile <768px'te gosterilir) -->
     <div
-      v-if="!loading"
+      v-if="!ilkYukleme"
       class="cari-kart-liste"
     >
       <div
@@ -388,9 +468,9 @@
           </div>
           <span
             class="bakiye-rozet"
-            :class="borcluMu(c.bakiye) ? 'borc' : 'alacak'"
+            :class="odenecekMi(c.bakiye) ? 'borc' : 'alacak'"
           >
-            <i :class="borcluMu(c.bakiye) ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
+            <i :class="odenecekMi(c.bakiye) ? 'pi pi-arrow-up-right' : 'pi pi-arrow-down-left'" />
             {{ formatCurrency(Math.abs(c.bakiye || 0)) }}
           </span>
         </div>
@@ -407,16 +487,12 @@
         </div>
         <div class="cari-kart-islemler">
           <Button
-            icon="pi pi-file-plus"
+            icon="pi pi-money-bill"
             class="p-button-rounded p-button-success p-button-sm"
-            :title="t('cariHesaplar.yeniFatura')"
-            @click="yeniFatura(c)"
-          />
-          <Button
-            icon="pi pi-pencil"
-            class="p-button-rounded p-button-warning p-button-sm"
-            :title="t('common.edit')"
-            @click="editCariHesap(c)"
+            :title="t('cariHesaplar.tahsilat')"
+            :aria-label="t('cariHesaplar.tahsilat')"
+            data-test="cari-tahsilat"
+            @click="tahsilatAc(c)"
           />
           <SatirEylemleri
             :gorunur="{ duzenle: false, cogalt: false, sil: false }"
@@ -456,6 +532,17 @@
       style="width: 780px"
       :draggable="false"
     >
+      <p
+        v-if="formHatalariVar"
+        class="form-hata-ozet"
+        role="alert"
+      >
+        <i
+          class="pi pi-exclamation-triangle"
+          aria-hidden="true"
+        />
+        {{ t('cariHesaplar.formHatalariVar') }}
+      </p>
       <div class="dialog-form">
         <!-- Sol kolon: genel bilgiler -->
         <div class="form-kolon">
@@ -470,7 +557,16 @@
                 v-model="form.ad"
                 :placeholder="t('cariHesaplar.adPlaceholder')"
                 class="w-full"
+                required
+                :aria-invalid="alanHatalari.ad ? 'true' : 'false'"
+                :aria-describedby="alanHatalari.ad ? 'ad-hata' : undefined"
+                @input="hataTemizle('ad')"
               />
+              <small
+                v-if="alanHatalari.ad"
+                id="ad-hata"
+                class="alan-hata"
+              >{{ alanHatalari.ad }}</small>
             </div>
             <div class="form-group">
               <label>{{ t('cariHesaplar.fotograf') }}</label>
@@ -524,7 +620,17 @@
                   v-model="form.vergiNumarasi"
                   :placeholder="t('cariHesaplar.vergiNoPlaceholder')"
                   class="w-full"
+                  inputmode="numeric"
+                  maxlength="11"
+                  :aria-invalid="alanHatalari.vergiNumarasi ? 'true' : 'false'"
+                  :aria-describedby="alanHatalari.vergiNumarasi ? 'vergiNumarasi-hata' : undefined"
+                  @input="hataTemizle('vergiNumarasi')"
                 />
+                <small
+                  v-if="alanHatalari.vergiNumarasi"
+                  id="vergiNumarasi-hata"
+                  class="alan-hata"
+                >{{ alanHatalari.vergiNumarasi }}</small>
               </div>
             </div>
             <div class="form-row">
@@ -535,7 +641,17 @@
                   v-model="form.telefon"
                   placeholder="05XX XXX XX XX"
                   class="w-full"
+                  inputmode="tel"
+                  maxlength="20"
+                  :aria-invalid="alanHatalari.telefon ? 'true' : 'false'"
+                  :aria-describedby="alanHatalari.telefon ? 'telefon-hata' : undefined"
+                  @input="hataTemizle('telefon')"
                 />
+                <small
+                  v-if="alanHatalari.telefon"
+                  id="telefon-hata"
+                  class="alan-hata"
+                >{{ alanHatalari.telefon }}</small>
               </div>
               <div class="form-group">
                 <label for="email">{{ t('cariHesaplar.eposta') }}</label>
@@ -544,7 +660,17 @@
                   v-model="form.email"
                   placeholder="ornek@firma.com"
                   class="w-full"
+                  inputmode="email"
+                  autocomplete="email"
+                  :aria-invalid="alanHatalari.email ? 'true' : 'false'"
+                  :aria-describedby="alanHatalari.email ? 'email-hata' : undefined"
+                  @input="hataTemizle('email')"
                 />
+                <small
+                  v-if="alanHatalari.email"
+                  id="email-hata"
+                  class="alan-hata"
+                >{{ alanHatalari.email }}</small>
               </div>
             </div>
             <div class="form-row">
@@ -564,16 +690,28 @@
                   v-model="form.iban"
                   placeholder="TR..."
                   class="w-full"
+                  maxlength="34"
+                  :aria-invalid="alanHatalari.iban ? 'true' : 'false'"
+                  :aria-describedby="alanHatalari.iban ? 'iban-hata' : 'iban-yardim'"
+                  @input="hataTemizle('iban')"
                 />
                 <small
-                  v-if="ibanGecerli === true"
+                  v-if="alanHatalari.iban"
+                  id="iban-hata"
+                  class="alan-hata"
+                >{{ alanHatalari.iban }}</small>
+                <small
+                  v-else-if="ibanGecerli === true"
                   class="iban-gecerli"
                 >&#x2713; {{ t('cariHesaplar.ibanGecerli') }}</small>
                 <small
-                  v-if="ibanGecerli === false"
+                  v-else-if="ibanGecerli === false"
                   class="iban-gecersiz"
                 >&#x2717; {{ t('cariHesaplar.ibanGecersiz') }}</small>
-                <small class="iban-yardim">{{ t('cariHesaplar.ibanYardim') }}</small>
+                <small
+                  id="iban-yardim"
+                  class="iban-yardim"
+                >{{ t('cariHesaplar.ibanYardim') }}</small>
               </div>
             </div>
           </div>
@@ -914,6 +1052,7 @@
         </AppDataTable>
 
         <TabView
+          scrollable
           class="cari-sekmeler"
           @update:active-index="cariSekmeDegisti"
         >
@@ -1238,6 +1377,8 @@
       :cari="kartCari"
       @ekstre="ekstreAc"
       @adresler="adresAc360"
+      @tahsilat="tahsilatAc"
+      @fatura="yeniFatura"
     />
 
     <Dialog
@@ -1562,6 +1703,7 @@ import { resimSikistir } from '../utils/resimSikistir.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
+import { cariFormDogrula } from '../composables/cariFormDogrulama.js'
 import TabloAyarlari from '../components/TabloAyarlari.vue'
 import EmptyState from '../components/EmptyState.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
@@ -1585,13 +1727,23 @@ const confirm = useConfirm()
 const cariHesapStore = useCariHesapStore()
 const authStore = useAuthStore()
 const isAdmin = computed(() => authStore?.kullanici?.role === 'ADMIN')
+const riskGorebilir = computed(() => authStore?.kullanici?.role !== 'DRIVER')
 const router = useRouter()
 const route = useRoute()
 const { kopyala } = usePanoyaKopyala()
 const { t } = useI18n()
 
 const tabloYogunluk = ref('comfortable')
-const kolonGorunurluk = ref({})
+// Varsayılan görünümde yalnızca günlük kullanım için gereken kolonlar açık.
+// ID, yetkili, kredi limiti, temsilci ve etiketler kolon ayarlarından açılabilir.
+const varsayilanKolonGorunurluk = {
+  id: false,
+  yetkiliKisi: false,
+  krediLimiti: false,
+  temsilciAd: false,
+  etiketler: false
+}
+const kolonGorunurluk = ref({ ...varsayilanKolonGorunurluk })
 const varsayilanKolonlar = computed(() => [
   { field: 'id', header: 'ID' },
   { field: 'ad', header: t('cariHesaplar.ad') },
@@ -1651,6 +1803,7 @@ const acilisCari = ref(null)
 const acilisKaydediliyor = ref(false)
 const acilisForm = ref({ tutar: null, tarih: null, aciklama: '' })
 const loading = ref(false)
+const ilkYukleme = ref(true)
 const saving = ref(false)
 const editingId = ref(null)
 const cariHareketler = ref([])
@@ -1681,6 +1834,32 @@ const bakiyeFiltreleri = computed(() => [
   { label: t('cariHesaplar.bizeAlacakli'), value: 'alacak' },
   { label: t('cariHesaplar.bizeBorclu'), value: 'borc' }
 ])
+const aktifFiltreler = computed(() => {
+  const liste = []
+  if (filtreTur.value) {
+    liste.push({
+      tip: 'tur',
+      etiket: cariTurSecenekleri.value.find((o) => o.value === filtreTur.value)?.label || filtreTur.value
+    })
+  }
+  if (filtreBakiye.value) {
+    liste.push({
+      tip: 'bakiye',
+      etiket: bakiyeFiltreleri.value.find((o) => o.value === filtreBakiye.value)?.label || filtreBakiye.value
+    })
+  }
+  if (filtreEtiket.value && filtreEtiket.value.trim()) {
+    liste.push({ tip: 'etiket', etiket: `#${filtreEtiket.value.trim()}` })
+  }
+  return liste
+})
+const filtreCipKaldir = (tip) => {
+  if (tip === 'tur') filtreTur.value = null
+  if (tip === 'bakiye') filtreBakiye.value = null
+  if (tip === 'etiket') filtreEtiket.value = ''
+  cariSayfa.value = 0
+  loadCariHesaplar(0, cariSayfaBoyutu.value)
+}
 const aktifSecenekleri = computed(() => [
   { label: t('common.active'), value: true },
   { label: t('common.passive'), value: false }
@@ -1694,11 +1873,14 @@ const paraBirimiSecenekleri = [
 ]
 
 /**
- * Bakiye işareti kuralı (backend ile aynı): negatif = cari bize borçlu.
+ * Bakiye işareti kuralı (backend ile aynı): negatif = cari bize borçlu
+ * (tahsil edilecek), pozitif = biz cariye borçluyuz (ödenecek).
+ * Renk ve ok yönü KPI kartlarıyla aynı olmalı; bu yüzden pozitif bakiye
+ * kırmızı "ödenecek", negatif bakiye yeşil "tahsil edilecek" gösterilir.
  * @param {number|null} bakiye
- * @returns {boolean} true → bize borçlu (borç)
+ * @returns {boolean} true → biz ödeyeceğiz (borç)
  */
-const borcluMu = (bakiye) => Number(bakiye || 0) < 0
+const odenecekMi = (bakiye) => Number(bakiye || 0) > 0
 
 const cariOzet = ref({})
 
@@ -1840,6 +2022,7 @@ const acilisKaydet = async () => {
 }
 
 const filtreleriTemizle = () => {
+  aramaMetni.value = ''
   filtreTur.value = null
   filtreBakiye.value = null
   filtreEtiket.value = ''
@@ -1852,10 +2035,36 @@ const filtreDegisti = () => {
   loadCariHesaplar(0, cariSayfaBoyutu.value)
 }
 
+/** KPI kartına tıklama: aynı filtreye tekrar basınca filtre kaldırılır. */
+const kpiBakiyeFiltre = (yon) => {
+  filtreBakiye.value = filtreBakiye.value === yon ? null : yon
+  cariSayfa.value = 0
+  loadCariHesaplar(0, cariSayfaBoyutu.value)
+}
+
 // Faz 2.4: etiket filtresi (Enter/odak kaybında uygula).
 const filtreEtiketAra = () => {
   cariSayfa.value = 0
   loadCariHesaplar(0, cariSayfaBoyutu.value)
+}
+
+// Etiket autocomplete: şirkette kullanılan etiketler bir kez yüklenir,
+// yazarken istemci tarafında filtrelenir (ek istek yok).
+const tumEtiketler = ref([])
+const etiketOnerileri = ref([])
+const etiketleriYukle = async () => {
+  try {
+    const r = await cariHesapAPI.etiketler()
+    tumEtiketler.value = unwrapList(r) || []
+  } catch {
+    tumEtiketler.value = []
+  }
+}
+const etiketOner = (event) => {
+  const q = String(event?.query || '').toLocaleLowerCase('tr')
+  etiketOnerileri.value = tumEtiketler.value
+    .filter((e) => !q || e.toLocaleLowerCase('tr').includes(q))
+    .slice(0, 20)
 }
 
 /** Ekstre tarih araligi icin hizli secimler (yazdirma araligini belirler). */
@@ -2033,6 +2242,24 @@ const ibanGecerli = computed(() => {
 })
 
 const submitted = ref(false)
+const alanHatalari = ref({})
+const formHatalariVar = computed(() => Object.keys(alanHatalari.value).length > 0)
+
+const hataTemizle = (alan) => {
+  if (!alanHatalari.value[alan]) return
+  const yeni = { ...alanHatalari.value }
+  delete yeni[alan]
+  alanHatalari.value = yeni
+}
+
+const formuDogrula = () => {
+  alanHatalari.value = cariFormDogrula({
+    form: form.value,
+    ibanGecerli: ibanGecerli.value,
+    t
+  })
+  return Object.keys(alanHatalari.value).length === 0
+}
 const form = ref({
   ad: '',
   tur: '',
@@ -2085,15 +2312,21 @@ onMounted(async () => {
   if (typeof q === 'string' && q.trim()) aramaMetni.value = q.trim()
   await loadCariHesaplar()
   cariOzetYukle()
+  etiketleriYukle()
 })
 
 const cariSayfa = ref(0)
 const cariSayfaBoyutu = ref(10)
+const siralama = ref({ field: 'ad', order: 1 })
 
 const loadCariHesaplar = async (sayfa = cariSayfa.value, boyut = cariSayfaBoyutu.value) => {
   loading.value = true
   try {
-    const params = { page: sayfa, size: boyut }
+    const params = {
+      page: sayfa,
+      size: boyut,
+      sort: `${siralama.value.field},${siralama.value.order === -1 ? 'desc' : 'asc'}`
+    }
     if (aramaMetni.value.trim()) params.q = aramaMetni.value.trim()
     if (filtreTur.value) params.tur = filtreTur.value
     if (filtreBakiye.value) params.bakiyeYonu = filtreBakiye.value
@@ -2103,6 +2336,7 @@ const loadCariHesaplar = async (sayfa = cariSayfa.value, boyut = cariSayfaBoyutu
     toastBildirim.hata(t('cariHesaplar.hataYukleme'))
   } finally {
     loading.value = false
+    ilkYukleme.value = false
   }
 }
 
@@ -2110,6 +2344,14 @@ const cariSayfaDegisti = (e) => {
   cariSayfa.value = e.page
   cariSayfaBoyutu.value = e.rows
   loadCariHesaplar(e.page, e.rows)
+}
+
+const cariSirala = (e) => {
+  const alan = e?.sortField || 'ad'
+  const yon = e?.sortOrder === -1 ? -1 : 1
+  siralama.value = { field: alan, order: yon }
+  cariSayfa.value = 0
+  loadCariHesaplar(0, cariSayfaBoyutu.value)
 }
 
 const ara = () => {
@@ -2145,6 +2387,7 @@ const openDialog = () => {
     paraBirimi: 'TRY'
   }
   submitted.value = false
+  alanHatalari.value = {}
   formTemizle()
   showDialog.value = true
 }
@@ -2152,6 +2395,7 @@ const openDialog = () => {
 const closeDialog = () => {
   showDialog.value = false
   submitted.value = false
+  alanHatalari.value = {}
 }
 
 const cariEylemleri = (c) => {
@@ -2271,6 +2515,7 @@ const cariCogalt = (c) => {
     aktif: c.aktif !== false
   }
   submitted.value = false
+  alanHatalari.value = {}
   formTemizle()
   showDialog.value = true
 }
@@ -2304,6 +2549,7 @@ const editCariHesap = (cariHesap) => {
     aktif: cariHesap.aktif !== false
   }
   submitted.value = false
+  alanHatalari.value = {}
   formTemizle()
   showDialog.value = true
 }
@@ -2336,8 +2582,7 @@ const temsilcileriYukle = async () => {
 
 const saveCariHesap = async () => {
   submitted.value = true
-  if (!form.value.ad.trim()) {
-    toastBildirim.uyari(t('cariHesaplar.adBosOlamaz'))
+  if (!formuDogrula()) {
     return
   }
 
@@ -2358,13 +2603,19 @@ const saveCariHesap = async () => {
       toastBildirim.basarili(t('cariHesaplar.olusturuldu'))
     }
     formTemizle()
+    alanHatalari.value = {}
     closeDialog()
     // Liste ve KPI yeniden sorgulanır. `createCrudStore.add/update` yeni kaydı
     // listenin SONUNA ekliyor ve toplam kaydı güncellemiyordu; özellikle
     // sayfalı/aramalı listede kayıt hiç görünmüyor ya da yanlış sayfada kalıyordu.
     await Promise.allSettled([loadCariHesaplar(), cariOzetYukle()])
   } catch (error) {
-    toastBildirim.hata(t('cariHesaplar.islemBasarisiz'))
+    const mesaj = error?.response?.data?.message || ''
+    if (/vergi numaras/i.test(mesaj)) {
+      alanHatalari.value = { ...alanHatalari.value, vergiNumarasi: mesaj }
+    } else {
+      toastBildirim.hata(mesaj || t('cariHesaplar.islemBasarisiz'))
+    }
   } finally {
     saving.value = false
   }
@@ -2776,6 +3027,12 @@ import { formatTarih as formatDate, formatTarihSaat } from '../utils/format.js'
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+}
+.cari-ad-hucre > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .cari-thumb {
   width: 32px;
@@ -2857,14 +3114,93 @@ import { formatTarih as formatDate, formatTarihSaat } from '../utils/format.js'
   align-items: center;
   gap: 8px;
 }
+.cari-aktif-filtreler {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: -4px 0 12px;
+}
+.cari-aktif-etiket {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.cari-filtre-cip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 3px 9px;
+  border: 1px solid var(--accent-border);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 160ms ease-out, border-color 160ms ease-out;
+}
+.cari-filtre-cip:hover {
+  background: var(--accent-soft-strong);
+}
+.cari-filtre-cip i {
+  font-size: 9px;
+}
+.cari-filtre-cip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .cari-kpi {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
+.cari-kpi-tikla {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-lg, 14px);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.cari-kpi-tikla:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.cari-kpi-tikla--aktif {
+  box-shadow: 0 0 0 2px var(--accent);
+  border-radius: var(--radius-lg, 14px);
+}
+.cari-kpi-not {
+  margin: -8px 0 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
 .filtre-select {
-  width: 180px;
+  width: 200px;
+}
+.cari-filtreler :deep(.p-autocomplete) {
+  width: 200px;
+}
+.cari-filtreler :deep(.p-autocomplete input) {
+  width: 100%;
+}
+.cari-filtreler :deep(.p-autocomplete-dropdown) {
+  width: 2.25rem;
+  border: 1px solid var(--border);
+  border-left: 0;
+  background: var(--bg-card);
+  color: var(--text-muted);
+}
+.cari-filtreler :deep(.p-autocomplete-dropdown:hover) {
+  background: var(--bg-muted);
+  color: var(--text-primary);
 }
 .cari-kart-liste {
   display: none;
@@ -3163,6 +3499,33 @@ h3 {
   border-radius: 12px;
   padding: 14px;
 }
+/* Yatay kaydırmada kimlik ve işlem kolonları görünür kalsın. */
+.table-container :deep(.cari-secim-kolon),
+.table-container :deep(.cari-ad-kolon),
+.table-container :deep(.cari-islem-kolon) {
+  position: sticky;
+  z-index: 2;
+  background: var(--bg-card);
+}
+.table-container :deep(.cari-secim-kolon) {
+  left: 0;
+}
+.table-container :deep(.cari-ad-kolon) {
+  left: 3rem;
+  box-shadow: 8px 0 12px -12px rgba(0, 0, 0, 0.8);
+}
+.table-container :deep(.cari-islem-kolon) {
+  right: 0;
+  box-shadow: -8px 0 12px -12px rgba(0, 0, 0, 0.8);
+}
+.table-container :deep(thead .cari-secim-kolon),
+.table-container :deep(thead .cari-ad-kolon),
+.table-container :deep(thead .cari-islem-kolon) {
+  z-index: 3;
+}
+.table-container :deep(.cari-islem-kolon .satir-islemler) {
+  flex-wrap: nowrap;
+}
 .satir-islemler {
   display: flex;
   align-items: center;
@@ -3315,6 +3678,30 @@ h3 {
 .form-group .required {
   color: var(--danger);
 }
+.alan-hata {
+  display: block;
+  margin-top: 4px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--danger);
+}
+.form-hata-ozet {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 14px;
+  padding: 9px 12px;
+  border: 1px solid var(--danger-border);
+  border-radius: 10px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 12.5px;
+}
+.form-group :deep(.p-inputtext[aria-invalid='true']),
+.form-group :deep(.p-textarea[aria-invalid='true']) {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 3px var(--danger-soft) !important;
+}
 
 .form-group :deep(.p-inputtext),
 .form-group :deep(.p-textarea) {
@@ -3424,6 +3811,7 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 }
 .kopyalanabilir:hover {
   color: var(--accent);

@@ -25,13 +25,11 @@ import com.raspel.erp.repository.ticaret.IadeRepository;
 import com.raspel.erp.repository.ticaret.SiparisRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -62,24 +60,28 @@ public class CariKartService {
                 .orElseThrow(() -> new ResourceNotFoundException("Cari Hesap", cariId));
         tenantChecker.check(cari.getSirketId(), "Cari Hesap");
 
+        Long tenantId = sirketId != null ? sirketId : cari.getSirketId();
+        if (tenantId == null) {
+            throw new ResourceNotFoundException("Cari Hesap", cariId);
+        }
+
+        // Ağır listeler yerine yalnızca son N kayıt; toplamlar SQL agregasyonu.
         List<Fatura> faturalar = faturaRepository
-                .findByCariHesapIdAndSirketIdOrderByTarihDesc(cariId, sirketId, Pageable.unpaged())
+                .findByCariHesapIdAndSirketIdOrderByTarihDesc(cariId, tenantId,
+                        org.springframework.data.domain.PageRequest.of(0, SON_KAYIT_LIMIT))
                 .getContent();
-        List<Siparis> siparisler = siparisRepository.findByCariHesapId(cariId).stream()
-                .filter(s -> sirketId == null || sirketId.equals(s.getSirketId()))
-                .collect(Collectors.toList());
-        List<Long> faturaIds = faturalar.stream().map(Fatura::getId).collect(Collectors.toList());
-        List<Iade> iadeler = faturaIds.isEmpty() ? List.of()
-                : iadeRepository.findByFaturaIdInAndSirketId(faturaIds, sirketId);
+        List<Siparis> siparisler = siparisRepository
+                .findTop5ByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(cariId, tenantId);
+        List<Iade> iadeler = iadeRepository
+                .findTop5ByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(cariId, tenantId);
         List<Not> notlar = notRepository.findByCariHesapIdOrderByOlusturmaTarihiDesc(cariId);
         List<CariFirsat> firsatlar = cariFirsatRepository
-                .findBySirketIdAndCariHesapIdOrderByOlusturmaTarihiDesc(sirketId, cariId);
+                .findBySirketIdAndCariHesapIdOrderByOlusturmaTarihiDesc(tenantId, cariId);
         List<CariFiyat> fiyatlar = cariFiyatRepository.findByCariHesapIdOrderByStokId(cariId);
-        // Faz 1.3: mümkünse tenant filtreli sorgu (defense-in-depth).
-        List<Hareket> hareketler = sirketId != null
-                ? hareketRepository.findBySirketIdAndCariHesapIdOrderByHareketTarihiDesc(sirketId, cariId)
-                : hareketRepository.findByCariHesapIdOrderByHareketTarihiDesc(cariId);
-        List<Taksit> taksitler = taksitRepository.findBySirketIdAndCariHesapIdOrderByVadeTarihiAsc(sirketId, cariId);
+        List<Hareket> hareketler = hareketRepository
+                .findTop5BySirketIdAndCariHesapIdOrderByHareketTarihiDescIdDesc(tenantId, cariId);
+        List<Taksit> taksitler = taksitRepository
+                .findBySirketIdAndCariHesapIdOrderByVadeTarihiAsc(tenantId, cariId);
 
         Map<Long, Stok> stokMap = stokMapHazirla(fiyatlar);
 
@@ -93,19 +95,19 @@ public class CariKartService {
                 .temsilciId(cari.getTemsilciId())
                 .temsilciAd(cari.getTemsilciAd())
                 .kredi(krediDurumu(cari))
-                .ozet(ozet(faturalar, siparisler, iadeler, hareketler))
-                .sonFaturalar(faturalar.stream().limit(SON_KAYIT_LIMIT).map(this::faturaOzet).collect(Collectors.toList()))
-                .sonSiparisler(siparisler.stream()
-                        .sorted(Comparator.comparing(Siparis::getTarih, Comparator.nullsLast(Comparator.reverseOrder())))
-                        .limit(SON_KAYIT_LIMIT).map(this::siparisOzet).collect(Collectors.toList()))
-                .sonIadeler(iadeler.stream()
-                        .sorted(Comparator.comparing(Iade::getTarih, Comparator.nullsLast(Comparator.reverseOrder())))
-                        .limit(SON_KAYIT_LIMIT).map(this::iadeOzet).collect(Collectors.toList()))
+                .ozet(ozet(
+                        faturaRepository.cariFaturaOzet(cariId, tenantId),
+                        siparisRepository.cariSiparisOzet(cariId, tenantId),
+                        iadeRepository.cariIadeOzet(cariId, tenantId),
+                        hareketRepository.cariTahsilatToplam(cariId, tenantId)))
+                .sonFaturalar(faturalar.stream().map(this::faturaOzet).collect(Collectors.toList()))
+                .sonSiparisler(siparisler.stream().map(this::siparisOzet).collect(Collectors.toList()))
+                .sonIadeler(iadeler.stream().map(this::iadeOzet).collect(Collectors.toList()))
                 .firsatlar(firsatlar.stream().map(this::firsatOzet).collect(Collectors.toList()))
                 .notlar(notlar.stream().map(this::notOzet).collect(Collectors.toList()))
                 .ozelFiyatlar(fiyatlar.stream().map(f -> fiyatOzet(f, stokMap.get(f.getStokId()))).collect(Collectors.toList()))
                 .taksitler(taksitler.stream().map(this::taksitOzet).collect(Collectors.toList()))
-                .sonHareketler(hareketler.stream().limit(SON_KAYIT_LIMIT).map(this::hareketOzet).collect(Collectors.toList()))
+                .sonHareketler(hareketler.stream().map(this::hareketOzet).collect(Collectors.toList()))
                 .build();
     }
 
@@ -150,39 +152,31 @@ public class CariKartService {
                 .build();
     }
 
-    private CariKartDTO.Ozet ozet(List<Fatura> faturalar, List<Siparis> siparisler,
-                                   List<Iade> iadeler, List<Hareket> hareketler) {
-        List<Fatura> gecerliFaturalar = faturalar.stream()
-                .filter(f -> f.getDurum() != Fatura.FaturaDurum.IPTAL).collect(Collectors.toList());
-        List<Iade> gecerliIadeler = iadeler.stream()
-                .filter(i -> !"IPTAL".equalsIgnoreCase(i.getDurum())).collect(Collectors.toList());
-
-        BigDecimal faturaToplam = gecerliFaturalar.stream()
-                .map(f -> f.getGenelToplam() != null ? f.getGenelToplam() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal kalanTutar = gecerliFaturalar.stream()
-                .map(f -> f.getKalanTutar() != null ? f.getKalanTutar() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal siparisToplam = siparisler.stream()
-                .map(s -> s.getGenelToplam() != null ? s.getGenelToplam() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal iadeToplam = gecerliIadeler.stream()
-                .map(i -> i.getTutar() != null ? i.getTutar() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal tahsilatToplam = hareketler.stream()
-                .filter(h -> h.getTur() == Hareket.HareketTuru.TAHSILAT)
-                .map(h -> h.getTutar() != null ? h.getTutar() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    private CariKartDTO.Ozet ozet(com.raspel.erp.dto.finans.CariFaturaOzet faturaOzet,
+                                   com.raspel.erp.dto.finans.CariTutarOzet siparisOzet,
+                                   com.raspel.erp.dto.finans.CariTutarOzet iadeOzet,
+                                   BigDecimal tahsilatToplam) {
+        long faturaSayisi = faturaOzet != null && faturaOzet.adet() != null ? faturaOzet.adet() : 0L;
+        BigDecimal faturaToplam = faturaOzet != null && faturaOzet.tutar() != null
+                ? faturaOzet.tutar() : BigDecimal.ZERO;
+        BigDecimal kalanTutar = faturaOzet != null && faturaOzet.kalan() != null
+                ? faturaOzet.kalan() : BigDecimal.ZERO;
+        long siparisSayisi = siparisOzet != null && siparisOzet.adet() != null ? siparisOzet.adet() : 0L;
+        BigDecimal siparisToplam = siparisOzet != null && siparisOzet.tutar() != null
+                ? siparisOzet.tutar() : BigDecimal.ZERO;
+        long iadeSayisi = iadeOzet != null && iadeOzet.adet() != null ? iadeOzet.adet() : 0L;
+        BigDecimal iadeToplam = iadeOzet != null && iadeOzet.tutar() != null
+                ? iadeOzet.tutar() : BigDecimal.ZERO;
 
         return CariKartDTO.Ozet.builder()
-                .siparisSayisi(siparisler.size())
+                .siparisSayisi(siparisSayisi)
                 .siparisToplam(siparisToplam)
-                .faturaSayisi(gecerliFaturalar.size())
+                .faturaSayisi(faturaSayisi)
                 .faturaToplam(faturaToplam)
                 .kalanTutar(kalanTutar)
-                .iadeSayisi(gecerliIadeler.size())
+                .iadeSayisi(iadeSayisi)
                 .iadeToplam(iadeToplam)
-                .tahsilatToplam(tahsilatToplam)
+                .tahsilatToplam(tahsilatToplam != null ? tahsilatToplam : BigDecimal.ZERO)
                 .build();
     }
 

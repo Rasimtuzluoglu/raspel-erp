@@ -11,6 +11,9 @@ export const cariHesapAPI = {
   ozet() {
     return apiClient.get('/cari-hesaplar/ozet')
   },
+  etiketler() {
+    return apiClient.get('/cari-hesaplar/etiketler', { meta: { sessiz: true } })
+  },
   getById(id) {
     return apiClient.get(`/cari-hesaplar/${id}`)
   },

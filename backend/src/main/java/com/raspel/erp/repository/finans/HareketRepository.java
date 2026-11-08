@@ -58,6 +58,14 @@ public interface HareketRepository extends JpaRepository<Hareket, Long> {
     @EntityGraph(attributePaths = {"cariHesap"})
     List<Hareket> findBySirketIdAndCariHesapIdOrderByHareketTarihiDesc(Long sirketId, Long cariHesapId);
 
+    /** Cari 360: yalnızca tahsilat toplamı. */
+    @Query("SELECT COALESCE(SUM(h.tutar), 0) FROM Hareket h " +
+            "WHERE h.cariHesap.id = :cariId AND h.sirketId = :sirketId " +
+            "AND h.tur = com.raspel.erp.entity.finans.Hareket.HareketTuru.TAHSILAT")
+    BigDecimal cariTahsilatToplam(@Param("cariId") Long cariId, @Param("sirketId") Long sirketId);
+
+    List<Hareket> findTop5BySirketIdAndCariHesapIdOrderByHareketTarihiDescIdDesc(Long sirketId, Long cariHesapId);
+
     @EntityGraph(attributePaths = {"cariHesap"})
     Page<Hareket> findByCariHesapId(Long cariHesapId, Pageable pageable);
 

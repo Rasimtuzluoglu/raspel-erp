@@ -37,6 +37,11 @@ public interface CariHesapRepository extends JpaRepository<CariHesap, Long> {
 
     Page<CariHesap> findBySirketId(Long sirketId, Pageable pageable);
 
+    /** Filtre çubuğundaki etiket autocomplete'i için şirket bazlı etiket havuzu. */
+    @Query("SELECT DISTINCT c.etiketler FROM CariHesap c WHERE c.sirketId = :sirketId " +
+            "AND c.etiketler IS NOT NULL AND c.etiketler <> ''")
+    List<String> etiketleriGetir(@Param("sirketId") Long sirketId);
+
     List<CariHesap> findBySirketIdAndAdContainingIgnoreCase(Long sirketId, String query);
 
     /**

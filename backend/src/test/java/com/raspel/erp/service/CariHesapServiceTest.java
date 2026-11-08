@@ -135,6 +135,42 @@ class CariHesapServiceTest {
     }
 
     @Test
+    void cariHesapGuncelle_bosAlanlariTemizler() {
+        CariHesap existing = createCariHesap(1L);
+        existing.setKrediLimiti(new BigDecimal("5000"));
+        existing.setOdemeVadesi(30);
+        existing.setTemsilciId(9L);
+        existing.setTemsilciAd("Ali");
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(cariHesapRepository.save(any(CariHesap.class))).thenReturn(existing);
+
+        CariHesapDTO dto = CariHesapDTO.builder()
+                .ad("Test Cari")
+                .krediLimiti(null)
+                .odemeVadesi(null)
+                .temsilciId(null)
+                .temsilciAd(null)
+                .build();
+        cariHesapService.cariHesapGuncelle(1L, dto);
+
+        assertNull(existing.getKrediLimiti());
+        assertEquals(0, existing.getOdemeVadesi());
+        assertNull(existing.getTemsilciId());
+        assertNull(existing.getTemsilciAd());
+        assertNotNull(existing.getAd());
+    }
+
+    @Test
+    void etiketler_ayristirirTekillestirirVeSiralar() {
+        when(cariHesapRepository.etiketleriGetir(1L))
+                .thenReturn(List.of("vip,bayi", "bayi, vip", "acil", ""));
+
+        var sonuc = cariHesapService.etiketler(1L);
+
+        assertEquals(List.of("acil", "bayi", "vip"), sonuc);
+    }
+
+    @Test
     void cariHesapGuncelle_throwsWhenNotFound() {
         when(cariHesapRepository.findById(99L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> cariHesapService.cariHesapGuncelle(99L, new CariHesapDTO()));

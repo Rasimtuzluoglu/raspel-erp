@@ -76,14 +76,22 @@ class CariKartServiceTest {
                 .genelToplam(new BigDecimal("1000")).kalanTutar(BigDecimal.ZERO).sirketId(1L).build();
         when(faturaRepository.findByCariHesapIdAndSirketIdOrderByTarihDesc(eq(1L), eq(1L), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(kesildi, iptal)));
+        when(faturaRepository.cariFaturaOzet(1L, 1L))
+                .thenReturn(new com.raspel.erp.dto.finans.CariFaturaOzet(
+                        1L, new BigDecimal("5000"), new BigDecimal("2000")));
 
-        when(siparisRepository.findByCariHesapId(1L)).thenReturn(List.of(
-                Siparis.builder().id(20L).siparisNo("S-20").tarih(LocalDate.now())
+        when(siparisRepository.cariSiparisOzet(1L, 1L))
+                .thenReturn(new com.raspel.erp.dto.finans.CariTutarOzet(1L, new BigDecimal("4000")));
+        when(siparisRepository.findTop5ByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(1L, 1L))
+                .thenReturn(List.of(Siparis.builder().id(20L).siparisNo("S-20").tarih(LocalDate.now())
                         .durum("TEKLIF").genelToplam(new BigDecimal("4000")).sirketId(1L).build()));
 
-        when(iadeRepository.findByFaturaIdInAndSirketId(anyCollection(), eq(1L))).thenReturn(List.of(
-                Iade.builder().id(30L).faturaId(10L).tur("SATIS").tarih(LocalDate.now())
-                        .tutar(new BigDecimal("500")).durum("TAMAMLANDI").sirketId(1L).build()));
+        when(iadeRepository.cariIadeOzet(1L, 1L))
+                .thenReturn(new com.raspel.erp.dto.finans.CariTutarOzet(1L, new BigDecimal("500")));
+        when(iadeRepository.findTop5ByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(1L, 1L))
+                .thenReturn(List.of(Iade.builder().id(30L).faturaId(10L).cariHesapId(1L).tur("SATIS")
+                        .tarih(LocalDate.now()).tutar(new BigDecimal("500")).durum("TAMAMLANDI")
+                        .sirketId(1L).build()));
 
         when(notRepository.findByCariHesapIdOrderByOlusturmaTarihiDesc(1L)).thenReturn(List.of(
                 Not.builder().id(40L).baslik("Not").icerik("Görüşüldü").onemDerecesi("NORMAL")
@@ -97,9 +105,11 @@ class CariKartServiceTest {
                 CariFiyat.builder().id(60L).cariHesapId(1L).stokId(5L).fiyat(new BigDecimal("99"))
                         .sirketId(1L).build()));
 
-        when(hareketRepository.findBySirketIdAndCariHesapIdOrderByHareketTarihiDesc(1L, 1L)).thenReturn(List.of(
-                Hareket.builder().id(70L).tur(Hareket.HareketTuru.TAHSILAT).tutar(new BigDecimal("1000")).build(),
-                Hareket.builder().id(71L).tur(Hareket.HareketTuru.ODEME).tutar(new BigDecimal("200")).build()));
+        when(hareketRepository.cariTahsilatToplam(1L, 1L)).thenReturn(new BigDecimal("1000"));
+        when(hareketRepository.findTop5BySirketIdAndCariHesapIdOrderByHareketTarihiDescIdDesc(1L, 1L))
+                .thenReturn(List.of(
+                        Hareket.builder().id(70L).tur(Hareket.HareketTuru.TAHSILAT).tutar(new BigDecimal("1000")).build(),
+                        Hareket.builder().id(71L).tur(Hareket.HareketTuru.ODEME).tutar(new BigDecimal("200")).build()));
 
         when(stokRepository.findAllById(anyList())).thenReturn(List.of(
                 Stok.builder().id(5L).ad("Ürün 5").stokKodu("K-5").build()));
@@ -163,6 +173,23 @@ class CariKartServiceTest {
         assertEquals(0, kart.getKredi().getRiskOrani().compareTo(BigDecimal.ZERO));
         assertFalse(kart.getKredi().isLimitAsimi());
         assertEquals(new BigDecimal("10000"), kart.getKredi().getKullanilabilirKredi());
+    }
+
+    @Test
+    void kartGetir_tumListeleriYuklemezSonBesVeAgregatKullanir() {
+        verileriHazirla(cari(new BigDecimal("10000"), new BigDecimal("-3000")));
+
+        cariKartService.kartGetir(1L, 1L);
+
+        verify(faturaRepository).cariFaturaOzet(1L, 1L);
+        verify(faturaRepository).findByCariHesapIdAndSirketIdOrderByTarihDesc(
+                eq(1L), eq(1L), argThat(p -> p.getPageSize() == 5));
+        verify(siparisRepository).cariSiparisOzet(1L, 1L);
+        verify(siparisRepository).findTop5ByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(1L, 1L);
+        verify(iadeRepository).cariIadeOzet(1L, 1L);
+        verify(iadeRepository).findTop5ByCariHesapIdAndSirketIdOrderByTarihDescIdDesc(1L, 1L);
+        verify(hareketRepository).cariTahsilatToplam(1L, 1L);
+        verify(hareketRepository).findTop5BySirketIdAndCariHesapIdOrderByHareketTarihiDescIdDesc(1L, 1L);
     }
 
     @Test

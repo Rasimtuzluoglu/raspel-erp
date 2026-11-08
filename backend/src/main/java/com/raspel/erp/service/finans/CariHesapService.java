@@ -33,7 +33,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -144,8 +146,28 @@ public class CariHesapService {
      */
     public Page<CariHesapDTO> tumCariHesaplariGetir(Long sirketId, Pageable pageable) {
         log.debug("Tüm cari hesaplar getiriliyor, sirketId: {}", sirketId);
-        return cariHesapRepository.findBySirketId(sirketId, pageable)
+        return cariHesapRepository.findBySirketId(sirketId, varsayilanSirali(pageable))
                 .map(this::entityDTOyeCevir);
+    }
+
+    /**
+     * Sıralama belirtilmemişse ad alanına göre kararlı bir varsayılan uygular.
+     * Böylece sayfalar arasında kayıt sırası veritabanına bırakılmaz.
+     */
+    private Pageable varsayilanSirali(Pageable pageable) {
+        if (pageable == null) {
+            return PageRequest.of(0, 50, Sort.by(Sort.Direction.ASC, "ad"));
+        }
+        if (pageable.isUnpaged()) {
+            return pageable.getSort().isSorted()
+                    ? pageable
+                    : Pageable.unpaged(Sort.by(Sort.Direction.ASC, "ad"));
+        }
+        if (pageable.getSort().isSorted()) {
+            return pageable;
+        }
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                Sort.by(Sort.Direction.ASC, "ad"));
     }
 
     /**
@@ -182,7 +204,7 @@ public class CariHesapService {
         // Faz 2.4: etiket filtresi (virgülle ayrık etiketler içinde LIKE).
         String etiketArama = com.raspel.erp.util.AramaTemizleyici.like(etiket);
         return cariHesapRepository.filtreli(sirketId, arama, bosIseNull(tur), etiketArama,
-                        bosIseNull(bakiyeYonu), pageable)
+                        bosIseNull(bakiyeYonu), varsayilanSirali(pageable))
                 .map(this::entityDTOyeCevir);
     }
 
@@ -268,28 +290,31 @@ public class CariHesapService {
             vergiNumarasiBenzersizliginiDogrula(cariHesap.getSirketId(), dto.getVergiNumarasi(), id);
         }
 
-        if (dto.getAd() != null) cariHesap.setAd(dto.getAd());
-        if (dto.getVergiNumarasi() != null) cariHesap.setVergiNumarasi(dto.getVergiNumarasi());
-        if (dto.getTelefon() != null) cariHesap.setTelefon(dto.getTelefon());
-        if (dto.getEmail() != null) cariHesap.setEmail(dto.getEmail());
-        if (dto.getAdres() != null) cariHesap.setAdres(dto.getAdres());
-        if (dto.getTur() != null) cariHesap.setTur(dto.getTur());
-        if (dto.getIl() != null) cariHesap.setIl(dto.getIl());
-        if (dto.getIlce() != null) cariHesap.setIlce(dto.getIlce());
-        if (dto.getVergiDairesi() != null) cariHesap.setVergiDairesi(dto.getVergiDairesi());
-        if (dto.getYetkiliKisi() != null) cariHesap.setYetkiliKisi(dto.getYetkiliKisi());
-        if (dto.getYetkiliTelefon() != null) cariHesap.setYetkiliTelefon(dto.getYetkiliTelefon());
-        if (dto.getIban() != null) cariHesap.setIban(dto.getIban());
-        if (dto.getNotlar() != null) cariHesap.setNotlar(dto.getNotlar());
-        if (dto.getEtiketler() != null) cariHesap.setEtiketler(dto.getEtiketler());
-        if (dto.getFotoUrl() != null) cariHesap.setFotoUrl(dto.getFotoUrl());
-        if (dto.getFotoThumbUrl() != null) cariHesap.setFotoThumbUrl(dto.getFotoThumbUrl());
+        if (dto.getAd() != null && !dto.getAd().isBlank()) cariHesap.setAd(dto.getAd());
+        // PUT semantiği: gönderilen alanlar tam olarak uygulanır; null/boş değer
+        // alanı temizler. Böylece kredi limiti, vade ve satış temsilcisi gibi
+        // alanlar arayüzden boşaltılabiliyor.
+        cariHesap.setVergiNumarasi(dto.getVergiNumarasi());
+        cariHesap.setTelefon(dto.getTelefon());
+        cariHesap.setEmail(dto.getEmail());
+        cariHesap.setAdres(dto.getAdres());
+        cariHesap.setTur(dto.getTur());
+        cariHesap.setIl(dto.getIl());
+        cariHesap.setIlce(dto.getIlce());
+        cariHesap.setVergiDairesi(dto.getVergiDairesi());
+        cariHesap.setYetkiliKisi(dto.getYetkiliKisi());
+        cariHesap.setYetkiliTelefon(dto.getYetkiliTelefon());
+        cariHesap.setIban(dto.getIban());
+        cariHesap.setNotlar(dto.getNotlar());
+        cariHesap.setEtiketler(dto.getEtiketler());
+        cariHesap.setFotoUrl(dto.getFotoUrl());
+        cariHesap.setFotoThumbUrl(dto.getFotoThumbUrl());
         if (dto.getAktif() != null) cariHesap.setAktif(dto.getAktif());
-        if (dto.getParaBirimi() != null) cariHesap.setParaBirimi(dto.getParaBirimi());
-        if (dto.getKrediLimiti() != null) cariHesap.setKrediLimiti(dto.getKrediLimiti());
-        if (dto.getOdemeVadesi() != null) cariHesap.setOdemeVadesi(dto.getOdemeVadesi());
-        if (dto.getTemsilciId() != null) cariHesap.setTemsilciId(dto.getTemsilciId());
-        if (dto.getTemsilciAd() != null) cariHesap.setTemsilciAd(dto.getTemsilciAd());
+        cariHesap.setParaBirimi(dto.getParaBirimi() != null ? dto.getParaBirimi() : "TRY");
+        cariHesap.setKrediLimiti(dto.getKrediLimiti());
+        cariHesap.setOdemeVadesi(dto.getOdemeVadesi() != null ? dto.getOdemeVadesi() : 0);
+        cariHesap.setTemsilciId(dto.getTemsilciId());
+        cariHesap.setTemsilciAd(dto.getTemsilciAd());
         
         CariHesap guncellenenCariHesap = cariHesapRepository.save(cariHesap);
         log.info("Cari hesap başarıyla güncellendi - ID: {}", id);
@@ -463,6 +488,20 @@ public class CariHesapService {
 
     private BigDecimal bosMuMu(BigDecimal v) {
         return v != null ? v : BigDecimal.ZERO;
+    }
+
+    /** Filtre çubuğu için şirket bazlı benzersiz etiket listesi (en fazla 200). */
+    @Transactional(readOnly = true)
+    public List<String> etiketler(Long sirketId) {
+        if (sirketId == null) return List.of();
+        return cariHesapRepository.etiketleriGetir(sirketId).stream()
+                .flatMap(s -> java.util.Arrays.stream(s.split(",")))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .distinct()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .limit(200)
+                .collect(Collectors.toList());
     }
 
     /**

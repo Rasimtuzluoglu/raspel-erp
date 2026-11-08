@@ -173,8 +173,10 @@ apiClient.interceptors.response.use(
         networkStatus.showBanner = true
         networkStatus.sunucuyaUlasilamiyor = true
       }
-      hataYayinla(0, error.config?.url, null,
-        zamanAsimi ? SUNUCUSUZ_HATA_ANAHTARI.zamanAsimi : SUNUCUSUZ_HATA_ANAHTARI.baglantiHatasi)
+      if (!error.config?.meta?.sessiz) {
+        hataYayinla(0, error.config?.url, null,
+          zamanAsimi ? SUNUCUSUZ_HATA_ANAHTARI.zamanAsimi : SUNUCUSUZ_HATA_ANAHTARI.baglantiHatasi)
+      }
       return Promise.reject(error)
     }
     let { status, data } = error.response
@@ -194,7 +196,7 @@ apiClient.interceptors.response.use(
     // mesaj. Eski davranista yalnizca sunucu mesaji varsa bildirim cikiyordu;
     // Traefik/nginx'in 502/503/504 HTML govdesi veya bos govdeli 500'de ekranda
     // hicbir sey gorunmuyordu.
-    if (status >= 400 && status !== 401) {
+    if (status >= 400 && status !== 401 && !error.config?.meta?.sessiz) {
       const errorMsg = data?.message || data?.error
       if (errorMsg) {
         hataYayinla(status, error.config?.url, errorMsg, null)

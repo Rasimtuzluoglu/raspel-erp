@@ -49,6 +49,20 @@
         </div>
         <div class="kart-islemler">
           <Button
+            :label="t('cariHesaplar.tahsilat')"
+            icon="pi pi-money-bill"
+            class="p-button-sm"
+            data-test="cari-360-tahsilat"
+            @click="emit('tahsilat', props.cari)"
+          />
+          <Button
+            :label="t('cariHesaplar.yeniFatura')"
+            icon="pi pi-file-plus"
+            class="p-button-sm p-button-outlined"
+            data-test="cari-360-fatura"
+            @click="emit('fatura', props.cari)"
+          />
+          <Button
             :label="t('cariHesaplar.ekstreYazdir')"
             icon="pi pi-print"
             class="p-button-sm p-button-outlined"
@@ -70,7 +84,10 @@
         </div>
         <div class="kpi-hucre">
           <span>{{ t('cariKart.bakiye') }}</span>
-          <strong class="gizli-veri">{{ formatCurrency(kart.kredi?.bakiye) }}</strong>
+          <strong
+            class="gizli-veri"
+            :class="{ 'bakiye-alacak': Number(kart.kredi?.bakiye) < 0, 'bakiye-odenecek': Number(kart.kredi?.bakiye) > 0 }"
+          >{{ formatCurrency(kart.kredi?.bakiye) }}</strong>
         </div>
         <div class="kpi-hucre">
           <span>{{ t('cariKart.kullanilabilirKredi') }}</span>
@@ -83,6 +100,10 @@
           <span>{{ t('cariKart.riskOrani') }}</span>
           <strong class="gizli-veri">{{ kart.kredi?.riskOrani != null ? kart.kredi.riskOrani + '%' : '-' }}</strong>
         </div>
+        <div class="kpi-hucre">
+          <span>{{ t('cariKart.sonFatura') }}</span>
+          <strong>{{ sonFaturaTarihi }}</strong>
+        </div>
         <Tag
           v-if="kart.kredi?.limitAsimi"
           severity="danger"
@@ -91,24 +112,99 @@
         />
       </div>
 
-      <TabView>
+      <TabView scrollable>
         <TabPanel :header="t('cariKart.ozet')">
-          <AppDataTable
-            :value="ozetSatirlari"
-            :paginator="false"
-          >
-            <Column
-              field="etiket"
-              :header="t('cariKart.gosterge')"
-            />
-            <Column
-              field="deger"
-              :header="t('cariKart.deger')"
-            />
-          </AppDataTable>
+          <div class="kart-ozet">
+            <section class="kart-ozet-kutu">
+              <h4>{{ t('cariKart.finansalOzet') }}</h4>
+              <div class="kart-ozet-statlar">
+                <div
+                  v-for="s in ozetKutulari"
+                  :key="s.etiket"
+                  class="kart-stat"
+                >
+                  <span>{{ s.etiket }}</span>
+                  <strong :class="{ negatif: s.negatif }">{{ s.deger }}</strong>
+                </div>
+              </div>
+            </section>
+
+            <section class="kart-ozet-kutu">
+              <h4>{{ t('cariKart.sonHareketler') }}</h4>
+              <ul
+                v-if="(kart.sonHareketler || []).length > 0"
+                class="kart-mini-liste"
+              >
+                <li
+                  v-for="h in kart.sonHareketler"
+                  :key="h.id"
+                >
+                  <span class="kart-mini-tarih">{{ formatDate(h.tarih) }}</span>
+                  <span class="kart-mini-metin">{{ hareketTuruEtiketi(h.tur) }} · {{ h.aciklama || '-' }}</span>
+                  <strong :class="h.tur === 'TAHSILAT' ? 'pozitif' : 'negatif'">
+                    {{ h.tur === 'TAHSILAT' ? '+' : '-' }}{{ formatCurrency(h.tutar) }}
+                  </strong>
+                </li>
+              </ul>
+              <p
+                v-else
+                class="kart-bos"
+              >
+                {{ t('cariKart.kayitYok') }}
+              </p>
+            </section>
+
+            <section class="kart-ozet-kutu">
+              <h4>{{ t('cariKart.sonFaturalar') }}</h4>
+              <ul
+                v-if="(kart.sonFaturalar || []).length > 0"
+                class="kart-mini-liste"
+              >
+                <li
+                  v-for="f in kart.sonFaturalar"
+                  :key="f.id"
+                >
+                  <span class="kart-mini-tarih">{{ formatDate(f.tarih) }}</span>
+                  <span class="kart-mini-metin">{{ f.faturaNumarasi }} · {{ f.durum }}</span>
+                  <strong>{{ formatCurrency(f.genelToplam) }}</strong>
+                </li>
+              </ul>
+              <p
+                v-else
+                class="kart-bos"
+              >
+                {{ t('cariKart.kayitYok') }}
+              </p>
+            </section>
+
+            <section class="kart-ozet-kutu">
+              <h4>{{ t('cariKart.notlar') }}</h4>
+              <ul
+                v-if="(kart.notlar || []).length > 0"
+                class="kart-mini-liste"
+              >
+                <li
+                  v-for="n in kart.notlar.slice(0, 4)"
+                  :key="n.id"
+                >
+                  <span class="kart-mini-tarih">{{ formatDate(n.olusturmaTarihi) }}</span>
+                  <span class="kart-mini-metin">{{ n.baslik || n.icerik }}</span>
+                </li>
+              </ul>
+              <p
+                v-else
+                class="kart-bos"
+              >
+                {{ t('cariKart.kayitYok') }}
+              </p>
+            </section>
+          </div>
         </TabPanel>
 
-        <TabPanel :header="t('cariKart.hareketler')">
+        <TabPanel :header="t('cariKart.sonHareketler')">
+          <p class="kart-liste-notu">
+            {{ t('cariKart.sonKayitNotu') }}
+          </p>
           <AppDataTable
             :value="kart.sonHareketler"
             :paginator="false"
@@ -149,7 +245,10 @@
           </AppDataTable>
         </TabPanel>
 
-        <TabPanel :header="t('cariKart.faturalar')">
+        <TabPanel :header="t('cariKart.sonFaturalar')">
+          <p class="kart-liste-notu">
+            {{ t('cariKart.sonKayitNotu') }}
+          </p>
           <AppDataTable
             :value="kart.sonFaturalar"
             :paginator="false"
@@ -190,7 +289,10 @@
           </AppDataTable>
         </TabPanel>
 
-        <TabPanel :header="t('cariKart.siparisler')">
+        <TabPanel :header="t('cariKart.sonSiparisler')">
+          <p class="kart-liste-notu">
+            {{ t('cariKart.sonKayitNotu') }}
+          </p>
           <AppDataTable
             :value="kart.sonSiparisler"
             :paginator="false"
@@ -223,7 +325,10 @@
           </AppDataTable>
         </TabPanel>
 
-        <TabPanel :header="t('cariKart.iadeler')">
+        <TabPanel :header="t('cariKart.sonIadeler')">
+          <p class="kart-liste-notu">
+            {{ t('cariKart.sonKayitNotu') }}
+          </p>
           <AppDataTable
             :value="kart.sonIadeler"
             :paginator="false"
@@ -407,7 +512,7 @@ const props = defineProps({
   /** Liste satiri (avatar/tur icin); opsiyonel. */
   cari: { type: Object, default: null }
 })
-const emit = defineEmits(['update:visible', 'ekstre', 'adresler'])
+const emit = defineEmits(['update:visible', 'ekstre', 'adresler', 'tahsilat', 'fatura'])
 
 const { t } = useI18n()
 const kart = ref(null)
@@ -423,17 +528,22 @@ const turSeverity = (tur) =>
 const hareketTuruEtiketi = (tur) =>
   ({ TAHSILAT: t('hareketler.tahsilat'), ODEME: t('hareketler.odeme'), BORC: t('hareketler.borclandirma') }[tur] || tur)
 
-const ozetSatirlari = computed(() => {
+const sonFaturaTarihi = computed(() => {
+  const tarih = kart.value?.sonFaturalar?.[0]?.tarih
+  return tarih ? formatDate(tarih) : '—'
+})
+
+const ozetKutulari = computed(() => {
   const o = kart.value?.ozet
   if (!o) return []
   return [
-    { etiket: t('cariKart.faturaSayisi'), deger: o.faturaSayisi },
+    { etiket: t('cariKart.faturaSayisi'), deger: o.faturaSayisi ?? 0 },
     { etiket: t('cariKart.faturaToplam'), deger: formatCurrency(o.faturaToplam) },
-    { etiket: t('cariKart.kalan'), deger: formatCurrency(o.kalanTutar) },
-    { etiket: t('cariKart.siparisSayisi'), deger: o.siparisSayisi },
+    { etiket: t('cariKart.kalan'), deger: formatCurrency(o.kalanTutar), negatif: Number(o.kalanTutar) > 0 },
+    { etiket: t('cariKart.siparisSayisi'), deger: o.siparisSayisi ?? 0 },
     { etiket: t('cariKart.siparisToplam'), deger: formatCurrency(o.siparisToplam) },
-    { etiket: t('cariKart.iadeSayisi'), deger: o.iadeSayisi },
-    { etiket: t('cariKart.iadeToplam'), deger: formatCurrency(o.iadeToplam) },
+    { etiket: t('cariKart.iadeSayisi'), deger: o.iadeSayisi ?? 0 },
+    { etiket: t('cariKart.iadeToplam'), deger: formatCurrency(o.iadeToplam), negatif: Number(o.iadeToplam) > 0 },
     { etiket: t('cariKart.tahsilatToplam'), deger: formatCurrency(o.tahsilatToplam) }
   ]
 })
@@ -576,9 +686,112 @@ watch(
 .limit-asimi {
   color: #ef4444;
 }
+.kpi-hucre strong.bakiye-alacak {
+  color: var(--success);
+}
+.kpi-hucre strong.bakiye-odenecek {
+  color: var(--danger);
+}
+.kart-ozet {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.kart-ozet-kutu {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-primary);
+}
+.kart-ozet-kutu h4 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.kart-ozet-statlar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.kart-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-card);
+}
+.kart-stat span {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+.kart-stat strong {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.kart-stat strong.negatif {
+  color: var(--danger);
+}
+.kart-mini-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.kart-mini-liste li {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+}
+.kart-mini-tarih {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.kart-mini-metin {
+  overflow: hidden;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kart-mini-liste strong {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.kart-mini-liste strong.pozitif {
+  color: var(--success);
+}
+.kart-mini-liste strong.negatif {
+  color: var(--danger);
+}
+.kart-bos {
+  margin: 0;
+  padding: 8px 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.kart-liste-notu {
+  margin: 0 0 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
 @media (max-width: 700px) {
   .kart-kimlik-kart {
     flex-direction: column;
+  }
+  .kart-ozet {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 </style>
