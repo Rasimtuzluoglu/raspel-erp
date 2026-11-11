@@ -69,6 +69,26 @@ describe('FaturaFormEkrani — Faz B', () => {
     expect(ekran).toContain('data-test="fatura-kilitli"')
   })
 
+  it('depo, manuel kur ve teslimat alanlari vardir', () => {
+    expect(ekran).toContain('data-test="fatura-depo"')
+    expect(ekran).toContain('data-test="fatura-kur"')
+    expect(ekran).toContain('data-test="fatura-sofor"')
+    expect(ekran).toContain('data-test="fatura-teslimat-adresi"')
+    expect(ekran).toContain('depoKilitli')
+    expect(ekran).toContain('kurKilitli')
+    expect(ekran).toContain('teslimatVar')
+    expect(form).toContain('depoAPI.getAll')
+    expect(form).toContain('personelAPI.getAll')
+    expect(form).toContain('teslimatAPI.suruculer')
+    expect(form).toContain('teslimatKaydet')
+  })
+
+  it('manuel kur yalnizca yeni kayitta ve TRY disinda gonderilir', () => {
+    expect(form).toContain("form.value.paraBirimi !== 'TRY'")
+    expect(form).toContain('cekirdek.kur = kur')
+    expect(form).toContain('if (!duzenlemeMi.value) {')
+  })
+
   it('rotalar FATURA_WRITE ile tanimli ve detay rotasindan once', () => {
     const yeniIdx = router.indexOf("name: 'FaturaYeni'")
     const duzenleIdx = router.indexOf("name: 'FaturaDuzenle'")

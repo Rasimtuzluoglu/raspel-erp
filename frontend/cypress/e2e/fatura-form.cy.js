@@ -210,4 +210,72 @@ describe('Fatura form ekranı', () => {
     cy.wait(1200)
     cy.then(() => expect(sayac).to.eq(1))
   })
+
+  it('depo, manuel kur ve teslimat bilgilerini kaydeder', () => {
+    cy.intercept('GET', '/api/depolar*', {
+      statusCode: 200,
+      body: { content: [{ id: 1, ad: 'Merkez', aktif: true }, { id: 2, ad: 'Yedek', aktif: true }], totalElements: 2 }
+    }).as('depolar')
+    cy.intercept('GET', '/api/drivers', {
+      statusCode: 200,
+      body: [{ id: 5, ad: 'Ali Şoför', rol: 'DRIVER' }]
+    }).as('suruculer')
+
+    let faturaGovde = null
+    let teslimatGovde = null
+    cy.intercept('POST', '/api/faturalar', (req) => {
+      faturaGovde = req.body
+      req.reply({ statusCode: 201, body: { id: 21, ...req.body } })
+    }).as('kaydet')
+    cy.intercept('POST', '/api/deliveries', (req) => {
+      teslimatGovde = req.body
+      req.reply({ statusCode: 201, body: { id: 31, ...req.body } })
+    }).as('teslimat')
+
+    cy.visit('/faturalar/yeni')
+    cy.wait('@depolar')
+    cy.get('[data-test="fatura-para-birimi"]').click()
+    cy.get('.p-select-option').contains('USD').click()
+    cy.get('[data-test="fatura-kur"]').find('input').clear().type('40')
+    cy.get('[data-test="fatura-depo"]').click()
+    cy.get('.p-select-option').contains('Merkez').click()
+
+    cariVeKalemDoldur()
+
+    cy.get('[data-test="fatura-sofor"]').click()
+    cy.get('.p-select-option').contains('Ali Şoför').click()
+    cy.get('[data-test="fatura-teslimat-adresi"]').type('Test Mah. 1')
+    cy.get('[data-test="fatura-kaydet"]').click()
+    cy.wait('@kaydet')
+    cy.wait('@teslimat')
+
+    cy.then(() => {
+      expect(faturaGovde.paraBirimi).to.eq('USD')
+      expect(Number(faturaGovde.kur)).to.eq(40)
+      expect(faturaGovde.depoId).to.eq(1)
+      expect(teslimatGovde.faturaId).to.eq(21)
+      expect(teslimatGovde.driverId).to.eq(5)
+      expect(teslimatGovde.teslimatAdresi).to.contain('Test Mah')
+    })
+  })
+
+  it('duzenlemede depo kilitlidir ve mevcut teslimat gosterilir', () => {
+    cy.intercept('GET', '/api/faturalar/2', {
+      statusCode: 200,
+      body: {
+        ...faturaMock,
+        depoId: 1,
+        depoAd: 'Merkez',
+        teslimatVar: true,
+        teslimatDurum: 'YOLDA',
+        driverAd: 'Ali Şoför'
+      }
+    }).as('faturaDetayKilitli')
+
+    cy.visit('/faturalar/2/duzenle')
+    cy.wait('@faturaDetayKilitli')
+    cy.get('[data-test="fatura-depo"]').should('have.class', 'p-disabled')
+    cy.get('[data-test="fatura-mevcut-teslimat"]').should('be.visible').and('contain', 'Ali Şoför')
+    cy.get('[data-test="fatura-sofor"]').should('not.exist')
+  })
 })

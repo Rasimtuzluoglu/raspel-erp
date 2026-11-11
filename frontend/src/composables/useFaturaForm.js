@@ -7,7 +7,8 @@ import { useCariOnerileri, cariHesapCoz } from './useCariOnerileri.js'
 import { useTaslakKayit } from './useTaslakKayit.js'
 import { useFaturaStore } from '../stores/faturaStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
-import { faturaAPI } from '../api/index.js'
+import { faturaAPI, depoAPI, personelAPI, teslimatAPI } from '../api/index.js'
+import { unwrapList } from '../api/utils/unwrap.js'
 import { satisPayloadUret } from '../utils/satisPayload.js'
 import { kalemNetTutar, kalemKdv, kdvOrani } from '../utils/faturaHesapla.js'
 import { getLocalDateString } from '../utils/format.js'
@@ -24,6 +25,7 @@ export const bosFaturaFormu = () => ({
   teslimNotu: '',
   depoId: null,
   paraBirimi: 'TRY',
+  kur: null,
   aciklama: '',
   driverId: null,
   beklenenTeslimTarihi: null,
@@ -41,6 +43,7 @@ const faturadanForm = (f) => ({
   teslimNotu: f.teslimNotu || '',
   depoId: f.depoId || null,
   paraBirimi: f.paraBirimi || 'TRY',
+  kur: f.kur ?? null,
   aciklama: f.aciklama || '',
   driverId: null,
   beklenenTeslimTarihi: null,
@@ -84,6 +87,11 @@ export function useFaturaForm() {
   const faturaStore = useFaturaStore()
   const cariHesapStore = useCariHesapStore()
 
+  // Faz C: depo / personel / sofor listeleri (tek ekranda secim icin).
+  const depolar = ref([])
+  const personelListesi = ref([])
+  const suruculer = ref([])
+
   const faturaId = ref(route.params.id ? Number(route.params.id) : null)
   const kopyaId = ref(route.query.kopya ? Number(route.query.kopya) : null)
 
@@ -97,6 +105,8 @@ export function useFaturaForm() {
   const kaydedildi = ref(false)
   const kirli = ref(false)
   const hazir = ref(false)
+  // Kaydetme sonrasi aksiyonlar (PDF/e-fatura) icin son kaydedilen kayit kimligi.
+  const sonKaydedilenId = ref(null)
 
   const { ara: cariAra, oneriler: cariOnerileri, yukleniyor: cariOnerileriYukleniyor, hemenAra: cariHemenAra } =
     useCariOnerileri()
@@ -146,8 +156,47 @@ export function useFaturaForm() {
     return kopyaId.value ? t('faturalar.faturaCogalt') : t('faturalar.yeniFatura')
   })
 
+  const depoAdi = computed(() => {
+    if (mevcutFatura.value?.depoAd) return mevcutFatura.value.depoAd
+    const depo = depolar.value.find((d) => d.id === form.value.depoId)
+    return depo?.ad || ''
+  })
+
+  const personelSecenekleri = computed(() =>
+    personelListesi.value
+      .filter((p) => p.aktif !== false)
+      .map((p) => `${p.ad || ''} ${p.soyad || ''}`.trim())
+      .filter(Boolean)
+  )
+
+  const teslimatVar = computed(() => !!mevcutFatura.value?.teslimatVar)
+  // Revizyonda depo/kur degisimi backend'de guvenli islenmiyor; duzenlemede kilitli.
+  const depoKilitli = computed(() => duzenlemeMi.value)
+  const kurKilitli = computed(() => duzenlemeMi.value || form.value.paraBirimi === 'TRY')
+
+  const listeleriYukle = async () => {
+    const [depoSonuc, personelSonuc, soforSonuc] = await Promise.allSettled([
+      depoAPI.getAll({ size: 500 }),
+      personelAPI.getAll({ size: 500 }),
+      teslimatAPI.suruculer()
+    ])
+    if (depoSonuc.status === 'fulfilled') {
+      depolar.value = unwrapList(depoSonuc.value).filter((d) => d?.aktif !== false)
+    }
+    if (personelSonuc.status === 'fulfilled') {
+      personelListesi.value = unwrapList(personelSonuc.value)
+    }
+    if (soforSonuc.status === 'fulfilled') {
+      suruculer.value = soforSonuc.value?.data || []
+    }
+  }
+
   const cariSecildi = (event) => {
     form.value.cariHesapId = event.value?.id || null
+    const adres = event.value?.adres || ''
+    if (adres && !String(form.value.teslimatAdresi || '').trim()) {
+      form.value.teslimatAdresi = adres
+    }
   }
 
   const kalemEkle = (kalem) => {
@@ -212,6 +261,7 @@ export function useFaturaForm() {
 
   const hazirla = async () => {
     cariHemenAra('')
+    await listeleriYukle()
     if (route.query.cariId) {
       const id = Number(route.query.cariId)
       await cariyiCoz(id)
@@ -264,6 +314,12 @@ export function useFaturaForm() {
     if (!duzenlemeMi.value) {
       cekirdek.odenenTutar = 0
       cekirdek.odemeDurumu = 'ODENMEDI'
+      // Manuel kur yalnizca yeni kayitta ve TRY disi para biriminde gonderilir.
+      // Bos/0 ise backend TCMB satis kurunu kullanir.
+      const kur = Number(form.value.kur)
+      if (form.value.paraBirimi && form.value.paraBirimi !== 'TRY' && Number.isFinite(kur) && kur > 0) {
+        cekirdek.kur = kur
+      }
     }
     const payload = satisPayloadUret({
       ...cekirdek,
@@ -278,6 +334,30 @@ export function useFaturaForm() {
     })
     if (!duzenlemeMi.value && durum) payload.durum = durum
     return payload
+  }
+
+  const teslimatKaydet = async (id) => {
+    const adres = String(form.value.teslimatAdresi || '').trim()
+    if (!id || !form.value.driverId || !adres) return false
+    try {
+      await teslimatAPI.olustur({
+        faturaId: id,
+        driverId: form.value.driverId,
+        teslimatAdresi: adres,
+        beklenenTeslimTarihi: form.value.beklenenTeslimTarihi
+          ? getLocalDateString(form.value.beklenenTeslimTarihi)
+          : null,
+        notlar: form.value.teslimatNotu || null
+      })
+      return true
+    } catch (err) {
+      // Fatura kaydi geri alinmaz; kullaniciya ayri bildirim verilir.
+      toast.hata(
+        t('faturalar.teslimatOlusturulamadi') +
+          (err?.response?.data?.message || t('faturalar.bilinmeyenHata'))
+      )
+      return false
+    }
   }
 
   const kaydet = async ({ durum = 'TASLAK', krediOnayli = false } = {}) => {
@@ -302,7 +382,9 @@ export function useFaturaForm() {
         }
         toast.basarili(t('faturalar.faturaGuncellendi'))
       } else {
-        await faturaStore.addFatura(payloadUret({ durum, krediOnayli }))
+        const yeni = await faturaStore.addFatura(payloadUret({ durum, krediOnayli }))
+        sonKaydedilenId.value = yeni?.id ?? null
+        await teslimatKaydet(yeni?.id)
         toast.basarili(t('faturalar.faturaOlusturuldu'))
       }
       taslakTemizle()
@@ -368,10 +450,18 @@ export function useFaturaForm() {
     hata,
     kirli,
     kaydedildi,
+    sonKaydedilenId,
     duzenlemeMi,
     duzenlenebilir,
     kilitNedeni,
     sayfaBasligi,
+    depolar,
+    depoAdi,
+    depoKilitli,
+    kurKilitli,
+    personelSecenekleri,
+    suruculer,
+    teslimatVar,
     araToplam,
     kdvToplam,
     genelToplam,

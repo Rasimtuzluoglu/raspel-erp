@@ -125,14 +125,51 @@
             placeholder="TRY (₺)"
             data-test="fatura-para-birimi"
           />
-          <div
-            v-if="form.paraBirimi && form.paraBirimi !== 'TRY'"
-            class="kur-bilgi-box"
-          >
+        </div>
+
+        <div
+          v-if="form.paraBirimi && form.paraBirimi !== 'TRY'"
+          class="form-alan"
+        >
+          <label class="form-etiket">{{ t('faturalar.kurManuel') }}</label>
+          <InputNumber
+            v-model="form.kur"
+            :min="0"
+            :min-fraction-digits="2"
+            :max-fraction-digits="6"
+            :disabled="kurKilitli || !duzenlenebilir"
+            class="w-full"
+            data-test="fatura-kur"
+          />
+          <small class="form-ipucu">
             1 {{ form.paraBirimi }} =
             <span v-if="kurDegeri != null">{{ formatPara(kurDegeri, 'TRY') }}</span>
             <span v-else>{{ t('faturalar.kurYuklenemedi') }}</span>
-          </div>
+            <template v-if="kurKilitli"> · {{ t('faturalar.kurDegistirilemez') }}</template>
+          </small>
+        </div>
+
+        <div class="form-alan">
+          <label class="form-etiket">{{ t('faturalar.depo') }}</label>
+          <Dropdown
+            v-model="form.depoId"
+            :options="depolar"
+            option-label="ad"
+            option-value="id"
+            :placeholder="t('faturalar.depoSecin')"
+            :disabled="depoKilitli || !duzenlenebilir"
+            show-clear
+            class="w-full"
+            data-test="fatura-depo"
+          />
+          <small
+            v-if="depoAdi"
+            class="form-ipucu"
+          >{{ depoAdi }}</small>
+          <small
+            v-else
+            class="form-ipucu"
+          >{{ t('faturalar.varsayilanDepo') }}</small>
         </div>
 
         <div class="form-alan">
@@ -146,6 +183,119 @@
             data-test="fatura-aciklama"
           />
         </div>
+
+        <div class="form-ayrac" />
+        <h3 class="form-alt-baslik">
+          <i class="pi pi-truck" />
+          {{ t('faturalar.teslimatBilgileri') }}
+        </h3>
+
+        <div class="form-alan">
+          <label class="form-etiket">{{ t('faturalar.teslimEdenPersonel') }}</label>
+          <Dropdown
+            v-model="form.teslimEden"
+            :options="personelSecenekleri"
+            :placeholder="t('faturalar.teslimEdenPlaceholder')"
+            :disabled="!duzenlenebilir"
+            editable
+            show-clear
+            class="w-full"
+            data-test="fatura-teslim-eden"
+          />
+        </div>
+
+        <div class="form-alan">
+          <label class="form-etiket">{{ t('faturalar.teslimDurumu') }}</label>
+          <Dropdown
+            v-model="form.teslimDurumu"
+            :options="teslimDurumSecenekleri"
+            option-label="label"
+            option-value="value"
+            :disabled="!duzenlenebilir"
+            class="w-full"
+          />
+        </div>
+
+        <div class="form-alan">
+          <label class="form-etiket">{{ t('faturalar.teslimNotu') }}</label>
+          <Textarea
+            v-model="form.teslimNotu"
+            :disabled="!duzenlenebilir"
+            rows="2"
+            auto-resize
+            class="w-full"
+          />
+        </div>
+
+        <template v-if="form.tur === 'SATIS'">
+          <div
+            v-if="teslimatVar"
+            class="teslimat-mevcut"
+            data-test="fatura-mevcut-teslimat"
+          >
+            <Tag
+              :value="t('faturalar.mevcutTeslimat')"
+              severity="info"
+            />
+            <span v-if="mevcutFatura?.driverAd">{{ mevcutFatura.driverAd }}</span>
+            <Button
+              :label="t('faturalar.teslimatAc')"
+              icon="pi pi-external-link"
+              class="p-button-text p-button-sm"
+              @click="router.push({ name: 'Teslimatlar' })"
+            />
+          </div>
+          <template v-else>
+            <div class="form-alan">
+              <label class="form-etiket">{{ t('faturalar.sofor') }}</label>
+              <Dropdown
+                v-model="form.driverId"
+                :options="suruculer"
+                option-label="ad"
+                option-value="id"
+                :placeholder="t('faturalar.soforSecin')"
+                :disabled="!duzenlenebilir"
+                show-clear
+                class="w-full"
+                data-test="fatura-sofor"
+              />
+            </div>
+
+            <div class="form-alan">
+              <label class="form-etiket">{{ t('faturalar.teslimatAdresi') }}</label>
+              <Textarea
+                v-model="form.teslimatAdresi"
+                :disabled="!duzenlenebilir"
+                rows="2"
+                auto-resize
+                class="w-full"
+                data-test="fatura-teslimat-adresi"
+              />
+            </div>
+
+            <div class="form-alan">
+              <label class="form-etiket">{{ t('faturalar.beklenenTeslimTarihi') }}</label>
+              <DatePicker
+                v-model="form.beklenenTeslimTarihi"
+                :disabled="!duzenlenebilir"
+                date-format="dd.mm.yy"
+                show-icon
+                class="w-full"
+              />
+            </div>
+
+            <div class="form-alan">
+              <label class="form-etiket">{{ t('faturalar.teslimatNotu') }}</label>
+              <Textarea
+                v-model="form.teslimatNotu"
+                :disabled="!duzenlenebilir"
+                rows="2"
+                auto-resize
+                class="w-full"
+              />
+            </div>
+          </template>
+        </template>
 
         <Message
           v-if="!duzenlenebilir"
@@ -293,6 +443,13 @@ const {
   duzenlenebilir,
   kilitNedeni,
   sayfaBasligi,
+  depolar,
+  depoAdi,
+  depoKilitli,
+  kurKilitli,
+  personelSecenekleri,
+  suruculer,
+  teslimatVar,
   araToplam,
   kdvToplam,
   genelToplam,
@@ -312,6 +469,12 @@ const {
 const turSecenekleri = computed(() => [
   { label: t('faturalar.satis'), value: 'SATIS' },
   { label: t('faturalar.alis'), value: 'ALIS' }
+])
+
+const teslimDurumSecenekleri = computed(() => [
+  { label: t('faturalar.durumBekliyor'), value: 'BEKLIYOR' },
+  { label: t('faturalar.durumYolda'), value: 'YOLDA' },
+  { label: t('faturalar.durumTeslimEdildi'), value: 'TESLIM_EDILDI' }
 ])
 
 const kurDegeri = computed(() => {
@@ -446,14 +609,45 @@ onMounted(hazirla)
   padding: 0;
 }
 
-.kur-bilgi-box {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-secondary);
+.form-ipucu {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.form-ayrac {
+  margin: 14px 0 10px;
+  border-top: 1px solid var(--border);
+}
+
+.form-alt-baslik {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.form-alt-baslik i {
+  color: var(--accent);
+}
+
+.teslimat-mevcut {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 10px;
   background: var(--bg-muted);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
 }
 
 .ozet-satir {
