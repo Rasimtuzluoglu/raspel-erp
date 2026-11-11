@@ -29,7 +29,7 @@
           :label="t('satis.duzenle')"
           icon="pi pi-pencil"
           class="p-button-outlined no-print"
-          @click="$router.push({ name: 'Satislar', query: { duzenle: fatura.id } })"
+          @click="$router.push({ name: 'FaturaDuzenle', params: { id: fatura.id } })"
         />
         <Button
           :label="t('faturaDetay.epostaGonder')"

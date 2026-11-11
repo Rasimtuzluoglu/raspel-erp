@@ -75,7 +75,9 @@ export async function cariHesapCoz(id, onbellek = []) {
   if (onbellekteki) return onbellekteki
   try {
     const r = await cariHesapAPI.getById(id)
-    return r?.data ?? null
+    // Bazi uclar bos dizi/dolayli govde donebilir; yalnizca gercek cari nesnesi kabul edilir.
+    const veri = r?.data
+    return veri && !Array.isArray(veri) && veri.id != null ? veri : null
   } catch {
     return null
   }

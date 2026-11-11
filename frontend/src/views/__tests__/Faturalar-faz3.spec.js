@@ -3,24 +3,36 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 /**
- * FAZ 3 — Fatura oluştur/düzenle dialogu: bölüm başlıkları + kart düzeni.
+ * FAZ 3 — Fatura formu tek ekrana tasindi.
+ * Liste ekrani yalniz liste; form kendi rotasinda 3 panelli.
  */
 
-const src = readFileSync(join(process.cwd(), 'src/views/Faturalar.vue'), 'utf8')
+const liste = readFileSync(join(process.cwd(), 'src/views/Faturalar.vue'), 'utf8')
+const ekran = readFileSync(join(process.cwd(), 'src/views/FaturaFormEkrani.vue'), 'utf8')
 
-describe('Fatura olustur/duzenle dialogu — Faz3', () => {
-  it('bolum basliklari kullanir (Fatura Bilgileri / Urun Ekle / Kalemler)', () => {
-    expect(src).toContain('fatura-form-baslik')
-    expect(src).toContain('bolumFaturaBilgileri')
-    expect(src).toContain('bolumUrunEkle')
-    expect(src).toContain("t('faturalar.faturaKalemleri')")
+describe('Fatura formu — Faz3 (tek ekran)', () => {
+  it('liste ekraninda form dialogu kalmadi', () => {
+    expect(liste).not.toContain('<AppDialog')
+    expect(liste).not.toContain('form-grid')
+    expect(liste).not.toContain('fatura-form-baslik')
+    expect(liste).toContain("name: 'FaturaYeni'")
+    expect(liste).toContain("name: 'FaturaDuzenle'")
   })
 
-  it('form-grid kart gorunumu (padding + radius)', () => {
-    expect(src).toMatch(/\.form-grid\s*\{[^}]*border-radius/)
+  it('form ekraninda bolum basliklari ve kalem bileseni vardir', () => {
+    expect(ekran).toContain('bolumFaturaBilgileri')
+    expect(ekran).toContain('faturaKalemleri')
+    expect(ekran).toContain('toplamlar')
+    expect(ekran).toContain('FaturaKalemleri')
   })
 
-  it('responsive: form-grid tek kolona iner', () => {
-    expect(src).toMatch(/@media \(max-width: 900px\)\s*\{[^}]*\.form-grid/)
+  it('panel kartlari padding + radius ile ayrilir', () => {
+    expect(ekran).toMatch(/\.form-panel\s*\{[^}]*border-radius/)
+    expect(ekran).toMatch(/\.form-panel\s*\{[^}]*padding/)
+  })
+
+  it('responsive: 3 panel 2 kolona ve tek kolona iner', () => {
+    expect(ekran).toMatch(/@media \(max-width: 1199px\)\s*\{[\s\S]*?fatura-form-grid/)
+    expect(ekran).toMatch(/@media \(max-width: 767px\)\s*\{[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/)
   })
 })

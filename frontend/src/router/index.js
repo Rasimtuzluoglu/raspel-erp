@@ -57,6 +57,18 @@ const routes = [
     meta: { requiresAuth: true, permission: 'FATURA_READ' }
   },
   {
+    path: '/faturalar/yeni',
+    name: 'FaturaYeni',
+    component: () => import('../views/FaturaFormEkrani.vue'),
+    meta: { requiresAuth: true, permission: 'FATURA_WRITE' }
+  },
+  {
+    path: '/faturalar/:id/duzenle',
+    name: 'FaturaDuzenle',
+    component: () => import('../views/FaturaFormEkrani.vue'),
+    meta: { requiresAuth: true, permission: 'FATURA_WRITE' }
+  },
+  {
     path: '/faturalar/:id',
     name: 'FaturaDetay',
     component: () => import('../views/FaturaDetay.vue'),

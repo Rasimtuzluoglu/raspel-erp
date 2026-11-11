@@ -524,329 +524,6 @@
       </div>
     </div>
 
-    <AppDialog
-      v-model:visible="showDialog"
-      :header="dialogBaslik"
-      width="1280px"
-      content-max-height="min(84vh, 900px)"
-      :close-on-escape="false"
-    >
-      <div class="fatura-form-baslik">
-        <i class="pi pi-file-invoice" />
-        <span>{{ t('faturalar.bolumFaturaBilgileri') }}</span>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>{{ form.tur === 'ALIS' ? t('faturalar.tedarikci') : t('faturalar.musteri') }} <span class="required">*</span></label>
-          <AutoComplete
-            v-model="seciliCariNesnesi"
-            :suggestions="cariOnerileri"
-            option-label="ad"
-            option-value="id"
-            :placeholder="
-              form.tur === 'ALIS'
-                ? t('faturalar.tedarikciAra')
-                : t('faturalar.cariAra')
-            "
-            class="w-full"
-            :force-selection="false"
-            :loading="cariOnerileriYukleniyor"
-            dropdown
-            @complete="cariAra($event)"
-            @option-select="cariSecildi"
-          >
-            <template #option="slotProps">
-              <div class="cari-opsiyon">
-                <span>{{ slotProps.option.ad }}</span>
-                <span class="cari-opsiyon-detay">{{
-                  slotProps.option.vergiNumarasi || slotProps.option.telefon || ''
-                }}</span>
-              </div>
-            </template>
-          </AutoComplete>
-          <Button
-            v-if="form.cariHesapId"
-            :label="t('faturalar.sonFaturaKopyala')"
-            icon="pi pi-copy"
-            class="p-button-text p-button-sm son-fatura-kopyala"
-            :loading="sonFaturaYukleniyor"
-            @click="sonFaturayiKopyala"
-          />
-        </div>
-        <div class="form-group">
-          <label>{{ t('faturalar.faturaTuru') }}</label>
-          <Dropdown
-            v-model="form.tur"
-            :options="turSecenekler"
-            option-label="label"
-            option-value="value"
-            :placeholder="t('faturalar.seciniz')"
-            class="w-full"
-          />
-        </div>
-        <div
-          v-if="form.tur === 'ALIS'"
-          class="form-group"
-        >
-          <label>{{ t('faturalar.girisDeposu') }}</label>
-          <Dropdown
-            v-model="form.depoId"
-            :options="depolar"
-            option-label="ad"
-            option-value="id"
-            :placeholder="t('faturalar.depoSecin')"
-            class="w-full"
-            :show-clear="true"
-          />
-        </div>
-        <div class="form-group">
-          <label>{{ t('faturalar.tarihZorunlu') }}</label>
-          <DatePicker
-            v-model="form.tarih"
-            date-format="dd.mm.yy"
-            class="w-full"
-          />
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>{{ t('faturalar.paraBirimi') }}</label>
-            <Dropdown
-              v-model="form.paraBirimi"
-              :options="['TRY', 'USD', 'EUR', 'GBP', 'SAR', 'GAU']"
-              class="w-full"
-              placeholder="TRY (₺)"
-            />
-          </div>
-          <div
-            v-if="form.paraBirimi && form.paraBirimi !== 'TRY'"
-            class="form-group"
-          >
-            <label>{{ t('faturalar.kurBilgisi') }}</label>
-            <div class="kur-bilgi-box">
-              1 {{ form.paraBirimi }} =
-              {{
-                dovizStore.formatPara(
-                  dovizStore.getKur(form.paraBirimi).satisFiyati || dovizStore.getKur(form.paraBirimi).satisKuru,
-                  'TRY'
-                )
-              }}
-            </div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>{{ t('faturalar.teslimEdenPersonel') }}</label>
-          <div class="teslim-eden-grup">
-            <Dropdown
-              v-model="form.teslimEden"
-              :options="personelSecenekleri"
-              option-label="label"
-              option-value="value"
-              filter
-              editable
-              :placeholder="t('faturalar.teslimEdenPlaceholder')"
-              class="w-full"
-              :show-clear="true"
-            >
-              <template #option="s">
-                <div class="personel-opsiyon">
-                  <i class="pi pi-truck" />
-                  <span>{{ s.option.label }}</span>
-                </div>
-              </template>
-            </Dropdown>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>{{ t('faturalar.teslimDurumu') }}</label>
-          <Dropdown
-            v-model="form.teslimDurumu"
-            :options="teslimDurumSecenekleri"
-            option-label="label"
-            option-value="value"
-            class="w-full"
-          />
-        </div>
-        <div class="form-group">
-          <label>{{ t('faturalar.teslimNotu') }}</label>
-          <Textarea
-            v-model="form.teslimNotu"
-            rows="2"
-            :placeholder="t('faturalar.teslimNotuPlaceholder')"
-            class="w-full"
-          />
-        </div>
-        <div class="form-group">
-          <label>{{ t('common.description') }}</label>
-          <Textarea
-            v-model="form.aciklama"
-            rows="2"
-            :placeholder="t('faturalar.istegeBagli')"
-            class="w-full"
-          />
-        </div>
-
-        <template v-if="form.tur === 'SATIS'">
-          <div
-            class="form-group teslimat-baslik"
-            style="grid-column: 1 / -1; margin-top: 6px"
-          >
-            <label style="font-weight: 700; color: var(--text-primary)">
-              <i
-                class="pi pi-truck"
-                style="margin-right: 6px"
-              /> {{ t('faturalar.teslimatBilgileri') }}
-            </label>
-          </div>
-          <div class="form-group">
-            <label>{{ t('faturalar.sofor') }}</label>
-            <Dropdown
-              v-model="form.driverId"
-              :options="suruculer"
-              option-label="ad"
-              option-value="id"
-              :placeholder="t('faturalar.soforSecin')"
-              class="w-full"
-              :show-clear="true"
-            />
-          </div>
-          <div class="form-group">
-            <label>{{ t('faturalar.beklenenTeslimTarihi') }}</label>
-            <DatePicker
-              v-model="form.beklenenTeslimTarihi"
-              date-format="dd.mm.yy"
-              class="w-full"
-            />
-          </div>
-          <div class="form-group">
-            <label>{{ t('faturalar.teslimatAdresi') }}</label>
-            <Textarea
-              v-model="form.teslimatAdresi"
-              rows="2"
-              :placeholder="t('faturalar.adresPlaceholder')"
-              class="w-full"
-            />
-          </div>
-          <div class="form-group">
-            <label>{{ t('faturalar.teslimNotu') }}</label>
-            <Textarea
-              v-model="form.teslimatNotu"
-              rows="2"
-              :placeholder="t('faturalar.istegeBagli')"
-              class="w-full"
-            />
-          </div>
-        </template>
-      </div>
-
-      <div class="fatura-form-baslik">
-        <i class="pi pi-plus-circle" />
-        <span>{{ t('faturalar.bolumUrunEkle') }}</span>
-      </div>
-      <div class="urun-ekleme">
-        <div
-          class="form-row"
-          style="display: flex; gap: 10px; align-items: flex-end"
-        >
-          <div
-            class="form-group"
-            style="flex: 3; margin: 0"
-          >
-            <label>{{ t('faturalar.urunSec') }}</label>
-            <Dropdown
-              v-model="urunSecimi"
-              :options="stokStore.stoklar"
-              filter
-              option-label="ad"
-              option-value="id"
-              :placeholder="t('faturalar.urunAra')"
-              class="w-full"
-              @change="urunSecildi"
-            >
-              <template #option="s">
-                <div style="display: flex; align-items: center; gap: 10px">
-                  <span style="flex: 1; color: var(--text-primary)">{{ s.option.ad }}</span>
-                  <span
-                    v-if="kritikStokMu(s.option)"
-                    class="kitlik-rozeti"
-                    :title="t('faturalar.kritikStokTitle', { n: s.option.minMiktar || 0 })"
-                  >{{ t('faturalar.sonAdet', { n: Math.floor(s.option.miktar) }) }}</span>
-                  <span style="color: var(--success); font-size: 12px; font-weight: 600">{{ s.option.miktar }} {{ s.option.birim || 'Adet' }}</span>
-                  <span style="color: var(--text-muted); font-size: 12px">{{ formatCurrency(s.option.fiyat) }}</span>
-                </div>
-              </template>
-            </Dropdown>
-          </div>
-          <div
-            class="form-group"
-            style="flex: 1; margin: 0"
-          >
-            <label>{{ t('faturalar.miktar') }}</label>
-            <InputNumber
-              v-model="urunAdet"
-              :min="1"
-              class="w-full"
-            />
-          </div>
-          <Button
-            icon="pi pi-plus"
-            :aria-label="$t('common.add')"
-            class="p-button-success"
-            style="margin-bottom: 2px"
-            :disabled="!urunSecimi || !urunAdet"
-            @click="urunEkleKalem"
-          />
-        </div>
-      </div>
-
-      <FaturaFiyatGecmisi
-        v-if="fiyatGecmisi && fiyatGecmisi.gecmis && fiyatGecmisi.gecmis.length"
-        :fiyat-gecmisi="fiyatGecmisi"
-      />
-
-      <CariUrunFiyatPaneli
-        v-if="urunSecimi && (fiyatSecenekleri.length || (cariUrunFiyati && cariUrunFiyati.sonFiyat != null))"
-        :fiyat-gecmisi="cariUrunFiyati"
-        :secenekler="fiyatSecenekleri"
-        @uygula="cariFiyatOverride = $event"
-      />
-
-      <FaturaSonUrunler
-        v-if="form.cariHesapId && !cariSonUrunlerGizle && cariSonUrunler.length > 0"
-        :urunler="cariSonUrunler"
-        @ekle="sonUrunuEkle"
-        @gizle="cariSonUrunlerGizle = true"
-      />
-
-      <div class="fatura-form-baslik">
-        <i class="pi pi-list" />
-        <span>{{ t('faturalar.faturaKalemleri') }}</span>
-      </div>
-      <FaturaKalemleri
-        :kalemler="form.kalemler"
-        :ara-toplam="araToplam"
-        :kdv-toplam="kdvToplam"
-        :genel-toplam="genelToplam"
-        :kdv-secenekleri="[0, 1, 8, 10, 18, 20]"
-        @add="addKalem"
-        @remove="removeKalem"
-        @geri-al="kalemGeriAl"
-      />
-
-      <template #footer>
-        <Button
-          :label="t('common.cancel')"
-          icon="pi pi-times"
-          class="p-button-text"
-          @click="closeDialog"
-        />
-        <Button
-          :label="editingId ? t('faturalar.guncelle') : t('faturalar.olustur')"
-          icon="pi pi-check"
-          :loading="saving"
-          @click="saveFatura"
-        />
-      </template>
-    </AppDialog>
 
     <Message
       v-if="faturaStore.error"
@@ -873,42 +550,23 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { unwrapList } from '../api/utils/unwrap.js'
 import { useRouter, useRoute } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useI18n } from 'vue-i18n'
 import { useFaturaStore } from '../stores/faturaStore.js'
 import { useAuthStore } from '../stores/authStore.js'
-import { useCariOnerileri, cariHesapCoz } from '../composables/useCariOnerileri.js'
-import { useCariHesapStore } from '../stores/cariHesapStore.js'
-import { useStokStore } from '../stores/stokStore.js'
-import { useDovizStore } from '../stores/dovizStore.js'
-
-const dovizStore = useDovizStore()
-import { faturaAPI, excelAPI, pdfAPI, personelAPI, depoAPI, teslimatAPI } from '../api/index.js'
+import { faturaAPI, excelAPI, pdfAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
-import { useTaslakKayit } from '../composables/useTaslakKayit.js'
-import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
 import TabloAyarlari from '../components/TabloAyarlari.vue'
-import AppDialog from '../components/AppDialog.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
-import FaturaKalemleri from '../components/FaturaKalemleri.vue'
-import FaturaFiyatGecmisi from '../components/FaturaFiyatGecmisi.vue'
-import FaturaSonUrunler from '../components/FaturaSonUrunler.vue'
-import CariUrunFiyatPaneli from '../components/CariUrunFiyatPaneli.vue'
 import SoforAtaDialog from '../components/SoforAtaDialog.vue'
-import { useUrunFiyatlari } from '../composables/useUrunFiyatlari.js'
-import { formatCurrency, formatPara, getLocalDateString } from '../utils/format.js'
-import { kdvOrani, kalemNetTutar, kalemKdv } from '../utils/faturaHesapla.js'
-import { satisPayloadUret } from '../utils/satisPayload.js'
+import { formatPara, getLocalDateString } from '../utils/format.js'
 
 const router = useRouter()
 const route = useRoute()
-const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const { t } = useI18n()
@@ -929,24 +587,15 @@ const tasarlaVeYazdir = (id) => {
   seciliFaturaId.value = id
   tasarimModalAcik.value = true
 }
-const cariHesapStore = useCariHesapStore()
-const stokStore = useStokStore()
 
 useKisayollar({
-  yeni: () => openCreateDialog(),
-  iptal: () => {
-    showDialog.value = false
-  },
-  kaydet: () => saveFatura()
+  yeni: () => openCreateDialog()
 })
 
-const showDialog = ref(false)
 const loading = ref(false)
 // Ilk yukleme skeleton'i yalnizca bir kez gosterilir; sonraki filtre/sayfa
 // yuklemelerinde KPI ve tablo DOM'da kalir (flicker onlenir).
 const ilkYukleme = ref(true)
-const saving = ref(false)
-const editingId = ref(null)
 const tarihAraligi = ref(null)
 const selectedItems = ref([])
 const topluSiliniyor = ref(false)
@@ -1077,11 +726,6 @@ const aramaDebounce = () => {
   }, 300)
 }
 
-const turSecenekler = computed(() => [
-  { label: t('faturalar.satis'), value: 'SATIS' },
-  { label: t('faturalar.alis'), value: 'ALIS' }
-])
-
 // --- Liste filtre cubugu (tur / durum / gelismis) ---
 const turFiltreSecenekleri = computed(() => [
   { label: t('faturalar.filtreTumu'), value: null },
@@ -1168,36 +812,9 @@ watch([turFiltre, durumFiltre, odemeFiltre, vadesiGecenFiltre, teslimatiOlanFilt
   ozetYukle()
 })
 
-const form = ref({
-  cariHesapId: null,
-  tur: '',
-  tarih: new Date(),
-  teslimEden: '',
-  teslimDurumu: 'BEKLIYOR',
-  teslimNotu: '',
-  depoId: null,
-  paraBirimi: 'TRY',
-  aciklama: '',
-  driverId: null,
-  beklenenTeslimTarihi: null,
-  teslimatAdresi: '',
-  teslimatNotu: '',
-  kalemler: []
+onUnmounted(() => {
+  if (aramaZamanlayici) clearTimeout(aramaZamanlayici)
 })
-
-const depolar = ref([])
-const suruculer = ref([])
-
-const teslimDurumSecenekleri = computed(() => [
-  { label: t('faturalar.durumBekliyor'), value: 'BEKLIYOR' },
-  { label: t('faturalar.durumYolda'), value: 'YOLDA' },
-  { label: t('faturalar.durumTeslimEdildi'), value: 'TESLIM_EDILDI' }
-])
-
-const urunSecimi = ref(null)
-const urunAdet = ref(1)
-
-const dialogBaslik = computed(() => (editingId.value ? t('faturalar.dialogDuzenle') : t('faturalar.dialogYeni')))
 
 watch(tarihAraligi, () => {
   sayfa.value = 0
@@ -1205,30 +822,12 @@ watch(tarihAraligi, () => {
   ozetYukle()
 })
 
-const { temizle: taslakTemizle } = useTaslakKayit('fatura', form, {
-  onRestore: () => {
-    toast.add({
-      severity: 'info',
-      summary: t('faturalar.taslakGeriYuklendi'),
-      detail: t('faturalar.taslakGeriYuklendiDetay'),
-      life: 5000
-    })
-  }
-})
-
-const { temizle: formTemizle } = useFormKorumasi(form)
-
 onMounted(async () => {
   loading.value = true
   try {
     await Promise.all([
       loadFaturalar(0, sayfaBoyutu.value),
-      ozetYukle(),
-      // Cari secici sunucu aramali; 50 kayitlik onbellek gerekmiyor.
-      stokStore.getAll({ size: 1000 }),
-      personelListesiniYukle(),
-      depolarıYukle(),
-      suruculeriYukle()
+      ozetYukle()
     ])
   } catch (err) {
     toastBildirim.hata(t('faturalar.hataYukleme'))
@@ -1236,18 +835,11 @@ onMounted(async () => {
     loading.value = false
     ilkYukleme.value = false
   }
-  // Cari ekranından gelen "Yeni Fatura" kısayolu: cariId query'si varsa cariyi seçip dialog aç
+  // Cari/kokpit kisayollari: form ayri rotada acilir.
   if (route.query.cariId) {
-    const cariId = Number(route.query.cariId)
-    let cari = await cariHesapCoz(cariId, cariHesapStore?.cariHesaplar)
-    if (cari) {
-      openCreateDialog()
-      seciliCariNesnesi.value = cari
-      form.value.cariHesapId = cariId
-    }
+    router.replace({ name: 'FaturaYeni', query: { cariId: route.query.cariId } })
   } else if (route?.query?.yeni === '1') {
-    // Kokpitten "Yeni Fatura" kısayolu: doğrudan oluşturma diyaloğunu aç.
-    openCreateDialog()
+    router.replace({ name: 'FaturaYeni' })
   }
   // Fatura numarasından derin bağlantı: /faturalar?no=FTR-... -> ilgili fatura detayına git
   if (route.query.no) {
@@ -1259,245 +851,6 @@ onMounted(async () => {
     }
   }
 })
-
-const personelListesi = ref([])
-
-const depolarıYukle = async () => {
-  try {
-    const r = await depoAPI.getAll({ size: 500 })
-    depolar.value = unwrapList(r)
-  } catch {
-    depolar.value = []
-  }
-}
-
-const suruculeriYukle = async () => {
-  try {
-    const r = await teslimatAPI.suruculer()
-    suruculer.value = r.data || []
-  } catch {
-    suruculer.value = []
-  }
-}
-
-const personelSecenekleri = computed(() =>
-  personelListesi.value
-    .filter((p) => p.aktif !== false)
-    .map((p) => ({ label: `${p.ad || ''} ${p.soyad || ''}`.trim(), value: `${p.ad || ''} ${p.soyad || ''}`.trim() }))
-)
-
-const personelListesiniYukle = async () => {
-  try {
-    const r = await personelAPI.getAll({ size: 500 })
-    personelListesi.value = unwrapList(r)
-  } catch {
-    personelListesi.value = []
-  }
-}
-
-const addKalem = (row) => {
-  // FaturaKalemleri hizli ekleme/cogaltma tam satiri gonderir; yoksa KDV 0 ile bos satir.
-  form.value.kalemler.push(row || { aciklama: '', adet: 1, birimFiyat: 0, iskontoOrani: 0, kdvOrani: 0 })
-}
-
-// Satir icinde stok secilince satiri stok bilgisiyle doldur (fiyat = satis fiyati).
-// REDTEAM/Faz9: satir ici stok aramasi KALDIRILDI (bkz. FaturaKalemleri).
-// Kalem ekleme tek yoldan: hizli ekleme satiri + barkod.
-
-const urunSecildi = () => {
-  if (!urunSecimi.value) return
-  const u = stokStore.stoklar.find((s) => s.id === urunSecimi.value)
-  if (u) urunAdet.value = 1
-  fiyatGecmisiYukle(urunSecimi.value)
-  cariFiyatOverride.value = null
-  cariUrunFiyatiYukle()
-}
-
-const fiyatGecmisi = ref(null)
-const fiyatGecmisiYukleniyor = ref(false)
-
-const fiyatGecmisiYukle = async (stokId) => {
-  if (!stokId) {
-    fiyatGecmisi.value = null
-    return
-  }
-  fiyatGecmisiYukleniyor.value = true
-  try {
-    const r = await faturaAPI.stokFiyatGecmisi(stokId)
-    fiyatGecmisi.value = r.data
-  } catch {
-    fiyatGecmisi.value = null
-  } finally {
-    fiyatGecmisiYukleniyor.value = false
-  }
-}
-
-// Faz 2: carinin bu urune gecmiste odedigi son fiyat
-const cariUrunFiyati = ref(null)
-const cariFiyatOverride = ref(null)
-const { secenekler: fiyatSecenekleri, yukle: fiyatlariYukle, temizle: fiyatlariTemizle } = useUrunFiyatlari()
-
-const cariUrunFiyatiYukle = async () => {
-  const cariId = form.value.cariHesapId
-  const stokId = urunSecimi.value
-  if (!stokId) {
-    cariUrunFiyati.value = null
-    fiyatlariTemizle()
-    return
-  }
-  const stokObj = stokStore.stoklar.find((s) => s.id === stokId)
-  const stokFiyat = stokObj?.satisFiyati || stokObj?.fiyat
-  if (!cariId) {
-    cariUrunFiyati.value = null
-  } else {
-    try {
-      const r = await faturaAPI.cariUrunFiyatGecmisi(cariId, stokId)
-      cariUrunFiyati.value = r.data || null
-    } catch {
-      cariUrunFiyati.value = null
-    }
-  }
-  await fiyatlariYukle(cariId, stokId, stokFiyat)
-}
-
-const kritikStokMu = (stok) => {
-  if (!stok?.miktar) return false
-  if (stok.minMiktar != null && stok.miktar <= stok.minMiktar) return true
-  return stok.miktar <= 10
-}
-
-const urunEkleKalem = () => {
-  if (!urunSecimi.value || !urunAdet.value) return
-  const u = stokStore.stoklar.find((s) => s.id === urunSecimi.value)
-  if (!u) return
-  form.value.kalemler.push({
-    aciklama: u.ad,
-    adet: urunAdet.value,
-    birimFiyat: cariFiyatOverride.value != null ? cariFiyatOverride.value : (u.satisFiyati || u.fiyat),
-    iskontoOrani: 0,
-    kdvOrani: u.kdvOrani != null ? Number(u.kdvOrani) : 0,
-    stokId: u.id
-  })
-  urunSecimi.value = null
-  urunAdet.value = 1
-  cariFiyatOverride.value = null
-  cariUrunFiyati.value = null
-  fiyatlariTemizle()
-}
-
-const seciliCariNesnesi = ref(null)
-// Cari secici sunucu aramali. Once `cariHesapStore.cariHesaplar` (50 kayitlik
-// tavan) icinde istemci tarafi filtreleniyordu; 50. kayittan sonraki cariler
-// fatura satirina hic atanamiyordu, kullaniciya bos liste gorunuyordu.
-const { ara: cariAra, oneriler: cariOnerileri, yukleniyor: cariOnerileriYukleniyor } = useCariOnerileri()
-
-const cariSecildi = (event) => {
-  form.value.cariHesapId = event.value?.id || null
-  const adres = event.value?.adres || ''
-  if (adres && !form.value.teslimatAdresi) {
-    form.value.teslimatAdresi = adres
-  }
-}
-
-const cariSonUrunler = ref([])
-const cariSonUrunlerGizle = ref(false)
-let cariSonUrunlerZamanlayici = null
-
-onUnmounted(() => {
-  if (aramaZamanlayici) clearTimeout(aramaZamanlayici)
-  if (cariSonUrunlerZamanlayici) clearTimeout(cariSonUrunlerZamanlayici)
-})
-
-watch(
-  () => form.value.cariHesapId,
-  (yeniCariId) => {
-    cariSonUrunlerGizle.value = false
-    if (cariSonUrunlerZamanlayici) clearTimeout(cariSonUrunlerZamanlayici)
-    if (!yeniCariId) {
-      cariSonUrunler.value = []
-      cariUrunFiyati.value = null
-      cariFiyatOverride.value = null
-      return
-    }
-    if (urunSecimi.value) cariUrunFiyatiYukle()
-    // Debounce - kullanici cari secerken istek yagmasi
-    cariSonUrunlerZamanlayici = setTimeout(async () => {
-      try {
-        const r = await faturaAPI.cariSonUrunler(yeniCariId, 10)
-        cariSonUrunler.value = r.data || []
-      } catch {
-        cariSonUrunler.value = []
-      }
-    }, 400)
-  }
-)
-
-const sonUrunuEkle = (urun) => {
-  if (!urun) return
-  const u = urun.stokId ? stokStore.stoklar.find((s) => s.id === urun.stokId) : null
-  form.value.kalemler.push({
-    aciklama: urun.stokAd || (u ? u.ad : t('faturalar.urun')),
-    adet: 1,
-    birimFiyat: urun.sonBirimFiyat || (u ? (u.satisFiyati || u.fiyat) : 0),
-    iskontoOrani: 0,
-    kdvOrani: u?.kdvOrani != null ? Number(u.kdvOrani) : 0,
-    stokId: urun.stokId || null
-  })
-    toastBildirim.basarili(t('faturalar.kalemEklendi'))
-}
-
-const sonFaturaYukleniyor = ref(false)
-
-const sonFaturayiKopyala = async () => {
-  if (!form.value.cariHesapId) return
-  sonFaturaYukleniyor.value = true
-  try {
-    const r = await faturaAPI.cariSonFatura(form.value.cariHesapId)
-    if (!r.data) {
-      toastBildirim.bilgi(t('faturalar.dahaOnceFaturaYok'))
-      return
-    }
-    const kaynak = r.data
-    form.value.aciklama = kaynak.aciklama || ''
-    form.value.tur = kaynak.tur || 'SATIS'
-    form.value.kalemler = (kaynak.kalemler || []).map((k) => ({
-      aciklama: k.aciklama || '',
-      adet: k.adet || 1,
-      birimFiyat: k.birimFiyat || 0,
-      iskontoOrani: k.iskontoOrani || 0,
-      kdvOrani: kdvOrani(k),
-      stokId: k.stokId || null
-    }))
-    if (form.value.kalemler.length === 0) {
-      form.value.kalemler.push({ aciklama: '', adet: 1, birimFiyat: 0, kdvOrani: 0 })
-    }
-    toastBildirim.basarili(t('faturalar.sonFaturaKopyalandi'))
-  } catch {
-    toastBildirim.hata(t('faturalar.sonFaturaYuklenemedi'))
-  } finally {
-    sonFaturaYukleniyor.value = false
-  }
-}
-
-const removeKalem = (index) => {
-  form.value.kalemler.splice(index, 1)
-}
-
-/** Silinen kalemi ESKI KONUMUNA geri koyar (FaturaKalemleri geri-al bandi). */
-const kalemGeriAl = ({ index, kalem }) => {
-  const hedef = Math.min(Math.max(index, 0), form.value.kalemler.length)
-  form.value.kalemler.splice(hedef, 0, kalem)
-}
-
-const araToplam = computed(() => {
-  return form.value.kalemler.reduce((t, k) => t + kalemNetTutar(k), 0)
-})
-
-const kdvToplam = computed(() => {
-  return form.value.kalemler.reduce((t, k) => t + kalemKdv(k), 0)
-})
-
-const genelToplam = computed(() => araToplam.value + kdvToplam.value)
 
 const whatsappGonder = async (fatura) => {
   // WhatsApp dosya ekleyemediği için PDF'i indirip mesajla birlikte elle eklenebilir hale getir.
@@ -1568,180 +921,18 @@ const onizle = async (fatura) => {
 }
 
 const openCreateDialog = () => {
-  editingId.value = null
-  seciliCariNesnesi.value = null
-  form.value = {
-    cariHesapId: null,
-    tur: '',
-    tarih: new Date(),
-    teslimEden: '',
-    teslimDurumu: 'BEKLIYOR',
-    teslimNotu: '',
-    depoId: null,
-    paraBirimi: 'TRY',
-    aciklama: '',
-    driverId: null,
-    beklenenTeslimTarihi: null,
-    teslimatAdresi: '',
-    teslimatNotu: '',
-    kalemler: []
-  }
-  formTemizle()
-  showDialog.value = true
+  router.push({ name: 'FaturaYeni' })
 }
 
-const editFatura = async (fatura) => {
-  editingId.value = fatura.id
-  // Duzenlemede once onbellek, olmazsa tek kayit: liste 50 kayitla sinirli
-  // oldugu icin cari o listede yoksa kutu bos gorunur ve kayit kurtulamazdi.
-  seciliCariNesnesi.value =
-    (await cariHesapCoz(fatura.cariHesapId, cariHesapStore?.cariHesaplar)) || { id: fatura.cariHesapId, ad: fatura.cariHesapAd }
-  form.value = {
-    cariHesapId: fatura.cariHesapId,
-    tur: fatura.tur,
-    tarih: new Date(fatura.tarih),
-    teslimEden: fatura.teslimEden || '',
-    teslimDurumu: fatura.teslimDurumu || 'BEKLIYOR',
-    teslimNotu: fatura.teslimNotu || '',
-    depoId: fatura.depoId || null,
-    paraBirimi: fatura.paraBirimi || 'TRY',
-    aciklama: fatura.aciklama || '',
-    driverId: null,
-    beklenenTeslimTarihi: null,
-    teslimatAdresi: '',
-    teslimatNotu: '',
-    kalemler: fatura.kalemler.map((k) => ({
-      id: k.id,
-      aciklama: k.aciklama,
-      adet: k.adet,
-      birimFiyat: k.birimFiyat,
-      iskontoOrani: k.iskontoOrani || 0,
-      kdvOrani: k.kdvOrani,
-      stokId: k.stokId || null
-    }))
-  }
-  formTemizle()
-  showDialog.value = true
+const editFatura = (fatura) => {
+  router.push({ name: 'FaturaDuzenle', params: { id: fatura.id } })
 }
 
 const cogalt = (fatura) => {
-  editingId.value = null
-  form.value = {
-    cariHesapId: fatura.cariHesapId,
-    tur: fatura.tur,
-    tarih: new Date(fatura.tarih),
-    teslimEden: fatura.teslimEden || '',
-    teslimDurumu: fatura.teslimDurumu || 'BEKLIYOR',
-    teslimNotu: fatura.teslimNotu || '',
-    paraBirimi: fatura.paraBirimi || 'TRY',
-    depoId: fatura.depoId || null,
-    aciklama: fatura.aciklama || '',
-    driverId: null,
-    beklenenTeslimTarihi: null,
-    teslimatAdresi: '',
-    teslimatNotu: '',
-    kalemler: fatura.kalemler.map((k) => ({
-      aciklama: k.aciklama,
-      adet: k.adet,
-      birimFiyat: k.birimFiyat,
-      iskontoOrani: k.iskontoOrani || 0,
-      kdvOrani: k.kdvOrani,
-      stokId: k.stokId || null
-    }))
-  }
-  formTemizle()
-  showDialog.value = true
-    toastBildirim.basarili(t('faturalar.faturaCogaltildi'))
+  router.push({ name: 'FaturaYeni', query: { kopya: fatura.id } })
+  toastBildirim.basarili(t('faturalar.faturaCogaltildi'))
 }
 
-const closeDialog = () => {
-  showDialog.value = false
-}
-
-const saveFatura = async (krediOnayli = false) => {
-  // Cift gonderim engeli: buton :loading bagli olsa da Enter ile form
-  // gonderimi veya hizli cift tiklama ayni ucu iki kez cagirabiliyor.
-  // Ayni fatura iki kez olusurdu (stok/cari hareketi iki kez duserdi).
-  if (saving.value) return
-  if (!form.value.tur) {
-    toastBildirim.uyari(t('faturalar.faturaTuruSeciniz'))
-    return
-  }
-  if (!form.value.cariHesapId) {
-    toastBildirim.uyari(t('faturalar.cariSeciniz'))
-    return
-  }
-  const gecersiz = form.value.kalemler.some((k) => !k.aciklama.trim() || !k.adet || !k.birimFiyat)
-  if (gecersiz) {
-    toastBildirim.uyari(t('faturalar.kalemleriDoldurun'))
-    return
-  }
-
-  const payload = satisPayloadUret({
-    cariHesapId: form.value.cariHesapId,
-    tur: form.value.tur,
-    tarih: form.value.tarih ? getLocalDateString(form.value.tarih) : null,
-    aciklama: form.value.aciklama,
-    genelIskontoTutari: 0,
-    odenenTutar: 0,
-    odemeDurumu: 'ODENMEDI',
-    kalemler: form.value.kalemler,
-    ekstra: {
-      teslimEden: form.value.teslimEden || null,
-      teslimDurumu: form.value.teslimDurumu || 'BEKLIYOR',
-      teslimNotu: form.value.teslimNotu || null,
-      depoId: form.value.depoId || null,
-      paraBirimi: form.value.paraBirimi || 'TRY',
-      krediLimitiGormezdenGel: krediOnayli
-    }
-  })
-
-  saving.value = true
-  try {
-    if (editingId.value) {
-      await faturaStore.updateFatura(editingId.value, payload)
-      toastBildirim.basarili(t('faturalar.faturaGuncellendi'))
-    } else {
-      const yeni = await faturaStore.addFatura(payload)
-      toastBildirim.basarili(t('faturalar.faturaOlusturuldu'))
-      if (form.value.driverId && form.value.teslimatAdresi?.trim()) {
-        try {
-          await teslimatAPI.olustur({
-            faturaId: yeni.id,
-            driverId: form.value.driverId,
-            teslimatAdresi: form.value.teslimatAdresi,
-            beklenenTeslimTarihi: form.value.beklenenTeslimTarihi ? getLocalDateString(form.value.beklenenTeslimTarihi) : null,
-            notlar: form.value.teslimatNotu || null
-          })
-        } catch (teslimatHata) {
-          toastBildirim.hata(
-            t('faturalar.teslimatOlusturulamadi') + (teslimatHata?.response?.data?.message || t('faturalar.bilinmeyenHata'))
-          )
-        }
-      }
-    }
-    taslakTemizle()
-    formTemizle()
-    closeDialog()
-  } catch (err) {
-    const msg = err.response?.data?.message || t('faturalar.islemBasarisiz')
-    // Kredi limiti aşımı: sunucu engelledi; kullanıcı açık onay verirse bayrakla tekrar denenir.
-    if (!editingId.value && !krediOnayli && msg.includes('Kredi limiti')) {
-      confirm.require({
-        message: msg + ' ' + t('faturalar.krediLimitiDevam'),
-        header: t('faturalar.krediLimitiBaslik'),
-        icon: 'pi pi-exclamation-triangle',
-        acceptLabel: t('faturalar.krediLimitiOnayla'),
-        rejectLabel: t('common.vazgec'),
-        accept: () => saveFatura(true)
-      })
-    } else {
-      toastBildirim.hata(msg)
-    }
-  } finally {
-    saving.value = false
-  }
-}
 
 const viewFatura = (id) => {
   router.push(`/faturalar/${id}`)
@@ -2143,87 +1334,6 @@ h1 {
   text-align: center;
   padding: 40px;
   color: var(--text-muted);
-}
-.fatura-form-baslik {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--accent);
-  margin: 18px 0 10px;
-}
-.fatura-form-baslik i {
-  font-size: 14px;
-}
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--bg-secondary);
-}
-@media (max-width: 900px) {
-  .form-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-.form-group {
-  margin-bottom: 15px;
-}
-.form-group label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.son-fatura-kopyala {
-  margin-top: 6px;
-  padding: 4px 8px;
-  font-size: 12px;
-}
-.personel-opsiyon {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.personel-opsiyon i {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-.cari-opsiyon {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
-.cari-opsiyon-detay {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-.kitlik-rozeti {
-  background: var(--danger-soft);
-  color: var(--danger);
-  border: 1px solid var(--danger-border);
-  border-radius: 20px;
-  padding: 1px 8px;
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.urun-ekleme {
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-border);
-  border-radius: 10px;
-  padding: 14px;
-  margin: 15px 0;
 }
 .badge {
   display: inline-flex;

@@ -89,9 +89,9 @@ Cypress.Commands.add('girisYap', () => {
       win.localStorage.setItem('raspel_gosterilen_ipuclari', '[]')
     }
   })
-  cy.get('input[placeholder="Kullanıcı Adı"]').type('admin')
-  cy.get('input[type="password"]').type('Admin123!')
-  cy.contains('Giriş Yap').click()
+  cy.get('[data-test="giris-username"]', { timeout: 15000 }).type('admin')
+  cy.get('[data-test="giris-password"]').type('Admin123!')
+  cy.get('[data-test="giris-buton"]').click()
   cy.wait('@login')
   cy.wait('@girisSirket')
   cy.url().should('not.include', '/giris')

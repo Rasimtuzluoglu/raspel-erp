@@ -12,7 +12,8 @@ const KAYDET_BAYRAGI = /(kaydediliyor|saving|kayitEdiyor|kayitAktif)/i
 // Para/stok hareketi ureten kritik kaydetme yollari. Buradaki her view
 // icin koruma ZORUNLU: cift gonderim ayni kaydi iki kez olusturuyor.
 const KRITIK = [
-  ['Faturalar.vue', 'saving'],
+  // Fatura formu ayri ekrana tasindi; kaydetme korumasi composable icinde.
+  ['../composables/useFaturaForm.js', 'saving'],
   ['Iadeler.vue', 'kaydediliyor'],
   ['Irsaliyeler.vue', 'kaydediliyor'],
   ['Siparisler.vue', 'kaydediliyor'],
