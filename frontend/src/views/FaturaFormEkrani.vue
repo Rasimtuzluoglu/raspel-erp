@@ -6,6 +6,14 @@
     >
       <template #actions>
         <Button
+          v-if="!duzenlemeMi"
+          :label="t('faturalar.kaynaktanDoldur')"
+          icon="pi pi-download"
+          class="p-button-outlined"
+          data-test="fatura-kaynaktan-doldur"
+          @click="kaynakDialogAc"
+        />
+        <Button
           :label="t('faturalar.listeyeDon')"
           icon="pi pi-arrow-left"
           class="p-button-text"
@@ -391,8 +399,171 @@
             @click="kesOnayla"
           />
         </div>
+
+        <div
+          v-if="aktifFaturaId"
+          class="form-aksiyonlar form-aksiyonlar-ek"
+          data-test="fatura-aksiyonlar"
+        >
+          <h3 class="form-alt-baslik">
+            <i class="pi pi-print" />
+            {{ t('faturalar.aksiyonlar') }}
+          </h3>
+          <Button
+            :label="t('faturalar.fisYazdir')"
+            icon="pi pi-print"
+            class="p-button-outlined w-full"
+            :disabled="!aktifFaturaId"
+            data-test="fatura-fis-yazdir"
+            @click="fisYazdir"
+          />
+          <Button
+            :label="t('faturalar.urunEtiketi')"
+            icon="pi pi-barcode"
+            class="p-button-outlined w-full"
+            :loading="etiketYukleniyor"
+            :disabled="!etiketlenebilirKalemler.length"
+            :title="etiketlenebilirKalemler.length ? '' : t('faturalar.etiketYok')"
+            data-test="fatura-urun-etiketi"
+            @click="urunEtiketiYazdir"
+          />
+
+          <template v-if="mevcutFatura?.durum === 'KESILDI'">
+            <Button
+              :label="t('faturalar.pdfIndir')"
+              icon="pi pi-file-pdf"
+              class="p-button-outlined w-full"
+              data-test="fatura-pdf"
+              @click="pdfIndir"
+            />
+            <Button
+              :label="t('faturalar.onizle')"
+              icon="pi pi-eye"
+              class="p-button-outlined w-full"
+              data-test="fatura-onizle"
+              @click="onizleFatura"
+            />
+            <Button
+              :label="t('faturalar.epostaGonder')"
+              icon="pi pi-envelope"
+              class="p-button-outlined w-full"
+              data-test="fatura-eposta"
+              @click="epostaGonder"
+            />
+
+            <h3 class="form-alt-baslik efatura-baslik">
+              <i class="pi pi-send" />
+              {{ t('faturalar.efaturaBaslik') }}
+            </h3>
+
+            <div
+              v-if="eFatura"
+              class="efatura-bilgi"
+              data-test="fatura-efatura-bilgi"
+            >
+              <div class="efatura-satir">
+                <span>{{ t('faturalar.ettn') }}</span>
+                <strong class="efatura-ettn">{{ eFatura.ettn || '-' }}</strong>
+              </div>
+              <div class="efatura-satir">
+                <span>{{ t('faturalar.gibDurum') }}</span>
+                <strong>{{ eFatura.gibDurumKodu || '-' }} {{ eFatura.gibDurumAciklama || '' }}</strong>
+              </div>
+              <div class="efatura-butonlar">
+                <Button
+                  v-if="Number(eFatura.gibDurumKodu || 0) < 1200"
+                  :label="t('faturalar.efaturaGonder')"
+                  icon="pi pi-send"
+                  class="p-button-sm"
+                  :loading="efaturaIslem"
+                  data-test="fatura-gib-gonder"
+                  @click="efaturaGonder"
+                />
+                <Button
+                  :label="t('faturalar.efaturaDurum')"
+                  icon="pi pi-refresh"
+                  class="p-button-sm p-button-outlined"
+                  :loading="efaturaIslem"
+                  data-test="fatura-gib-durum"
+                  @click="efaturaDurum"
+                />
+                <Button
+                  :label="t('faturalar.efaturaXml')"
+                  icon="pi pi-download"
+                  class="p-button-sm p-button-outlined"
+                  data-test="fatura-efatura-xml"
+                  @click="efaturaXml"
+                />
+              </div>
+            </div>
+            <Button
+              v-else
+              :label="t('faturalar.efaturaOlustur')"
+              icon="pi pi-send"
+              class="p-button-outlined w-full"
+              :loading="efaturaIslem"
+              data-test="fatura-efatura-olustur"
+              @click="efaturaOlustur"
+            />
+          </template>
+          <small
+            v-else-if="mevcutFatura"
+            class="form-ipucu"
+          >{{ t('faturalar.kesildiktenSonra') }}</small>
+        </div>
       </aside>
     </div>
+
+    <FaturaTasarimModal
+      v-model:visible="tasarimAcik"
+      :fatura-id="aktifFaturaId"
+    />
+
+    <AppDialog
+      v-model:visible="kaynakDialog"
+      :header="t('faturalar.kaynaktanDoldur')"
+      width="560px"
+    >
+      <div class="form-alan">
+        <label class="form-etiket">{{ t('faturalar.kaynakTuru') }}</label>
+        <SelectButton
+          v-model="kaynakTuru"
+          :options="kaynakTurleri"
+          option-label="label"
+          option-value="value"
+          :allow-empty="false"
+          @change="kaynakTurDegisti"
+        />
+      </div>
+      <div class="form-alan">
+        <label class="form-etiket">{{ t('faturalar.kaynakSec') }}</label>
+        <Dropdown
+          v-model="seciliKaynakId"
+          :options="kaynakSecenekleri"
+          option-label="etiket"
+          option-value="id"
+          :loading="kaynaklarYukleniyor"
+          :placeholder="t('faturalar.kaynakSec')"
+          class="w-full"
+          data-test="fatura-kaynak-secim"
+        />
+      </div>
+      <template #footer>
+        <Button
+          :label="t('common.vazgec')"
+          class="p-button-text"
+          @click="kaynakDialog = false"
+        />
+        <Button
+          :label="t('faturalar.kaynakGetir')"
+          icon="pi pi-check"
+          :loading="kaynakDolduruluyor"
+          :disabled="!seciliKaynakId"
+          data-test="fatura-kaynak-getir"
+          @click="kaynaktanDoldurTikla"
+        />
+      </template>
+    </AppDialog>
 
     <!-- Mobil: alt sticky ozet + kaydet -->
     <div
@@ -415,20 +586,25 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDovizStore } from '../stores/dovizStore.js'
-import { formatPara } from '../utils/format.js'
+import { formatPara, formatDate } from '../utils/format.js'
+import { stokAPI } from '../api/index.js'
+import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useFaturaForm } from '../composables/useFaturaForm.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import FaturaKalemleri from '../components/FaturaKalemleri.vue'
+import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
+import AppDialog from '../components/AppDialog.vue'
 
 const { t } = useI18n()
 const router = useRouter()
 const confirm = useConfirm()
 const dovizStore = useDovizStore()
+const toast = useToastBildirim()
 
 const {
   form,
@@ -440,6 +616,7 @@ const {
   hata,
   kirli,
   kaydedildi,
+  sonKaydedilenId,
   duzenlenebilir,
   kilitNedeni,
   sayfaBasligi,
@@ -450,6 +627,19 @@ const {
   personelSecenekleri,
   suruculer,
   teslimatVar,
+  kaynaklar,
+  kaynaklarYukleniyor,
+  kaynakYukle,
+  kaynaktanDoldur,
+  eFatura,
+  efaturaIslem,
+  pdfIndir,
+  onizleFatura,
+  epostaGonder,
+  efaturaOlustur,
+  efaturaGonder,
+  efaturaDurum,
+  efaturaXml,
   araToplam,
   kdvToplam,
   genelToplam,
@@ -477,6 +667,49 @@ const teslimDurumSecenekleri = computed(() => [
   { label: t('faturalar.durumTeslimEdildi'), value: 'TESLIM_EDILDI' }
 ])
 
+// C4: kaynaktan doldurma.
+const kaynakDialog = ref(false)
+const kaynakTuru = ref('SIPARIS')
+const seciliKaynakId = ref(null)
+const kaynakDolduruluyor = ref(false)
+
+const kaynakTurleri = computed(() => [
+  { label: t('faturalar.siparis'), value: 'SIPARIS' },
+  { label: t('faturalar.irsaliye'), value: 'IRSALIYE' },
+  { label: t('faturalar.teklif'), value: 'TEKLIF' }
+])
+
+const kaynakSecenekleri = computed(() =>
+  (kaynaklar.value || []).map((k) => {
+    const no = k.siparisNo || k.irsaliyeNo || k.teklifNo || `#${k.id}`
+    const cari = k.cariHesapAdi || k.cariHesapAd || ''
+    return { ...k, etiket: [no, cari, formatDate(k.tarih)].filter(Boolean).join(' · ') }
+  })
+)
+
+const kaynakDialogAc = async () => {
+  kaynakTuru.value = 'SIPARIS'
+  seciliKaynakId.value = null
+  kaynakDialog.value = true
+  await kaynakYukle('SIPARIS')
+}
+
+const kaynakTurDegisti = async () => {
+  seciliKaynakId.value = null
+  await kaynakYukle(kaynakTuru.value)
+}
+
+const kaynaktanDoldurTikla = async () => {
+  if (!seciliKaynakId.value) return
+  kaynakDolduruluyor.value = true
+  try {
+    const oldu = await kaynaktanDoldur(kaynakTuru.value, seciliKaynakId.value)
+    if (oldu) kaynakDialog.value = false
+  } finally {
+    kaynakDolduruluyor.value = false
+  }
+}
+
 const kurDegeri = computed(() => {
   if (!form.value.paraBirimi || form.value.paraBirimi === 'TRY') return null
   const kur = dovizStore.getKur?.(form.value.paraBirimi) || {}
@@ -485,6 +718,49 @@ const kurDegeri = computed(() => {
 
 const odemeDurumu = computed(() => mevcutFatura.value?.odemeDurumu || 'ODENMEDI')
 const kalanTutar = computed(() => Number(mevcutFatura.value?.kalanTutar || 0))
+
+// C3: kaydedilmis faturada etiket/yazdirma aksiyonlari.
+const tasarimAcik = ref(false)
+const etiketYukleniyor = ref(false)
+const aktifFaturaId = computed(() => mevcutFatura.value?.id || sonKaydedilenId.value)
+
+const etiketlenebilirKalemler = computed(() => {
+  const harita = new Map()
+  for (const k of form.value.kalemler || []) {
+    if (k.stokId == null || !Number(k.adet)) continue
+    harita.set(k.stokId, (harita.get(k.stokId) || 0) + Number(k.adet))
+  }
+  return [...harita.entries()].map(([stokId, adet]) => ({ stokId, adet }))
+})
+
+const blobIndir = (blob, ad) => {
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = ad
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  setTimeout(() => window.URL.revokeObjectURL(url), 30000)
+}
+
+const fisYazdir = () => {
+  if (aktifFaturaId.value) tasarimAcik.value = true
+}
+
+const urunEtiketiYazdir = async () => {
+  if (!etiketlenebilirKalemler.value.length) return
+  etiketYukleniyor.value = true
+  try {
+    const r = await stokAPI.topluEtiket({ tip: 'BARKOD', kalemler: etiketlenebilirKalemler.value })
+    blobIndir(new Blob([r.data], { type: 'application/pdf' }), `urun-etiketleri-${aktifFaturaId.value}.pdf`)
+    toast.basarili(t('faturalar.etiketIndirildi'))
+  } catch {
+    toast.hata(t('faturalar.etiketIndirilemedi'))
+  } finally {
+    etiketYukleniyor.value = false
+  }
+}
 
 // KESILDI revizyonda yeniden "kes" gerekmez; yalnizca TASLAK ve yeni kayitta sunulur.
 const kesilebilir = computed(() => {
@@ -650,6 +926,46 @@ onMounted(hazirla)
   color: var(--text-secondary);
 }
 
+.efatura-baslik {
+  margin-top: 14px;
+}
+
+.efatura-bilgi {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.efatura-satir {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.efatura-satir strong {
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.efatura-ettn {
+  font-family: monospace;
+  font-size: 10.5px;
+  word-break: break-all;
+}
+
+.efatura-butonlar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
 .ozet-satir {
   display: flex;
   align-items: center;
@@ -695,6 +1011,11 @@ onMounted(hazirla)
   flex-direction: column;
   gap: 8px;
   margin-top: 14px;
+}
+
+.form-aksiyonlar-ek {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
 }
 
 .form-yukleniyor {

@@ -7,7 +7,7 @@ import { useCariOnerileri, cariHesapCoz } from './useCariOnerileri.js'
 import { useTaslakKayit } from './useTaslakKayit.js'
 import { useFaturaStore } from '../stores/faturaStore.js'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
-import { faturaAPI, depoAPI, personelAPI, teslimatAPI } from '../api/index.js'
+import { faturaAPI, depoAPI, personelAPI, teslimatAPI, siparisAPI, irsaliyeAPI, teklifAPI, stokAPI, pdfAPI, eFaturaAPI } from '../api/index.js'
 import { unwrapList } from '../api/utils/unwrap.js'
 import { satisPayloadUret } from '../utils/satisPayload.js'
 import { kalemNetTutar, kalemKdv, kdvOrani } from '../utils/faturaHesapla.js'
@@ -26,6 +26,8 @@ export const bosFaturaFormu = () => ({
   depoId: null,
   paraBirimi: 'TRY',
   kur: null,
+  siparisId: null,
+  irsaliyeId: null,
   aciklama: '',
   driverId: null,
   beklenenTeslimTarihi: null,
@@ -44,6 +46,8 @@ const faturadanForm = (f) => ({
   depoId: f.depoId || null,
   paraBirimi: f.paraBirimi || 'TRY',
   kur: f.kur ?? null,
+  siparisId: f.siparisId ?? null,
+  irsaliyeId: f.irsaliyeId ?? null,
   aciklama: f.aciklama || '',
   driverId: null,
   beklenenTeslimTarihi: null,
@@ -66,6 +70,9 @@ const kopyalananForm = (f) => {
   const form = faturadanForm(f)
   return {
     ...form,
+    // Kopya yeni bir faturadir; kaynak baglari tasinmaz.
+    siparisId: null,
+    irsaliyeId: null,
     // Kopyada kalem kimlikleri tasinmaz; aksi halde update sanilir.
     kalemler: form.kalemler.map((k) => ({
       aciklama: k.aciklama,
@@ -107,6 +114,9 @@ export function useFaturaForm() {
   const hazir = ref(false)
   // Kaydetme sonrasi aksiyonlar (PDF/e-fatura) icin son kaydedilen kayit kimligi.
   const sonKaydedilenId = ref(null)
+  // C5: kaydedilmis faturadaki e-fatura belgesi (varsa).
+  const eFatura = ref(null)
+  const efaturaIslem = ref(false)
 
   const { ara: cariAra, oneriler: cariOnerileri, yukleniyor: cariOnerileriYukleniyor, hemenAra: cariHemenAra } =
     useCariOnerileri()
@@ -191,6 +201,104 @@ export function useFaturaForm() {
     }
   }
 
+  // C4: siparis / irsaliye / teklif kaynagindan kalem doldurma.
+  const kaynaklar = ref([])
+  const kaynaklarYukleniyor = ref(false)
+
+  const kaynakYukle = async (tur) => {
+    kaynaklarYukleniyor.value = true
+    kaynaklar.value = []
+    try {
+      if (tur === 'IRSALIYE') {
+        const r = await irsaliyeAPI.filtreli({ durum: 'KESILDI', page: 0, size: 100 })
+        kaynaklar.value = unwrapList(r).filter((i) => !i.faturaId)
+      } else if (tur === 'TEKLIF') {
+        const r = await teklifAPI.getAll({ page: 0, size: 100 })
+        kaynaklar.value = unwrapList(r).filter((t) => t.durum !== 'FATURALASTI' && t.durum !== 'IPTAL')
+      } else {
+        const r = await siparisAPI.getAll({ page: 0, size: 100 })
+        kaynaklar.value = unwrapList(r).filter((s) => s.durum !== 'FATURA_KESILDI' && s.durum !== 'IPTAL')
+      }
+    } catch {
+      kaynaklar.value = []
+      toast.hata(t('faturalar.kaynakHata'))
+    } finally {
+      kaynaklarYukleniyor.value = false
+    }
+  }
+
+  const kaynaktanDoldur = async (tur, id) => {
+    if (!id) return false
+    try {
+      const detay =
+        tur === 'IRSALIYE'
+          ? (await irsaliyeAPI.getById(id)).data
+          : tur === 'TEKLIF'
+            ? (await teklifAPI.getById(id)).data
+            : (await siparisAPI.getById(id)).data
+      if (!detay) throw new Error()
+
+      if (tur === 'IRSALIYE' && detay.faturaId) {
+        toast.uyari(t('faturalar.kaynakFaturaVar'))
+        return false
+      }
+      if (form.value.kalemler.length) {
+        const devam = window.confirm(t('faturalar.kaynakUzerineYaz'))
+        if (!devam) return false
+      }
+
+      const cariId = detay.cariHesapId
+      form.value.cariHesapId = cariId
+      await cariyiCoz(cariId, detay.cariHesapAdi)
+      form.value.tur = 'SATIS'
+      if (tur === 'IRSALIYE' && detay.depoId) form.value.depoId = detay.depoId
+      if (tur === 'TEKLIF' && detay.paraBirimi) form.value.paraBirimi = detay.paraBirimi
+      form.value.siparisId = tur === 'SIPARIS' ? detay.id : detay.siparisId || null
+      form.value.irsaliyeId = tur === 'IRSALIYE' ? detay.id : null
+
+      let stokHaritasi = new Map()
+      if (tur === 'IRSALIYE') {
+        const stokIdler = [...new Set((detay.kalemler || []).map((k) => k.stokId).filter(Boolean))]
+        const stoklar = await Promise.all(
+          stokIdler.map((sid) => stokAPI.getById(sid).then((r) => r.data).catch(() => null))
+        )
+        stokHaritasi = new Map(stoklar.filter(Boolean).map((s) => [s.id, s]))
+      }
+
+      const kalemler = (detay.kalemler || []).map((k) => {
+        if (tur === 'IRSALIYE') {
+          const stok = stokHaritasi.get(k.stokId)
+          return {
+            stokId: k.stokId ?? null,
+            aciklama: k.aciklama || k.stokAdi || stok?.ad || '',
+            adet: Number(k.miktar || 1),
+            birimFiyat: Number(stok?.satisFiyati || stok?.fiyat || 0),
+            iskontoOrani: null,
+            kdvOrani: kdvOrani(stok || {})
+          }
+        }
+        return {
+          stokId: k.stokId ?? null,
+          aciklama: k.aciklama || k.stokAdi || k.stokKodu || '',
+          adet: Number(k.miktar ?? k.adet ?? 1),
+          birimFiyat: Number(k.birimFiyat || 0),
+          iskontoOrani: k.iskontoOrani ?? null,
+          kdvOrani: kdvOrani(k)
+        }
+      })
+      if (!kalemler.length) {
+        toast.uyari(t('faturalar.kaynakKalemYok'))
+        return false
+      }
+      form.value.kalemler = kalemler
+      toast.basarili(t('faturalar.kaynakDolduruldu'))
+      return true
+    } catch {
+      toast.hata(t('faturalar.kaynakHata'))
+      return false
+    }
+  }
+
   const cariSecildi = (event) => {
     form.value.cariHesapId = event.value?.id || null
     const adres = event.value?.adres || ''
@@ -248,10 +356,11 @@ export function useFaturaForm() {
     yuklemeHatasi.value = ''
     try {
       const f = await faturaStore.getFaturaById(id)
-      if (!f) throw new Error(t('faturalar.faturaBulunamadi'))
+      if (!f || Array.isArray(f) || f.id == null) throw new Error(t('faturalar.faturaBulunamadi'))
       mevcutFatura.value = f
       await cariyiCoz(f.cariHesapId, f.cariHesapAd)
       form.value = faturadanForm(f)
+      await efaturaYukle()
     } catch (err) {
       yuklemeHatasi.value = err?.response?.data?.message || t('faturalar.faturaBulunamadi')
     } finally {
@@ -320,6 +429,8 @@ export function useFaturaForm() {
       if (form.value.paraBirimi && form.value.paraBirimi !== 'TRY' && Number.isFinite(kur) && kur > 0) {
         cekirdek.kur = kur
       }
+      if (form.value.siparisId) cekirdek.siparisId = form.value.siparisId
+      if (form.value.irsaliyeId) cekirdek.irsaliyeId = form.value.irsaliyeId
     }
     const payload = satisPayloadUret({
       ...cekirdek,
@@ -360,6 +471,96 @@ export function useFaturaForm() {
     }
   }
 
+  // C5: kaydedilmis fatura aksiyonlari (PDF / e-posta / e-fatura).
+  const aktifFaturaId = computed(() => mevcutFatura.value?.id || sonKaydedilenId.value)
+
+  const efaturaYukle = async () => {
+    eFatura.value = null
+    if (mevcutFatura.value?.durum !== 'KESILDI' || !faturaId.value) return
+    try {
+      const r = await eFaturaAPI.getTumu({ page: 0, size: 200 })
+      eFatura.value = unwrapList(r).find((e) => e.faturaId === faturaId.value) || null
+    } catch {
+      eFatura.value = null
+    }
+  }
+
+  const dosyaIndir = (blob, ad) => {
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = ad
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => window.URL.revokeObjectURL(url), 30000)
+  }
+
+  const pdfIndir = async () => {
+    if (!aktifFaturaId.value) return
+    try {
+      const res = await pdfAPI.fatura(aktifFaturaId.value)
+      dosyaIndir(new Blob([res.data], { type: 'application/pdf' }), `fatura-${aktifFaturaId.value}.pdf`)
+    } catch (err) {
+      toast.hata(err?.response?.data?.message || t('faturalar.pdfIndirilemedi'))
+    }
+  }
+
+  const onizleFatura = async () => {
+    if (!aktifFaturaId.value) return
+    try {
+      const res = await pdfAPI.faturaOnizleme(aktifFaturaId.value)
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      window.open(url, '_blank')
+      setTimeout(() => window.URL.revokeObjectURL(url), 60000)
+    } catch (err) {
+      toast.hata(err?.response?.data?.message || t('faturalar.pdfIndirilemedi'))
+    }
+  }
+
+  const epostaGonder = async () => {
+    if (!aktifFaturaId.value) return
+    try {
+      await faturaAPI.gonderEmail(aktifFaturaId.value)
+      toast.basarili(t('faturalar.epostaGonderildi'))
+    } catch (err) {
+      toast.hata(err?.response?.data?.message || t('faturalar.epostaHata'))
+    }
+  }
+
+  const efaturaIslemCalistir = async (islem) => {
+    if (!aktifFaturaId.value || efaturaIslem.value) return
+    efaturaIslem.value = true
+    try {
+      const r = await islem()
+      if (r?.data) eFatura.value = r.data
+      return true
+    } catch (err) {
+      toast.hata(err?.response?.data?.message || t('faturalar.efaturaHata'))
+      return false
+    } finally {
+      efaturaIslem.value = false
+    }
+  }
+
+  const efaturaOlustur = async () => {
+    const oldu = await efaturaIslemCalistir(() => eFaturaAPI.olustur(aktifFaturaId.value))
+    if (oldu) toast.basarili(t('faturalar.efaturaOlusturuldu'))
+  }
+
+  const efaturaGonder = () => efaturaIslemCalistir(() => eFaturaAPI.gibGonder(eFatura.value.id))
+  const efaturaDurum = () => efaturaIslemCalistir(() => eFaturaAPI.durumSorgula(eFatura.value.id))
+
+  const efaturaXml = async () => {
+    if (!eFatura.value?.id) return
+    try {
+      const res = await eFaturaAPI.xmlIndir(eFatura.value.id)
+      dosyaIndir(new Blob([res.data], { type: 'application/xml' }), `e-fatura-${eFatura.value.id}.xml`)
+    } catch (err) {
+      toast.hata(err?.response?.data?.message || t('faturalar.efaturaHata'))
+    }
+  }
+
   const kaydet = async ({ durum = 'TASLAK', krediOnayli = false } = {}) => {
     if (saving.value) return false
     if (!duzenlenebilir.value) {
@@ -390,7 +591,18 @@ export function useFaturaForm() {
       taslakTemizle()
       kaydedildi.value = true
       kirli.value = false
-      router.push({ name: 'Faturalar' })
+      // Kaydettikten sonra ekranda kal: aksiyonlar (PDF/e-fatura) icin id gerekir.
+      const kayitId = duzenlemeMi.value ? faturaId.value : sonKaydedilenId.value
+      if (duzenlemeMi.value) {
+        hazir.value = false
+        await faturaYukle(kayitId)
+        hazir.value = true
+        kirli.value = false
+      } else if (kayitId) {
+        router.replace({ name: 'FaturaDuzenle', params: { id: kayitId } })
+      } else {
+        router.push({ name: 'Faturalar' })
+      }
       return true
     } catch (err) {
       const msg = err?.response?.data?.message || t('faturalar.islemBasarisiz')
@@ -462,6 +674,20 @@ export function useFaturaForm() {
     personelSecenekleri,
     suruculer,
     teslimatVar,
+    kaynaklar,
+    kaynaklarYukleniyor,
+    kaynakYukle,
+    kaynaktanDoldur,
+    aktifFaturaId,
+    eFatura,
+    efaturaIslem,
+    pdfIndir,
+    onizleFatura,
+    epostaGonder,
+    efaturaOlustur,
+    efaturaGonder,
+    efaturaDurum,
+    efaturaXml,
     araToplam,
     kdvToplam,
     genelToplam,

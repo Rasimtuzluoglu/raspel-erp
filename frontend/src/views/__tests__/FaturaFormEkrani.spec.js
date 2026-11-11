@@ -89,6 +89,41 @@ describe('FaturaFormEkrani — Faz B', () => {
     expect(form).toContain('if (!duzenlemeMi.value) {')
   })
 
+  it('kaydedilmis faturada etiket ve fis yazdirma aksiyonlari vardir', () => {
+    expect(ekran).toContain('data-test="fatura-fis-yazdir"')
+    expect(ekran).toContain('data-test="fatura-urun-etiketi"')
+    expect(ekran).toContain('FaturaTasarimModal')
+    expect(ekran).toContain('topluEtiket')
+    expect(ekran).toContain("tip: 'BARKOD'")
+    expect(ekran).toContain('etiketlenebilirKalemler')
+  })
+
+  it('kaynaktan doldurma siparis/irsaliye/teklif destekler ve baglari payloada ekler', () => {
+    expect(ekran).toContain('data-test="fatura-kaynaktan-doldur"')
+    expect(ekran).toContain('fatura-kaynak-secim')
+    expect(ekran).toContain('kaynakYukle')
+    expect(ekran).toContain('kaynaktanDoldur')
+    expect(form).toContain('siparisAPI.getAll')
+    expect(form).toContain('irsaliyeAPI.filtreli')
+    expect(form).toContain('teklifAPI.getAll')
+    expect(form).toContain('cekirdek.siparisId')
+    expect(form).toContain('cekirdek.irsaliyeId')
+    expect(form).toContain('kaynakFaturaVar')
+  })
+
+  it('kaydettikten sonra ekranda kalir ve PDF/e-fatura aksiyonlari sunar', () => {
+    expect(form).toContain("router.replace({ name: 'FaturaDuzenle', params: { id: kayitId } })")
+    expect(form).toContain('pdfAPI.fatura')
+    expect(form).toContain('eFaturaAPI.olustur')
+    expect(form).toContain('eFaturaAPI.gibGonder')
+    expect(form).toContain('eFaturaAPI.durumSorgula')
+    expect(ekran).toContain('data-test="fatura-pdf"')
+    expect(ekran).toContain('data-test="fatura-efatura-olustur"')
+    expect(ekran).toContain('data-test="fatura-gib-gonder"')
+    expect(ekran).toContain("mevcutFatura?.durum === 'KESILDI'")
+    expect(ekran).toContain('kesildiktenSonra')
+  })
+
   it('rotalar FATURA_WRITE ile tanimli ve detay rotasindan once', () => {
     const yeniIdx = router.indexOf("name: 'FaturaYeni'")
     const duzenleIdx = router.indexOf("name: 'FaturaDuzenle'")

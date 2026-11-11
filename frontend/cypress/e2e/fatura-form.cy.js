@@ -278,4 +278,116 @@ describe('Fatura form ekranı', () => {
     cy.get('[data-test="fatura-mevcut-teslimat"]').should('be.visible').and('contain', 'Ali Şoför')
     cy.get('[data-test="fatura-sofor"]').should('not.exist')
   })
+
+  it('kaydedilmis faturada urun etiketi istegi gonderir', () => {
+    cy.intercept('GET', '/api/faturalar/2', {
+      statusCode: 200,
+      body: {
+        ...faturaMock,
+        kalemler: [{ ...faturaMock.kalemler[0], stokId: 10 }]
+      }
+    }).as('faturaEtiket')
+
+    let govde = null
+    cy.intercept('POST', '/api/stoklar/etiketler', (req) => {
+      govde = req.body
+      req.reply({
+        statusCode: 200,
+        body: 'PDF',
+        headers: { 'content-type': 'application/pdf' }
+      })
+    }).as('etiket')
+
+    cy.visit('/faturalar/2/duzenle')
+    cy.wait('@faturaEtiket')
+    cy.get('[data-test="fatura-urun-etiketi"]').click()
+    cy.wait('@etiket')
+    cy.then(() => {
+      expect(govde.tip).to.eq('BARKOD')
+      expect(govde.kalemler[0].stokId).to.eq(10)
+      expect(govde.kalemler[0].adet).to.eq(2)
+    })
+  })
+
+  it('siparisten kalemleri doldurur ve siparisId bagini gonderir', () => {
+    cy.intercept('GET', '/api/siparisler?*', {
+      statusCode: 200,
+      body: {
+        content: [{ id: 5, siparisNo: 'SIP-2026-1', cariHesapId: 3, cariHesapAdi: 'Acme Ltd. Şti.', tarih: '2026-08-01', durum: 'BEKLEMEDE' }],
+        totalElements: 1
+      }
+    }).as('siparisler')
+    cy.intercept('GET', '/api/siparisler/5', {
+      statusCode: 200,
+      body: {
+        id: 5,
+        siparisNo: 'SIP-2026-1',
+        cariHesapId: 3,
+        cariHesapAdi: 'Acme Ltd. Şti.',
+        tarih: '2026-08-01',
+        durum: 'BEKLEMEDE',
+        kalemler: [
+          { id: 1, stokId: 10, stokAdi: 'Kalem A', aciklama: 'Kalem A', miktar: 3, birimFiyat: 50, kdvOrani: 20 }
+        ]
+      }
+    }).as('siparisDetay')
+
+    let govde = null
+    cy.intercept('POST', '/api/faturalar', (req) => {
+      govde = req.body
+      req.reply({ statusCode: 201, body: { id: 41, ...req.body } })
+    }).as('kaydet')
+
+    cy.visit('/faturalar/yeni')
+    cy.get('[data-test="fatura-kaynaktan-doldur"]').click()
+    cy.wait('@siparisler')
+    cy.get('[data-test="fatura-kaynak-secim"]').click()
+    cy.get('.p-select-option').contains('SIP-2026-1').click()
+    cy.get('[data-test="fatura-kaynak-getir"]').click()
+    cy.wait('@siparisDetay')
+
+    cy.get('[data-test="fatura-cari"]').find('input').should('have.value', 'Acme Ltd. Şti.')
+    cy.get('[data-test="fatura-genel-toplam"]').should('contain', '150')
+    cy.get('[data-test="fatura-kaydet"]').click()
+    cy.wait('@kaydet')
+    cy.then(() => {
+      expect(govde.siparisId).to.eq(5)
+      expect(govde.kalemler[0].aciklama).to.eq('Kalem A')
+      expect(Number(govde.kalemler[0].adet)).to.eq(3)
+    })
+  })
+
+  it('kesilmis faturada PDF ve e-fatura aksiyonlarini sunar', () => {
+    cy.intercept('GET', '/api/faturalar/2', {
+      statusCode: 200,
+      body: { ...faturaMock, durum: 'KESILDI', teslimatVar: false }
+    }).as('faturaKesildi')
+    cy.intercept('GET', '/api/e-fatura?*', {
+      statusCode: 200,
+      body: { content: [], totalElements: 0 }
+    }).as('efaturaListe')
+    cy.intercept('GET', '/api/rapor/fatura/2', {
+      statusCode: 200,
+      body: 'PDF',
+      headers: { 'content-type': 'application/pdf' }
+    }).as('pdf')
+    cy.intercept('POST', '/api/e-fatura/olustur/2*', {
+      statusCode: 201,
+      body: { id: 7, faturaId: 2, ettn: 'ETTN-1', gibDurumKodu: 1000, gibDurumAciklama: 'Olusturuldu' }
+    }).as('efaturaOlustur')
+    cy.intercept('POST', '/api/e-fatura/7/gib-gonder', {
+      statusCode: 200,
+      body: { id: 7, faturaId: 2, ettn: 'ETTN-1', gibDurumKodu: 1200, gibDurumAciklama: 'Gonderildi' }
+    }).as('gib')
+
+    cy.visit('/faturalar/2/duzenle')
+    cy.wait('@faturaKesildi')
+    cy.get('[data-test="fatura-pdf"]').should('be.visible')
+    cy.get('[data-test="fatura-efatura-olustur"]').click()
+    cy.wait('@efaturaOlustur')
+    cy.get('[data-test="fatura-efatura-bilgi"]').should('contain', 'ETTN-1')
+    cy.get('[data-test="fatura-gib-gonder"]').click()
+    cy.wait('@gib')
+    cy.get('[data-test="fatura-efatura-bilgi"]').should('contain', '1200')
+  })
 })
