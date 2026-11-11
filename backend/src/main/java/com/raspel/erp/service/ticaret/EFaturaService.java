@@ -85,6 +85,15 @@ public class EFaturaService {
         return entityToDTO(eFatura);
     }
 
+    /** Faturaya bagli e-fatura belgesi (varsa). Tam liste taramasini onler. */
+    @Transactional(readOnly = true)
+    public EFaturaDTO eFaturaFaturaIleGetir(Long faturaId) {
+        EFatura eFatura = eFaturaRepository.findByFaturaId(faturaId)
+                .orElseThrow(() -> new ResourceNotFoundException("E-Fatura", faturaId));
+        tenantChecker.check(eFatura.getSirketId(), "E-Fatura");
+        return entityToDTO(eFatura);
+    }
+
     public EFaturaDTO eFaturaOlustur(Long faturaId, String senaryo, String tip, Long sirketId) {
         FaturaDTO fatura = faturaService.faturaGetir(faturaId);
         if (fatura == null) {

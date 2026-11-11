@@ -41,6 +41,13 @@ public class EFaturaController {
         return ResponseEntity.ok(eFaturaService.eFaturaGetir(id));
     }
 
+    @GetMapping("/fatura/{faturaId}")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FATURA_READ')")
+    @Operation(summary = "Faturaya bağlı E-Faturayı getir")
+    public ResponseEntity<EFaturaDTO> faturaIleGetir(@PathVariable Long faturaId) {
+        return ResponseEntity.ok(eFaturaService.eFaturaFaturaIleGetir(faturaId));
+    }
+
     @PostMapping("/olustur/{faturaId}")
     @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FATURA_WRITE')")
     @Operation(summary = "E-Fatura taslağı oluştur", description = "Fatura için UBL-TR 2.1 E-Fatura taslağı oluşturur")

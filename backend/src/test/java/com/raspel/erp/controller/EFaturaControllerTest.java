@@ -44,6 +44,15 @@ class EFaturaControllerTest {
     }
 
     @Test
+    void shouldGetByFaturaId() throws Exception {
+        when(eFaturaService.eFaturaFaturaIleGetir(1L)).thenReturn(ornek());
+        mockMvc.perform(get("/api/e-fatura/fatura/1").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ettn").value("ettn-1"))
+                .andExpect(jsonPath("$.faturaId").value(1));
+    }
+
+    @Test
     void shouldGetAll() throws Exception {
         when(eFaturaService.eFaturalariGetir(anyLong(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(ornek())));

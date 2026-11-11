@@ -108,6 +108,16 @@ class EFaturaServiceTest {
     }
 
     @Test
+    void eFaturaFaturaIleGetir_belgeyiDoner() {
+        when(eFaturaRepository.findByFaturaId(1L)).thenReturn(Optional.of(mockEFatura));
+
+        EFaturaDTO dto = eFaturaService.eFaturaFaturaIleGetir(1L);
+
+        assertEquals(10L, dto.getId());
+        assertEquals(1L, dto.getFaturaId());
+    }
+
+    @Test
     void testEFaturaOlustur_TaslakFaturadaReddeder() {
         mockFatura.setDurum("TASLAK");
         when(faturaService.faturaGetir(1L)).thenReturn(mockFatura);
