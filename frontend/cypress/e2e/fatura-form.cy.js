@@ -84,6 +84,7 @@ describe('Fatura form ekranı', () => {
     cy.get('[data-test="fatura-genel-toplam"]').should('contain', '200')
     cy.get('[data-test="fatura-kaydet-kes"]').should('be.visible')
     cy.get('[data-test="fatura-kaydet"]').should('contain', 'Taslak Kaydet')
+    cy.screenshot('fatura-form-masaustu', { capture: 'viewport' })
   })
 
   it('390px mobilde paneller yigilir ve sticky kaydet cubugu gorunur', () => {
@@ -93,6 +94,7 @@ describe('Fatura form ekranı', () => {
     cy.get('.fatura-form-mobil-bar').should('be.visible')
     cy.get('.form-panel-sol').should('be.visible')
     cy.get('.form-panel-sag').should('be.visible')
+    cy.screenshot('fatura-form-mobil', { capture: 'viewport' })
     cy.window().then((win) => {
       const doc = win.document.documentElement
       const zoom = Number.parseFloat(getComputedStyle(doc).zoom) || 1
@@ -362,10 +364,10 @@ describe('Fatura form ekranı', () => {
       statusCode: 200,
       body: { ...faturaMock, durum: 'KESILDI', teslimatVar: false }
     }).as('faturaKesildi')
-    cy.intercept('GET', '/api/e-fatura?*', {
-      statusCode: 200,
-      body: { content: [], totalElements: 0 }
-    }).as('efaturaListe')
+    cy.intercept('GET', '/api/e-fatura/fatura/2', {
+      statusCode: 404,
+      body: { message: 'E-Fatura bulunamadı' }
+    }).as('efaturaYok')
     cy.intercept('GET', '/api/rapor/fatura/2', {
       statusCode: 200,
       body: 'PDF',
@@ -389,5 +391,51 @@ describe('Fatura form ekranı', () => {
     cy.get('[data-test="fatura-gib-gonder"]').click()
     cy.wait('@gib')
     cy.get('[data-test="fatura-efatura-bilgi"]').should('contain', '1200')
+  })
+
+  it('390px kaynak dialogu acilir ve yatay tasmaz', () => {
+    cy.intercept('GET', '/api/siparisler?*', {
+      statusCode: 200,
+      body: {
+        content: [{ id: 5, siparisNo: 'SIP-2026-1', cariHesapAdi: 'Acme Ltd. Şti.', tarih: '2026-08-01', durum: 'BEKLEMEDE' }],
+        totalElements: 1
+      }
+    }).as('siparislerMobil')
+
+    cy.viewport(390, 844)
+    cy.visit('/faturalar/yeni')
+    cy.get('[data-test="fatura-kaynaktan-doldur"]').click()
+    cy.wait('@siparislerMobil')
+    cy.get('.p-dialog').should('be.visible')
+    cy.screenshot('fatura-kaynak-mobil', { capture: 'viewport' })
+    cy.window().then((win) => {
+      const doc = win.document.documentElement
+      const zoom = Number.parseFloat(getComputedStyle(doc).zoom) || 1
+      expect(doc.scrollWidth).to.be.at.most(Math.ceil(win.innerWidth / zoom) + 1)
+    })
+  })
+
+  it('390px kesilmis faturada aksiyonlar erisilebilir', () => {
+    cy.intercept('GET', '/api/faturalar/2', {
+      statusCode: 200,
+      body: { ...faturaMock, durum: 'KESILDI', teslimatVar: false }
+    }).as('faturaMobilKesildi')
+    cy.intercept('GET', '/api/e-fatura/fatura/2', {
+      statusCode: 404,
+      body: { message: 'E-Fatura bulunamadı' }
+    }).as('efaturaYokMobil')
+
+    cy.viewport(390, 844)
+    cy.visit('/faturalar/2/duzenle')
+    cy.wait('@faturaMobilKesildi')
+    cy.get('[data-test="fatura-pdf"]').scrollIntoView().should('be.visible')
+    cy.get('[data-test="fatura-efatura-olustur"]').should('be.visible')
+    cy.get('.fatura-form-mobil-bar').should('be.visible')
+    cy.screenshot('fatura-aksiyon-mobil', { capture: 'viewport' })
+    cy.window().then((win) => {
+      const doc = win.document.documentElement
+      const zoom = Number.parseFloat(getComputedStyle(doc).zoom) || 1
+      expect(doc.scrollWidth).to.be.at.most(Math.ceil(win.innerWidth / zoom) + 1)
+    })
   })
 })

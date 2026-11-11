@@ -370,7 +370,8 @@ export function useFaturaForm() {
 
   const hazirla = async () => {
     cariHemenAra('')
-    await listeleriYukle()
+    // Listeler form yuklemesini bloklamaz; seciciler doldukca kullanilabilir.
+    listeleriYukle()
     if (route.query.cariId) {
       const id = Number(route.query.cariId)
       await cariyiCoz(id)
@@ -478,8 +479,8 @@ export function useFaturaForm() {
     eFatura.value = null
     if (mevcutFatura.value?.durum !== 'KESILDI' || !faturaId.value) return
     try {
-      const r = await eFaturaAPI.getTumu({ page: 0, size: 200 })
-      eFatura.value = unwrapList(r).find((e) => e.faturaId === faturaId.value) || null
+      const r = await eFaturaAPI.faturaIleGetir(faturaId.value)
+      eFatura.value = r?.data || null
     } catch {
       eFatura.value = null
     }

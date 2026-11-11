@@ -178,6 +178,9 @@ export const eFaturaAPI = {
   getById(id) {
     return apiClient.get(`/e-fatura/${id}`)
   },
+  faturaIleGetir(faturaId) {
+    return apiClient.get(`/e-fatura/fatura/${faturaId}`)
+  },
   olustur(faturaId, senaryo = 'TEMELFATURA', tip = 'SATIS') {
     return apiClient.post(`/e-fatura/olustur/${faturaId}`, null, { params: { senaryo, tip } })
   },

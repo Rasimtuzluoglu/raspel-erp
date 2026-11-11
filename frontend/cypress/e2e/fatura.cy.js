@@ -66,6 +66,7 @@ describe('Fatura Yönetimi', () => {
     cy.contains('FTR-2026-000001').should('be.visible')
     cy.contains('FTR-2026-000002').should('be.visible')
     cy.contains('Acme Ltd. Şti.').should('be.visible')
+    cy.screenshot('fatura-liste-masaustu', { capture: 'viewport' })
   })
 
   it('fatura detayına gider', () => {
