@@ -643,7 +643,11 @@ export function useFaturaForm() {
   watch(
     form,
     () => {
-      if (hazir.value) kirli.value = true
+      if (hazir.value) {
+        kirli.value = true
+        // Yeni bir degisiklik, onceki basarili kaydin "kaydedildi" bayragini gecersiz kilar.
+        kaydedildi.value = false
+      }
     },
     { deep: true }
   )
