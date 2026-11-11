@@ -45,9 +45,11 @@ describe('Fatura Yönetimi', () => {
     })
 
     cy.visit('/giris')
-    cy.get('input[placeholder="Kullanıcı Adı"]').type('admin')
-    cy.get('input[type="password"]').type('Admin123!')
-    cy.contains('Giriş Yap').click()
+    // Giris formu alanlari data-test ile isaretli; placeholder metni degisse de
+    // secici kirilmaz.
+    cy.get('[data-test="giris-username"]', { timeout: 15000 }).type('admin')
+    cy.get('[data-test="giris-password"]').type('Admin123!')
+    cy.get('[data-test="giris-buton"]').click()
     cy.wait('@login')
     cy.get('body').then(($body) => {
       if ($body.find('.p-dialog-mask').length > 0) {
@@ -108,5 +110,71 @@ describe('Fatura Yönetimi', () => {
 
     cy.get('.tur-filtre-secim').contains('button', 'Satış').click()
     cy.wait('@faturalar').its('request.url').should('include', 'tur=SATIS')
+  })
+
+  it('KPI özeti aktif filtrelerle yenilenir ve Temizle hepsini sıfırlar', () => {
+    const ozetIstekleri = []
+    cy.intercept('GET', '/api/faturalar/ozet*', (req) => {
+      ozetIstekleri.push(req.url)
+      req.reply({ statusCode: 200, body: { adet: 2, ciro: 23000, tahsilEdilen: 0, kalan: 23000 } })
+    }).as('ozet')
+
+    cy.wait('@faturalar')
+    cy.get('.fatura-kpi').should('be.visible')
+
+    cy.contains('.durum-cip', 'Kesildi').click()
+    cy.wait('@faturalar').its('request.url').should('include', 'durum=KESILDI')
+    cy.then(() => {
+      expect(ozetIstekleri.some((u) => u.includes('durum=KESILDI'))).to.eq(true)
+    })
+
+    cy.get('[data-test="fatura-aktif-filtreler"]').should('be.visible')
+    cy.get('[data-test="fatura-filtre-temizle"]').click()
+    cy.wait('@faturalar').its('request.url').should('not.include', 'durum=')
+    cy.get('[data-test="fatura-aktif-filtreler"]').should('not.exist')
+    cy.then(() => {
+      const son = ozetIstekleri[ozetIstekleri.length - 1] || ''
+      expect(son).to.not.include('durum=')
+    })
+  })
+
+  it('sıralama sunucuya sort parametresi gönderir', () => {
+    cy.wait('@faturalar')
+    cy.get('.p-datatable-thead th').contains('Fatura No').click()
+    cy.wait('@faturalar').its('request.url').should('include', 'sort=faturaNumarasi,asc')
+    cy.get('.p-datatable-thead th').contains('Fatura No').click()
+    cy.wait('@faturalar').its('request.url').should('include', 'sort=faturaNumarasi,desc')
+  })
+
+  it('satır menüsü tetikleyicinin yanında açılır', () => {
+    cy.wait('@faturalar')
+    cy.get('.p-datatable-tbody tr').first().find('.satir-eylemler button').first().as('tetik')
+    cy.get('@tetik').click()
+    cy.get('body > .eylem-menu').should('be.visible').then(($menu) => {
+      const menu = $menu[0].getBoundingClientRect()
+      cy.get('@tetik').then(($btn) => {
+        const btn = $btn[0].getBoundingClientRect()
+        // Menü satirin hemen altinda/yaninda acilir; ekranin sol ustune kacmaz.
+        expect(Math.abs(menu.left - btn.right)).to.be.lessThan(400)
+        expect(menu.top).to.be.lessThan(btn.bottom + 420)
+      })
+    })
+  })
+
+  it('390px mobilde kart listesi taşmadan görünür', () => {
+    cy.viewport(390, 844)
+    cy.visit('/faturalar')
+    cy.wait('@faturalar')
+    cy.get('.fatura-kart').should('have.length.at.least', 1)
+    cy.get('.fatura-kart').first().find('[data-test="fatura-kart-goruntule"]').should('be.visible')
+    cy.get('.fatura-kart').first().find('.fatura-kart-tutar').should('be.visible')
+    // Uygulama html uzerinde CSS zoom kullaniyor; tasma kontrolu zoom'lu
+    // gorunur genislige gore yapilmalidir.
+    cy.window().then((win) => {
+      const doc = win.document.documentElement
+      const zoom = Number.parseFloat(getComputedStyle(doc).zoom) || 1
+      const gorunurGenislik = win.innerWidth / zoom
+      expect(doc.scrollWidth).to.be.at.most(Math.ceil(gorunurGenislik) + 1)
+    })
   })
 })

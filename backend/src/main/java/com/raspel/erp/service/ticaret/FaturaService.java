@@ -19,7 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -115,9 +117,49 @@ public class FaturaService {
     @org.springframework.beans.factory.annotation.Value("${app.kdv.varsayilan-oran:20}")
     private BigDecimal varsayilanKdvOrani;
 
+    /** Liste ekranında izin verilen sıralama alanları (entity property yolları). */
+    private static final Map<String, String> FATURA_SIRALAMA_ALANLARI = Map.ofEntries(
+            Map.entry("tarih", "tarih"),
+            Map.entry("id", "id"),
+            Map.entry("faturaNumarasi", "faturaNumarasi"),
+            Map.entry("cariHesapAd", "cariHesap.ad"),
+            Map.entry("genelToplam", "genelToplam"),
+            Map.entry("kalanTutar", "kalanTutar"),
+            Map.entry("odemeDurumu", "odemeDurumu"),
+            Map.entry("durum", "durum"),
+            Map.entry("tur", "tur")
+    );
+
+    /**
+     * Fatura listesi için güvenli ve kararlı sıralama üretir.
+     * Beyaz liste dışındaki alanlar yok sayılır; sıralama yoksa en yeni fatura
+     * önce gelecek şekilde varsayılan uygulanır.
+     */
+    private Pageable faturaSirali(Pageable pageable) {
+        int sayfa = pageable != null && !pageable.isUnpaged() ? pageable.getPageNumber() : 0;
+        int boyut = pageable != null && !pageable.isUnpaged() ? pageable.getPageSize() : 50;
+        List<Sort.Order> sirala = new ArrayList<>();
+        if (pageable != null && pageable.getSort().isSorted()) {
+            for (Sort.Order order : pageable.getSort()) {
+                String alan = FATURA_SIRALAMA_ALANLARI.get(order.getProperty());
+                if (alan != null) {
+                    sirala.add(new Sort.Order(order.getDirection(), alan));
+                }
+            }
+        }
+        if (sirala.isEmpty()) {
+            sirala.add(Sort.Order.desc("tarih"));
+            sirala.add(Sort.Order.desc("id"));
+        }
+        Sort sort = Sort.by(sirala);
+        return pageable != null && pageable.isUnpaged()
+                ? Pageable.unpaged(sort)
+                : PageRequest.of(sayfa, boyut, sort);
+    }
+
     @Transactional(readOnly = true)
     public Page<FaturaDTO> tumFaturalariGetir(Long sirketId, Pageable pageable) {
-        return sayfaDTOyaCevir(faturaRepository.findBySirketIdOrderByTarihDesc(sirketId, pageable));
+        return sayfaDTOyaCevir(faturaRepository.findBySirketId(sirketId, faturaSirali(pageable)));
     }
 
     @Transactional(readOnly = true)
@@ -137,7 +179,7 @@ public class FaturaService {
                                Boolean vadesiGecen, Boolean teslimatVar, Pageable pageable) {
         String like = com.raspel.erp.util.AramaTemizleyici.like(q);
         return sayfaDTOyaCevir(faturaRepository.ara(sirketId, like, bas, bit, tur, durum, odemeDurumu,
-                vadesiGecen, teslimatVar, LocalDate.now(), pageable));
+                vadesiGecen, teslimatVar, LocalDate.now(), faturaSirali(pageable)));
     }
 
     @Transactional(readOnly = true)
@@ -1780,13 +1822,42 @@ public class FaturaService {
      */
     @Transactional(readOnly = true)
     public com.raspel.erp.dto.ticaret.FaturaOzetDTO ozet(Long sirketId, String tur, LocalDate baslangic, LocalDate bitis) {
+        return ozet(sirketId, null, tur, null, null, null, null, baslangic, bitis);
+    }
+
+    /**
+     * Filtre-duyarlı KPI özeti. Durum filtresi verilmezse finansal tutarlılık
+     * için varsayılan KESİLDİ kabul edilir; açıkça durum seçilirse o durum
+     * kullanılır.
+     */
+    @Transactional(readOnly = true)
+    public com.raspel.erp.dto.ticaret.FaturaOzetDTO ozet(Long sirketId, String q, String tur, String durum,
+                                                         String odemeDurumu, Boolean vadesiGecen,
+                                                         Boolean teslimatVar, LocalDate baslangic, LocalDate bitis) {
         Fatura.FaturaTur turEnum;
         try {
             turEnum = tur != null ? Fatura.FaturaTur.valueOf(tur) : Fatura.FaturaTur.SATIS;
         } catch (IllegalArgumentException e) {
             turEnum = Fatura.FaturaTur.SATIS;
         }
-        Object[] r = faturaRepository.ozet(sirketId, turEnum, Fatura.FaturaDurum.KESILDI, baslangic, bitis);
+
+        Fatura.FaturaDurum durumEnum;
+        try {
+            durumEnum = (durum != null && !durum.isBlank())
+                    ? Fatura.FaturaDurum.valueOf(durum)
+                    : Fatura.FaturaDurum.KESILDI;
+        } catch (IllegalArgumentException e) {
+            durumEnum = Fatura.FaturaDurum.KESILDI;
+        }
+
+        String like = com.raspel.erp.util.AramaTemizleyici.like(q);
+        String odeme = (odemeDurumu == null || odemeDurumu.isBlank()) ? null : odemeDurumu;
+        Object[] r = faturaRepository.ozetFiltreli(sirketId, like, baslangic, bitis,
+                turEnum, durumEnum, odeme, vadesiGecen, teslimatVar, LocalDate.now());
+        return ozetDTO(r);
+    }
+
+    private com.raspel.erp.dto.ticaret.FaturaOzetDTO ozetDTO(Object[] r) {
         if (r == null || r.length == 0) {
             return com.raspel.erp.dto.ticaret.FaturaOzetDTO.builder()
                     .adet(0L).ciro(BigDecimal.ZERO).tahsilEdilen(BigDecimal.ZERO).kalan(BigDecimal.ZERO).build();

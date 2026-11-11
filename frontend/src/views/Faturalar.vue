@@ -28,7 +28,7 @@
     />
 
     <div
-      v-if="!loading"
+      v-if="!ilkYukleme"
       class="fatura-kpi"
     >
       <KpiKart
@@ -137,10 +137,47 @@
           />
         </div>
       </Popover>
+      <div class="filtre-sag">
+        <TabloAyarlari
+          tablo-key="fatura"
+          :kolonlar="kolonlar"
+          @update:kolonlar="kolonGuncelle"
+          @update:yogunluk="tabloYogunluk = $event"
+        />
+      </div>
     </div>
 
     <div
-      v-if="loading"
+      v-if="aktifFiltreler.length > 0"
+      class="fatura-aktif-filtreler"
+      data-test="fatura-aktif-filtreler"
+    >
+      <span class="fatura-aktif-etiket">{{ t('faturalar.aktifFiltreler') }}</span>
+      <button
+        v-for="f in aktifFiltreler"
+        :key="f.tip"
+        type="button"
+        class="fatura-filtre-cip"
+        :aria-label="`${f.etiket} — ${t('faturalar.filtreKaldir')}`"
+        @click="filtreCipKaldir(f.tip)"
+      >
+        {{ f.etiket }}
+        <i
+          class="pi pi-times"
+          aria-hidden="true"
+        />
+      </button>
+      <Button
+        :label="t('faturalar.temizle')"
+        icon="pi pi-filter-slash"
+        class="p-button-text p-button-sm fatura-filtre-temizle"
+        data-test="fatura-filtre-temizle"
+        @click="filtreTemizle"
+      />
+    </div>
+
+    <div
+      v-if="ilkYukleme"
       class="loading-iskelet"
       :aria-label="t('common.loading')"
     >
@@ -151,32 +188,46 @@
     </div>
 
     <div
-      v-if="!loading"
+      v-if="!ilkYukleme"
       class="table-container"
     >
       <AppDataTable
         v-model:selection="selectedItems"
         selection-mode="multiple"
         :value="faturaStore.faturalar"
+        :loading="loading"
         striped-rows
         :lazy="true"
         :total-records="faturaStore.toplamKayit"
         :rows="sayfaBoyutu"
         :paginator="true"
+        :sort-field="siralama.field"
+        :sort-order="siralama.order"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rows-per-page-options="[10, 20, 50]"
         :current-page-report-template="'{first} - {last} ({totalRecords} ' + $t('common.recordsWord') + ')'"
         gorunum-anahtari="faturalar"
         @page="sayfaDegisti"
+        @sort="sirala"
       >
         <Column
+          selection-mode="multiple"
+          header-style="width: 3rem"
+          class="fatura-secim-kolon"
+        />
+        <Column
+          v-if="kolonGorunur('faturaNumarasi')"
           field="faturaNumarasi"
           :header="t('faturalar.colFaturaNo')"
+          sortable
+          class="fatura-no-kolon"
           style="width: 160px"
         />
         <Column
+          v-if="kolonGorunur('tarih')"
           field="tarih"
           :header="t('common.date')"
+          sortable
           style="width: 110px"
         >
           <template #body="s">
@@ -184,6 +235,7 @@
           </template>
         </Column>
         <Column
+          v-if="kolonGorunur('tur')"
           field="tur"
           :header="t('faturalar.colTur')"
           style="width: 90px"
@@ -195,8 +247,10 @@
           </template>
         </Column>
         <Column
+          v-if="kolonGorunur('cariHesapAd')"
           field="cariHesapAd"
           :header="t('faturalar.colCari')"
+          sortable
           style="width: 180px"
         >
           <template #body="s">
@@ -204,9 +258,11 @@
           </template>
         </Column>
         <Column
+          v-if="kolonGorunur('genelToplam')"
           field="genelToplam"
           :header="t('faturalar.colToplam')"
           class="sayisal"
+          sortable
           style="width: 130px"
         >
           <template #body="s">
@@ -214,6 +270,7 @@
           </template>
         </Column>
         <Column
+          v-if="kolonGorunur('odemeDurumu')"
           field="odemeDurumu"
           :header="t('faturalar.colOdemeDurumu')"
           style="width: 130px"
@@ -225,9 +282,11 @@
           </template>
         </Column>
         <Column
+          v-if="kolonGorunur('kalanTutar')"
           field="kalanTutar"
           :header="t('faturalar.colKalan')"
           class="sayisal"
+          sortable
           style="width: 120px"
         >
           <template #body="s">
@@ -242,6 +301,7 @@
           </template>
         </Column>
         <Column
+          v-if="kolonGorunur('durum')"
           field="durum"
           :header="t('common.status')"
           style="width: 150px"
@@ -261,6 +321,7 @@
           </template>
         </Column>
         <Column
+          v-if="kolonGorunur('yazdirmaSayisi')"
           field="yazdirmaSayisi"
           :header="t('faturalar.colYazdirma')"
           style="width: 110px"
@@ -281,6 +342,7 @@
           </template>
         </Column>
         <Column
+          v-if="kolonGorunur('olusturanKullaniciAdi')"
           field="olusturanKullaniciAdi"
           :header="t('faturalar.colIslemiYapan')"
           style="width: 140px"
@@ -297,6 +359,7 @@
           </template>
         </Column>
         <Column
+          v-if="kolonGorunur('teslimEden')"
           field="teslimEden"
           :header="t('faturalar.colTeslimEden')"
           style="width: 140px"
@@ -313,6 +376,7 @@
           </template>
         </Column>
         <Column
+          v-if="kolonGorunur('teslimatDurum')"
           :header="t('faturalar.colTeslimatDurum')"
           style="width: 130px"
         >
@@ -333,6 +397,7 @@
         </Column>
         <Column
           :header="t('common.actions')"
+          class="fatura-islem-kolon"
           style="width: 90px"
         >
           <template #body="s">
@@ -341,13 +406,23 @@
                 icon="pi pi-eye"
                 class="p-button-rounded p-button-sm p-button-info"
                 :title="t('faturalar.goruntule')"
+                :aria-label="t('faturalar.goruntule')"
+                data-test="fatura-goruntule"
                 @click="viewFatura(s.data.id)"
+              />
+              <Button
+                v-if="tahsilatYapilabilir(s.data)"
+                icon="pi pi-money-bill"
+                class="p-button-rounded p-button-sm p-button-success"
+                :title="t('faturalar.tahsilatAl')"
+                :aria-label="t('faturalar.tahsilatAl')"
+                data-test="fatura-tahsilat"
+                @click="tahsilataGit(s.data)"
               />
               <SatirEylemleri
                 :gorunur="{ duzenle: false, cogalt: false, sil: false }"
                 :items="faturaEylemleri(s.data)"
                 :baslik="`${s.data.faturaNumarasi} · ${s.data.cariHesapAd || ''}`"
-                sabit-konum
               />
             </div>
           </template>
@@ -378,8 +453,9 @@
 
     <!-- Kucuk ekran: tablo yerine kart listesi (CSS ile <768px gosterilir) -->
     <div
-      v-if="!loading"
+      v-if="!ilkYukleme"
       class="fatura-kart-liste"
+      :aria-busy="loading"
     >
       <div
         v-for="f in (faturaStore.faturalar || [])"
@@ -396,12 +472,26 @@
           <span class="fatura-kart-tutar">{{ formatPara(f.genelToplam, f.paraBirimi) }}</span>
         </div>
         <div class="fatura-kart-alt">
-          <span><i class="pi pi-user" /> {{ f.cariHesapAd || '-' }}</span>
+          <span class="fatura-kart-cari"><i class="pi pi-user" /> {{ f.cariHesapAd || '-' }}</span>
           <span><i class="pi pi-calendar" /> {{ formatDate(f.tarih) }}</span>
+          <span v-if="f.vadeTarihi"><i class="pi pi-clock" /> {{ formatDate(f.vadeTarihi) }}</span>
+          <Tag
+            v-if="gecikmisGun(f) > 0"
+            class="gecikme-rozet"
+            :value="t('faturalar.gunGecikti', { n: gecikmisGun(f) })"
+            severity="danger"
+          />
         </div>
         <div class="fatura-kart-rozetler">
           <span :class="['odeme-badge', (f.odemeDurumu || '').toLowerCase()]">{{ odemeDurumEtiket(f.odemeDurumu) }}</span>
           <span :class="['durum-badge', (f.durum || '').toLowerCase()]">{{ durumLabel(f.durum) }}</span>
+          <Tag
+            v-if="f.teslimatVar"
+            :value="teslimatDurumEtiket(f.teslimatDurum)"
+            :severity="TESLIMAT_DURUM_SEVERITY[f.teslimatDurum] || 'secondary'"
+            :title="f.driverAd || ''"
+            data-test="fatura-kart-teslimat"
+          />
           <span
             v-if="f.kalanTutar && f.kalanTutar > 0"
             class="kalan-tutar"
@@ -412,13 +502,23 @@
             icon="pi pi-eye"
             class="p-button-rounded p-button-sm p-button-info"
             :title="t('faturalar.goruntule')"
+            :aria-label="t('faturalar.goruntule')"
+            data-test="fatura-kart-goruntule"
             @click="viewFatura(f.id)"
+          />
+          <Button
+            v-if="tahsilatYapilabilir(f)"
+            icon="pi pi-money-bill"
+            class="p-button-rounded p-button-sm p-button-success"
+            :title="t('faturalar.tahsilatAl')"
+            :aria-label="t('faturalar.tahsilatAl')"
+            data-test="fatura-kart-tahsilat"
+            @click="tahsilataGit(f)"
           />
           <SatirEylemleri
             :gorunur="{ duzenle: false, cogalt: false, sil: false }"
             :items="faturaEylemleri(f)"
             :baslik="`${f.faturaNumarasi} · ${f.cariHesapAd || ''}`"
-            sabit-konum
           />
         </div>
       </div>
@@ -792,6 +892,7 @@ import { useKisayollar } from '../composables/useKisayollar.js'
 import { useTaslakKayit } from '../composables/useTaslakKayit.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
 import TarihHizliSecim from '../components/TarihHizliSecim.vue'
+import TabloAyarlari from '../components/TabloAyarlari.vue'
 import AppDialog from '../components/AppDialog.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import FaturaTasarimModal from '../components/FaturaTasarimModal.vue'
@@ -841,6 +942,9 @@ useKisayollar({
 
 const showDialog = ref(false)
 const loading = ref(false)
+// Ilk yukleme skeleton'i yalnizca bir kez gosterilir; sonraki filtre/sayfa
+// yuklemelerinde KPI ve tablo DOM'da kalir (flicker onlenir).
+const ilkYukleme = ref(true)
 const saving = ref(false)
 const editingId = ref(null)
 const tarihAraligi = ref(null)
@@ -850,6 +954,45 @@ const arama = ref('')
 let aramaZamanlayici = null
 const sayfa = ref(0)
 const sayfaBoyutu = ref(10)
+const siralama = ref({ field: 'tarih', order: -1 })
+
+// Tablo kolon ayarlari: varsayilan gorunumde yalnizca gunluk kullanim kolonlari
+// acik; tur, yazdirma, islemi yapan, teslim eden ve teslimat durumu ayarlardan
+// acilabilir. Fatura no ve islem kolonlari yatay kaydirmada sabittir.
+const tabloYogunluk = ref('comfortable')
+const varsayilanKolonGorunurluk = {
+  tur: false,
+  yazdirmaSayisi: false,
+  olusturanKullaniciAdi: false,
+  teslimEden: false,
+  teslimatDurum: false
+}
+const kolonGorunurluk = ref({ ...varsayilanKolonGorunurluk })
+const varsayilanKolonlar = computed(() => [
+  { field: 'faturaNumarasi', header: t('faturalar.colFaturaNo') },
+  { field: 'tarih', header: t('common.date') },
+  { field: 'tur', header: t('faturalar.colTur') },
+  { field: 'cariHesapAd', header: t('faturalar.colCari') },
+  { field: 'genelToplam', header: t('faturalar.colToplam') },
+  { field: 'odemeDurumu', header: t('faturalar.colOdemeDurumu') },
+  { field: 'kalanTutar', header: t('faturalar.colKalan') },
+  { field: 'durum', header: t('common.status') },
+  { field: 'yazdirmaSayisi', header: t('faturalar.colYazdirma') },
+  { field: 'olusturanKullaniciAdi', header: t('faturalar.colIslemiYapan') },
+  { field: 'teslimEden', header: t('faturalar.colTeslimEden') },
+  { field: 'teslimatDurum', header: t('faturalar.colTeslimatDurum') }
+])
+const kolonlar = computed(() =>
+  varsayilanKolonlar.value.map((k) => ({ ...k, visible: kolonGorunurluk.value[k.field] !== false }))
+)
+const kolonGorunur = (field) => kolonGorunurluk.value[field] !== false
+const kolonGuncelle = (yeni) => {
+  const map = {}
+  ;(yeni || []).forEach((k) => {
+    map[k.field] = k.visible !== false
+  })
+  kolonGorunurluk.value = map
+}
 
 // Liste filtreleri (sunucu tarafli): tur/durum/odeme/vadesi gecen/teslimat.
 const turFiltre = ref(null)
@@ -874,7 +1017,12 @@ const faturaOzet = ref({})
 const ozetYukle = async () => {
   try {
     const p = { ...tarihParametreleri() }
+    if (arama.value.trim()) p.search = arama.value.trim()
     if (turFiltre.value) p.tur = turFiltre.value
+    if (durumFiltre.value) p.durum = durumFiltre.value
+    if (odemeFiltre.value) p.odemeDurumu = odemeFiltre.value
+    if (vadesiGecenFiltre.value) p.vadesiGecen = true
+    if (teslimatiOlanFiltre.value) p.teslimatVar = true
     const r = await faturaAPI.ozet(p)
     faturaOzet.value = r.data || {}
   } catch {
@@ -885,7 +1033,12 @@ const ozetYukle = async () => {
 const loadFaturalar = async (yeniSayfa = sayfa.value, yeniBoyut = sayfaBoyutu.value) => {
   loading.value = true
   try {
-    const params = { page: yeniSayfa, size: yeniBoyut, ...tarihParametreleri() }
+    const params = {
+      page: yeniSayfa,
+      size: yeniBoyut,
+      sort: `${siralama.value.field},${siralama.value.order === -1 ? 'desc' : 'asc'}`,
+      ...tarihParametreleri()
+    }
     if (arama.value.trim()) params.search = arama.value.trim()
     if (turFiltre.value) params.tur = turFiltre.value
     if (durumFiltre.value) params.durum = durumFiltre.value
@@ -900,6 +1053,15 @@ const loadFaturalar = async (yeniSayfa = sayfa.value, yeniBoyut = sayfaBoyutu.va
   }
 }
 
+const sirala = (e) => {
+  siralama.value = {
+    field: e?.sortField || 'tarih',
+    order: e?.sortOrder === 1 ? 1 : -1
+  }
+  sayfa.value = 0
+  loadFaturalar(0, sayfaBoyutu.value)
+}
+
 const sayfaDegisti = (e) => {
   sayfa.value = e.page
   sayfaBoyutu.value = e.rows
@@ -911,6 +1073,7 @@ const aramaDebounce = () => {
   aramaZamanlayici = setTimeout(() => {
     sayfa.value = 0
     loadFaturalar(0, sayfaBoyutu.value)
+    ozetYukle()
   }, 300)
 }
 
@@ -939,13 +1102,64 @@ const odemeFiltreSecenekleri = computed(() => [
 const gelismisFiltreSayisi = computed(
   () => (odemeFiltre.value ? 1 : 0) + (vadesiGecenFiltre.value ? 1 : 0) + (teslimatiOlanFiltre.value ? 1 : 0)
 )
+
+// Aktif filtreler: her biri tek tek kaldirilabilen cipler olarak gosterilir.
+const aktifFiltreler = computed(() => {
+  const liste = []
+  const aralik = tarihAraligi.value
+  if (aralik && aralik.length === 2 && aralik[0] && aralik[1]) {
+    liste.push({ tip: 'tarih', etiket: `${formatDate(aralik[0])} – ${formatDate(aralik[1])}` })
+  }
+  if (arama.value.trim()) {
+    liste.push({ tip: 'arama', etiket: t('faturalar.filtreArama', { q: arama.value.trim() }) })
+  }
+  if (turFiltre.value) {
+    const o = turFiltreSecenekleri.value.find((s) => s.value === turFiltre.value)
+    liste.push({ tip: 'tur', etiket: o?.label || turFiltre.value })
+  }
+  if (durumFiltre.value) {
+    const o = durumFiltreSecenekleri.value.find((s) => s.value === durumFiltre.value)
+    liste.push({ tip: 'durum', etiket: o?.label || durumFiltre.value })
+  }
+  if (odemeFiltre.value) {
+    const o = odemeFiltreSecenekleri.value.find((s) => s.value === odemeFiltre.value)
+    liste.push({ tip: 'odeme', etiket: o?.label || odemeFiltre.value })
+  }
+  if (vadesiGecenFiltre.value) liste.push({ tip: 'vadesiGecen', etiket: t('faturalar.vadesiGecen') })
+  if (teslimatiOlanFiltre.value) liste.push({ tip: 'teslimat', etiket: t('faturalar.teslimatiOlan') })
+  return liste
+})
+
+const filtreCipKaldir = (tip) => {
+  if (tip === 'tarih') {
+    tarihAraligi.value = null
+    return
+  }
+  if (tip === 'arama') {
+    arama.value = ''
+    sayfa.value = 0
+    loadFaturalar(0, sayfaBoyutu.value)
+    ozetYukle()
+    return
+  }
+  // Diger filtreler watch uzerinden listeyi + KPI'yi yeniler.
+  if (tip === 'tur') turFiltre.value = null
+  else if (tip === 'durum') durumFiltre.value = null
+  else if (tip === 'odeme') odemeFiltre.value = null
+  else if (tip === 'vadesiGecen') vadesiGecenFiltre.value = false
+  else if (tip === 'teslimat') teslimatiOlanFiltre.value = false
+}
 const filtreTemizle = () => {
+  arama.value = ''
+  tarihAraligi.value = null
   turFiltre.value = null
   durumFiltre.value = null
   odemeFiltre.value = null
   vadesiGecenFiltre.value = false
   teslimatiOlanFiltre.value = false
+  sayfa.value = 0
   loadFaturalar(0, sayfaBoyutu.value)
+  ozetYukle()
 }
 
 watch([turFiltre, durumFiltre, odemeFiltre, vadesiGecenFiltre, teslimatiOlanFiltre], () => {
@@ -1020,6 +1234,7 @@ onMounted(async () => {
     toastBildirim.hata(t('faturalar.hataYukleme'))
   } finally {
     loading.value = false
+    ilkYukleme.value = false
   }
   // Cari ekranından gelen "Yeni Fatura" kısayolu: cariId query'si varsa cariyi seçip dialog aç
   if (route.query.cariId) {
@@ -1604,6 +1819,12 @@ const yazdirmaBaslik = (f) => {
 
 const soforDialogRef = ref(null)
 
+/** Acik satis faturasi: kalan tutar varsa tahsilat aksiyonu sunulur. */
+const tahsilatYapilabilir = (f) =>
+  f?.tur === 'SATIS' && f?.durum === 'KESILDI' && Number(f?.kalanTutar || 0) > 0
+
+const tahsilataGit = (f) => router.push({ name: 'Tahsilat', query: { cariId: f.cariHesapId } })
+
 const faturaEylemleri = (f) => {
   const gruplar = []
 
@@ -1659,7 +1880,7 @@ const faturaEylemleri = (f) => {
   }
   if (lojistik.length) gruplar.push({ grup: t('faturalar.grupLojistik'), items: lojistik })
 
-  if (f.tur === 'SATIS' && f.durum === 'KESILDI' && Number(f.kalanTutar || 0) > 0) {
+  if (tahsilatYapilabilir(f)) {
     gruplar.push({
       grup: t('faturalar.grupFinans'),
       items: [
@@ -1667,7 +1888,7 @@ const faturaEylemleri = (f) => {
           etiket: t('faturalar.tahsilatAl'),
           ikon: 'pi pi-money-bill',
           sinif: 'eylem-pozitif',
-          islem: () => router.push({ name: 'Tahsilat', query: { cariId: f.cariHesapId } })
+          islem: () => tahsilataGit(f)
         }
       ]
     })
@@ -1780,6 +2001,7 @@ import { formatTarih as formatDate } from '../utils/format.js'
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
   padding: 14px;
   margin-bottom: 10px;
   background: var(--bg-card);
@@ -1791,6 +2013,7 @@ import { formatTarih as formatDate } from '../utils/format.js'
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
 }
 .fatura-kart-baslik {
   display: flex;
@@ -1800,6 +2023,9 @@ import { formatTarih as formatDate } from '../utils/format.js'
 }
 .fatura-kart-baslik strong {
   color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .fatura-kart-tutar {
   font-weight: 800;
@@ -1809,10 +2035,19 @@ import { formatTarih as formatDate } from '../utils/format.js'
 }
 .fatura-kart-alt {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: 12px;
   font-size: 13px;
   color: var(--text-secondary);
+  min-width: 0;
+}
+.fatura-kart-alt .fatura-kart-cari {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 .fatura-kart-alt i {
   color: var(--text-muted);
@@ -1869,10 +2104,40 @@ h1 {
   border-radius: 12px;
   padding: 14px;
 }
+/* Yatay kaydirmada secim, fatura no ve islem kolonlari gorunur kalsin. */
+.table-container :deep(.fatura-secim-kolon),
+.table-container :deep(.fatura-no-kolon),
+.table-container :deep(.fatura-islem-kolon) {
+  position: sticky;
+  z-index: 2;
+  background: var(--bg-card);
+}
+.table-container :deep(.fatura-secim-kolon) {
+  left: 0;
+}
+.table-container :deep(.fatura-no-kolon) {
+  left: 3rem;
+  box-shadow: 8px 0 12px -12px rgba(0, 0, 0, 0.8);
+}
+.table-container :deep(.fatura-islem-kolon) {
+  right: 0;
+  box-shadow: -8px 0 12px -12px rgba(0, 0, 0, 0.8);
+}
+.table-container :deep(thead .fatura-secim-kolon),
+.table-container :deep(thead .fatura-no-kolon),
+.table-container :deep(thead .fatura-islem-kolon) {
+  z-index: 3;
+}
+/* Tutar hucreleri tek satirda kalsin (sayisal sinif sag hizalar). */
+.table-container :deep(td.sayisal),
+.table-container :deep(th.sayisal) {
+  white-space: nowrap;
+}
 .satir-islemler {
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-wrap: nowrap;
 }
 .loading {
   text-align: center;
@@ -2079,6 +2344,51 @@ h1 {
   gap: 10px;
   flex-wrap: wrap;
   margin: 0 0 14px;
+}
+/* Kolon ayarlari dugmesi filtre cubugunun sagina yaslanir. */
+.filtre-sag {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+/* Aktif filtre cipleri: yalnizca filtre seciliyken gorunur. */
+.fatura-aktif-filtreler {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: -4px 0 14px;
+}
+.fatura-aktif-etiket {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+.fatura-filtre-cip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.fatura-filtre-cip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.fatura-filtre-cip i {
+  font-size: 10px;
+}
+.fatura-filtre-temizle {
+  margin-left: 2px;
 }
 .tur-filtre-secim :deep(.p-selectbutton) {
   display: flex;

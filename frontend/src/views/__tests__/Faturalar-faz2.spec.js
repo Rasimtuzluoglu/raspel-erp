@@ -23,8 +23,24 @@ describe('Faturalar satir menusu — Faz2', () => {
     expect(src).toContain("sinif: 'eylem-sil'")
   })
 
-  it('satir menusu sabit konum + kayit basligi kullanir', () => {
-    expect(src).toContain('sabit-konum')
+  it('satir menusu tetikleyiciye hizalanir ve kayit basligi kullanir', () => {
+    expect(src).not.toContain('sabit-konum')
     expect(src).toContain(':baslik=')
+  })
+
+  it('birincil aksiyonlar: goruntule + acik satis faturasinda tahsilat', () => {
+    expect(src).toContain('fatura-goruntule')
+    expect(src).toContain('fatura-tahsilat')
+    expect(src).toContain('tahsilatYapilabilir')
+    expect(src).toContain("f?.tur === 'SATIS'")
+    expect(src).toContain("f?.durum === 'KESILDI'")
+    expect(src).toContain('tahsilataGit')
+  })
+
+  it('ikon-only butonlarda aria-label vardir', () => {
+    expect(src).toContain(':aria-label="t(\'faturalar.goruntule\')"')
+    expect(src).toContain(':aria-label="t(\'faturalar.tahsilatAl\')"')
+    expect(src).toContain('data-test="fatura-kart-goruntule"')
+    expect(src).toContain('data-test="fatura-kart-tahsilat"')
   })
 })

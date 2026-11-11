@@ -89,6 +89,25 @@ class FaturaControllerTest {
     }
 
     @Test
+    void shouldGetOzetWithAllFilters() throws Exception {
+        var ozet = com.raspel.erp.dto.ticaret.FaturaOzetDTO.builder()
+                .adet(3L).ciro(new BigDecimal("1500")).tahsilEdilen(new BigDecimal("1000"))
+                .kalan(new BigDecimal("500")).build();
+        when(faturaService.ozet(eq(1L), eq("acme"), eq("SATIS"), eq("KESILDI"),
+                eq("KISMI"), eq(true), eq(true), eq(LocalDate.of(2026, 1, 1)), eq(LocalDate.of(2026, 1, 31))))
+                .thenReturn(ozet);
+
+        mockMvc.perform(get("/api/faturalar/ozet?search=acme&tur=SATIS&durum=KESILDI&odemeDurumu=KISMI"
+                        + "&vadesiGecen=true&teslimatVar=true&bas=2026-01-01&bit=2026-01-31")
+                        .requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.adet").value(3));
+
+        verify(faturaService).ozet(eq(1L), eq("acme"), eq("SATIS"), eq("KESILDI"),
+                eq("KISMI"), eq(true), eq(true), eq(LocalDate.of(2026, 1, 1)), eq(LocalDate.of(2026, 1, 31)));
+    }
+
+    @Test
     void shouldTopluYenidenHesaplaOnizleme() throws Exception {
         var ozet = com.raspel.erp.dto.ticaret.FaturaTopluHesaplaDTO.builder()
                 .kaydet(false).taranan(10).degisecek(2).build();

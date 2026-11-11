@@ -83,11 +83,19 @@ public class FaturaController {
             description = "Gerçekleşmiş (KESİLDİ) faturaların adet/ciro/tahsil edilen/kalan toplamlarını döndürür.")
     public ResponseEntity<com.raspel.erp.dto.ticaret.FaturaOzetDTO> ozet(
             HttpServletRequest request,
+            @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "tur", required = false) Fatura.FaturaTur tur,
+            @RequestParam(value = "durum", required = false) Fatura.FaturaDurum durum,
+            @RequestParam(value = "odemeDurumu", required = false) String odemeDurumu,
+            @RequestParam(value = "vadesiGecen", required = false) Boolean vadesiGecen,
+            @RequestParam(value = "teslimatVar", required = false) Boolean teslimatVar,
             @RequestParam(value = "bas", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bas,
             @RequestParam(value = "bit", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate bit) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(faturaService.ozet(sirketId, tur != null ? tur.name() : null, bas, bit));
+        return ResponseEntity.ok(faturaService.ozet(sirketId, search,
+                tur != null ? tur.name() : null,
+                durum != null ? durum.name() : null,
+                odemeDurumu, vadesiGecen, teslimatVar, bas, bit));
     }
 
     @GetMapping("/numara/{faturaNumarasi}")

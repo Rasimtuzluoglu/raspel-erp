@@ -129,14 +129,59 @@ class FaturaServiceTest {
 
     @Test
     void tumFaturalariGetir_returnsAll() {
-        when(faturaRepository.findBySirketIdOrderByTarihDesc(anyLong(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(createFatura(1L))));
+        when(faturaRepository.findBySirketId(anyLong(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(createFatura(1L))));
         var result = faturaService.tumFaturalariGetir(1L, Pageable.unpaged());
         assertEquals(1, result.getContent().size());
     }
 
     @Test
+    void tumFaturalariGetir_varsayilanOlarakTariheGoreSiralar() {
+        when(faturaRepository.findBySirketId(anyLong(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(createFatura(1L))));
+
+        faturaService.tumFaturalariGetir(1L, Pageable.unpaged());
+
+        org.mockito.ArgumentCaptor<Pageable> captor =
+                org.mockito.ArgumentCaptor.forClass(Pageable.class);
+        verify(faturaRepository).findBySirketId(eq(1L), captor.capture());
+        var sort = captor.getValue().getSort();
+        assertEquals("tarih: DESC,id: DESC", sort.toString());
+    }
+
+    @Test
+    void tumFaturalariGetir_izinVerilenAlanaGoreSiralar() {
+        when(faturaRepository.findBySirketId(anyLong(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(createFatura(1L))));
+
+        faturaService.tumFaturalariGetir(1L,
+                org.springframework.data.domain.PageRequest.of(0, 10,
+                        org.springframework.data.domain.Sort.by(
+                                org.springframework.data.domain.Sort.Order.asc("genelToplam"))));
+
+        org.mockito.ArgumentCaptor<Pageable> captor =
+                org.mockito.ArgumentCaptor.forClass(Pageable.class);
+        verify(faturaRepository).findBySirketId(eq(1L), captor.capture());
+        assertEquals("genelToplam: ASC", captor.getValue().getSort().toString());
+    }
+
+    @Test
+    void tumFaturalariGetir_beyazListeDisiAlaniYokSayar() {
+        when(faturaRepository.findBySirketId(anyLong(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(createFatura(1L))));
+
+        faturaService.tumFaturalariGetir(1L,
+                org.springframework.data.domain.PageRequest.of(0, 10,
+                        org.springframework.data.domain.Sort.by("sirketId")));
+
+        org.mockito.ArgumentCaptor<Pageable> captor =
+                org.mockito.ArgumentCaptor.forClass(Pageable.class);
+        verify(faturaRepository).findBySirketId(eq(1L), captor.capture());
+        assertEquals("tarih: DESC,id: DESC", captor.getValue().getSort().toString());
+    }
+
+    @Test
     void tumFaturalariGetir_teslimatVarBayraginiDoldurur() {
-        when(faturaRepository.findBySirketIdOrderByTarihDesc(anyLong(), any(Pageable.class)))
+        when(faturaRepository.findBySirketId(anyLong(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(createFatura(1L), createFatura(2L))));
         when(teslimatRepository.findByFaturaIdIn(anyCollection()))
                 .thenReturn(List.of(com.raspel.erp.entity.ticaret.Teslimat.builder()
@@ -875,7 +920,8 @@ class FaturaServiceTest {
 
     @Test
     void ozet_toplamlariDoner() {
-        when(faturaRepository.ozet(eq(1L), eq(Fatura.FaturaTur.SATIS), eq(Fatura.FaturaDurum.KESILDI), any(), any()))
+        when(faturaRepository.ozetFiltreli(eq(1L), isNull(), any(), any(),
+                eq(Fatura.FaturaTur.SATIS), eq(Fatura.FaturaDurum.KESILDI), isNull(), isNull(), isNull(), any(LocalDate.class)))
                 .thenReturn(new Object[]{ 7L, new BigDecimal("125000"), new BigDecimal("90000"), new BigDecimal("35000") });
 
         var ozet = faturaService.ozet(1L, "SATIS", LocalDate.now().minusMonths(1), LocalDate.now());
@@ -887,8 +933,34 @@ class FaturaServiceTest {
     }
 
     @Test
+    void ozet_tumAktifFiltreleriRepoYaGecirir() {
+        when(faturaRepository.ozetFiltreli(eq(1L), eq("%acme%"), eq(LocalDate.of(2026, 1, 1)), eq(LocalDate.of(2026, 1, 31)),
+                eq(Fatura.FaturaTur.ALIS), eq(Fatura.FaturaDurum.TASLAK), eq("KISMI"), eq(true), eq(true), any(LocalDate.class)))
+                .thenReturn(new Object[]{ 2L, new BigDecimal("1000"), new BigDecimal("400"), new BigDecimal("600") });
+
+        var ozet = faturaService.ozet(1L, "acme", "ALIS", "TASLAK", "KISMI", true, true,
+                LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 31));
+
+        assertEquals(2L, ozet.getAdet());
+        verify(faturaRepository).ozetFiltreli(eq(1L), eq("%acme%"), eq(LocalDate.of(2026, 1, 1)), eq(LocalDate.of(2026, 1, 31)),
+                eq(Fatura.FaturaTur.ALIS), eq(Fatura.FaturaDurum.TASLAK), eq("KISMI"), eq(true), eq(true), any(LocalDate.class));
+    }
+
+    @Test
+    void ozet_durumVerilmezseKesildiKullanir() {
+        when(faturaRepository.ozetFiltreli(anyLong(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new Object[]{ 0L, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO });
+
+        faturaService.ozet(1L, null, null, null, null, null, null, null, null);
+
+        verify(faturaRepository).ozetFiltreli(eq(1L), isNull(), isNull(), isNull(),
+                eq(Fatura.FaturaTur.SATIS), eq(Fatura.FaturaDurum.KESILDI), isNull(), isNull(), isNull(), any(LocalDate.class));
+    }
+
+    @Test
     void ozet_bosSonucSifirDoner() {
-        when(faturaRepository.ozet(anyLong(), any(), any(), any(), any())).thenReturn(new Object[]{});
+        when(faturaRepository.ozetFiltreli(anyLong(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new Object[]{});
 
         var ozet = faturaService.ozet(1L, null, null, null);
 

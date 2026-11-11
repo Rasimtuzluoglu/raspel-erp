@@ -41,6 +41,9 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     Page<Fatura> findBySirketIdOrderByTarihDesc(Long sirketId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"cariHesap"})
+    Page<Fatura> findBySirketId(Long sirketId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"cariHesap"})
     @Query("SELECT f FROM Fatura f LEFT JOIN f.cariHesap c WHERE f.sirketId = :sirketId " +
             "AND (:q IS NULL OR lower(f.faturaNumarasi) LIKE :q ESCAPE '\\' " +
             "            OR lower(c.ad) LIKE :q ESCAPE '\\') " +
@@ -52,8 +55,7 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
             "AND (:odemeDurumu IS NULL OR f.odemeDurumu = :odemeDurumu) " +
             "AND (:vadesiGecen IS NULL OR :vadesiGecen = false OR (f.kalanTutar > 0 AND f.vadeTarihi < :bugun)) " +
             "AND (:teslimatVar IS NULL OR (:teslimatVar = true AND EXISTS (SELECT 1 FROM Teslimat t WHERE t.faturaId = f.id)) " +
-            "     OR (:teslimatVar = false AND NOT EXISTS (SELECT 1 FROM Teslimat t WHERE t.faturaId = f.id))) " +
-            "ORDER BY f.tarih DESC, f.id DESC")
+            "     OR (:teslimatVar = false AND NOT EXISTS (SELECT 1 FROM Teslimat t WHERE t.faturaId = f.id)))")
     Page<Fatura> ara(@Param("sirketId") Long sirketId, @Param("q") String q,
                      @Param("bas") java.time.LocalDate bas, @Param("bit") java.time.LocalDate bit,
                      @Param("tur") Fatura.FaturaTur tur, @Param("durum") Fatura.FaturaDurum durum,
@@ -73,6 +75,26 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long> {
     Object[] ozet(@Param("sirketId") Long sirketId, @Param("tur") Fatura.FaturaTur tur,
                   @Param("durum") Fatura.FaturaDurum durum,
                   @Param("bas") java.time.LocalDate bas, @Param("bit") java.time.LocalDate bit);
+
+    /** KPI şeridi: aktif liste filtrelerinin tamamını kapsayan tek agregasyon. */
+    @Query("SELECT COUNT(f), COALESCE(SUM(f.genelToplam), 0), COALESCE(SUM(f.odenenTutar), 0), COALESCE(SUM(f.kalanTutar), 0) " +
+            "FROM Fatura f LEFT JOIN f.cariHesap c WHERE f.sirketId = :sirketId " +
+            "AND (:q IS NULL OR lower(f.faturaNumarasi) LIKE :q ESCAPE '\\' " +
+            "            OR lower(c.ad) LIKE :q ESCAPE '\\') " +
+            "AND f.tarih >= COALESCE(:bas, f.tarih) AND f.tarih <= COALESCE(:bit, f.tarih) " +
+            "AND (:tur IS NULL OR f.tur = :tur) " +
+            "AND (:durum IS NULL OR f.durum = :durum) " +
+            "AND (:odemeDurumu IS NULL OR f.odemeDurumu = :odemeDurumu) " +
+            "AND (:vadesiGecen IS NULL OR :vadesiGecen = false OR (f.kalanTutar > 0 AND f.vadeTarihi < :bugun)) " +
+            "AND (:teslimatVar IS NULL OR (:teslimatVar = true AND EXISTS (SELECT 1 FROM Teslimat t WHERE t.faturaId = f.id)) " +
+            "     OR (:teslimatVar = false AND NOT EXISTS (SELECT 1 FROM Teslimat t WHERE t.faturaId = f.id)))")
+    Object[] ozetFiltreli(@Param("sirketId") Long sirketId, @Param("q") String q,
+                          @Param("bas") java.time.LocalDate bas, @Param("bit") java.time.LocalDate bit,
+                          @Param("tur") Fatura.FaturaTur tur, @Param("durum") Fatura.FaturaDurum durum,
+                          @Param("odemeDurumu") String odemeDurumu,
+                          @Param("vadesiGecen") Boolean vadesiGecen,
+                          @Param("teslimatVar") Boolean teslimatVar,
+                          @Param("bugun") java.time.LocalDate bugun);
 
     /**
      * Toplu yeniden hesaplama icin keyset (id > sonId) ID taramasi. OFFSET/COUNT yerine
