@@ -90,6 +90,10 @@ public class EFaturaService {
         if (fatura == null) {
             throw new ResourceNotFoundException("Fatura", faturaId);
         }
+        // Taslak/iptal fatura icin resmi belge uretilmez.
+        if (!"KESILDI".equals(fatura.getDurum())) {
+            throw new BusinessException("E-fatura yalnızca kesilmiş fatura için oluşturulabilir");
+        }
 
         eFaturaRepository.findByFaturaId(faturaId).ifPresent(ef -> {
             throw new BusinessException("Bu fatura için zaten E-Fatura oluşturulmuş. ETTN: " + ef.getEttn());

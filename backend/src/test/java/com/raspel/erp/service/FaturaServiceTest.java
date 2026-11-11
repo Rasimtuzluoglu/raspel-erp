@@ -67,6 +67,7 @@ class FaturaServiceTest {
     @Mock private com.raspel.erp.service.sistem.DonemService donemService;
     @Mock private com.raspel.erp.service.ticaret.IskontoMotoruService iskontoMotoruService;
     @Mock private com.raspel.erp.repository.muhasebe.IrsaliyeRepository irsaliyeRepository;
+    @Mock private com.raspel.erp.repository.ticaret.SiparisRepository siparisRepository;
     @Mock private com.raspel.erp.repository.finans.HareketRepository hareketRepository;
     @Mock private com.raspel.erp.repository.finans.KasaRepository kasaRepository;
     @Mock private com.raspel.erp.repository.finans.KasaHareketRepository kasaHareketRepository;
@@ -414,6 +415,68 @@ class FaturaServiceTest {
         // İrsaliye zaten stok işlediği için faturada stok hareketi oluşmamalı.
         verify(stokHareketRepository, never()).saveAll(any());
         verify(stokRepository, never()).save(any());
+    }
+
+    @Test
+    void faturaOlustur_irsaliyeBaskaFaturayaBagliysaReddeder() {
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(createCariHesap()));
+        com.raspel.erp.entity.muhasebe.Irsaliye irsaliye = new com.raspel.erp.entity.muhasebe.Irsaliye();
+        irsaliye.setId(7L);
+        irsaliye.setDurum("KESILDI");
+        irsaliye.setSirketId(1L);
+        irsaliye.setCariHesapId(1L);
+        irsaliye.setFaturaId(99L);
+        when(irsaliyeRepository.findById(7L)).thenReturn(Optional.of(irsaliye));
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("K").adet(java.math.BigDecimal.ONE)
+                .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).stokId(1L).build();
+        FaturaDTO dto = FaturaDTO.builder().tur("SATIS").durum("KESILDI").tarih(LocalDate.now())
+                .cariHesapId(1L).irsaliyeId(7L).kalemler(List.of(kalem)).build();
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> faturaService.faturaOlustur(dto, 1L, null, null));
+    }
+
+    @Test
+    void faturaOlustur_siparisCariUyusmazliginiReddeder() {
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(createCariHesap()));
+        com.raspel.erp.entity.ticaret.Siparis siparis = new com.raspel.erp.entity.ticaret.Siparis();
+        siparis.setId(4L);
+        siparis.setSirketId(1L);
+        siparis.setCariHesapId(2L);
+        when(siparisRepository.findById(4L)).thenReturn(Optional.of(siparis));
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("K").adet(java.math.BigDecimal.ONE)
+                .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).stokId(1L).build();
+        FaturaDTO dto = FaturaDTO.builder().tur("SATIS").durum("TASLAK").tarih(LocalDate.now())
+                .cariHesapId(1L).siparisId(4L).kalemler(List.of(kalem)).build();
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> faturaService.faturaOlustur(dto, 1L, null, null));
+    }
+
+    @Test
+    void faturaGuncelle_depoDegisinceDepoStokTasinir() {
+        Fatura fatura = createFatura(1L);
+        fatura.setDurum(Fatura.FaturaDurum.KESILDI);
+        fatura.setDepoId(1L);
+        FaturaKalem eskiKalem = FaturaKalem.builder().id(1L).fatura(fatura).aciklama("K")
+                .adet(java.math.BigDecimal.valueOf(2)).birimFiyat(BigDecimal.valueOf(100))
+                .kdvOrani(BigDecimal.valueOf(20)).tutar(BigDecimal.valueOf(240)).stokId(1L).build();
+        fatura.getKalemler().add(eskiKalem);
+        when(faturaRepository.findById(1L)).thenReturn(Optional.of(fatura));
+        when(cariHesapRepository.findById(1L)).thenReturn(Optional.of(createCariHesap()));
+        when(depoStokService.coz(eq(1L), any())).thenReturn(1L);
+        when(depoStokService.coz(eq(2L), any())).thenReturn(2L);
+        when(faturaRepository.save(any(Fatura.class))).thenReturn(fatura);
+
+        FaturaKalemDTO kalem = FaturaKalemDTO.builder().aciklama("K").adet(java.math.BigDecimal.valueOf(2))
+                .birimFiyat(BigDecimal.valueOf(100)).kdvOrani(BigDecimal.valueOf(20)).stokId(1L).build();
+        FaturaDTO dto = FaturaDTO.builder().tur("SATIS").tarih(LocalDate.now())
+                .cariHesapId(1L).depoId(2L).kalemler(List.of(kalem)).build();
+
+        faturaService.faturaGuncelle(1L, dto);
+
+        verify(depoStokService).guncelle(eq(1L), eq(1L), eq(java.math.BigDecimal.valueOf(2)));
+        verify(depoStokService).guncelle(eq(2L), eq(1L), eq(java.math.BigDecimal.valueOf(-2)));
     }
 
     @Test

@@ -42,6 +42,7 @@ public class EFaturaController {
     }
 
     @PostMapping("/olustur/{faturaId}")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FATURA_WRITE')")
     @Operation(summary = "E-Fatura taslağı oluştur", description = "Fatura için UBL-TR 2.1 E-Fatura taslağı oluşturur")
     public ResponseEntity<EFaturaDTO> olustur(
             @PathVariable Long faturaId,
@@ -54,12 +55,14 @@ public class EFaturaController {
     }
 
     @PostMapping("/{id}/gib-gonder")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FATURA_WRITE')")
     @Operation(summary = "E-Faturayı GİB'e gönder", description = "Hazırlanan E-Faturayı GİB entegratörüne iletir")
     public ResponseEntity<EFaturaDTO> gibGonder(@PathVariable Long id) {
         return ResponseEntity.ok(eFaturaService.gibGonder(id));
     }
 
     @PostMapping("/kredi-notu/{iadeId}")
+    @PreAuthorize("hasRole('ADMIN') or @yetkiKontrol.kontrol(authentication, 'FATURA_WRITE')")
     @Operation(summary = "Kredi notu (e-Arşiv iade) oluştur",
             description = "Tamamlanmış iade kaydından e-Arşiv IADE tipinde kredi notu taslağı üretir ve iadeye bağlar")
     public ResponseEntity<EFaturaDTO> krediNotu(@PathVariable Long iadeId, HttpServletRequest request) {

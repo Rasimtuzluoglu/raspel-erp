@@ -99,6 +99,7 @@ public class FaturaService {
     private final com.raspel.erp.repository.finans.BankaRepository bankaRepository;
     private final com.raspel.erp.repository.finans.BankaHareketiRepository bankaHareketiRepository;
     private final com.raspel.erp.repository.muhasebe.IrsaliyeRepository irsaliyeRepository;
+    private final com.raspel.erp.repository.ticaret.SiparisRepository siparisRepository;
     private final com.raspel.erp.repository.finans.HareketRepository hareketRepository;
     private final com.raspel.erp.service.finans.TaksitService taksitService;
     private final FaturaGecmisService faturaGecmisService;
@@ -465,6 +466,10 @@ public class FaturaService {
         Map<Long, BigDecimal> agirlikHaritasi = stokHaritasi.values().stream()
                 .filter(s -> s.getAgirlik() != null)
                 .collect(Collectors.toMap(Stok::getId, Stok::getAgirlik));
+
+        // Kaynak baglari (siparis/irsaliye) yalnizca ayni sirket + ayni cari ve
+        // henuz faturaya baglanmamis irsaliye icin kabul edilir.
+        kaynakBaglariniDogrula(dto, sirketId);
 
         // Kalemde iskonto belirtilmediyse kademeli iskonto motorundan oran çözülür.
         java.time.LocalDate iskontoTarihi = dto.getTarih() != null ? dto.getTarih() : LocalDate.now();
@@ -1276,6 +1281,7 @@ public class FaturaService {
         if (dto.getTeslimDurumu() != null) fatura.setTeslimDurumu(dto.getTeslimDurumu());
         if (dto.getTeslimNotu() != null) fatura.setTeslimNotu(dto.getTeslimNotu());
         if (dto.getTeslimFotograf() != null) fatura.setTeslimFotograf(dto.getTeslimFotograf());
+        Long eskiDepoId = fatura.getDepoId();
         if (dto.getDepoId() != null) fatura.setDepoId(dto.getDepoId());
         if (dto.getParaBirimi() != null) fatura.setParaBirimi(dto.getParaBirimi());
         fatura.setAraToplam(araToplam);
@@ -1297,7 +1303,13 @@ public class FaturaService {
                 if (k.getStokId() == null) continue;
                 yeniMiktarlar.merge(k.getStokId(), (k.getAdet() != null ? k.getAdet() : BigDecimal.ZERO), BigDecimal::add);
             }
-            stokFarkiIsle(fatura, eskiMiktarlar, yeniMiktarlar, tur);
+            // Irsaliye stogu zaten islediyse revizyonda da tekrar dusulmez.
+            if (irsaliyeStokIslenmisMi(fatura.getIrsaliyeId())) {
+                log.info("Fatura #{} revizesinde stok farki islenmedi; stok irsaliyede islenmis",
+                        fatura.getFaturaNumarasi());
+            } else {
+                stokFarkiIsle(fatura, eskiMiktarlar, yeniMiktarlar, tur, eskiDepoId);
+            }
 
             // Cari bakiye farkını işle (revize)
             bakiyeUygula(eskiCariId, eskiTur, eskiGenelToplam, eskiParaBirimi, true);
@@ -1338,6 +1350,40 @@ public class FaturaService {
         faturaRepository.deleteById(id);
         faturaGecmisService.kaydet(fatura, FaturaGecmisService.SIL, "Fatura silindi", silmeOncesiSnapshot, null);
         dashboardYayinService.yayinla(silinenSirketId, "FATURA", "Fatura silindi: " + silinenFaturaNo);
+    }
+
+    /**
+     * Kaynak baglari (siparis/irsaliye) yalnizca ayni sirket + ayni cari ve henuz
+     * faturaya baglanmamis irsaliye icin kabul edilir.
+     */
+    private void kaynakBaglariniDogrula(FaturaDTO dto, Long sirketId) {
+        if (dto.getIrsaliyeId() != null) {
+            com.raspel.erp.entity.muhasebe.Irsaliye irsaliye = irsaliyeRepository
+                    .findById(dto.getIrsaliyeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Irsaliye", dto.getIrsaliyeId()));
+            if (!java.util.Objects.equals(irsaliye.getSirketId(), sirketId)) {
+                throw new BusinessException("İrsaliye bu şirkete ait değil");
+            }
+            if (irsaliye.getFaturaId() != null) {
+                throw new BusinessException("İrsaliye zaten bir faturaya bağlı");
+            }
+            if (irsaliye.getCariHesapId() != null && dto.getCariHesapId() != null
+                    && !irsaliye.getCariHesapId().equals(dto.getCariHesapId())) {
+                throw new BusinessException("İrsaliye carisi fatura carisiyle uyuşmuyor");
+            }
+        }
+        if (dto.getSiparisId() != null) {
+            com.raspel.erp.entity.ticaret.Siparis siparis = siparisRepository
+                    .findById(dto.getSiparisId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Siparis", dto.getSiparisId()));
+            if (!java.util.Objects.equals(siparis.getSirketId(), sirketId)) {
+                throw new BusinessException("Sipariş bu şirkete ait değil");
+            }
+            if (siparis.getCariHesapId() != null && dto.getCariHesapId() != null
+                    && !siparis.getCariHesapId().equals(dto.getCariHesapId())) {
+                throw new BusinessException("Sipariş carisi fatura carisiyle uyuşmuyor");
+            }
+        }
     }
 
     /**
@@ -1414,7 +1460,8 @@ public class FaturaService {
      * Revize edilen faturanın eski/yeni kalem miktarları arasındaki farkı stoğa işler.
      * Maliyet fiyatına dokunmaz; yalnızca miktarı düzeltir ve hareket kaydı oluşturur.
      */
-    private void stokFarkiIsle(Fatura fatura, Map<Long, BigDecimal> eski, Map<Long, BigDecimal> yeni, Fatura.FaturaTur tur) {
+    private void stokFarkiIsle(Fatura fatura, Map<Long, BigDecimal> eski, Map<Long, BigDecimal> yeni,
+                               Fatura.FaturaTur tur, Long eskiDepoId) {
         Set<Long> stokIdler = new HashSet<>();
         stokIdler.addAll(eski.keySet());
         stokIdler.addAll(yeni.keySet());
@@ -1424,48 +1471,75 @@ public class FaturaService {
             BigDecimal eskiAdet = eski.getOrDefault(stokId, BigDecimal.ZERO);
             BigDecimal yeniAdet = yeni.getOrDefault(stokId, BigDecimal.ZERO);
             BigDecimal delta = yeniAdet.subtract(eskiAdet);
-            if (delta.compareTo(BigDecimal.ZERO) == 0) continue;
+
+            // Depo degistiyse miktar ayni kalsa bile depo kirilimi tasinmalidir.
+            Long yeniDepoId = depoStokService.coz(fatura.getDepoId(), fatura.getSirketId());
+            Long eskiDepo = eskiDepoId != null
+                    ? depoStokService.coz(eskiDepoId, fatura.getSirketId())
+                    : null;
+            boolean depoDegisti = eskiDepo != null && yeniDepoId != null && !eskiDepo.equals(yeniDepoId);
+            if (delta.compareTo(BigDecimal.ZERO) == 0 && !depoDegisti) continue;
 
             // SATIS'te miktar artınca stok düşer; ALIS'te artınca stok artar.
             BigDecimal stokDegisim = tur == Fatura.FaturaTur.SATIS ? delta.negate() : delta;
 
-            Stok stok = stokRepository.findByIdForUpdate(stokId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Stok", stokId));
-            // Güvenlik: revize edilen faturanın şirketi dışındaki stoklara dokunulamaz.
-            tenantChecker.check(stok.getSirketId(), "Stok");
-            if (fatura.getSirketId() != null && stok.getSirketId() != null && !fatura.getSirketId().equals(stok.getSirketId())) {
-                throw new ResourceNotFoundException("Stok bu sirkete ait degil");
-            }
-            BigDecimal yeniMiktar = (stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO).add(stokDegisim);
-            if (yeniMiktar.compareTo(BigDecimal.ZERO) < 0) {
-                if (negatifStokIzinli(fatura.getSirketId())) {
-                    log.warn("Negatif stok izni açık; revize ile stok eksiye düşüyor. Ürün: {}", stok.getAd());
-                } else {
-                    throw new BusinessException("Yetersiz stok! Ürün: " + stok.getAd()
-                            + ", Mevcut: " + stok.getMiktar() + ", Revize sonrası: " + yeniMiktar);
+            if (delta.compareTo(BigDecimal.ZERO) != 0) {
+                Stok stok = stokRepository.findByIdForUpdate(stokId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Stok", stokId));
+                // Güvenlik: revize edilen faturanın şirketi dışındaki stoklara dokunulamaz.
+                tenantChecker.check(stok.getSirketId(), "Stok");
+                if (fatura.getSirketId() != null && stok.getSirketId() != null && !fatura.getSirketId().equals(stok.getSirketId())) {
+                    throw new ResourceNotFoundException("Stok bu sirkete ait degil");
                 }
-            }
-            BigDecimal oncekiMiktar = yeniMiktar.subtract(stokDegisim);
-            stok.setMiktar(yeniMiktar);
-            stokRepository.save(stok);
-            if (stokDegisim.signum() > 0) {
-                maliyetService.girisIsle(stok, oncekiMiktar, stokDegisim, null,
-                        fatura.getSirketId(), "FATURA", fatura.getId());
-            } else {
-                maliyetService.cikisIsle(stok, stokDegisim.abs(), yeniMiktar,
-                        fatura.getSirketId(), "FATURA", fatura.getId());
+                BigDecimal yeniMiktar = (stok.getMiktar() != null ? stok.getMiktar() : BigDecimal.ZERO).add(stokDegisim);
+                if (yeniMiktar.compareTo(BigDecimal.ZERO) < 0) {
+                    if (negatifStokIzinli(fatura.getSirketId())) {
+                        log.warn("Negatif stok izni açık; revize ile stok eksiye düşüyor. Ürün: {}", stok.getAd());
+                    } else {
+                        throw new BusinessException("Yetersiz stok! Ürün: " + stok.getAd()
+                                + ", Mevcut: " + stok.getMiktar() + ", Revize sonrası: " + yeniMiktar);
+                    }
+                }
+                BigDecimal oncekiMiktar = yeniMiktar.subtract(stokDegisim);
+                stok.setMiktar(yeniMiktar);
+                stokRepository.save(stok);
+                if (stokDegisim.signum() > 0) {
+                    maliyetService.girisIsle(stok, oncekiMiktar, stokDegisim, null,
+                            fatura.getSirketId(), "FATURA", fatura.getId());
+                } else {
+                    maliyetService.cikisIsle(stok, stokDegisim.abs(), yeniMiktar,
+                            fatura.getSirketId(), "FATURA", fatura.getId());
+                }
+
+                String hareketTuru = stokDegisim.compareTo(BigDecimal.ZERO) >= 0 ? "GIRIS" : "CIKIS";
+                hareketler.add(StokHareket.builder()
+                        .stok(stok).tur(hareketTuru)
+                        .miktar(stokDegisim.abs())
+                        .hareketTarihi(fatura.getTarih() != null ? fatura.getTarih() : LocalDate.now())
+                        .aciklama("Fatura revize #" + fatura.getFaturaNumarasi())
+                        .cariHesap(fatura.getCariHesap())
+                        .depoId(fatura.getDepoId())
+                        .kaynakTip("FATURA").kaynakId(fatura.getId())
+                        .build());
             }
 
-            String hareketTuru = stokDegisim.compareTo(BigDecimal.ZERO) >= 0 ? "GIRIS" : "CIKIS";
-            hareketler.add(StokHareket.builder()
-                    .stok(stok).tur(hareketTuru)
-                    .miktar(stokDegisim.abs())
-                    .hareketTarihi(fatura.getTarih() != null ? fatura.getTarih() : LocalDate.now())
-                    .aciklama("Fatura revize #" + fatura.getFaturaNumarasi())
-                    .cariHesap(fatura.getCariHesap())
-                    .depoId(fatura.getDepoId())
-                    .kaynakTip("FATURA").kaynakId(fatura.getId())
-                    .build());
+            // Depo kirilimi da revizyonla senkron kalsin. Depo degistiyse eski
+            // depodan eski adet geri alinir, yeni depoya yeni adet uygulanir.
+            if (depoDegisti) {
+                if (eskiAdet.signum() > 0) {
+                    BigDecimal geriAl = tur == Fatura.FaturaTur.SATIS ? eskiAdet : eskiAdet.negate();
+                    depoStokService.guncelle(eskiDepo, stokId, geriAl);
+                }
+                if (yeniAdet.signum() > 0) {
+                    BigDecimal uygula = tur == Fatura.FaturaTur.SATIS ? yeniAdet.negate() : yeniAdet;
+                    depoStokService.guncelle(yeniDepoId, stokId, uygula);
+                }
+            } else {
+                Long hedefDepo = yeniDepoId != null ? yeniDepoId : eskiDepo;
+                if (hedefDepo != null) {
+                    depoStokService.guncelle(hedefDepo, stokId, stokDegisim);
+                }
+            }
         }
         if (!hareketler.isEmpty()) {
             stokHareketRepository.saveAll(hareketler);

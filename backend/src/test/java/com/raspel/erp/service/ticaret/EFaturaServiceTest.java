@@ -70,6 +70,7 @@ class EFaturaServiceTest {
                 .genelToplam(BigDecimal.valueOf(1500.00))
                 .cariHesapAd("Test Müşteri Ltd.")
                 .tarih(java.time.LocalDate.now())
+                .durum("KESILDI")
                 .build();
 
         mockEFatura = EFatura.builder()
@@ -104,6 +105,15 @@ class EFaturaServiceTest {
         when(eFaturaRepository.findByFaturaId(1L)).thenReturn(Optional.of(mockEFatura));
 
         assertThrows(BusinessException.class, () -> eFaturaService.eFaturaOlustur(1L, "TEMELFATURA", "SATIS", 100L));
+    }
+
+    @Test
+    void testEFaturaOlustur_TaslakFaturadaReddeder() {
+        mockFatura.setDurum("TASLAK");
+        when(faturaService.faturaGetir(1L)).thenReturn(mockFatura);
+
+        assertThrows(BusinessException.class, () -> eFaturaService.eFaturaOlustur(1L, "TEMELFATURA", "SATIS", 100L));
+        verify(eFaturaRepository, never()).save(any());
     }
 
     @Test
