@@ -398,13 +398,13 @@
         <Column
           :header="t('common.actions')"
           class="fatura-islem-kolon"
-          style="width: 90px"
+          style="width: 110px"
         >
           <template #body="s">
-            <div class="satir-islemler">
+            <div class="satir-islemler fatura-satir-eylemler">
               <Button
                 icon="pi pi-eye"
-                class="p-button-rounded p-button-sm p-button-info"
+                class="p-button-rounded p-button-sm p-button-text p-button-info"
                 :title="t('faturalar.goruntule')"
                 :aria-label="t('faturalar.goruntule')"
                 data-test="fatura-goruntule"
@@ -413,7 +413,7 @@
               <Button
                 v-if="tahsilatYapilabilir(s.data)"
                 icon="pi pi-money-bill"
-                class="p-button-rounded p-button-sm p-button-success"
+                class="p-button-rounded p-button-sm p-button-text p-button-success"
                 :title="t('faturalar.tahsilatAl')"
                 :aria-label="t('faturalar.tahsilatAl')"
                 data-test="fatura-tahsilat"
@@ -498,28 +498,30 @@
           >{{ formatPara(f.kalanTutar, f.paraBirimi) }}</span>
         </div>
         <div class="fatura-kart-islemler">
-          <Button
-            icon="pi pi-eye"
-            class="p-button-rounded p-button-sm p-button-info"
-            :title="t('faturalar.goruntule')"
-            :aria-label="t('faturalar.goruntule')"
-            data-test="fatura-kart-goruntule"
-            @click="viewFatura(f.id)"
-          />
-          <Button
-            v-if="tahsilatYapilabilir(f)"
-            icon="pi pi-money-bill"
-            class="p-button-rounded p-button-sm p-button-success"
-            :title="t('faturalar.tahsilatAl')"
-            :aria-label="t('faturalar.tahsilatAl')"
-            data-test="fatura-kart-tahsilat"
-            @click="tahsilataGit(f)"
-          />
-          <SatirEylemleri
-            :gorunur="{ duzenle: false, cogalt: false, sil: false }"
-            :items="faturaEylemleri(f)"
-            :baslik="`${f.faturaNumarasi} · ${f.cariHesapAd || ''}`"
-          />
+          <div class="fatura-kart-eylem-grup">
+            <Button
+              icon="pi pi-eye"
+              class="p-button-rounded p-button-sm p-button-info"
+              :title="t('faturalar.goruntule')"
+              :aria-label="t('faturalar.goruntule')"
+              data-test="fatura-kart-goruntule"
+              @click="viewFatura(f.id)"
+            />
+            <Button
+              v-if="tahsilatYapilabilir(f)"
+              icon="pi pi-money-bill"
+              class="p-button-rounded p-button-sm p-button-success"
+              :title="t('faturalar.tahsilatAl')"
+              :aria-label="t('faturalar.tahsilatAl')"
+              data-test="fatura-kart-tahsilat"
+              @click="tahsilataGit(f)"
+            />
+            <SatirEylemleri
+              :gorunur="{ duzenle: false, cogalt: false, sil: false }"
+              :items="faturaEylemleri(f)"
+              :baslik="`${f.faturaNumarasi} · ${f.cariHesapAd || ''}`"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -1253,9 +1255,26 @@ import { formatTarih as formatDate } from '../utils/format.js'
 .fatura-kart-islemler {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: flex-end;
   padding-top: 10px;
   border-top: 1px solid var(--border);
+}
+.fatura-kart-eylem-grup {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-muted);
+}
+.fatura-kart-eylem-grup :deep(.p-button) {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+.fatura-kart-eylem-grup :deep(.p-button .pi) {
+  font-size: 14px;
 }
 @media (max-width: 768px) {
   .table-container {
@@ -1318,6 +1337,29 @@ h1 {
 .table-container :deep(thead .fatura-no-kolon),
 .table-container :deep(thead .fatura-islem-kolon) {
   z-index: 3;
+}
+/* Islem kolonu: uc aksiyon ayni boyutta, saga hizali ve tek satirda. */
+.table-container :deep(th.fatura-islem-kolon),
+.table-container :deep(td.fatura-islem-kolon) {
+  width: 110px;
+  min-width: 110px;
+}
+.fatura-satir-eylemler {
+  justify-content: flex-end;
+  gap: 2px;
+  min-width: 96px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-muted);
+}
+.fatura-satir-eylemler :deep(.p-button) {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+}
+.fatura-satir-eylemler :deep(.p-button .pi) {
+  font-size: 13px;
 }
 /* Tutar hucreleri tek satirda kalsin (sayisal sinif sag hizalar). */
 .table-container :deep(td.sayisal),

@@ -43,4 +43,11 @@ describe('Faturalar satir menusu — Faz2', () => {
     expect(src).toContain('data-test="fatura-kart-goruntule"')
     expect(src).toContain('data-test="fatura-kart-tahsilat"')
   })
+
+  it('satir aksiyonlari tek ve tutarli bir grupta toplanir', () => {
+    expect(src).toContain('fatura-satir-eylemler')
+    expect(src).toContain('fatura-kart-eylem-grup')
+    expect(src).toMatch(/\.fatura-satir-eylemler\s*\{[^}]*border-radius:\s*999px/)
+    expect(src).toMatch(/\.fatura-kart-eylem-grup\s*\{[^}]*border-radius:\s*999px/)
+  })
 })
