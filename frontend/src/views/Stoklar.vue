@@ -160,7 +160,7 @@
     </div>
 
     <div
-      class="filter-bar"
+      class="filter-bar filtre-kart"
       :class="{ 'filtre-gizli': !filtreAcik }"
     >
       <!-- REDTEAM/Faz3.3: `p-input-icon-left` PrimeVue 4'te kaldirildi; asagidaki

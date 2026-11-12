@@ -109,7 +109,7 @@
           v-if="aktifSekme === sekme.index"
           class="sekme-icerik"
         >
-          <div class="irsaliye-arac">
+          <div class="irsaliye-arac filtre-kart">
             <IconField class="filtre-arama">
               <InputIcon class="pi pi-search" />
               <InputText
@@ -1805,7 +1805,7 @@ onMounted(async () => {
 .irsaliye-arac {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
   margin-bottom: 12px;
 }

@@ -84,9 +84,8 @@ const gizliKolonSayisi = computed(() => localKolonlar.value.filter((k) => k.visi
 
 const localStorageAnahtari = () => `raspel_tablo_${props.tabloKey}`
 
-watch(
-  localKolonlar,
-  () => {
+const kaydet = () => {
+  try {
     localStorage.setItem(
       localStorageAnahtari(),
       JSON.stringify({
@@ -94,9 +93,14 @@ watch(
         yogunluk: yogunluk.value
       })
     )
-  },
-  { deep: true }
-)
+  } catch {
+    /* depolama kapali olabilir */
+  }
+}
+
+watch(localKolonlar, kaydet, { deep: true })
+// Yogunluk tek basina degistiginde de kalici olsun.
+watch(yogunluk, kaydet)
 
 const init = () => {
   try {

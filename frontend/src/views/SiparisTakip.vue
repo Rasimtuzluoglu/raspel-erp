@@ -68,7 +68,7 @@
     </div>
 
     <!-- Filtre çubuğu: sipariş no, durum, şoför -->
-    <div class="takip-filtre">
+    <div class="takip-filtre filtre-kart">
       <IconField class="filtre-arama">
         <InputIcon class="pi pi-search" />
         <InputText

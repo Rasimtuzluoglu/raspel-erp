@@ -50,7 +50,7 @@
       />
     </div>
 
-    <div class="masraf-arac">
+    <div class="masraf-arac filtre-kart">
       <span class="arac-arama">
         <i class="pi pi-search" />
         <InputText
@@ -79,6 +79,15 @@
         @update:model-value="filtreDegisti"
       />
       <span class="arac-bosluk" />
+      <Button
+        v-if="filtreVar"
+        :label="t('masraflar.filtreTemizle')"
+        icon="pi pi-times"
+        text
+        size="small"
+        data-test="masraf-filtre-temizle"
+        @click="filtreTemizle"
+      />
       <Button
         :label="t('masraflar.excel')"
         icon="pi pi-file-excel"
@@ -557,6 +566,13 @@ const filtreDegisti = () => {
   yukle()
 }
 
+const filtreTemizle = () => {
+  arama.value = ''
+  kategoriFiltre.value = 'TUMU'
+  tarihAraligi.value = null
+  filtreDegisti()
+}
+
 const aramaGirdi = () => {
   clearTimeout(aramaZamanlayici)
   aramaZamanlayici = setTimeout(filtreDegisti, 300)
@@ -704,7 +720,7 @@ const sil = (data) => {
 .masraf-arac {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
   margin-bottom: 12px;
 }

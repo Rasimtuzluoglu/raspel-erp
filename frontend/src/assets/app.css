@@ -2096,6 +2096,26 @@ h3 {
   align-items: flex-end;
   gap: 8px;
 }
+/* Ortak filtre karti: liste ekranlarinda arama/filtre kontrollerini gruplar. */
+.filtre-kart {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 12px;
+  padding: 7px 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.filtre-kart .filtre-secim {
+  min-width: 128px;
+}
+@media (max-width: 768px) {
+  .filtre-kart {
+    gap: 6px;
+  }
+}
 .p-paginator {
   flex-wrap: wrap !important;
   gap: 6px !important;

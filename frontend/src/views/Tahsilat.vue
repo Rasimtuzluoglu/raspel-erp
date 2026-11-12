@@ -133,7 +133,7 @@
     <TabView v-model:active-index="aktifSekme">
       <!-- 1) YAŞLANDIRMA -->
       <TabPanel :header="t('tahsilat.tabYaslandirma')">
-        <div class="tahsilat-arac">
+        <div class="tahsilat-arac filtre-kart">
           <IconField class="filtre-arama">
             <InputIcon class="pi pi-search" />
             <InputText
@@ -401,7 +401,7 @@
 
       <!-- 2) TAHSİLAT GEÇMİŞİ -->
       <TabPanel :header="t('tahsilat.tabGecmis')">
-        <div class="tahsilat-arac">
+        <div class="tahsilat-arac filtre-kart">
           <DatePicker
             :model-value="gecmisBaslangic"
             show-icon
@@ -664,7 +664,7 @@
 
       <!-- 3) HEDEF & PERFORMANS -->
       <TabPanel :header="t('tahsilat.tabPerformans')">
-        <div class="tahsilat-arac">
+        <div class="tahsilat-arac filtre-kart">
           <Select
             v-model="perfYil"
             :options="yilSecenekleri"
@@ -1643,7 +1643,7 @@ onUnmounted(() => {
 .tahsilat-arac {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
   margin-bottom: 12px;
 }

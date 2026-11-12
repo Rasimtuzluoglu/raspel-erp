@@ -32,7 +32,7 @@
       :metin="t('cariHesaplar.ipucuMetin')"
     />
 
-    <div class="cari-filtreler">
+    <div class="cari-filtreler filtre-kart">
       <IconField class="cari-arama">
         <InputIcon class="pi pi-search" />
         <InputText
@@ -3095,7 +3095,7 @@ import { formatTarih as formatDate, formatTarihSaat } from '../utils/format.js'
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   align-items: center;
 }
 .cari-arama {
