@@ -40,20 +40,53 @@ public class SohbetService {
     private final LlmClientService llmClientService;
     private final DosyaDepolamaService dosyaDepolama;
     private final com.raspel.erp.config.TenantChecker tenantChecker;
+    private final SohbetHizSiniri hizSiniri;
 
     private static final String DOSYA_KLASOR = "sohbet";
     private static final java.util.Set<String> IZINLI_UZANTILAR = java.util.Set.of(
             ".pdf", ".jpg", ".jpeg", ".png", ".webp", ".gif", ".txt", ".csv",
             ".doc", ".docx", ".xls", ".xlsx", ".zip");
 
-    /** Şirket bazlı kısa dönem sohbet belleği (AI asistan çok turlu bağlam). */
-    private final Map<Long, java.util.ArrayDeque<String>> sohbetHafizasi = new java.util.concurrent.ConcurrentHashMap<>();
+    /** Şirket + kullanıcı bazlı kısa dönem sohbet belleği (AI asistan çok turlu bağlam).
+     *
+     *  NEDEN KULLANICI BAZLI: Önce yalnız `sirketId` anahtarı vardı; aynı
+     *  şirketteki kullanıcılar birbirinin soru/cevaplarını system prompt'unda
+     *  görüyordu (veri sızıntısı + cevapların karışması).
+     */
+    private final Map<HafizaAnahtari, java.util.ArrayDeque<String>> sohbetHafizasi = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private record HafizaAnahtari(Long sirketId, Long kullaniciId) {
+    }
 
     @Transactional(readOnly = true)
     public List<SohbetMesajDTO> sonMesajlar(Long sirketId) {
-        List<SohbetMesaj> mesajlar = sohbetMesajRepository.findTop50BySirketIdOrderByOlusturmaTarihiDesc(sirketId);
+        return sonMesajlar(sirketId, null, null);
+    }
+
+    /**
+     * Genel sohbet mesajları cursor (id) tabanlı sayfalanır; oda mesajlarıyla
+     * aynı sözleşme. {@code cursor=null} en yeni {@code limit} mesajı verir.
+     */
+    @Transactional(readOnly = true)
+    public List<SohbetMesajDTO> sonMesajlar(Long sirketId, Long cursor, Integer limit) {
+        int boyut = (limit == null || limit <= 0) ? 50 : Math.min(limit, 100);
+        org.springframework.data.domain.Pageable sayfa = org.springframework.data.domain.PageRequest.of(0, boyut);
+        List<SohbetMesaj> mesajlar = (cursor == null)
+                ? sohbetMesajRepository.findBySirketIdAndOdaIdIsNullOrderByIdDesc(sirketId, sayfa)
+                : sohbetMesajRepository.findBySirketIdAndOdaIdIsNullAndIdLessThanOrderByIdDesc(sirketId, cursor, sayfa);
         java.util.Collections.reverse(mesajlar);
         return mesajlar.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    /** Genel sohbette kullanıcının son gördüğü mesajdan sonraki kayıt sayısı.
+     *
+     *  `sonOkunanId` null ise (cihazda henüz okuma kaydı yok) 0 döner: aksi
+     *  halde yeni cihazda tüm geçmiş "okunmamış" görünürdü.
+     */
+    @Transactional(readOnly = true)
+    public long genelOkunmamisSayisi(Long sirketId, Long sonOkunanId) {
+        if (sirketId == null || sonOkunanId == null) return 0;
+        return sohbetMesajRepository.countBySirketIdAndOdaIdIsNullAndIdGreaterThan(sirketId, sonOkunanId);
     }
 
     @Transactional
@@ -63,6 +96,12 @@ public class SohbetService {
         if (!mesajVar && !dosyaVar) {
             throw new com.raspel.erp.exception.BusinessException("Mesaj boş olamaz");
         }
+        // Faz 8: paylasilan dosya yalnizca kendi yukleme yolumuz olabilir;
+        // aksi halde dis siteye istek atan/tracking URL'leri kabul ediliyordu.
+        com.raspel.erp.util.SohbetDosyaUrl.dogrula(dto.getDosyaUrl());
+        // Flood korumasi: 10 saniyede en fazla 20 mesaj.
+        hizSiniri.kontrolEt("sohbet-mesaj:" + kullaniciId, 20, 10_000,
+                "Çok hızlı mesaj gönderiyorsunuz, lütfen biraz bekleyin.");
         SohbetMesaj mesaj = SohbetMesaj.builder()
                 .sirketId(sirketId)
                 .kullaniciId(kullaniciId)
@@ -106,6 +145,11 @@ public class SohbetService {
 
     @Transactional(readOnly = true)
     public AISorguSonucDTO aiSorgula(String soru, Long sirketId) {
+        return aiSorgula(soru, sirketId, null);
+    }
+
+    @Transactional(readOnly = true)
+    public AISorguSonucDTO aiSorgula(String soru, Long sirketId, Long kullaniciId) {
         if (soru == null || soru.isBlank()) {
             return AISorguSonucDTO.builder()
                     .soru(soru)
@@ -113,6 +157,11 @@ public class SohbetService {
                     .grafikTipi("none")
                     .build();
         }
+
+        // Maliyetli cagri: dakikada en fazla 15 AI sorgusu. Try DISINDA: hiz
+        // siniri istisnasi kural tabanli yanita dusurulmemeli.
+        hizSiniri.kontrolEt("sohbet-ai:" + kullaniciId, 15, 60_000,
+                "Çok sık soru gönderdiniz, lütfen bir dakika bekleyin.");
 
         try {
             com.raspel.erp.dto.sistem.AiConfigDTO aiConfig = aiConfigService.getConfig(sirketId);
@@ -122,9 +171,9 @@ public class SohbetService {
                 String systemPrompt = "Sen RasPel ERP sisteminin yapay zeka asistanısın. Aşağıda şirketin güncel özet verileri var. "
                         + "Soruları bu verilere dayanarak, Türkçe, profesyonel ve net cevapla. "
                         + "Sayısal cevaplarda para birimi TL, adet vb. belirt.\n\n"
-                        + "ŞİRKET VERİLERİ:\n" + veriBaglami + "\n\n" + hafizaBaglami(sirketId);
+                        + "ŞİRKET VERİLERİ:\n" + veriBaglami + "\n\n" + hafizaBaglami(sirketId, kullaniciId);
                 String response = llmClientService.sendQuery(aiConfig.getProvider(), aiConfig.getModel(), apiKey, systemPrompt, soru);
-                hafizaEkle(sirketId, soru, response);
+                hafizaEkle(sirketId, kullaniciId, soru, response);
                 
                 return AISorguSonucDTO.builder()
                         .soru(soru)
@@ -376,10 +425,16 @@ public class SohbetService {
      * onToken geri çağrısına iletilir. AI yapılandırılmamışsa kural tabanlı yanıt tek parça halinde iletilir.
      */
     public void aiSorgulaStream(String soru, Long sirketId, java.util.function.Consumer<String> onToken) {
+        aiSorgulaStream(soru, sirketId, null, onToken);
+    }
+
+    public void aiSorgulaStream(String soru, Long sirketId, Long kullaniciId, java.util.function.Consumer<String> onToken) {
         if (soru == null || soru.isBlank()) {
             onToken.accept("Lütfen sormak istediğiniz soruyu yazın.");
             return;
         }
+        hizSiniri.kontrolEt("sohbet-ai:" + kullaniciId, 15, 60_000,
+                "Çok sık soru gönderdiniz, lütfen bir dakika bekleyin.");
         try {
             com.raspel.erp.dto.sistem.AiConfigDTO aiConfig = aiConfigService.getConfig(sirketId);
             if (aiConfig != null && Boolean.TRUE.equals(aiConfig.getAktif()) && !"YAPILANDIRILMADI".equals(aiConfig.getDurum())) {
@@ -388,25 +443,25 @@ public class SohbetService {
                 String systemPrompt = "Sen RasPel ERP sisteminin yapay zeka asistanısın. Aşağıda şirketin güncel özet verileri var. "
                         + "Soruları bu verilere dayanarak, Türkçe, profesyonel ve net cevapla. "
                         + "Sayısal cevaplarda para birimi TL, adet vb. belirt.\n\n"
-                        + "ŞİRKET VERİLERİ:\n" + veriBaglami + "\n\n" + hafizaBaglami(sirketId);
+                        + "ŞİRKET VERİLERİ:\n" + veriBaglami + "\n\n" + hafizaBaglami(sirketId, kullaniciId);
                 StringBuilder toplanan = new StringBuilder();
                 llmClientService.streamQuery(aiConfig.getProvider(), aiConfig.getModel(), apiKey, systemPrompt, soru, token -> {
                     toplanan.append(token);
                     onToken.accept(token);
                 });
-                hafizaEkle(sirketId, soru, toplanan.toString());
+                hafizaEkle(sirketId, kullaniciId, soru, toplanan.toString());
                 return;
             }
         } catch (Exception e) {
             log.error("LLM akış sorgusu başarısız oldu, kural tabanlı sisteme geçiliyor: {}", e.getMessage());
         }
         // Kural tabanlı yanıtı tek parça olarak ilet.
-        String cevap = aiSorgula(soru, sirketId).getCevapMetni();
+        String cevap = aiSorgula(soru, sirketId, kullaniciId).getCevapMetni();
         onToken.accept(cevap);
     }
 
-    private String hafizaBaglami(Long sirketId) {
-        java.util.ArrayDeque<String> q = sohbetHafizasi.get(sirketId);
+    private String hafizaBaglami(Long sirketId, Long kullaniciId) {
+        java.util.ArrayDeque<String> q = sohbetHafizasi.get(new HafizaAnahtari(sirketId, kullaniciId));
         if (q == null || q.isEmpty()) return "";
         StringBuilder sb = new StringBuilder();
         sb.append("ÖNCEKİ KONUŞMA:\n");
@@ -414,9 +469,10 @@ public class SohbetService {
         return sb.toString();
     }
 
-    private void hafizaEkle(Long sirketId, String soru, String cevap) {
+    private void hafizaEkle(Long sirketId, Long kullaniciId, String soru, String cevap) {
         if (sirketId == null) return;
-        java.util.ArrayDeque<String> q = sohbetHafizasi.computeIfAbsent(sirketId, k -> new java.util.ArrayDeque<>());
+        java.util.ArrayDeque<String> q = sohbetHafizasi.computeIfAbsent(
+                new HafizaAnahtari(sirketId, kullaniciId), k -> new java.util.ArrayDeque<>());
         q.addLast("Kullanıcı: " + soru);
         q.addLast("Asistan: " + (cevap != null ? cevap : ""));
         while (q.size() > 10) q.removeFirst();
@@ -478,9 +534,16 @@ public class SohbetService {
      * yapılandırılmış metin (fatura kalemleri) döndürür.
      */
     public String aiOcrOku(String base64Image, String mimeType, Long sirketId) {
+        return aiOcrOku(base64Image, mimeType, sirketId, null);
+    }
+
+    public String aiOcrOku(String base64Image, String mimeType, Long sirketId, Long kullaniciId) {
         if (base64Image == null || base64Image.isBlank()) {
             throw new com.raspel.erp.exception.BusinessException("Görüntü verisi boş olamaz");
         }
+        // Vision çağrısı pahalı: dakikada en fazla 5 OCR isteği.
+        hizSiniri.kontrolEt("sohbet-ocr:" + kullaniciId, 5, 60_000,
+                "Çok sık fatura okuma isteği gönderdiniz, lütfen bekleyin.");
         try {
             com.raspel.erp.dto.sistem.AiConfigDTO aiConfig = aiConfigService.getConfig(sirketId);
             if (aiConfig == null || !Boolean.TRUE.equals(aiConfig.getAktif()) || "YAPILANDIRILMADI".equals(aiConfig.getDurum())) {

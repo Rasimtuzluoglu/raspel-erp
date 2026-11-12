@@ -96,8 +96,11 @@ export const durumAPI = {
 }
 
 export const sohbetAPI = {
-  sonMesajlar() {
-    return apiClient.get('/sohbet')
+  sonMesajlar(params) {
+    return apiClient.get('/sohbet', { params })
+  },
+  okunmamis(sonOkunanId) {
+    return apiClient.get('/sohbet/okunmamis', { params: { sonOkunanId } })
   },
   gonder(data) {
     return apiClient.post('/sohbet', data)

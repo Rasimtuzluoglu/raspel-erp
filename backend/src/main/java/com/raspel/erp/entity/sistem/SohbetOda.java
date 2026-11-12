@@ -32,6 +32,11 @@ public class SohbetOda {
     @Column(name = "olusturan_kullanici_id")
     private Long olusturanKullaniciId;
 
+    /** Ozel kanal: uye olmayanlar listede gormez ve kendi kendine katilamaz. */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean ozel = false;
+
     @Column(name = "olusturma_tarihi", nullable = false)
     private Instant olusturmaTarihi;
 

@@ -20,6 +20,7 @@ import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -52,11 +53,22 @@ class SohbetControllerTest {
     @Test
     void shouldGetSonMesajlar() throws Exception {
         var list = List.of(SohbetMesajDTO.builder().id(1L).mesaj("Test mesaj").build());
-        when(sohbetService.sonMesajlar(1L)).thenReturn(list);
+        when(sohbetService.sonMesajlar(eq(1L), isNull(), isNull())).thenReturn(list);
 
         mockMvc.perform(get("/api/sohbet").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].mesaj").value("Test mesaj"));
+    }
+
+    @Test
+    void shouldGetGenelOkunmamis() throws Exception {
+        when(sohbetService.genelOkunmamisSayisi(1L, 9L)).thenReturn(4L);
+
+        mockMvc.perform(get("/api/sohbet/okunmamis")
+                        .requestAttr("sirketId", 1L)
+                        .param("sonOkunanId", "9"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.okunmamis").value(4));
     }
 
     @Test
@@ -88,7 +100,7 @@ class SohbetControllerTest {
                 .cevapMetni("Müşteri listelendi")
                 .intent("CIRO_MUSTERI")
                 .build();
-        when(sohbetService.aiSorgula(eq("En çok ciro yapan müşteri"), eq(1L))).thenReturn(res);
+        when(sohbetService.aiSorgula(eq("En çok ciro yapan müşteri"), eq(1L), isNull())).thenReturn(res);
 
         mockMvc.perform(post("/api/sohbet/ai-sorgu")
                         .requestAttr("sirketId", 1L)

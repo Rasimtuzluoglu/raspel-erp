@@ -14,6 +14,7 @@ import com.raspel.erp.repository.finans.KasaRepository;
 import com.raspel.erp.repository.sistem.SohbetMesajRepository;
 import com.raspel.erp.repository.ticaret.FaturaRepository;
 import com.raspel.erp.service.sistem.SohbetService;
+import com.raspel.erp.service.sistem.SohbetHizSiniri;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -47,6 +48,8 @@ class SohbetServiceTest {
     @Mock private com.raspel.erp.service.sistem.AiConfigService aiConfigService;
     @Mock private com.raspel.erp.service.sistem.LlmClientService llmClientService;
     @Mock private com.raspel.erp.service.sistem.DosyaDepolamaService dosyaDepolama;
+    @Mock private SohbetHizSiniri hizSiniri;
+    @Mock private com.raspel.erp.config.TenantChecker tenantChecker;
 
     @InjectMocks private SohbetService sohbetService;
 
@@ -54,11 +57,85 @@ class SohbetServiceTest {
     void sonMesajlar_returnsReversedList() {
         SohbetMesaj m1 = SohbetMesaj.builder().id(1L).mesaj("Mesaj 1").olusturmaTarihi(Instant.now()).build();
         SohbetMesaj m2 = SohbetMesaj.builder().id(2L).mesaj("Mesaj 2").olusturmaTarihi(Instant.now()).build();
-        when(sohbetMesajRepository.findTop50BySirketIdOrderByOlusturmaTarihiDesc(1L)).thenReturn(new java.util.ArrayList<>(List.of(m2, m1)));
+        when(sohbetMesajRepository.findBySirketIdAndOdaIdIsNullOrderByIdDesc(eq(1L), any()))
+                .thenReturn(new java.util.ArrayList<>(List.of(m2, m1)));
 
         List<SohbetMesajDTO> result = sohbetService.sonMesajlar(1L);
         assertEquals(2, result.size());
         assertEquals("Mesaj 1", result.get(0).getMesaj());
+    }
+
+    @Test
+    void sonMesajlar_cursorVerilinceEskiSayfayiDoner() {
+        when(sohbetMesajRepository.findBySirketIdAndOdaIdIsNullAndIdLessThanOrderByIdDesc(eq(1L), eq(5L), any()))
+                .thenReturn(new java.util.ArrayList<>(List.of(
+                        SohbetMesaj.builder().id(4L).mesaj("eski").build())));
+
+        List<SohbetMesajDTO> result = sohbetService.sonMesajlar(1L, 5L, 50);
+        assertEquals(1, result.size());
+        assertEquals(4L, result.get(0).getId());
+    }
+
+    @Test
+    void genelOkunmamisSayisi_sonOkunanIdIleSayar() {
+        when(sohbetMesajRepository.countBySirketIdAndOdaIdIsNullAndIdGreaterThan(1L, 7L)).thenReturn(3L);
+        assertEquals(3L, sohbetService.genelOkunmamisSayisi(1L, 7L));
+    }
+
+    @Test
+    void genelOkunmamisSayisi_okumaKaydiYoksaSifir() {
+        assertEquals(0L, sohbetService.genelOkunmamisSayisi(1L, null));
+    }
+
+    @Test
+    void mesajGonder_disSiteDosyaUrlReddedilir() {
+        SohbetMesajDTO dto = SohbetMesajDTO.builder().mesaj("x")
+                .dosyaUrl("https://evil.example/tracker.png").build();
+
+        assertThrows(com.raspel.erp.exception.BusinessException.class,
+                () -> sohbetService.mesajGonder(dto, 1L, 2L, "Ali"));
+        verify(sohbetMesajRepository, never()).save(any(SohbetMesaj.class));
+    }
+
+    @Test
+    void mesajGonder_kendiYuklemeUrlKabulEdilir() {
+        SohbetMesajDTO dto = SohbetMesajDTO.builder().mesaj("fatura")
+                .dosyaUrl("/api/uploads/sohbet/abc123.png").build();
+        when(sohbetMesajRepository.save(any(SohbetMesaj.class))).thenAnswer(inv -> {
+            SohbetMesaj m = inv.getArgument(0);
+            m.setId(5L);
+            return m;
+        });
+
+        SohbetMesajDTO sonuc = sohbetService.mesajGonder(dto, 1L, 2L, "Ali");
+        assertEquals("/api/uploads/sohbet/abc123.png", sonuc.getDosyaUrl());
+    }
+
+    /**
+     * Faz 8: AI konusma bellegi kullanici bazlidir. Bir kullanicinin sorusu
+     * baska kullanicinin system prompt'una sizmamali.
+     */
+    @Test
+    void aiSorgula_hafizaKullaniciBazli() {
+        when(aiConfigService.getConfig(1L)).thenReturn(com.raspel.erp.dto.sistem.AiConfigDTO.builder()
+                .provider("OPENAI").model("gpt-4o").aktif(true).durum("AKTIF").build());
+        when(aiConfigService.getDecryptedKey(1L)).thenReturn("key");
+        when(llmClientService.sendQuery(any(), any(), any(), any(), any()))
+                .thenReturn("ilk cevap", "ikinci cevap");
+
+        sohbetService.aiSorgula("gizli soru A", 1L, 10L);
+        sohbetService.aiSorgula("soru B", 1L, 20L);
+
+        ArgumentCaptor<String> prompt = ArgumentCaptor.forClass(String.class);
+        verify(llmClientService, times(2)).sendQuery(any(), any(), any(), prompt.capture(), any());
+        // Ikinci kullanicinin prompt'unda birinci kullanicinin sorusu/cevabi yok.
+        assertFalse(prompt.getAllValues().get(1).contains("gizli soru A"));
+        assertFalse(prompt.getAllValues().get(1).contains("ilk cevap"));
+        // Ayni kullanici tekrar sorunca kendi gecmisi gelir.
+        sohbetService.aiSorgula("soru C", 1L, 10L);
+        ArgumentCaptor<String> prompt2 = ArgumentCaptor.forClass(String.class);
+        verify(llmClientService, times(3)).sendQuery(any(), any(), any(), prompt2.capture(), any());
+        assertTrue(prompt2.getAllValues().get(2).contains("gizli soru A"));
     }
 
     @Test

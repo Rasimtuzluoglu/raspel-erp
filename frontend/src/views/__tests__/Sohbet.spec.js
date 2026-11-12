@@ -4,6 +4,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
 import i18n from '../../i18n.js'
+import { useAuthStore } from '../../stores/authStore.js'
 
 vi.mock('axios', () => ({
   default: {
@@ -20,7 +21,26 @@ vi.mock('axios', () => ({
 const stubs = {
   Button: true,
   InputText: true,
-  SelectButton: true
+  SelectButton: true,
+  Dropdown: true,
+  MultiSelect: true,
+  InputSwitch: true,
+  Tag: true,
+  Dialog: true
+}
+
+const mountSohbet = async (rol = 'ADMIN') => {
+  const pinia = createPinia()
+  setActivePinia(pinia)
+  const auth = useAuthStore()
+  auth.kullanici = { id: 1, role: rol, displayName: 'Test Kullanıcı' }
+  auth.sirketId = 1
+  const Sohbet = (await import('../Sohbet.vue')).default
+  const wrapper = mount(Sohbet, {
+    global: { stubs, plugins: [pinia, ToastService, ConfirmationService, i18n] }
+  })
+  await flushPromises()
+  return wrapper
 }
 
 describe('Sohbet.vue', () => {
@@ -29,21 +49,21 @@ describe('Sohbet.vue', () => {
   })
 
   it('renders chat page and AI Assistant header', async () => {
-    const Sohbet = (await import('../Sohbet.vue')).default
-    const wrapper = mount(Sohbet, {
-      global: { stubs, plugins: [createPinia(), ToastService, ConfirmationService, i18n] }
-    })
-    await flushPromises()
+    const wrapper = await mountSohbet('ADMIN')
     expect(wrapper.find('.sohbet-sayfasi').exists()).toBe(true)
     expect(wrapper.text()).toContain('Yapay Zeka (AI) Asistanı')
   })
 
   it('renders quick question chips in AI mode', async () => {
-    const Sohbet = (await import('../Sohbet.vue')).default
-    const wrapper = mount(Sohbet, {
-      global: { stubs, plugins: [createPinia(), ToastService, ConfirmationService, i18n] }
-    })
-    await flushPromises()
+    const wrapper = await mountSohbet('ADMIN')
     expect(wrapper.findAll('.oneri-cip').length).toBeGreaterThan(0)
+  })
+
+  // Faz 8: AI finansal veri okuyabildigi icin DRIVER rolune kapali.
+  it('DRIVER rolunde AI sekmesi ve hizli sorular gorunmez', async () => {
+    const wrapper = await mountSohbet('DRIVER')
+    expect(wrapper.text()).toContain('Ekip Sohbeti')
+    expect(wrapper.text()).not.toContain('Yapay Zeka (AI) Asistanı')
+    expect(wrapper.findAll('.oneri-cip').length).toBe(0)
   })
 })

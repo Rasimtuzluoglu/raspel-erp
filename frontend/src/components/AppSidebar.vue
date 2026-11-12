@@ -335,7 +335,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
-import { onaySayilariAPI, sohbetOdaAPI, ajandaAPI, sifreKasaAPI } from '../api/index.js'
+import { onaySayilariAPI, sohbetAPI, sohbetOdaAPI, ajandaAPI, sifreKasaAPI } from '../api/index.js'
 import { useMarka } from '../composables/useMarka.js'
 import BildirimZili from './BildirimZili.vue'
 import ThemeSwitcher from './ThemeSwitcher.vue'
@@ -603,12 +603,21 @@ onMounted(() => {
   }
   // Faz 3.4: sohbet okunmamış ve ajanda görev rozetleri.
   rozetleriYukle()
+  // Faz 8: başka odalarda gelen mesaj için rozet canlı kalsın (30 sn yoklama
+  // + sohbet sayfasının gönderdiği olay). Böylece menüde bayat sayı kalmaz.
+  rozetZamanlayici = setInterval(rozetleriYukle, 30000)
+  window.addEventListener('raspel:sohbet-guncelle', rozetleriYukle)
   // Mobil alt menüdeki "Daha fazla" öğesi menü çekmecesini bu olayla açar.
   window.addEventListener('raspel:menu-ac', menuCekmecesiniAc)
 })
 
 onUnmounted(() => {
   window.removeEventListener('raspel:menu-ac', menuCekmecesiniAc)
+  window.removeEventListener('raspel:sohbet-guncelle', rozetleriYukle)
+  if (rozetZamanlayici) {
+    clearInterval(rozetZamanlayici)
+    rozetZamanlayici = null
+  }
 })
 
 const menuCekmecesiniAc = () => {
@@ -643,14 +652,36 @@ const sifreUyariYukle = async () => {
 }
 
 // Faz 3.4: sohbet okunmamış toplamı + ajanda açık görev sayısı.
+// Faz 8: genel sohbet de sayılır ve rozet canlı tazelenir.
+const GENEL_OKUMA_ANAHTARI = 'raspel_sohbet_genel_son_id'
+let rozetZamanlayici = null
+
+const genelSonOkunanId = () => {
+  try {
+    const deger = Number(localStorage.getItem(GENEL_OKUMA_ANAHTARI) || 0)
+    return deger > 0 ? deger : null
+  } catch {
+    return null
+  }
+}
+
 const rozetleriYukle = async () => {
+  let odaOkunmamis = 0
   try {
     const r = await sohbetOdaAPI.odalar()
     const odalar = r.data || []
-    sohbetOkunmamis.value = odalar.reduce((t, o) => t + (o.okunmamisSayisi || 0), 0)
+    odaOkunmamis = odalar.reduce((t, o) => t + (o.okunmamisSayisi || 0), 0)
   } catch {
-    sohbetOkunmamis.value = 0
+    odaOkunmamis = 0
   }
+  let genelOkunmamis = 0
+  try {
+    const r = await sohbetAPI.okunmamis(genelSonOkunanId())
+    genelOkunmamis = Number(r.data?.okunmamis || 0)
+  } catch {
+    genelOkunmamis = 0
+  }
+  sohbetOkunmamis.value = odaOkunmamis + genelOkunmamis
   try {
     const r = await ajandaAPI.gorevler()
     const gorevler = r.data || []

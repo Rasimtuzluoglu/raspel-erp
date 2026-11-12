@@ -34,6 +34,7 @@ class SohbetOdaServiceTest {
     @Mock private KullaniciRepository kullaniciRepository;
     @Mock private SimpMessagingTemplate messagingTemplate;
     @Mock private DosyaDepolamaService dosyaDepolama;
+    @Mock private SohbetHizSiniri hizSiniri;
     @InjectMocks private SohbetOdaService odaService;
 
     @Test
@@ -49,11 +50,43 @@ class SohbetOdaServiceTest {
             o.setId(1L);
             return o;
         });
+        SohbetOdaUye kurucu = SohbetOdaUye.builder().odaId(1L).kullaniciId(10L).rol("OWNER").build();
+        when(uyeRepository.findByOdaId(1L)).thenReturn(java.util.List.of(kurucu));
+        when(uyeRepository.findByOdaIdAndKullaniciId(1L, 10L)).thenReturn(Optional.of(kurucu));
+
         SohbetOdaDTO sonuc = odaService.olustur(SohbetOdaDTO.builder().ad("Satış Ekibi").build(), 1L, 10L);
 
         assertEquals(1L, sonuc.getId());
         assertTrue(sonuc.isUyeMi());
+        assertEquals(1, sonuc.getUyeSayisi());
         verify(uyeRepository).save(argThat(u -> u.getOdaId().equals(1L) && u.getKullaniciId().equals(10L)));
+    }
+
+    @Test
+    void olustur_seciliUyeleriEkler() {
+        when(odaRepository.save(any(SohbetOda.class))).thenAnswer(inv -> {
+            SohbetOda o = inv.getArgument(0);
+            o.setId(2L);
+            return o;
+        });
+        when(kullaniciRepository.findById(5L)).thenReturn(Optional.of(
+                Kullanici.builder().id(5L).sirketId(1L).displayName("Ayşe").build()));
+        when(kullaniciRepository.findById(6L)).thenReturn(Optional.of(
+                Kullanici.builder().id(6L).sirketId(1L).displayName("Mehmet").build()));
+        when(uyeRepository.existsByOdaIdAndKullaniciId(2L, 5L)).thenReturn(false);
+        when(uyeRepository.existsByOdaIdAndKullaniciId(2L, 6L)).thenReturn(false);
+        when(uyeRepository.findByOdaId(2L)).thenReturn(java.util.List.of(
+                SohbetOdaUye.builder().odaId(2L).kullaniciId(10L).rol("OWNER").build()));
+        when(uyeRepository.findByOdaIdAndKullaniciId(2L, 10L)).thenReturn(Optional.of(
+                SohbetOdaUye.builder().odaId(2L).kullaniciId(10L).rol("OWNER").build()));
+
+        odaService.olustur(SohbetOdaDTO.builder().ad("Özel Kanal").ozel(true)
+                .uyeIdleri(java.util.List.of(5L, 6L, 5L, 10L)).build(), 1L, 10L);
+
+        verify(uyeRepository).save(argThat(u -> u.getKullaniciId().equals(5L) && "MEMBER".equals(u.getRol())));
+        verify(uyeRepository).save(argThat(u -> u.getKullaniciId().equals(6L) && "MEMBER".equals(u.getRol())));
+        // Kurucu ve tekrarlanan id ikinci kez eklenmez.
+        verify(uyeRepository, times(1)).save(argThat(u -> u.getKullaniciId().equals(10L)));
     }
 
     @Test
@@ -63,6 +96,11 @@ class SohbetOdaServiceTest {
             o.setId(1L);
             return o;
         });
+        when(uyeRepository.findByOdaId(1L)).thenReturn(java.util.List.of(
+                SohbetOdaUye.builder().odaId(1L).kullaniciId(10L).rol("OWNER").build()));
+        when(uyeRepository.findByOdaIdAndKullaniciId(1L, 10L)).thenReturn(Optional.of(
+                SohbetOdaUye.builder().odaId(1L).kullaniciId(10L).rol("OWNER").build()));
+
         odaService.olustur(SohbetOdaDTO.builder().ad("Satış Ekibi").build(), 1L, 10L);
 
         verify(uyeRepository).save(argThat(u -> "OWNER".equals(u.getRol())
@@ -234,5 +272,91 @@ class SohbetOdaServiceTest {
         MockMultipartFile svg = new MockMultipartFile("file", "x.svg", "image/svg+xml", "<svg/>".getBytes());
         assertThrows(BusinessException.class, () -> odaService.dosyaYukle(1L, svg, 1L, 99L));
         verify(dosyaDepolama, never()).kaydet(anyString(), any());
+    }
+
+    // ---------------------------------------------------------------- Faz 8
+
+    @Test
+    void katil_ozelKanalaKendiKendineKatilamaz() {
+        when(odaRepository.findById(1L)).thenReturn(Optional.of(
+                SohbetOda.builder().id(1L).sirketId(1L).ozel(true).build()));
+
+        assertThrows(BusinessException.class, () -> odaService.katil(1L, 1L, 99L));
+        verify(uyeRepository, never()).save(any(SohbetOdaUye.class));
+    }
+
+    @Test
+    void ayril_kurucuYonetimiEnEskiUyeyeDevreder() {
+        SohbetOda oda = SohbetOda.builder().id(1L).sirketId(1L).olusturanKullaniciId(10L).build();
+        SohbetOdaUye kurucu = SohbetOdaUye.builder().odaId(1L).kullaniciId(10L).rol("OWNER")
+                .eklenmeTarihi(java.time.Instant.parse("2026-01-01T10:00:00Z")).build();
+        SohbetOdaUye eskiUye = SohbetOdaUye.builder().odaId(1L).kullaniciId(20L).rol("MEMBER")
+                .eklenmeTarihi(java.time.Instant.parse("2026-01-02T10:00:00Z")).build();
+        when(odaRepository.findById(1L)).thenReturn(Optional.of(oda));
+        when(uyeRepository.findByOdaId(1L)).thenReturn(java.util.List.of(kurucu, eskiUye));
+
+        odaService.ayril(1L, 1L, 10L);
+
+        assertEquals(20L, oda.getOlusturanKullaniciId());
+        assertEquals("OWNER", eskiUye.getRol());
+        verify(uyeRepository).save(eskiUye);
+        verify(uyeRepository).deleteByOdaIdAndKullaniciId(1L, 10L);
+        verify(odaRepository, never()).delete(any(SohbetOda.class));
+    }
+
+    @Test
+    void ayril_sonUyeOdayiVeMesajlariSiler() {
+        SohbetOda oda = SohbetOda.builder().id(1L).sirketId(1L).olusturanKullaniciId(10L).build();
+        SohbetOdaUye kurucu = SohbetOdaUye.builder().odaId(1L).kullaniciId(10L).rol("OWNER").build();
+        when(odaRepository.findById(1L)).thenReturn(Optional.of(oda));
+        when(uyeRepository.findByOdaId(1L)).thenReturn(java.util.List.of(kurucu));
+
+        odaService.ayril(1L, 1L, 10L);
+
+        verify(mesajRepository).deleteByOdaId(1L);
+        verify(uyeRepository).deleteByOdaId(1L);
+        verify(odaRepository).delete(oda);
+    }
+
+    @Test
+    void sil_odaylaBirlikteMesajlariTemizler() {
+        SohbetOda oda = SohbetOda.builder().id(1L).sirketId(1L).olusturanKullaniciId(10L).build();
+        when(odaRepository.findById(1L)).thenReturn(Optional.of(oda));
+        when(kullaniciRepository.findById(99L)).thenReturn(Optional.of(
+                Kullanici.builder().id(99L).role("ADMIN").build()));
+
+        odaService.sil(1L, 1L, 99L);
+
+        verify(mesajRepository).deleteByOdaId(1L);
+        verify(uyeRepository).deleteByOdaId(1L);
+        verify(odaRepository).delete(oda);
+    }
+
+    @Test
+    void mesajGonder_dosyaUrlDisSiteReddedilir() {
+        when(odaRepository.findById(1L)).thenReturn(Optional.of(SohbetOda.builder().id(1L).sirketId(1L).build()));
+        when(uyeRepository.existsByOdaIdAndKullaniciId(1L, 99L)).thenReturn(true);
+
+        var dto = com.raspel.erp.dto.sistem.SohbetMesajDTO.builder()
+                .dosyaUrl("https://evil.example/x.png").build();
+
+        assertThrows(BusinessException.class, () -> odaService.mesajGonder(1L, dto, 1L, 99L, "Ali"));
+        verify(mesajRepository, never()).save(any(SohbetMesaj.class));
+    }
+
+    @Test
+    void mesajGonder_rozetOlayiYayinlar() {
+        when(odaRepository.findById(1L)).thenReturn(Optional.of(SohbetOda.builder().id(1L).sirketId(1L).build()));
+        when(uyeRepository.existsByOdaIdAndKullaniciId(1L, 99L)).thenReturn(true);
+        when(mesajRepository.save(any(SohbetMesaj.class))).thenAnswer(inv -> {
+            SohbetMesaj m = inv.getArgument(0);
+            m.setId(3L);
+            return m;
+        });
+
+        odaService.mesajGonder(1L,
+                com.raspel.erp.dto.sistem.SohbetMesajDTO.builder().mesaj("selam").build(), 1L, 99L, "Ali");
+
+        verify(messagingTemplate).convertAndSend(eq("/topic/sohbet/1/rozet"), any(Object.class));
     }
 }

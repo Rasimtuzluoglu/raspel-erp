@@ -10,6 +10,7 @@
       </h1>
       <div class="header-sag">
         <SelectButton
+          v-if="aiErisimVar"
           v-model="aktifMod"
           :options="modSecenekleri"
           option-label="label"
@@ -79,23 +80,32 @@
       v-if="aktifMod === 'ekip'"
       class="ekip-duzen"
     >
-      <div class="oda-listesi">
+      <nav
+        class="oda-listesi"
+        :aria-label="t('sohbet.sohbetKanallari')"
+      >
         <div class="oda-listesi-baslik">
           <span>{{ t('sohbet.sohbetKanallari') }}</span>
           <Button
             icon="pi pi-plus"
             class="p-button-text p-button-sm"
             :title="t('sohbet.yeniOda')"
-            @click="odaDialogAc = true"
+            :aria-label="t('sohbet.yeniOda')"
+            @click="odadanOlusturAc"
           />
         </div>
         <button
           class="oda-ogesi"
           :class="{ aktif: seciliOdaId === null }"
+          :aria-current="seciliOdaId === null ? 'true' : undefined"
           @click="genelSec"
         >
           <i class="pi pi-users" />
           <span>{{ t('sohbet.genelSohbet') }}</span>
+          <span
+            v-if="genelOkunmamis > 0 && seciliOdaId !== null"
+            class="okunmamis-rozet"
+          >{{ genelOkunmamis }}</span>
         </button>
         <div
           v-if="!odalar.length"
@@ -108,9 +118,10 @@
           :key="o.id"
           class="oda-ogesi"
           :class="{ aktif: seciliOdaId === o.id }"
+          :aria-current="seciliOdaId === o.id ? 'true' : undefined"
           @click="odaSec(o)"
         >
-          <i class="pi pi-hashtag" />
+          <i :class="o.ozel ? 'pi pi-lock' : 'pi pi-hashtag'" />
           <span class="oda-ad">{{ o.ad }}</span>
           <span
             v-if="o.uyeMi && o.okunmamisSayisi > 0 && seciliOdaId !== o.id"
@@ -122,7 +133,7 @@
             :title="t('sohbet.katil')"
           />
         </button>
-      </div>
+      </nav>
 
       <div class="oda-icerik">
         <div
@@ -151,12 +162,24 @@
               class="p-button-sm p-button-text p-button-danger"
               @click="odadanAyril"
             />
+            <Button
+              v-if="odaYoneticisiMi(seciliOda)"
+              icon="pi pi-trash"
+              class="p-button-sm p-button-text p-button-danger"
+              :title="t('sohbet.odaSil')"
+              :aria-label="t('sohbet.odaSil')"
+              @click="odayiSil"
+            />
           </div>
         </div>
 
         <div
           ref="mesajKutusu"
           class="mesaj-kutusu"
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions"
+          :aria-label="seciliOdaId ? t('sohbet.odaMesajlari') : t('sohbet.genelSohbet')"
         >
           <div
             v-if="yukleniyor || odaYukleniyor"
@@ -177,7 +200,7 @@
             {{ t('sohbet.mesajYok') }}
           </div>
           <div
-            v-if="seciliOdaId !== null && dahaVar"
+            v-if="dahaVar"
             class="daha-eski"
           >
             <Button
@@ -230,7 +253,10 @@
           </div>
         </div>
 
-        <div class="yaziyor-gosterge">
+        <div
+          class="yaziyor-gosterge"
+          aria-live="polite"
+        >
           <span v-if="yaziyorKullanici">{{ yaziyorKullanici }} {{ t('sohbet.yaziyor') }}</span>
         </div>
         <div class="mesaj-giris">
@@ -238,6 +264,8 @@
             icon="pi pi-paperclip"
             class="p-button-text"
             :title="t('sohbet.dosyaGorselPaylas')"
+            :aria-label="t('sohbet.dosyaGorselPaylas')"
+            :disabled="gonderiliyor"
             @click="sohbetDosyaInput.click()"
           />
           <input
@@ -250,6 +278,8 @@
             v-model="yeniMesaj"
             :placeholder="t('sohbet.mesajPlaceholder')"
             class="mesaj-input"
+            maxlength="4000"
+            :disabled="gonderiliyor"
             @keyup.enter="gonder"
             @input="yaziyorGonder"
           />
@@ -257,6 +287,7 @@
             icon="pi pi-send"
             :label="t('sohbet.gonder')"
             :loading="gonderiliyor"
+            :disabled="gonderiliyor || !yeniMesaj.trim()"
             @click="gonder"
           />
         </div>
@@ -345,7 +376,7 @@
                 class="ai-rozet"
               >
                 <span>{{ lbl }}</span>
-                <strong>{{ m.grafikVerisi.datasets?.[0]?.data?.[lIdx] }} ₺</strong>
+                <strong>{{ m.grafikVerisi.datasets?.[0]?.data?.[lIdx] }}{{ rozetBirimi(m) }}</strong>
               </div>
             </div>
           </div>
@@ -363,12 +394,15 @@
           v-model="yeniMesaj"
           :placeholder="t('sohbet.aiPlaceholder')"
           class="mesaj-input"
+          maxlength="4000"
+          :disabled="aiYukleniyor"
           @keyup.enter="gonder"
         />
         <Button
           icon="pi pi-sparkles"
           :label="t('sohbet.sor')"
           :loading="gonderiliyor || aiYukleniyor"
+          :disabled="aiYukleniyor || !yeniMesaj.trim()"
           @click="gonder"
         />
       </div>
@@ -387,6 +421,7 @@
           <InputText
             v-model="odaForm.ad"
             :placeholder="t('sohbet.odaAdiPlaceholder')"
+            maxlength="100"
             class="w-full"
           />
         </div>
@@ -395,8 +430,29 @@
           <InputText
             v-model="odaForm.aciklama"
             :placeholder="t('sohbet.aciklamaPlaceholder')"
+            maxlength="300"
             class="w-full"
           />
+        </div>
+        <div class="field">
+          <label>{{ t('sohbet.uyelerSec') }}</label>
+          <MultiSelect
+            v-model="odaForm.uyeIdleri"
+            :options="kullanicilar"
+            option-label="displayName"
+            option-value="id"
+            filter
+            display="chip"
+            :placeholder="t('sohbet.uyeEkle')"
+            class="w-full"
+          />
+        </div>
+        <div class="field ozel-kanal-alan">
+          <InputSwitch v-model="odaForm.ozel" />
+          <div>
+            <label class="ozel-kanal-etiket">{{ t('sohbet.ozelKanal') }}</label>
+            <small>{{ t('sohbet.ozelKanalAciklama') }}</small>
+          </div>
         </div>
       </div>
       <template #footer>
@@ -445,6 +501,7 @@
           :options="eklenecekKullanicilar"
           option-label="displayName"
           option-value="id"
+          filter
           :placeholder="t('sohbet.uyeEkle')"
           class="uye-dropdown"
         />
@@ -452,6 +509,7 @@
           icon="pi pi-plus"
           class="p-button-sm"
           :title="t('sohbet.ekle')"
+          :aria-label="t('sohbet.ekle')"
           @click="uyeEkle"
         />
       </div>
@@ -500,14 +558,22 @@ const grafikBileseni = (tip) => ({ bar: Bar, doughnut: Doughnut, line: Line }[ti
 const authStore = useAuthStore()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
-const aktifMod = ref('ai')
+// Faz 8: AI finansal verileri okuyabildigi icin DRIVER rolune kapali.
+// (Backend'de de ayni uc @PreAuthorize ile korunuyor.)
+const kullaniciRolu = computed(() => String(authStore?.kullanici?.role || '').toUpperCase())
+const aiErisimVar = computed(() => ['ADMIN', 'USER', 'MUHASEBE'].includes(kullaniciRolu.value))
+const aktifMod = ref(aiErisimVar.value ? 'ai' : 'ekip')
 const aiYapilandirildi = ref(false)
-const modSecenekleri = computed(() => [
-  { label: t('sohbet.aiAsistan'), value: 'ai' },
-  { label: t('sohbet.ekipSohbeti'), value: 'ekip' }
-])
+const modSecenekleri = computed(() =>
+  aiErisimVar.value
+    ? [
+        { label: t('sohbet.aiAsistan'), value: 'ai' },
+        { label: t('sohbet.ekipSohbeti'), value: 'ekip' }
+      ]
+    : [{ label: t('sohbet.ekipSohbeti'), value: 'ekip' }]
+)
 
 const hizliSorular = computed(() => [
   t('sohbet.soruCiro'),
@@ -540,7 +606,7 @@ const eskiYukleniyor = ref(false)
 
 const odaDialogAc = ref(false)
 const odaKaydediliyor = ref(false)
-const odaForm = ref({ ad: '', aciklama: '' })
+const odaForm = ref({ ad: '', aciklama: '', ozel: false, uyeIdleri: [] })
 const uyeDialogAc = ref(false)
 const kullanicilar = ref([])
 const eklenecekKullaniciId = ref(null)
@@ -558,6 +624,8 @@ const eklenecekKullanicilar = computed(() => {
 let stompClient = null
 let subscription = null
 let silSubscription = null
+let rozetSubscription = null
+let odaSilBildirimSubscription = null
 let odaSubscription = null
 let odaSilSubscription = null
 let yaziyorSubscription = null
@@ -568,7 +636,8 @@ const formatZaman = (t) => {
   if (!t) return ''
   const d = new Date(t)
   if (isNaN(d.getTime())) return ''
-  return d.toLocaleString('tr-TR', {
+  // Faz 8: tarih de arayuz diline uyar (onceden sabit tr-TR idi).
+  return d.toLocaleString(locale.value === 'en' ? 'en-GB' : 'tr-TR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -577,12 +646,12 @@ const formatZaman = (t) => {
   })
 }
 
-/** Yerel listeye mesajı (id'ye göre tekrarı önleyerek) ekler ve aşağı kaydırır. */
-const mesajEkle = (hedefRef, m) => {
+/** Yerel listeye mesajı (id'ye göre tekrarı önleyerek) ekler ve kaydırır. */
+const mesajEkle = (hedefRef, m, zorla = false) => {
   if (!hedefRef || !hedefRef.value || !m) return
   if (m.id != null && hedefRef.value.some((x) => x.id === m.id)) return
   hedefRef.value.push(m)
-  kaydir()
+  kaydir(zorla)
 }
 
 /** Yalnızca ADMIN mesaj silebilir. Genel sohbet veya oda mesajı silinir. */
@@ -626,18 +695,46 @@ const formatTabloBaslik = (key) => {  const map = {
     durum: t('common.status'),
     maliyet: t('sohbet.maliyet'),
     satis: t('sohbet.satisFiyati'),
-    marj: t('sohbet.karMarji')
+    marj: t('sohbet.karMarji'),
+    // Faz 8: backend `marjYuzde` gonderiyordu; baslikta ham anahtar gorunuyordu.
+    marjYuzde: t('sohbet.karMarji')
   }
   return map[key] || key
 }
 
-const kaydir = () => {
+/**
+ * Rozet birimi. Onceden her deger `₺` ile gosteriliyordu; stok adetleri ve
+ * yuzdeler de para birimi gibi gorunuyordu. Intent'e gore birim secilir.
+ */
+const rozetBirimi = (m) => {
+  if (m?.intent === 'KARLILIK') return ' %'
+  if (m?.intent === 'STOK_DURUM') return ''
+  return ' ₺'
+}
+
+/**
+ * Mesaj kutusunu kaydırır.
+ *
+ * Faz 8: Önce HER yeni mesajda dibe atılıyordu; kullanıcı geçmişi okurken
+ * ekran zıplıyordu. Artık yalnızca kullanıcı zaten dipteyse (veya kendi
+ * mesajını gönderdiyse) otomatik kaydırılır.
+ */
+const kaydir = (zorla = false) => {
   nextTick(() => {
-    if (mesajKutusu.value) mesajKutusu.value.scrollTop = mesajKutusu.value.scrollHeight
+    const el = mesajKutusu.value
+    if (!el) return
+    const dipteMi = el.scrollHeight - el.scrollTop - el.clientHeight < 80
+    if (zorla || dipteMi) el.scrollTop = el.scrollHeight
   })
 }
 
+/** Rozet tazelemesini layout'a bildirir (sidebar 30 sn'lik yoklamayi beklemez). */
+const rozetYenile = () => {
+  window.dispatchEvent(new CustomEvent('raspel:sohbet-guncelle'))
+}
+
 const hizliSoruSor = (soru) => {
+  if (aiYukleniyor.value) return
   yeniMesaj.value = soru
   gonder()
 }
@@ -671,6 +768,8 @@ const aiSseAkis = (metin, aiMesaj) =>
   })
 
 const aiStreamGonder = async (metin) => {
+  // Faz 8: paralel akislar cevaplari karistiriyordu.
+  if (aiYukleniyor.value) return
   aiMesajlar.value.push({ rol: 'user', metin, zaman: new Date() })
   yeniMesaj.value = ''
   const aiMesaj = { rol: 'ai', metin: '', zaman: new Date() }
@@ -750,11 +849,15 @@ const gonder = async () => {
   if (!metin) return
 
   if (aktifMod.value === 'ai') {
+    // Faz 8: AI istegi surerken ikinci istek baslatilmaz.
+    if (aiYukleniyor.value) return
     aiStreamGonder(metin)
     return
   }
 
-  // Ekip Sohbeti
+  // Faz 8: Enter'a iki kez basmak iki mesaj gonderiyordu (buton loading olsa
+  // da tus isleyicisi korunmuyordu).
+  if (gonderiliyor.value) return
   gonderiliyor.value = true
   try {
     let gonderilen
@@ -765,8 +868,10 @@ const gonder = async () => {
       const r = await sohbetAPI.gonder({ mesaj: metin })
       gonderilen = r.data
     }
-    mesajEkle(seciliOdaId.value ? odaMesajlar : mesajlar, gonderilen)
+    mesajEkle(seciliOdaId.value ? odaMesajlar : mesajlar, gonderilen, true)
     yeniMesaj.value = ''
+    if (!seciliOdaId.value) genelOkunduIsaretle()
+    rozetYenile()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('sohbet.mesajGonderilemedi'))
   } finally {
@@ -774,14 +879,54 @@ const gonder = async () => {
   }
 }
 
+/** Genel sohbette okunan son mesaj id'sini saklar (rozet buradan hesaplanir). */
+const GENEL_OKUMA_ANAHTARI = 'raspel_sohbet_genel_son_id'
+const genelOkunanId = () => {
+  try {
+    const deger = Number(localStorage.getItem(GENEL_OKUMA_ANAHTARI) || 0)
+    return deger > 0 ? deger : null
+  } catch {
+    return null
+  }
+}
+const genelOkunmamis = ref(0)
+const genelRozetYukle = async () => {
+  try {
+    const r = await sohbetAPI.okunmamis(genelOkunanId())
+    genelOkunmamis.value = Number(r.data?.okunmamis || 0)
+  } catch {
+    genelOkunmamis.value = 0
+  }
+}
+const genelOkunduIsaretle = () => {
+  const son = mesajlar.value[mesajlar.value.length - 1]
+  if (son?.id == null) return
+  try {
+    const onceki = Number(localStorage.getItem(GENEL_OKUMA_ANAHTARI) || 0)
+    if (!onceki || son.id > onceki) {
+      localStorage.setItem(GENEL_OKUMA_ANAHTARI, String(son.id))
+    }
+  } catch {
+    /* localStorage kapali olabilir */
+  }
+  genelOkunmamis.value = 0
+  rozetYenile()
+}
+
 const yukle = async () => {
   yukleniyor.value = true
   try {
-    const r = await sohbetAPI.sonMesajlar()
+    const r = await sohbetAPI.sonMesajlar({ limit: MESAJ_SAYFA })
     mesajlar.value = r.data || []
-    kaydir()
+    // Faz 8: genel sohbet de cursor ile sayfalanir.
+    mesajCursor.value = mesajlar.value.length ? mesajlar.value[0].id : null
+    dahaVar.value = mesajlar.value.length === MESAJ_SAYFA
+    kaydir(true)
+    genelOkunduIsaretle()
   } catch {
     mesajlar.value = []
+    mesajCursor.value = null
+    dahaVar.value = false
   }
   yukleniyor.value = false
 }
@@ -828,6 +973,8 @@ const odaSec = async (o) => {
   odaMesajlariYukle(o.id)
   o.okunmamisSayisi = 0
   sohbetOdaAPI.okundu(o.id).catch(() => {})
+  genelRozetYukle()
+  rozetYenile()
 }
 
 const MESAJ_SAYFA = 50
@@ -851,20 +998,28 @@ const odaMesajlariYukle = async (odaId) => {
 }
 
 // Faz 3.3: cursor'dan önceki (daha eski) mesajları yükler ve başa ekler.
+// Faz 8: genel sohbet için de çalışır; ekleme sonrası kaydırma konumu korunur.
 const dahaEskiYukle = async () => {
-  if (!seciliOdaId.value || !dahaVar.value || !mesajCursor.value || eskiYukleniyor.value) return
+  if (!dahaVar.value || !mesajCursor.value || eskiYukleniyor.value) return
   eskiYukleniyor.value = true
+  const el = mesajKutusu.value
+  const oncekiYukseklik = el?.scrollHeight || 0
+  const oncekiUst = el?.scrollTop || 0
   try {
-    const r = await sohbetOdaAPI.mesajlar(seciliOdaId.value, {
-      cursor: mesajCursor.value,
-      limit: MESAJ_SAYFA
-    })
+    const r = seciliOdaId.value
+      ? await sohbetOdaAPI.mesajlar(seciliOdaId.value, { cursor: mesajCursor.value, limit: MESAJ_SAYFA })
+      : await sohbetAPI.sonMesajlar({ cursor: mesajCursor.value, limit: MESAJ_SAYFA })
     const eski = r.data || []
     if (eski.length) {
-      odaMesajlar.value = [...eski, ...odaMesajlar.value]
+      if (seciliOdaId.value) odaMesajlar.value = [...eski, ...odaMesajlar.value]
+      else mesajlar.value = [...eski, ...mesajlar.value]
       mesajCursor.value = eski[0].id
     }
     dahaVar.value = eski.length === MESAJ_SAYFA
+    // Başa ekleme görünümü aşağı kaydırır; kullanıcı aynı mesajda kalsın.
+    nextTick(() => {
+      if (el) el.scrollTop = oncekiUst + (el.scrollHeight - oncekiYukseklik)
+    })
   } catch {
     /* sessiz: kullanıcı tekrar deneyebilir */
   } finally {
@@ -879,13 +1034,19 @@ const odaOlustur = async () => {
   }
   odaKaydediliyor.value = true
   try {
-    const r = await sohbetOdaAPI.olustur({ ad: odaForm.value.ad, aciklama: odaForm.value.aciklama })
+    const r = await sohbetOdaAPI.olustur({
+      ad: odaForm.value.ad.trim(),
+      aciklama: odaForm.value.aciklama,
+      ozel: odaForm.value.ozel,
+      uyeIdleri: odaForm.value.uyeIdleri
+    })
     odalar.value.push(r.data)
     odaDialogAc.value = false
-    odaForm.value = { ad: '', aciklama: '' }
+    odaForm.value = { ad: '', aciklama: '', ozel: false, uyeIdleri: [] }
     seciliOdaId.value = r.data.id
     odaAboneligiYenile()
     odaMesajlariYukle(r.data.id)
+    rozetYenile()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('sohbet.odaOlusturulamadi'))
   } finally {
@@ -893,18 +1054,77 @@ const odaOlustur = async () => {
   }
 }
 
-const odadanAyril = async () => {
-  if (!seciliOdaId.value) return
-  try {
-    await sohbetOdaAPI.ayril(seciliOdaId.value)
-    toastBildirim.basarili(t('sohbet.odadanAyrildiniz'))
-    seciliOdaId.value = null
-    await odalariYukle()
-    odaAboneligiYenile()
-    yukle()
-  } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || t('sohbet.islemBasarisiz'))
-  }
+/** Oda yöneticisi mi? (global ADMIN, kurucu veya OWNER/ADMIN üyelik) */
+const odaYoneticisiMi = (oda) => {
+  if (!oda) return false
+  if (adminMi.value) return true
+  if (oda.olusturanKullaniciId === kendiId.value) return true
+  return (oda.uyeler || []).some(
+    (u) => u.kullaniciId === kendiId.value && ['OWNER', 'ADMIN'].includes(String(u.rol || '').toUpperCase())
+  )
+}
+
+const odadanOlusturAc = async () => {
+  odaDialogAc.value = true
+  if (!kullanicilar.value.length) await kullanicilariYukle()
+}
+
+/**
+ * Faz 8: onaysiz ayrilma tek tiklama ile kanali silebiliyordu. Kurucu ayrilirsa
+ * yonetim en eski uyeye devredilir; son uye ayrilirsa oda silinir.
+ */
+const odadanAyril = () => {
+  if (!seciliOdaId.value || !seciliOda.value) return
+  const oda = seciliOda.value
+  const kurucu = oda.olusturanKullaniciId === kendiId.value
+  confirm.require({
+    message: kurucu ? t('sohbet.ayrilKurucuOnay') : t('sohbet.ayrilOnay'),
+    header: t('sohbet.ayrilOnayBaslik'),
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('sohbet.ayril'), severity: 'danger', size: 'small' },
+    accept: async () => {
+      try {
+        await sohbetOdaAPI.ayril(seciliOdaId.value)
+        toastBildirim.basarili(t('sohbet.odadanAyrildiniz'))
+        seciliOdaId.value = null
+        odaMesajlar.value = []
+        await odalariYukle()
+        odaAboneligiYenile()
+        yukle()
+        rozetYenile()
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || t('sohbet.islemBasarisiz'))
+      }
+    }
+  })
+}
+
+/** Odayı (ve mesajlarını) siler; yalnızca yönetici. */
+const odayiSil = () => {
+  if (!seciliOdaId.value || !seciliOda.value) return
+  const odaId = seciliOdaId.value
+  confirm.require({
+    message: t('sohbet.odaSilOnay', { ad: seciliOda.value.ad }),
+    header: t('sohbet.odaSil'),
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.vazgec'), severity: 'secondary', outlined: true, size: 'small' },
+    acceptProps: { label: t('sohbet.odaSil'), severity: 'danger', size: 'small' },
+    accept: async () => {
+      try {
+        await sohbetOdaAPI.sil(odaId)
+        toastBildirim.basarili(t('sohbet.odaSilindi'))
+        seciliOdaId.value = null
+        odaMesajlar.value = []
+        await odalariYukle()
+        odaAboneligiYenile()
+        yukle()
+        rozetYenile()
+      } catch (err) {
+        toastBildirim.hata(err?.response?.data?.message || t('sohbet.islemBasarisiz'))
+      }
+    }
+  })
 }
 
 const uyeYonetAc = async () => {
@@ -944,19 +1164,7 @@ const baglan = () => {
           reconnectDelay: 5000,
           onConnect: () => {
             bagli.value = true
-            const sirketId = authStore.sirketId
-            subscription = stompClient.subscribe(`/topic/sohbet/${sirketId}`, (msg) => {
-              try {
-                mesajEkle(mesajlar, JSON.parse(msg.body))
-              } catch {
-                /* empty */
-              }
-            })
-            silSubscription = stompClient.subscribe(`/topic/sohbet/${sirketId}/sil`, (msg) => {
-              const id = Number(msg.body)
-              mesajlar.value = mesajlar.value.filter((x) => x.id !== id)
-            })
-            odaAboneligiYenile()
+            globalAbonelikleriYenile()
           },
           onDisconnect: () => {
             bagli.value = false
@@ -966,6 +1174,59 @@ const baglan = () => {
       })
     })
     .catch(() => {})
+}
+
+/**
+ * Şirket geneli abonelikler: genel sohbet, silme, rozet ve oda silme.
+ * Yeniden bağlanmada eski abonelikler kapatılır (çift mesaj olmasın).
+ */
+const globalAbonelikleriYenile = () => {
+  if (!stompClient || !stompClient.connected) return
+  const sirketId = authStore.sirketId
+  ;[subscription, silSubscription, rozetSubscription, odaSilBildirimSubscription].forEach((s) => s?.unsubscribe?.())
+  subscription = stompClient.subscribe(`/topic/sohbet/${sirketId}`, (msg) => {
+    try {
+      const m = JSON.parse(msg.body)
+      mesajEkle(mesajlar, m)
+      // Genel sohbet ekrandaysa yeni mesaj okunmuş sayılır.
+      if (seciliOdaId.value === null) genelOkunduIsaretle()
+      else {
+        genelRozetYukle()
+        rozetYenile()
+      }
+    } catch {
+      /* empty */
+    }
+  })
+  silSubscription = stompClient.subscribe(`/topic/sohbet/${sirketId}/sil`, (msg) => {
+    const id = Number(msg.body)
+    mesajlar.value = mesajlar.value.filter((x) => x.id !== id)
+  })
+  // Faz 8: seçili olmayan odalarda gelen mesaj rozeti anında tazeler.
+  rozetSubscription = stompClient.subscribe(`/topic/sohbet/${sirketId}/rozet`, (msg) => {
+    try {
+      const veri = JSON.parse(msg.body)
+      if (veri?.odaId !== seciliOdaId.value) {
+        odalariYukle()
+        rozetYenile()
+      }
+    } catch {
+      /* empty */
+    }
+  })
+  // Faz 8: silinen oda listede kalmasın.
+  odaSilBildirimSubscription = stompClient.subscribe(`/topic/sohbet/${sirketId}/oda-sil`, (msg) => {
+    const odaId = Number(msg.body)
+    odalar.value = odalar.value.filter((o) => o.id !== odaId)
+    if (seciliOdaId.value === odaId) {
+      seciliOdaId.value = null
+      odaMesajlar.value = []
+      odaAboneligiYenile()
+      yukle()
+    }
+    rozetYenile()
+  })
+  odaAboneligiYenile()
 }
 
 const odaAboneligiYenile = () => {
@@ -1033,10 +1294,13 @@ const yaziyorGonder = () => {
 
 const resimMi = (url) => /\.(png|jpe?g|gif|webp|bmp)$/i.test(url || '')
 
-/** XSS koruması: yalnızca http(s), göreli ve blob URL'lere izin verir. */
+/** XSS/gizlilik koruması: yalnızca kendi yükleme yolumuz ve blob URL'ler.
+ *  Harici http(s) adresler (eski mesajlarda kalmış olabilir) ve `//evil.com`
+ *  gibi protokol-göreli adresler RENDER EDİLMEZ; aksi halde oda üyelerinin
+ *  tarayıcısı dış siteye istek atıyordu (IP/tracking sızıntısı). */
 const guvenliDosyaUrl = (url) => {
   const u = String(url || '').trim()
-  return /^(https?:\/\/|\/|blob:)/i.test(u) ? u : null
+  return u.startsWith('/api/uploads/') || u.startsWith('blob:') ? u : null
 }
 
 const sohbetDosyaYukle = async (event) => {
@@ -1061,7 +1325,9 @@ const sohbetDosyaYukle = async (event) => {
       const r = await sohbetAPI.gonder({ mesaj: dosya.name, dosyaUrl: url })
       gonderilen = r.data
     }
-    mesajEkle(seciliOdaId.value ? odaMesajlar : mesajlar, gonderilen)
+    mesajEkle(seciliOdaId.value ? odaMesajlar : mesajlar, gonderilen, true)
+    if (!seciliOdaId.value) genelOkunduIsaretle()
+    rozetYenile()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || err?.message || t('sohbet.dosyaYuklenemedi'))
   } finally {
@@ -1077,6 +1343,7 @@ watch(seciliOdaId, () => {
 onMounted(async () => {
   yukle()
   odalariYukle()
+  genelRozetYukle()
   baglan()
   try {
     const res = await aiConfigAPI.getConfig()
@@ -1091,6 +1358,8 @@ onMounted(async () => {
 onUnmounted(() => {
   if (subscription) subscription.unsubscribe()
   if (silSubscription) silSubscription.unsubscribe()
+  if (rozetSubscription) rozetSubscription.unsubscribe()
+  if (odaSilBildirimSubscription) odaSilBildirimSubscription.unsubscribe()
   if (odaSubscription) odaSubscription.unsubscribe()
   if (odaSilSubscription) odaSilSubscription.unsubscribe()
   if (yaziyorSubscription) yaziyorSubscription.unsubscribe()
@@ -1489,6 +1758,19 @@ onUnmounted(() => {
 }
 .ajanda-form .w-full {
   width: 100%;
+}
+.ozel-kanal-alan {
+  flex-direction: row !important;
+  align-items: flex-start;
+  gap: 10px !important;
+}
+.ozel-kanal-etiket {
+  display: block;
+  font-weight: 600;
+}
+.ozel-kanal-alan small {
+  color: var(--text-muted);
+  font-size: 12px;
 }
 .uye-listesi {
   display: flex;

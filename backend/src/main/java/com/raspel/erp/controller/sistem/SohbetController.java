@@ -28,6 +28,7 @@ public class SohbetController {
     @GetMapping("/ai-dashboard-ozet")
     @Operation(summary = "Dashboard AI özeti",
             description = "Şirketin güncel verilerinden yapay zeka ile kısa bir yönetici özeti üretir (AI yapılandırılmış olmalıdır)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
     public ResponseEntity<java.util.Map<String, String>> aiDashboardOzet(HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
         String baglam = sohbetService.veriBaglami(sirketId);
@@ -39,10 +40,25 @@ public class SohbetController {
     }
 
     @GetMapping
-    @Operation(summary = "Son sohbet mesajlarını getir", description = "Şirketin son 50 sohbet mesajını getirir")
-    public ResponseEntity<List<SohbetMesajDTO>> sonMesajlar(HttpServletRequest request) {
+    @Operation(summary = "Son sohbet mesajlarını getir",
+            description = "Genel sohbetin son 50 mesajını getirir. Daha eski mesajlar için cursor (ilk mesajın id'si) ve limit verilir.")
+    public ResponseEntity<List<SohbetMesajDTO>> sonMesajlar(
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(required = false) Integer limit,
+            HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
-        return ResponseEntity.ok(sohbetService.sonMesajlar(sirketId));
+        return ResponseEntity.ok(sohbetService.sonMesajlar(sirketId, cursor, limit));
+    }
+
+    @GetMapping("/okunmamis")
+    @Operation(summary = "Genel sohbette okunmamış mesaj sayısı",
+            description = "Kullanıcının son gördüğü mesaj id'sinden sonraki genel sohbet mesajlarını sayar.")
+    public ResponseEntity<java.util.Map<String, Long>> genelOkunmamis(
+            @RequestParam(required = false) Long sonOkunanId,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(java.util.Map.of(
+                "okunmamis", sohbetService.genelOkunmamisSayisi(sirketId, sonOkunanId)));
     }
 
     @PostMapping
@@ -73,34 +89,40 @@ public class SohbetController {
 
     @PostMapping("/ai-sorgu")
     @Operation(summary = "Doğal dilde veri sorgulama (AI Asistan)", description = "Yapay zeka ile doğal dil analitiği ve görsel grafik yanıtı üretir")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
     public ResponseEntity<com.raspel.erp.dto.sistem.AISorguSonucDTO> aiSorgu(@RequestBody java.util.Map<String, String> body, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         String soru = body != null ? body.get("soru") : "";
-        return ResponseEntity.ok(sohbetService.aiSorgula(soru, sirketId));
+        return ResponseEntity.ok(sohbetService.aiSorgula(soru, sirketId, kullaniciId));
     }
 
     @PostMapping("/ai-ocr")
     @Operation(summary = "Fatura/Fiş OCR okuma", description = "Görüntüyü (base64) AI vision ile okuyup fatura kalemlerini JSON döndürür")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
     public ResponseEntity<java.util.Map<String, Object>> aiOcr(@RequestBody java.util.Map<String, String> body, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         String base64Image = body != null ? body.get("gorsel") : "";
         String mimeType = body != null ? (body.get("mimeType") != null ? body.get("mimeType") : "image/jpeg") : "image/jpeg";
-        String sonuc = sohbetService.aiOcrOku(base64Image, mimeType, sirketId);
+        String sonuc = sohbetService.aiOcrOku(base64Image, mimeType, sirketId, kullaniciId);
         return ResponseEntity.ok(java.util.Map.of("sonuc", sonuc));
     }
 
     @GetMapping("/ai-sorgu-stream")
     @Operation(summary = "AI sorgusunu akışlı yanıtla", description = "Yapay zeka yanıtını token token (SSE) akıtır")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
     public org.springframework.web.servlet.mvc.method.annotation.SseEmitter aiSorguStream(
             @RequestParam String soru, HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
         org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter =
                 new org.springframework.web.servlet.mvc.method.annotation.SseEmitter(0L);
         java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             try {
-                sohbetService.aiSorgulaStream(soru, sirketId, token -> {
+                sohbetService.aiSorgulaStream(soru, sirketId, kullaniciId, token -> {
                     try {
                         emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
                                 .name("token").data(objectMapper.writeValueAsString(token)));
