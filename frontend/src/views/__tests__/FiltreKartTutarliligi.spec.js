@@ -38,6 +38,13 @@ describe('Ortak filtre karti — liste ekranlari', () => {
     expect(src).toContain('const kaydet = () =>')
   })
 
+  it('kompakt tablo yogunlugu gercek satir yuksekligi degisimi uretir', () => {
+    const css = oku('assets/app.css')
+    expect(css).toMatch(
+      /\.p-datatable\.p-datatable-sm \.p-datatable-tbody > tr > td\s*\{[^}]*padding:\s*3px/
+    )
+  })
+
   it('Masraflar filtresinde temizle aksiyonu vardir', () => {
     const src = oku('views/Masraflar.vue')
     expect(src).toContain('data-test="masraf-filtre-temizle"')

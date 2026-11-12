@@ -925,6 +925,15 @@ img {
   padding: 8px 10px !important;
   font-size: 13px !important;
 }
+/* Kompakt tablo yogunlugu: DataTable size="small" gercek satir yuksekligi
+   degisikligi uretsin (global td padding kurali aksi halde eziyor). */
+.p-datatable.p-datatable-sm .p-datatable-thead > tr > th {
+  padding: 4px 10px !important;
+}
+.p-datatable.p-datatable-sm .p-datatable-tbody > tr > td {
+  padding: 3px 10px !important;
+  font-size: 12px !important;
+}
 .p-datatable .p-datatable-tbody > tr:nth-child(even) {
   background: rgba(148, 163, 184, 0.02) !important;
 }
