@@ -71,6 +71,16 @@ describe('Faturalar liste ekrani — Faz1', () => {
     expect(src).toContain('@update:yogunluk="tabloYogunluk = $event"')
   })
 
+  it('kompakt yogunluk tabloya uygulanir', () => {
+    expect(src).toContain(':size="tabloYogunluk === \'compact\' ? \'small\' : \'normal\'"')
+  })
+
+  it('tur filtresi kompakt bir secimdir', () => {
+    expect(src).toContain('data-test="fatura-tur-filtre"')
+    expect(src).toContain('class="filtre-secim tur-filtre-secim"')
+    expect(src).not.toContain(':allow-empty="false"')
+  })
+
   it('varsayilan gorunumde ikincil kolonlar gizlidir', () => {
     for (const alan of ['tur', 'yazdirmaSayisi', 'olusturanKullaniciAdi', 'teslimEden', 'teslimatDurum']) {
       expect(src).toContain(`${alan}: false`)

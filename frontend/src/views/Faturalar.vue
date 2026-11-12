@@ -58,7 +58,7 @@
       />
     </div>
 
-    <!-- Liste filtreleri: tur segmenti + durum cipleri + gelismis popover -->
+    <!-- Liste filtreleri: arama + tur secimi + durum cipleri + gelismis popover -->
     <div class="filtre-cubugu">
       <IconField class="arama-kutu">
         <InputIcon class="pi pi-search" />
@@ -69,21 +69,28 @@
           @input="aramaDebounce"
         />
       </IconField>
-      <SelectButton
+      <Dropdown
         v-model="turFiltre"
         :options="turFiltreSecenekleri"
         option-label="label"
         option-value="value"
-        :allow-empty="false"
-        class="tur-filtre-secim"
+        class="filtre-secim tur-filtre-secim"
+        :placeholder="t('faturalar.filtreTumu')"
+        data-test="fatura-tur-filtre"
       />
-      <div class="durum-cipleri">
+      <span class="filtre-ayrac" />
+      <div
+        class="durum-cipleri"
+        role="group"
+        :aria-label="t('common.status')"
+      >
         <button
           v-for="d in durumFiltreSecenekleri"
           :key="d.value ?? 'tumu'"
           type="button"
           class="durum-cip"
           :class="{ aktif: durumFiltre === d.value }"
+          :aria-pressed="durumFiltre === d.value ? 'true' : 'false'"
           @click="durumFiltre = d.value"
         >
           {{ d.label }}
@@ -196,6 +203,7 @@
         selection-mode="multiple"
         :value="faturaStore.faturalar"
         :loading="loading"
+        :size="tabloYogunluk === 'compact' ? 'small' : 'normal'"
         striped-rows
         :lazy="true"
         :total-records="faturaStore.toplamKayit"
@@ -1489,13 +1497,35 @@ h1 {
 .w-full {
   width: 100% !important;
 }
-/* Liste filtre cubugu */
+/* Liste filtre cubugu: tek kart icinde gruplanmis, esit yukseklikte kontroller. */
 .filtre-cubugu {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
-  margin: 0 0 14px;
+  margin: 0 0 12px;
+  padding: 7px 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.arama-kutu {
+  flex: 1 1 220px;
+  max-width: 340px;
+}
+.arama-input {
+  width: 100%;
+}
+.filtre-secim {
+  min-width: 128px;
+}
+.filtre-secim :deep(.p-select) {
+  width: 100%;
+}
+.filtre-ayrac {
+  width: 1px;
+  height: 22px;
+  background: var(--border);
 }
 /* Kolon ayarlari dugmesi filtre cubugunun sagina yaslanir. */
 .filtre-sag {
@@ -1542,20 +1572,23 @@ h1 {
 .fatura-filtre-temizle {
   margin-left: 2px;
 }
-.tur-filtre-secim :deep(.p-selectbutton) {
-  display: flex;
+.tur-filtre-secim {
+  flex-shrink: 0;
 }
 .durum-cipleri {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 .durum-cip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
   border: 1px solid var(--border);
   background: var(--bg-card);
   color: var(--text-secondary);
   border-radius: 999px;
-  padding: 4px 12px;
+  padding: 0 12px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -1570,11 +1603,12 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-height: 32px;
   border: 1px solid var(--border);
   background: var(--bg-card);
   color: var(--text-secondary);
   border-radius: 10px;
-  padding: 6px 12px;
+  padding: 0 12px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -1597,13 +1631,39 @@ h1 {
   align-items: center;
   justify-content: center;
 }
+@media (max-width: 1280px) {
+  .filtre-gelismis-metin {
+    display: none;
+  }
+  .filtre-gelismis-btn {
+    width: 34px;
+    justify-content: center;
+    padding: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .filtre-cubugu {
+    gap: 6px;
+  }
+  .arama-kutu {
+    flex-basis: 100%;
+    max-width: none;
+  }
+  .filtre-ayrac {
+    display: none;
+  }
+  .filtre-sag {
+    margin-left: 0;
+  }
+}
+
 .filtre-panel {
   display: flex;
   flex-direction: column;
   gap: 12px;
   width: 250px;
-}
-.filtre-panel-baslik {
+}.filtre-panel-baslik {
   font-size: 13px;
   font-weight: 700;
   color: var(--text-primary);

@@ -109,8 +109,23 @@ describe('Fatura Yönetimi', () => {
     cy.contains('.durum-cip', 'Kesildi').click()
     cy.wait('@faturalar').its('request.url').should('include', 'durum=KESILDI')
 
-    cy.get('.tur-filtre-secim').contains('button', 'Satış').click()
+    cy.get('[data-test="fatura-tur-filtre"]').click()
+    cy.get('.p-select-option').contains('Satış').click()
     cy.wait('@faturalar').its('request.url').should('include', 'tur=SATIS')
+
+    // Kompakt secim: "Tümü" tur filtresini temizler.
+    cy.get('[data-test="fatura-tur-filtre"]').click()
+    cy.get('.p-select-option').contains('Tümü').click()
+    cy.wait('@faturalar').its('request.url').should('not.include', 'tur=')
+  })
+
+  it('kompakt tablo yogunlugu uygulanir', () => {
+    cy.wait('@faturalar')
+    cy.get('.tablo-ayarlari button').click()
+    cy.contains('.ayar-yogunluk button', 'Kompakt').click()
+    cy.get('.p-datatable-sm').should('exist')
+    cy.contains('.ayar-yogunluk button', 'Rahat').click()
+    cy.get('.p-datatable-sm').should('not.exist')
   })
 
   it('KPI özeti aktif filtrelerle yenilenir ve Temizle hepsini sıfırlar', () => {
