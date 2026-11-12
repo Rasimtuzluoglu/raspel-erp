@@ -999,8 +999,10 @@
     "cokSatanlar": "Best Sellers",
     "sirala": "Sort:",
     "siralaAd": "By Name",
-    "siralaFiyat": "By Price",
-    "siralaStok": "By Stock",
+    "siralaFiyatAzalan": "Price (high → low)",
+    "siralaFiyatArtan": "Price (low → high)",
+    "siralaStokCok": "Stock (high → low)",
+    "siralaStokAz": "Stock (low → high)",
     "tumu": "All",
     "kdvDahil": "VAT incl.",
     "kdvOranli": "VAT {oran}% incl.",
@@ -6848,7 +6850,9 @@
     "tumGruplar": "All groups",
     "manuelOkuma": "When on, the screen does not close on each scan; consecutive scanning is enabled.",
     "manuelBarkodGirin": "Or Enter Barcode Manually:",
-    "surekliOkumaModu": "Continuous Scan Mode"
+    "surekliOkumaModu": "Continuous Scan Mode",
+    "barkodNoPlaceholder": "Barcode No...",
+    "ekle": "Add"
   },
   "gecmisZaman": {
     "yukleniyor": "Loading history...",

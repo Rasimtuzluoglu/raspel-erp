@@ -36,13 +36,13 @@
         <div class="input-group">
           <InputText
             v-model="manualBarcode"
-            placeholder="Barkod No..."
+            :placeholder="$t('cmp.barkodNoPlaceholder')"
             class="w-full"
             @keyup.enter="submitManual"
           />
           <Button
             icon="pi pi-check"
-            label="Ekle"
+            :label="$t('cmp.ekle')"
             @click="submitManual"
           />
         </div>

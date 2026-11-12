@@ -666,7 +666,7 @@
 .pos-container .sepet-kontroller .sepet-kod {
   margin-right: auto;
 }
-.pos-container .sepet-adet-grup {
+.pos-container .adet-grup {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -691,7 +691,7 @@
   border-color: var(--accent);
   color: var(--accent);
 }
-.pos-container .sepet-adet-input {
+.pos-container .adet-girdi {
   width: clamp(44px, 7vw, 52px);
   height: 34px;
   padding: 0 4px;
@@ -728,7 +728,7 @@
   text-align: right;
   outline: none;
 }
-.pos-container .sepet-adet-input:focus,
+.pos-container .adet-girdi:focus,
 .pos-container .fiyat-giris-input:focus,
 .pos-container .fiyat-tip-select:focus {
   border-color: var(--accent);
@@ -1038,12 +1038,12 @@
   min-height: 42px;
   font-size: 19px;
 }
-.pos-container.pos-buyuk .sepet-adet-input,
+.pos-container.pos-buyuk .adet-girdi,
 .pos-container.pos-buyuk .fiyat-giris-input,
 .pos-container.pos-buyuk .fiyat-tip-select {
   height: 42px;
 }
-.pos-container.pos-buyuk .sepet-adet-input {
+.pos-container.pos-buyuk .adet-girdi {
   width: clamp(52px, 8vw, 62px);
   font-size: 17px;
 }
@@ -1088,7 +1088,7 @@
     width: 40px;
     min-height: 40px;
   }
-  .pos-container .sepet-adet-input,
+  .pos-container .adet-girdi,
   .pos-container .fiyat-giris-input,
   .pos-container .fiyat-tip-select {
     height: 40px;
@@ -1127,4 +1127,31 @@
   margin-top: 4px;
   color: var(--danger, #dc2626);
   font-size: 11.5px;
+}
+
+/* ======================= DOKUNMA HEDEFLERI (kaba isaretci) =================
+   Tablet/telefon (parmak) kullaniminda 30-36px dugmeler iskalaniyordu:
+   sepet satiri silme, adet +/- ve katlanir basliklar WCAG 2.5.5'in onerdigi
+   44x44 CSS px altindaydi. Fare kullanimini etkilememesi icin yalnizca
+   `pointer: coarse` altinda buyutulur. */
+@media (pointer: coarse) {
+  .pos-container .katlanir-ikon-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .pos-container .sepet-sil {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+  .pos-container .adet-btn {
+    width: 44px;
+    min-height: 44px;
+  }
+  .pos-container .sepet-baslik-toggle {
+    min-height: 44px;
+  }
+  .pos-container .odeme-yontem-btn {
+    min-height: 56px;
+  }
 }

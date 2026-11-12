@@ -528,7 +528,21 @@
       <div
         class="pos-right"
         :class="{ acik: sepetDrawerAcik }"
+        :inert="darEkran && !sepetDrawerAcik"
+        :aria-hidden="darEkran && !sepetDrawerAcik ? 'true' : undefined"
       >
+        <!-- Cekmece modunda perde disinda GORUNUR bir kapatma yolu yoktu;
+             kullanici yalnizca perdeye dokunabilecegini bilmiyordu. -->
+        <button
+          v-if="darEkran && sepetDrawerAcik"
+          type="button"
+          class="sepet-drawer-kapat"
+          :aria-label="t('common.close')"
+          :title="t('common.close')"
+          @click="sepetDrawerAcik = false"
+        >
+          <i class="pi pi-times" />
+        </button>
         <Card class="siparis-kart">
           <template #content>
             <PosMusteriPaneli
@@ -1047,6 +1061,8 @@ useKisayollar({
     if (yeniMusteriDialog.value) yeniMusteriDialog.value = false
     else if (scannerAcik.value) scannerAcik.value = false
     else if (satisOzetDialog.value) satisOzetDialog.value = false
+    else if (odemeOverlayAcik.value) odemeOverlayAcik.value = false
+    else if (sepetDrawerAcik.value) sepetDrawerAcik.value = false
     else if (adetPopoverUrun.value) adetPopoverKapat()
     else if (urunIzgaraOdak.value) urunIzgaradanCik()
   },
@@ -1098,7 +1114,7 @@ const fisDegiskeniniDegistir = () => {
 
 const odaklaAktifAdet = () => {
   const kok = sepetListeRef.value?.$el || sepetListeRef.value
-  const el = kok?.querySelector?.('.sepet-item.aktif-satir .sepet-adet-input')
+  const el = kok?.querySelector?.('.sepet-item.aktif-satir .adet-girdi')
   el?.focus?.()
   el?.select?.()
 }
@@ -1133,6 +1149,25 @@ const odemeOverlayAcik = ref(false)
 
 // Tablet/telefon: sepet sagda yer kaplamak yerine cekmece (drawer) olarak acilir.
 const sepetDrawerAcik = ref(false)
+// CSS esigi ile ayni (<=1280px). Kapali cekmece DOM'da kalir; `inert` +
+// `aria-hidden` olmadan gorunmeyen sepet kontrollerine Tab ile girilebiliyor,
+// ekran okuyucu da fiyat/adet alanlarini okuyordu.
+const darEkran = ref(false)
+let darEkranMq = null
+const darEkranDegisti = (e) => {
+  darEkran.value = e.matches
+  // Masaustune gecilirse cekmece durumu anlamsiz kalmasin.
+  if (!e.matches) sepetDrawerAcik.value = false
+}
+onMounted(() => {
+  darEkranMq = window.matchMedia('(max-width: 1280px)')
+  darEkran.value = darEkranMq.matches
+  darEkranMq.addEventListener?.('change', darEkranDegisti)
+})
+onUnmounted(() => {
+  darEkranMq?.removeEventListener?.('change', darEkranDegisti)
+  darEkranMq = null
+})
 
 // FAZ E: coklu sepet (park/askiya al). Birden fazla sepet paralel tutulabilir;
 // kasiyer bir musteriye gecici ara verip digerine bakabilir.
@@ -1725,12 +1760,26 @@ const bugunkuSatisGoruntule = (satis) => {
   satisGecmisiGoruntule(satis)
 }
 
-/** Izgarada gosterilen urunler: katalogun SIRALANMIS hali. */
+/** Izgarada gosterilen urunler: katalogun SIRALANMIS hali.
+ *
+ *  Tek yonlu siralama (yalniz "fiyat yuksek->dusuk", "stok cok->az") kasiyeri
+ *  kilitliyordu: en ucuz urunu veya bitmek uzere olani gormek icin baska bir
+ *  yol yoktu. Artan/azalan secenekleri acikca sunulur.
+ */
 const gorunenUrunler = computed(() => {
   const liste = [...katalogUrunleri.value]
-  if (siralama.value === 'fiyat') return liste.sort((a, b) => satisFiyati(b) - satisFiyati(a))
-  if (siralama.value === 'stok') return liste.sort((a, b) => (b.miktar || 0) - (a.miktar || 0))
-  return liste.sort((a, b) => (a.ad || '').localeCompare(b.ad || '', 'tr'))
+  switch (siralama.value) {
+    case 'fiyat-artan':
+      return liste.sort((a, b) => satisFiyati(a) - satisFiyati(b))
+    case 'fiyat-azalan':
+      return liste.sort((a, b) => satisFiyati(b) - satisFiyati(a))
+    case 'stok-az':
+      return liste.sort((a, b) => (a.miktar || 0) - (b.miktar || 0))
+    case 'stok-cok':
+      return liste.sort((a, b) => (b.miktar || 0) - (a.miktar || 0))
+    default:
+      return liste.sort((a, b) => (a.ad || '').localeCompare(b.ad || '', 'tr'))
+  }
 })
 
 // Görünen ürünler değiştiğinde çoklu fiyat listelerini besle
@@ -1740,8 +1789,10 @@ watch(gorunenUrunler, (list) => {
 
 const siralamaSecenekleri = computed(() => [
   { label: t('hizliSatis.siralaAd'), value: 'ad' },
-  { label: t('hizliSatis.siralaFiyat'), value: 'fiyat' },
-  { label: t('hizliSatis.siralaStok'), value: 'stok' }
+  { label: t('hizliSatis.siralaFiyatAzalan'), value: 'fiyat-azalan' },
+  { label: t('hizliSatis.siralaFiyatArtan'), value: 'fiyat-artan' },
+  { label: t('hizliSatis.siralaStokCok'), value: 'stok-cok' },
+  { label: t('hizliSatis.siralaStokAz'), value: 'stok-az' }
 ])
 
 const fisModuSecenekleri = computed(() => [

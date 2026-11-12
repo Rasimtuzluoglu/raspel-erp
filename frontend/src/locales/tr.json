@@ -1001,8 +1001,10 @@
     "son": "Son {n}",
     "sirala": "Sırala:",
     "siralaAd": "Ada Göre",
-    "siralaFiyat": "Fiyata Göre",
-    "siralaStok": "Stoğa Göre",
+    "siralaFiyatAzalan": "Fiyat (yüksek → düşük)",
+    "siralaFiyatArtan": "Fiyat (düşük → yüksek)",
+    "siralaStokCok": "Stok (çok → az)",
+    "siralaStokAz": "Stok (az → çok)",
     "tumu": "Tümü",
     "kdvDahil": "KDV dahil",
     "kdvOranli": "KDV %{oran} dahil",
@@ -6848,7 +6850,9 @@
     "tumGruplar": "Tüm gruplar",
     "manuelOkuma": "Açıksa her okumada ekran kapanmaz, art arda okuma yapılır.",
     "manuelBarkodGirin": "Veya Manuel Barkod Girin:",
-    "surekliOkumaModu": "Sürekli Okuma Modu"
+    "surekliOkumaModu": "Sürekli Okuma Modu",
+    "barkodNoPlaceholder": "Barkod No...",
+    "ekle": "Ekle"
   },
   "gecmisZaman": {
     "yukleniyor": "Geçmiş yükleniyor...",

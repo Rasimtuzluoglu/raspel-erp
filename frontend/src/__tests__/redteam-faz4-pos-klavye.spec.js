@@ -336,7 +336,9 @@ describe('Faz4.5 - fis yazdirma kisayolu duzeltildi', () => {
 
   it('fis blogu satis sonrasi da gorunur (yeniden yazdirma mumkun)', () => {
     // Once `v-if="sepet.length > 0"` idi: satis bitince bolum KAYBOLUYORDU.
-    expect(yorumsuz(sablonBlogu(posKod))).toContain('v-if="sepet.length > 0 || sonSatis"')
+    // Faz6: sepet temizlense de son satis snapshot'i (`sonSepet`) bolumu acik tutar.
+    const sablon = yorumsuz(sablonBlogu(posKod))
+    expect(sablon).toContain('v-if="sepet.length > 0 || sonSepet.length > 0"')
   })
 
   it('F7 bugunku satislari acar', () => {

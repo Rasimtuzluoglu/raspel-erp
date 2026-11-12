@@ -487,4 +487,37 @@ describe('Hızlı Satış (POS)', () => {
       expect(win.document.documentElement.scrollWidth).to.be.at.most(win.document.documentElement.clientWidth + 1)
     })
   })
+
+  // Faz7: cekmece yalniz perdeye dokunarak kapaniyordu; kapali cekmece de
+  // Tab/ekran okuyucu icin gezilebilir kaliyordu.
+  it('mobil sepet çekmecesi inert olur, kapatma düğmesi ve Esc ile kapanır', () => {
+    cy.viewport(1024, 800)
+    cy.get('.pos-container').should('exist')
+    cy.get('.pos-right').should('have.attr', 'inert')
+    cy.get('.sepet-fab').click()
+    cy.get('.pos-right').should('have.class', 'acik').and('not.have.attr', 'inert')
+    cy.get('.sepet-drawer-kapat').should('be.visible')
+    tusGonder('Escape')
+    cy.get('.pos-right').should('not.have.class', 'acik')
+    cy.get('.pos-right').should('have.attr', 'inert')
+  })
+
+  // Faz7: F4/Enter ile adet duzenleme OLU sinifa odaklaniyordu (`.sepet-adet-input`
+  // hic render edilmiyordu); gercek girdi `.adet-girdi`.
+  it('sepet satırında Enter adet girdisine odaklanır', () => {
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
+    cy.get('.sepet-item').should('have.length', 1)
+    cy.get('.sepet-item').first().click()
+    cy.get('input.komut-kutu-girdi').focus().blur()
+    tusGonder('Enter')
+    cy.focused().should('have.class', 'adet-girdi')
+  })
+
+  // Faz7: siralama iki yonlu (fiyat artan secildiginde en ucuz once gelir).
+  it('fiyat artan sıralaması en ucuz ürünü başa alır', () => {
+    cy.get('.product-card').should('have.length.at.least', 2)
+    cy.get('.siralama-dropdown').click()
+    cy.contains('.p-select-overlay .p-select-option', 'Fiyat (düşük').click()
+    cy.get('.product-card .product-name').first().should('contain', 'Zzz Stoksuz Ürün')
+  })
 })
