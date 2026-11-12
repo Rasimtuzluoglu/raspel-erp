@@ -26,45 +26,6 @@
       <GirisMarkaPaneli class="giris-marka-alani" />
 
       <main class="giris-icerik">
-        <div
-          class="giris-tema-secim"
-          role="group"
-          :aria-label="t('theme.mode')"
-        >
-          <button
-            type="button"
-            class="giris-tema-btn"
-            :class="{ 'giris-tema-btn--aktif': !isDark }"
-            data-test="giris-tema-light"
-            :aria-label="t('theme.light')"
-            :title="t('theme.light')"
-            :aria-pressed="!isDark ? 'true' : 'false'"
-            @click="applyMode('light')"
-          >
-            <i
-              class="pi pi-sun"
-              aria-hidden="true"
-            />
-            <span>{{ t('theme.lightShort') }}</span>
-          </button>
-          <button
-            type="button"
-            class="giris-tema-btn"
-            :class="{ 'giris-tema-btn--aktif': isDark }"
-            data-test="giris-tema-dark"
-            :aria-label="t('theme.dark')"
-            :title="t('theme.dark')"
-            :aria-pressed="isDark ? 'true' : 'false'"
-            @click="applyMode('dark')"
-          >
-            <i
-              class="pi pi-moon"
-              aria-hidden="true"
-            />
-            <span>{{ t('theme.darkShort') }}</span>
-          </button>
-        </div>
-
         <!-- Mobil/tablet: kompakt marka -->
         <div class="giris-mobil-marka">
           <img
@@ -99,7 +60,6 @@ import { nextTick, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/authStore.js'
-import { useTheme } from '../composables/useTheme.js'
 import GirisAcilis from '../components/GirisAcilis.vue'
 import GirisMarkaPaneli from '../components/GirisMarkaPaneli.vue'
 import GirisFormKarti from '../components/GirisFormKarti.vue'
@@ -108,7 +68,6 @@ import GirisAltBilgi from '../components/GirisAltBilgi.vue'
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
-const { isDark, applyMode } = useTheme()
 const { t } = useI18n()
 
 const SW_YENILEME_ANAHTARI = 'raspel_sw_yenileme'
@@ -370,60 +329,6 @@ onMounted(() => {
   min-width: 0;
 }
 
-.giris-tema-secim {
-  display: inline-flex;
-  align-self: flex-end;
-  gap: 2px;
-  margin-bottom: 10px;
-  padding: 3px;
-  border: 1px solid var(--giris-kenar-2);
-  border-radius: 999px;
-  background: var(--giris-yuzey-2);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(10px);
-}
-
-.giris-tema-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 32px;
-  padding: 0 11px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--giris-metin-3);
-  font-family: inherit;
-  font-size: 11.5px;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background 160ms ease-out,
-    color 160ms ease-out,
-    box-shadow 160ms ease-out;
-}
-
-.giris-tema-btn i {
-  font-size: 11.5px;
-}
-
-.giris-tema-btn:hover {
-  background: var(--giris-hover);
-  color: var(--giris-metin);
-}
-
-.giris-tema-btn--aktif {
-  background: var(--giris-aksan-yumusak-2);
-  color: var(--giris-aksan-parlak);
-  box-shadow: inset 0 0 0 1px var(--giris-aksan-kenar);
-}
-
-.giris-tema-btn:focus-visible {
-  outline: 2px solid var(--giris-aksan);
-  outline-offset: 2px;
-}
-
 .giris-mobil-marka {
   display: none;
   align-items: center;
@@ -479,18 +384,6 @@ onMounted(() => {
   .giris-sayfasi {
     align-items: flex-start;
     padding-top: calc(20px + env(safe-area-inset-top));
-  }
-}
-
-@media (max-width: 520px) {
-  .giris-tema-btn {
-    width: 36px;
-    min-height: 34px;
-    padding: 0;
-  }
-
-  .giris-tema-btn span {
-    display: none;
   }
 }
 

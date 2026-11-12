@@ -7,22 +7,64 @@
       v-if="!kurulumAdimi"
       class="gk-ust"
     >
-      <div class="gk-marka">
-        <img
-          :src="logoGoster"
-          alt=""
-          class="gk-logo"
-          width="36"
-          height="36"
+      <div class="gk-ust-satir">
+        <div class="gk-marka">
+          <img
+            :src="logoGoster"
+            alt=""
+            class="gk-logo"
+            width="36"
+            height="36"
+          >
+          <div class="gk-marka-metin">
+            <span class="gk-ad">RasPel ERP</span>
+            <span
+              v-if="sonSirketAd"
+              class="gk-son"
+            >{{ t('giris.lastCompany') }}: <strong>{{ sonSirketAd }}</strong></span>
+          </div>
+        </div>
+
+        <div
+          class="gk-tema"
+          role="group"
+          :aria-label="t('theme.mode')"
         >
-        <div class="gk-marka-metin">
-          <span class="gk-ad">RasPel ERP</span>
-          <span
-            v-if="sonSirketAd"
-            class="gk-son"
-          >{{ t('giris.lastCompany') }}: <strong>{{ sonSirketAd }}</strong></span>
+          <button
+            type="button"
+            class="gk-tema-btn"
+            :class="{ 'gk-tema-btn--aktif': !isDark }"
+            data-test="giris-tema-light"
+            :aria-label="t('theme.light')"
+            :title="t('theme.light')"
+            :aria-pressed="!isDark ? 'true' : 'false'"
+            @click="applyMode('light')"
+          >
+            <i
+              class="pi pi-sun"
+              aria-hidden="true"
+            />
+            <span>{{ t('theme.lightShort') }}</span>
+          </button>
+          <button
+            type="button"
+            class="gk-tema-btn"
+            :class="{ 'gk-tema-btn--aktif': isDark }"
+            data-test="giris-tema-dark"
+            :aria-label="t('theme.dark')"
+            :title="t('theme.dark')"
+            :aria-pressed="isDark ? 'true' : 'false'"
+            @click="applyMode('dark')"
+          >
+            <i
+              class="pi pi-moon"
+              aria-hidden="true"
+            />
+            <span>{{ t('theme.darkShort') }}</span>
+          </button>
         </div>
       </div>
+
       <h2 class="gk-baslik">
         {{ baslik }}
       </h2>
@@ -528,6 +570,7 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useTheme } from '../composables/useTheme.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { kurulumAPI, kullaniciAPI, passkeyAPI } from '../api/index.js'
 import { passkeyDestekleniyor, passkeyIleGiris } from '../utils/webauthn.js'
@@ -542,6 +585,7 @@ const props = defineProps({
 const emit = defineEmits(['giris-basarili'])
 
 const { t } = useI18n()
+const { isDark, applyMode } = useTheme()
 const authStore = useAuthStore()
 
 const kullaniciInput = ref(null)
@@ -945,11 +989,85 @@ const tumAdimlariSifirla = () => {
   min-width: 0;
 }
 
+.gk-ust-satir {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
 .gk-marka {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 4px;
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+/* Tema secici kart basligiyla butunlesik: ayri bir yuzey/panel gibi durmaz. */
+.gk-tema {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  padding: 2px;
+  border: 1px solid var(--giris-kenar-2);
+  border-radius: 999px;
+  background: transparent;
+}
+
+.gk-tema-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 28px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--giris-metin-3);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 160ms ease-out,
+    color 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+.gk-tema-btn i {
+  font-size: 11px;
+}
+
+.gk-tema-btn:hover {
+  background: var(--giris-hover);
+  color: var(--giris-metin);
+}
+
+.gk-tema-btn--aktif {
+  background: var(--giris-aksan-yumusak-2);
+  color: var(--giris-aksan-parlak);
+  box-shadow: inset 0 0 0 1px var(--giris-aksan-kenar);
+}
+
+.gk-tema-btn:focus-visible {
+  outline: 2px solid var(--giris-aksan);
+  outline-offset: 2px;
+}
+
+@media (max-width: 520px) {
+  .gk-tema-btn {
+    width: 30px;
+    min-height: 28px;
+    padding: 0;
+  }
+
+  .gk-tema-btn span {
+    display: none;
+  }
 }
 
 .gk-logo {
