@@ -1171,6 +1171,7 @@
     "urunEklendi": "Ürün Eklendi",
     "bulunamadi": "Bulunamadı",
     "barkodluUrunBulunamadi": "\"{barkod}\" barkodlu ürün bulunamadı",
+    "urunAdiBulunamadi": "\"{metin}\" ile eşleşen ürün bulunamadı",
     "fisAltNotVarsayilan": "Bizi tercih ettiğiniz için teşekkür ederiz!",
     "sepetKaydedildi": "Sepet Kaydedildi",
     "sepetKaydedildiDetay": "Kayıtlı sepete istediğinizde dönebilirsiniz.",

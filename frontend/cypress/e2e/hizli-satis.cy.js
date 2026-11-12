@@ -258,6 +258,68 @@ describe('Hızlı Satış (POS)', () => {
     cy.contains('FTR-TEST-0001').should('exist')
   })
 
+  // Faz6: odeme akisi tek yoldan tamamlanir; ozet kapaninca kasiyer yeni
+  // okutmaya hazir olmali (fareyle kutuya tiklamak zorunda kalmadan).
+  it('satış özeti kapanınca barkod alanına odak döner', () => {
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
+    cy.get('.sepet-item').should('have.length', 1)
+    cy.get('.musteri-modu').contains('Perakende').click()
+    cy.get('.yeni-odeme-btn').click()
+    cy.get('[data-test="pos-odeme-tamamla"]').click()
+    cy.wait('@satisOlustur')
+
+    cy.contains('.p-dialog button', 'Yeni Satış').click()
+    cy.get('.satis-ozet').should('not.exist')
+    cy.focused().should('have.class', 'komut-kutu-girdi')
+  })
+
+  // Faz6: fis YALNIZ sepette urun varken basilabiliyordu. Satistan sonra sepet
+  // temizlendigi icin "fisi tekrar ver" istegi karsilanamiyordu.
+  it('satıştan sonra fiş yeniden yazdırılabilir', () => {
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
+    cy.get('.sepet-item').should('have.length', 1)
+    cy.get('.musteri-modu').contains('Perakende').click()
+    cy.get('.yeni-odeme-btn').click()
+    cy.get('[data-test="pos-odeme-tamamla"]').click()
+    cy.wait('@satisOlustur')
+    cy.contains('.p-dialog button', 'Yeni Satış').click()
+
+    // Sepet bos ama fis bolumu (son satis snapshot'i) duruyor.
+    cy.get('.sepet-item').should('have.length', 0)
+    cy.get('details.fis-detay').should('exist').and('contain', 'Test Ürün')
+    cy.get('details.fis-detay .fis-ayarlar button').contains('F8').click({ force: true })
+    cy.wait('@yazdirmaKaydet')
+  })
+
+  // Faz6: ad aramasinda ("vida") urun yoksa "Yeni Urun" formu ACILMAZ.
+  it('ad aramasında eşleşme yoksa yeni ürün formu açılmaz', () => {
+    cy.intercept('GET', '**/api/stoklar/ara*', { statusCode: 200, body: [] }).as('bosAra')
+    cy.get('input.komut-kutu-girdi').type('olmayan urun{enter}')
+    cy.get('.p-toast-message').should('contain', 'Bulunamadı')
+    // Barkod benzeri olmadigi icin yeni urun diyalogu acilmaz.
+    cy.get('.p-dialog').should('not.exist')
+    cy.get('.sepet-item').should('have.length', 0)
+  })
+
+  // Faz6: basarili eklemeden sonra arama kutusu ve oneriler temizlenir; aksi
+  // halde bir sonraki urune kadar izgara eski aramayla filtrelenmis kaliyordu.
+  it('barkod okutulduktan sonra arama durumu sıfırlanır', () => {
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
+    cy.get('.sepet-item').should('have.length', 1)
+    cy.get('input.komut-kutu-girdi').should('have.value', '')
+    // Izgara tam listeye doner (3 mock urun).
+    cy.get('.product-card').should('have.length', 3)
+  })
+
+  // Faz6: ad aramasi sonuc buldugunda ILK sonuc sepete eklenir (kasiyer
+  // oneriden secmis gibi davranir); bos "yeni urun" formu ile karsilasmaz.
+  it('ad aramasında ilk sonuç sepete eklenir', () => {
+    cy.get('input.komut-kutu-girdi').type('vida{enter}')
+    cy.get('.sepet-item').should('have.length', 1)
+    cy.get('.sepet-item').should('contain', 'Test Ürün')
+    cy.get('.p-dialog').should('not.exist')
+  })
+
   // REDTEAM/Faz5: F9/F10 artik satisi TAMAMLAMAZ (kazara kayit engeli).
   // DAVRANIS DEGISIKLIGI: Musteri modu seciliyken musteri yoksa "Satisi Tamamla"
   // butonu artik DISABLED; eskiden tiklanip "Musteri gerekli" uyarisi cikiyordu.

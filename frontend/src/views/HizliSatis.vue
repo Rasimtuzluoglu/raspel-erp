@@ -697,7 +697,7 @@
                  `sepet.length > 0` ile aciliyordu, yani satis bittikten sonra
                  fiy yeniden basilamiyordu (fare ile bile: bolum kayboluyordu). -->
             <details
-              v-if="sepet.length > 0 || sonSatis"
+              v-if="sepet.length > 0 || sonSepet.length > 0"
               ref="fisDetayRef"
               class="fis-detay pos-bolum"
               @toggle="fisAclic = $event.target.open"
@@ -717,7 +717,7 @@
                     :label="t('hizliSatis.yazdirF8')"
                     icon="pi pi-print"
                     size="small"
-                    @click="fisiYazdir(sonSatis?.faturaNumarasi, satisOzet?.fisModu)"
+                    @click="fisiYazdir(sepet.length ? null : sonSatis?.faturaNumarasi)"
                   />
                   <Button
                     :label="t('hizliSatis.termalF11')"
@@ -735,17 +735,17 @@
                   :sirket-adi="sirketAdi"
                   :simdiki-tarih="simdikiTarih"
                   :fis-no="fisNo"
-                  :musteri-adi="musteriAdi"
-                  :sepet="sepet"
-                  :fis-fiyatli="fisFiyatliGecici"
-                  :toplam="toplam"
-                  :indirim-degeri="indirimDegeri"
-                  :indirim-tipi="indirimTipi"
-                  :indirim-tutari="indirimTutari"
-                  :genel-toplam="genelToplam"
-                  :odenen-tutar="odenenTutar"
-                  :kalan-tutar="kalanTutar"
-                  :odeme-durum-text="odemeDurumText"
+                  :musteri-adi="fisOzeti.musteriAdi"
+                  :sepet="fisSepeti"
+                  :fis-fiyatli="fisOzeti.fisModu ?? fisFiyatliGecici"
+                  :toplam="fisOzeti.toplam"
+                  :indirim-degeri="fisOzeti.indirimDegeri"
+                  :indirim-tipi="fisOzeti.indirimTipi"
+                  :indirim-tutari="fisOzeti.indirimTutari"
+                  :genel-toplam="fisOzeti.genelToplam"
+                  :odenen-tutar="fisOzeti.odenenTutar"
+                  :kalan-tutar="fisOzeti.kalanTutar"
+                  :odeme-durum-text="fisOzeti.odemeDurumText"
                   :fis-alt-notu="fisAltNotu"
                 />
               </div>
@@ -1277,6 +1277,20 @@ const komutBlur = () => {
     komutOnerileriAcik.value = false
   }, 150)
 }
+/**
+ * Komut kutusu temizligi.
+ *
+ * NEDEN: Barkod okutuldugunda/kalem eklendiginde arama sonuclari ve
+ * `katalogArama` DOLU kaliyordu. Izgara bir sonraki urune kadar eski aramayla
+ * filtrelenmis, oneri listesi de kapanmis kutuya ragmen acik saniyordu.
+ * Basarili eklemeden sonra arama durumu sifirlanir; urun izgarasi tam listeye
+ * doner ve kasier bir sonraki okutmaya temiz ekrandan devam eder.
+ */
+const komutTemizle = () => {
+  katalogArama.value = ''
+  urunOnerileri.value = []
+  komutOnerileriAcik.value = false
+}
 const komutSec = (o) => {
   komutOnerileriAcik.value = false
   if (globalBarkod.value.trim().startsWith('@')) {
@@ -1285,6 +1299,7 @@ const komutSec = (o) => {
     toastBildirim.uyari(t('hizliSatis.stokYokUyari', { ad: o.ad }))
   } else {
     sepeteEkle(o)
+    komutTemizle()
   }
   globalBarkod.value = ''
 }
@@ -1304,23 +1319,48 @@ const barkodTarandi = async (barkod, adet = 1) => {
   // Etiketlerde barkod alani bos urunlerde stok kodu kodlanir; arama her ikisini
   // ve seri numarasini kapsar.
   const eslesir = (s) => s.barkod === barkod || s.seriNo === barkod || s.stokKodu === barkod
+  // Barkod/stok kodu benzeri: bosluksuz, en az bir rakam iceren kisa kod.
+  // "vida", "vida 5x40" gibi metinler AD ARAMASIDIR; bunlarda urun yok diye
+  // "yeni urun" dialogu acmak yanlisti (kullanici yalnizca arama yapiyordu).
+  const kodBenzeri = !/\s/.test(barkod) && /\d/.test(barkod) && barkod.length <= 32
+  const adAramasi = !kodBenzeri
   // FAZ D: ONCE yuklu POS katalogunda ara (ekrandaki/elde olan urun icin sunucu
   // turu YOK -> barkod aninda sepete duser). Bulunamazsa eski global store,
   // en son sunucu aramasi.
   let urun = katalogUrunleri.value.find(eslesir) || stokStore.stoklar.find(eslesir)
   if (urun) {
     sepeteEkle(urun, adet)
+    komutTemizle()
   } else {
     // Sunucuda ara (büyük envanterde tümü yüklenmemiş olabilir)
     try {
       const r = await stokAPI.ara(barkod)
-      const bulunan = (r.data || []).find(eslesir)
+      const liste = r.data || []
+      const bulunan = liste.find(eslesir)
       if (bulunan) {
         sepeteEkle(bulunan, adet)
+        komutTemizle()
         return
+      }
+      // Ad aramasinda kullanici zaten oneri listesinden secim yapmis gibi
+      // davranilir: ILK sonuc sepete eklenir. Boylece "vida" yazip Enter'a
+      // basan kasiyer urunu alir; bos "yeni urun" formuyla karsilasmaz.
+      if (adAramasi) {
+        const ilk = liste[0] || urunOnerileri.value[0]
+        if (ilk) {
+          if (stokYokMu(ilk)) toastBildirim.uyari(t('hizliSatis.stokYokUyari', { ad: ilk.ad }))
+          else sepeteEkle(ilk, adet)
+          komutTemizle()
+          return
+        }
       }
     } catch {
       /* sunucu araması başarısız olabilir */
+    }
+    if (adAramasi) {
+      // Ad aramasinda sonuc yok: yeni urun formu ACILMAZ, yalnizca bilgi verilir.
+      toast.add({ severity: 'warn', summary: t('hizliSatis.bulunamadi'), detail: t('hizliSatis.urunAdiBulunamadi', { metin: barkod }), life: 3000 })
+      return
     }
     toast.add({ severity: 'warn', summary: t('hizliSatis.bulunamadi'), detail: t('hizliSatis.barkodluUrunBulunamadi', { barkod }), life: 3000 })
     hizliUrun.value = { barkod, ad: '', fiyat: 0, miktar: 1 }
@@ -1370,6 +1410,9 @@ const musteriKaydediliyor = ref(false)
 
 const kaydediliyor = ref(false)
 const fisNo = ref('')
+// Son satisin fis anlik goruntusu: sepet temizlendikten sonra da yeniden yazdirilabilir.
+const sonSepet = ref([])
+const sonFisOzet = ref(null)
 // `fisFiyatli` / `fisAltNotu` / `fisGenislik` artik `usePosTercih` icinde
 // tanimli; kalici yazim onun `watch`'i ile otomatik.
 // Fiş fiyatlı/fiyatsız seçimi satış başına geçicidir; satış tamamlanınca sunucu ayarına döner.
@@ -2040,7 +2083,7 @@ const urunDegistirSec = async ({ idx, urun }) => {
 }
 
 
-const simdikiTarih = computed(() => formatDateTime(new Date()))
+const simdikiTarih = ref(formatDateTime(new Date()))
 
 
 onMounted(async () => {
@@ -2212,21 +2255,11 @@ const musteriKaydet = async () => {
 
 // REDTEAM/Faz7: `hizliNakit` `usePosOdeme` icinde (HIZLI_NAKIT).
 
-const fisiYazdir = (gercekFaturaNo, fiyatliOverride = null) => {
-  if (!sepet.value.length) return
-  // Gercek fatura numarasi varsa fise o yazilir (fisten faturaya ulasilabilir).
-  // Yalnizca cevrimdisi/henuz olusmamis satislarda gecici numara uretilir.
-  fisNo.value = gercekFaturaNo || ('F-' + Date.now().toString(36).toUpperCase())
-  yazdirmaKaydet('TERMAL80')
+const fisSepeti = computed(() => (sepet.value.length ? sepet.value : sonSepet.value))
 
-  // Fis gorunumu utils/posFis.js icinde. Bu fonksiyon artik yalnizca veriyi
-  // toplayip pencerede yazdirir; 60 satirlik HTML sablonu + gomulu CSS dahil
-  // fis gorunumu tek yerde toplanir.
-  const pencere = fisPenceresiAcVeYazdir(
-    posFisHtml({
-      t,
-      sepet: sepet.value,
-      fiyatli: fiyatliOverride !== null ? fiyatliOverride : fisFiyatliGecici.value,
+const fisOzeti = computed(() => {
+  if (sepet.value.length) {
+    return {
       toplam: toplam.value,
       indirimDegeri: indirimDegeri.value,
       indirimTipi: indirimTipi.value,
@@ -2235,15 +2268,52 @@ const fisiYazdir = (gercekFaturaNo, fiyatliOverride = null) => {
       odenenTutar: odenenTutar.value,
       kalanTutar: kalanTutar.value,
       toplamAgirlik: toplamAgirlik.value,
-      sirketLogosu: sirketLogosu.value,
-      sirketAdi: sirketAdi.value,
-      simdikiTarih: simdikiTarih.value,
-      fisNo: fisNo.value,
       musteriAdi: musteriAdi.value,
       teslimEden: teslimEden.value,
       teslimDurumu: teslimDurumu.value,
       teslimNotu: teslimNotu.value,
       odemeDurumText: odemeDurumText.value,
+      fisModu: fisFiyatliGecici.value
+    }
+  }
+  return sonFisOzet.value || {}
+})
+
+const fisiYazdir = (gercekFaturaNo, fiyatliOverride = null) => {
+  if (!fisSepeti.value.length) return
+  // Gercek fatura numarasi varsa fise o yazilir; yeniden yazdirmada onceki no korunur.
+  if (gercekFaturaNo) fisNo.value = gercekFaturaNo
+  else if (!fisNo.value) fisNo.value = 'F-' + Date.now().toString(36).toUpperCase()
+  // Fis tarihi her yazdirmada tazelenir; vardiya boyunca sayfa acilis saati kalmasin.
+  simdikiTarih.value = formatDateTime(new Date())
+  yazdirmaKaydet('TERMAL80')
+
+  // Fis gorunumu utils/posFis.js icinde. Bu fonksiyon artik yalnizca veriyi
+  // toplayip pencerede yazdirir; 60 satirlik HTML sablonu + gomulu CSS dahil
+  // fis gorunumu tek yerde toplanir.
+  const ozet = fisOzeti.value
+  const pencere = fisPenceresiAcVeYazdir(
+    posFisHtml({
+      t,
+      sepet: fisSepeti.value,
+      fiyatli: fiyatliOverride !== null ? fiyatliOverride : (ozet.fisModu ?? fisFiyatliGecici.value),
+      toplam: ozet.toplam,
+      indirimDegeri: ozet.indirimDegeri,
+      indirimTipi: ozet.indirimTipi,
+      indirimTutari: ozet.indirimTutari,
+      genelToplam: ozet.genelToplam,
+      odenenTutar: ozet.odenenTutar,
+      kalanTutar: ozet.kalanTutar,
+      toplamAgirlik: ozet.toplamAgirlik,
+      sirketLogosu: sirketLogosu.value,
+      sirketAdi: sirketAdi.value,
+      simdikiTarih: simdikiTarih.value,
+      fisNo: fisNo.value,
+      musteriAdi: ozet.musteriAdi,
+      teslimEden: ozet.teslimEden,
+      teslimDurumu: ozet.teslimDurumu,
+      teslimNotu: ozet.teslimNotu,
+      odemeDurumText: ozet.odemeDurumText,
       saticiAdi: authStore?.kullanici?.displayName || '',
       fisGenislik: fisGenislik.value
     })
@@ -2254,15 +2324,17 @@ const fisiYazdir = (gercekFaturaNo, fiyatliOverride = null) => {
 }
 
 const termalYazdir = async () => {
-  if (!sepet.value.length) return
+  if (!fisSepeti.value.length) return
+  simdikiTarih.value = formatDateTime(new Date())
+  const ozet = fisOzeti.value
   const bytes = escPosFisiUret({
     baslik: sirketAdi.value || 'RASPEL ERP',
     tarih: simdikiTarih.value,
     fisNo: fisNo.value || undefined,
     genislik: fisGenislik.value,
-    kalemler: sepet.value.map((i) => ({ ad: i.ad, adet: i.miktar, tutar: i.miktar * i.fiyat })),
-    toplamAgirlik: agirlikVarMi.value ? toplamAgirlik.value : undefined,
-    toplam: genelToplam.value,
+    kalemler: fisSepeti.value.map((i) => ({ ad: i.ad, adet: i.miktar, tutar: i.miktar * i.fiyat })),
+    toplamAgirlik: agirlikVarMi.value ? ozet.toplamAgirlik : undefined,
+    toplam: ozet.genelToplam,
     altNot: fisAltNotu.value || undefined
   })
   try {
@@ -2520,6 +2592,26 @@ const satisiTamamlaOnaysiz = async () => {
 const satisBasarili = (yanit) => {
   // Yeni akista odeme overlay'i basarili satistan sonra kapanir.
   odemeOverlayAcik.value = false
+  // Fis anlik goruntusu: sepet temizlendikten sonra da yeniden yazdirilabilir.
+  sonSepet.value = sepet.value.map((i) => ({ ...i }))
+  sonFisOzet.value = {
+    toplam: toplam.value,
+    indirimDegeri: indirimDegeri.value,
+    indirimTipi: indirimTipi.value,
+    indirimTutari: indirimTutari.value,
+    genelToplam: genelToplam.value,
+    odenenTutar: odenenTutar.value,
+    kalanTutar: kalanTutar.value,
+    toplamAgirlik: toplamAgirlik.value,
+    musteriAdi: musteriAdi.value,
+    teslimEden: teslimEden.value,
+    teslimDurumu: teslimDurumu.value,
+    teslimNotu: teslimNotu.value,
+    odemeDurumText: odemeDurumText.value,
+    fisModu: fisFiyatliGecici.value
+  }
+  fisNo.value = yanit.data?.faturaNumarasi || fisNo.value
+  simdikiTarih.value = formatDateTime(new Date())
   // Sonuc durumu + ozet (`usePosSatisGecmisi`) — tutarlar buradan verilir.
   satisSonucunuKaydet(yanit, {
     genelToplam: genelToplam.value,
@@ -2562,6 +2654,13 @@ const yeniSatisaBasla = () => {
   satisOzetiKapat()
   nextTick(() => odakla(barkodInputRef))
 }
+
+// Özet X / Esc / "Yeni Satış" ile kapansa da odak barkod alanına döner.
+// Önceden odak dialog içinde kalıyor, kasiyer bir sonraki okutma için fareyle
+// kutuya tıklamak zorunda kalıyordu (USB tarayıcı da boşa okuma yapıyordu).
+watch(satisOzetDialog, (acik) => {
+  if (!acik) nextTick(() => odakla(barkodInputRef))
+})
 
 // Satış tamamlandıktan sonra: temizle (geri alınamaz) ve perakende moduna dön.
 const sepetiTemizle = () => {

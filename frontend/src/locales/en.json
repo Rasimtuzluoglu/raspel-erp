@@ -1171,6 +1171,7 @@
     "urunEklendi": "Product Added",
     "bulunamadi": "Not Found",
     "barkodluUrunBulunamadi": "No product found with barcode \"{barkod}\"",
+    "urunAdiBulunamadi": "No product matches \"{metin}\"",
     "fisAltNotVarsayilan": "Thank you for choosing us!",
     "sepetKaydedildi": "Cart Saved",
     "sepetKaydedildiDetay": "You can return to the saved cart anytime.",
