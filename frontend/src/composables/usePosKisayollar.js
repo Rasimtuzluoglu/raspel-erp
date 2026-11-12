@@ -303,6 +303,14 @@ export function yazarkenKoru(e) {
  * @returns {boolean} Olay isleniyorsa true
  */
 export function posKisayolCoz(e, c) {
+  // Modal/overlay acikken POS kisa yollari susar. Odeme katmaninda yalnizca
+  // odeme yontemi/durumu kisayollari calismaya devam eder (n/k/h/t, F9/F10).
+  if (c.overlayAcik?.value) {
+    const odemeKisayolu =
+      c.odemeOverlayAcik?.value &&
+      ['n', 'N', 'k', 'K', 'h', 'H', 't', 'T', 'F9', 'F10'].includes(e.key)
+    if (!odemeKisayolu) return false
+  }
   const gruplar = [
     girdidenIzgaraya,
     fonksiyonTuslari,

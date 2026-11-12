@@ -1071,6 +1071,7 @@
     "odenenTutar": "Paid Amount",
     "alinanNakit": "Cash Received",
     "paraUstu": "Change",
+    "nakitEksikUyari": "Cash received is less than the amount due.",
     "odemeYontemi": "Payment Method",
     "taksitKurum": "Installment Institution",
     "taksitKurumPlaceholder": "Bank / finance institution",

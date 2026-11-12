@@ -82,6 +82,19 @@ describe('PosOdemeOverlay.vue', () => {
     expect(w.emitted('tamamla')).toBeTruthy()
   })
 
+  it('nakit eksikse tamamla butonu kilitlenir ve uyari gorunur', async () => {
+    const w = mountOverlay({
+      odemeDurumu: 'tam',
+      odemeYontemi: 'NAKIT',
+      alinanNakit: 50,
+      odenenTutar: 100,
+      nakitEksik: true
+    })
+    const btn = w.findAll('button').find((b) => b.text().includes(i18n.global.t('hizliSatis.satisiTamamla')))
+    expect(btn.attributes('disabled')).toBeDefined()
+    expect(w.find('.nakit-eksik-uyari').exists()).toBe(true)
+  })
+
   it('nakit odemede hizli nakit kisayollari tutari ekler', async () => {
     const onUpdate = vi.fn()
     const w = mountOverlay({

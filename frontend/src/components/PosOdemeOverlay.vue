@@ -81,6 +81,15 @@
             <strong class="tutar-stat-deger">{{ formatCurrency(paraUstu) }}</strong>
           </div>
 
+          <small
+            v-if="nakitEksik"
+            class="nakit-eksik-uyari"
+            role="alert"
+          >
+            <i class="pi pi-exclamation-triangle" />
+            {{ t('hizliSatis.nakitEksikUyari') }}
+          </small>
+
           <div class="hizli-nakit">
             <button
               v-for="n in hizliNakit"
@@ -138,6 +147,9 @@
             icon="pi pi-check"
             severity="success"
             class="odeme-tamamla-btn"
+            :loading="kaydediliyor"
+            :disabled="nakitEksik || kaydediliyor"
+            data-test="pos-odeme-tamamla"
             @click="$emit('tamamla')"
           />
         </div>
@@ -193,6 +205,8 @@ const kalanTutar = computed(() => sayi(attr('kalanTutar')))
 const nakitAktif = computed(
   () => odemeDurumu.value !== 'yok' && odemeYontemi.value === 'NAKIT'
 )
+const nakitEksik = computed(() => Boolean(attr('nakitEksik')))
+const kaydediliyor = computed(() => Boolean(attr('kaydediliyor')))
 const hizliNakit = computed(() => {
   const liste = attr('hizliNakit')
   return Array.isArray(liste) && liste.length > 0 ? liste : VARSAYILAN_HIZLI_NAKIT
@@ -477,6 +491,18 @@ onBeforeUnmount(() => window.removeEventListener('keydown', klavyeBas))
 }
 .odeme-tamamla-btn {
   min-width: 170px;
+}
+.nakit-eksik-uyari {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--warning-soft, rgba(245, 158, 11, 0.12));
+  color: var(--warning, #f59e0b);
+  font-size: 12px;
+  font-weight: 600;
 }
 
 /* ------------------------------------------------------------- RESPONSIVE */

@@ -69,11 +69,29 @@ describe('Faz5.1 - F9/F10 satisi TAMAMLAMAZ (kazara kayit engeli)', () => {
     expect(cagri).not.toMatch(/^\s*satisiTamamla,\s*$/m)
   })
 
-  it('satisi bitirmek icin ACIK bir yol kalir (buton + Ctrl+S)', () => {
-    // Buton
-    expect(yorumsuz(posKod)).toContain('@click="satisiTamamla"')
-    // Ctrl+S `useKisayollar` `kaydet` eylemine bagli
-    expect(scriptKodu(posKod)).toMatch(/kaydet:\s*\(\)\s*=>\s*satisiTamamla\(\)/)
+  it('satisi bitirmek icin tek akis vardir (odeme katmani + Ctrl+S)', () => {
+    const sablon = yorumsuz(posKod)
+    // Alt blok artik dogrudan tamamlamaz; odeme katmanini acar.
+    expect(sablon).toContain('@click="odemeAc"')
+    expect(sablon).toContain('@tamamla="satisiTamamla"')
+    const s = scriptKodu(posKod)
+    expect(s).toMatch(/if \(odemeOverlayAcik\.value\) return satisiTamamla\(\)/)
+    expect(s).toContain('return odemeAc()')
+  })
+
+  it('nakit eksikse satis tamamlanmaz ve buton kilitlenir', () => {
+    const s = scriptKodu(posKod)
+    const onaysiz = blokBul(s, 'const satisiTamamlaOnaysiz =')
+    expect(onaysiz).toContain('nakitEksik.value')
+    expect(onaysiz).toContain('if (kaydediliyor.value) return')
+    expect(yorumsuz(posKod)).toContain(':nakit-eksik="nakitEksik"')
+  })
+
+  it('modal acikken POS kisayollari calismaz', () => {
+    expect(kisayolKod).toContain('if (c.overlayAcik?.value)')
+    expect(kisayolKod).toContain('odemeKisayolu')
+    expect(scriptKodu(posKod)).toContain('overlayAcik,')
+    expect(scriptKodu(posKod)).toContain('odemeOverlayAcik,')
   })
 })
 

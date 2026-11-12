@@ -1071,6 +1071,7 @@
     "odenenTutar": "Ödenen Tutar",
     "alinanNakit": "Alınan Nakit",
     "paraUstu": "Para Üstü",
+    "nakitEksikUyari": "Alınan nakit, tahsil edilecek tutardan az.",
     "odemeYontemi": "Ödeme Yöntemi",
     "taksitKurum": "Taksit Çekilen Kurum",
     "taksitKurumPlaceholder": "Banka / finans kurumu",

@@ -627,6 +627,8 @@
               :odeme-durum-text="odemeDurumText"
               :odeme-durum-severity="odemeDurumSeverity"
               :hatalar="hatalar"
+              :nakit-eksik="nakitEksik"
+              :kaydediliyor="kaydediliyor"
               @tamamla="satisiTamamla"
             />
 
@@ -675,19 +677,12 @@
               <button
                 type="button"
                 class="yeni-odeme-btn"
-                @click="odemeOverlayAcik = true"
+                :disabled="sepet.length === 0 || (!anlikMusteri && !seciliMusteri)"
+                @click="odemeAc"
               >
                 <i class="pi pi-wallet" />
                 <span>{{ t('hizliSatis.odemeAl') }}</span>
               </button>
-              <Button
-                :label="t('hizliSatis.satisiTamamla')"
-                icon="pi pi-check"
-                class="p-button-success w-full satis-buton"
-                :loading="kaydediliyor"
-                :disabled="sepet.length === 0 || (!anlikMusteri && !seciliMusteri)"
-                @click="satisiTamamla"
-              />
               <Button
                 v-if="sonSatis"
                 :label="t('hizliSatis.sonSatisiIptal')"
@@ -1043,7 +1038,11 @@ const offlineKuyruguSenkronizeEt = async () => {
 }
 
 useKisayollar({
-  kaydet: () => satisiTamamla(),
+  kaydet: () => {
+    if (overlayAcik.value && !odemeOverlayAcik.value) return
+    if (odemeOverlayAcik.value) return satisiTamamla()
+    return odemeAc()
+  },
   iptal: () => {
     if (yeniMusteriDialog.value) yeniMusteriDialog.value = false
     else if (scannerAcik.value) scannerAcik.value = false
@@ -2371,6 +2370,29 @@ watch(musteriModu, (m) => {
   if (m === 'perakende') hataTemizle('musteri')
 })
 
+/** Ödeme katmanını açar; doğrulamalar burada yapılır (tek tamamlama yolu). */
+const odemeAc = () => {
+  if (!anlikMusteri.value && !seciliMusteri.value) {
+    hataGoster('musteri')
+    toastBildirim.uyari(t('hizliSatis.musteriGerekli'))
+    return
+  }
+  if (sepet.value.length === 0) {
+    toast.add({ severity: 'warn', summary: t('hizliSatis.sepetBos'), detail: t('hizliSatis.onceUrunEkleyin'), life: 2500 })
+    return
+  }
+  odemeOverlayAcik.value = true
+}
+
+// Nakit alanı doldurulduysa ve tahsil edilenden azsa satış tamamlanmaz.
+const nakitEksik = computed(
+  () =>
+    odemeYontemi.value === 'NAKIT' &&
+    odemeDurumu.value !== 'yok' &&
+    alinanNakit.value > 0 &&
+    alinanNakit.value < odenenTutar.value
+)
+
 const satisiTamamla = async () => {
   // Anlik (perakende) satista musteri aranmaz; yalniz "Musteri" modunda zorunlu.
   if (!anlikMusteri.value && !seciliMusteri.value) {
@@ -2403,6 +2425,12 @@ const satisOnayIptal = () => {
 }
 
 const satisiTamamlaOnaysiz = async () => {
+  // Re-entrancy: overlay butonu + Ctrl+S ayni anda iki fatura uretmesin.
+  if (kaydediliyor.value) return
+  if (nakitEksik.value) {
+    toastBildirim.uyari(t('hizliSatis.nakitEksikUyari'))
+    return
+  }
   if (odemeYontemi.value === 'TAKSIT' && (!taksitKurum.value.trim() || !taksitTutar.value || taksitTutar.value <= 0)) {
     hataGoster('taksit')
     toastBildirim.uyari(t('hizliSatis.taksitZorunlu'))
@@ -2557,9 +2585,23 @@ const sepetiTemizle = () => {
 // `window` dinleyicileri de orada baglaniyor. Siralama kurali (fonksiyon tuslari
 // once, izgara modu "oda" gibi, harfler yazarken devre disi) composable
 // icinde yorumla belgeli.
+// Modal/overlay acikken POS kisayollari susar (yalnizca Esc global katmana kalir).
+const overlayAcik = computed(
+  () =>
+    odemeOverlayAcik.value ||
+    yeniMusteriDialog.value ||
+    scannerAcik.value ||
+    satisOzetDialog.value ||
+    onayDialog.value ||
+    bugunkuDialog.value ||
+    hizliUrunDialog.value
+)
+
 usePosKisayollar(
   {
     // durum
+    overlayAcik,
+    odemeOverlayAcik,
     urunIzgaraOdak,
     urunIzgaraIndeks,
     urunIzgaraRakam,

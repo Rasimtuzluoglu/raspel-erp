@@ -229,6 +229,7 @@ describe('Hızlı Satış (POS)', () => {
     cy.get('.pos-container').should('exist')
     cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
+    cy.get('.yeni-odeme-btn').click()
     tusGonder('t')
     cy.get('.odeme-yontem-btn.active').should('contain', 'Taksit')
     // Taksit alanlari acilir (kurum / tutar / taksit sayisi)
@@ -249,7 +250,8 @@ describe('Hızlı Satış (POS)', () => {
 
     // Müşteri yerine Perakende moduna geç
     cy.get('.musteri-modu').contains('Perakende').click()
-    cy.contains('Satışı Tamamla').click()
+    cy.get('.yeni-odeme-btn').click()
+    cy.get('[data-test="pos-odeme-tamamla"]').click()
 
     cy.wait('@satisOlustur').its('response.statusCode').should('eq', 200)
     cy.get('.satis-ozet').should('be.visible')
@@ -259,12 +261,13 @@ describe('Hızlı Satış (POS)', () => {
   // REDTEAM/Faz5: F9/F10 artik satisi TAMAMLAMAZ (kazara kayit engeli).
   // DAVRANIS DEGISIKLIGI: Musteri modu seciliyken musteri yoksa "Satisi Tamamla"
   // butonu artik DISABLED; eskiden tiklanip "Musteri gerekli" uyarisi cikiyordu.
-  it('müşteri modu seçiliyken müşteri yoksa Satışı Tamamla devre dışıdır', () => {
+  it('müşteri modu seçiliyken müşteri yoksa tamamlama engellenir', () => {
     cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
     // Varsayılan Perakende; müşteri-gerekli senaryosu için Müşteri moduna geç.
     cy.get('.musteri-modu').contains('Müşteri').click()
-    cy.contains('.sticky-tamamla button', 'Satışı Tamamla').should('be.disabled')
+    // Ödeme akışı müşteri yokken açılmaz.
+    cy.get('.yeni-odeme-btn').should('be.disabled')
     cy.get('@satisOlustur.all').should('have.length', 0)
   })
 
@@ -274,7 +277,7 @@ describe('Hızlı Satış (POS)', () => {
     tusGonder('F9')
     // Ödeme "Tam" seçilir ama satış OLUŞMAZ.
     cy.get('@satisOlustur.all').should('have.length', 0)
-    cy.contains('.sticky-tamamla button', 'Satışı Tamamla').should('be.visible')
+    cy.get('.yeni-odeme-btn').should('be.visible')
   })
 
   it('ürün kartları stok adedi, fiyat ve KDV notunu gösterir', () => {
@@ -348,7 +351,8 @@ describe('Hızlı Satış (POS)', () => {
     cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
     cy.get('.sepet-item').should('have.length', 1)
     cy.get('.musteri-modu').contains('Perakende').click()
-    cy.contains('Satışı Tamamla').click()
+    cy.get('.yeni-odeme-btn').click()
+    cy.get('[data-test="pos-odeme-tamamla"]').click()
     cy.wait('@satisOlustur')
     cy.get('@teslimatOlustur.all').should('have.length', 0)
   })
@@ -359,7 +363,8 @@ describe('Hızlı Satış (POS)', () => {
     cy.contains('.pos-bolum-baslik', 'Teslimat').click()
     cy.get('#hizli-teslim-sofor').click()
     cy.contains('.p-select-overlay .p-select-option', 'Ali Şoför').click()
-    cy.contains('Satışı Tamamla').click()
+    cy.get('.yeni-odeme-btn').click()
+    cy.get('[data-test="pos-odeme-tamamla"]').click()
     cy.contains('teslimat adresi zorunludur').should('exist')
     cy.get('@satisOlustur.all').should('have.length', 0)
   })
@@ -371,7 +376,8 @@ describe('Hızlı Satış (POS)', () => {
     cy.get('#hizli-teslim-sofor').click()
     cy.contains('.p-select-overlay .p-select-option', 'Ali Şoför').click()
     cy.get('#hizli-teslim-adres').type('Test Mah. 1. Sok No:5')
-    cy.contains('Satışı Tamamla').click()
+    cy.get('.yeni-odeme-btn').click()
+    cy.get('[data-test="pos-odeme-tamamla"]').click()
     cy.wait('@satisOlustur')
     cy.wait('@teslimatOlustur').its('request.body').then((body) => {
       expect(body.faturaId).to.eq(99)
