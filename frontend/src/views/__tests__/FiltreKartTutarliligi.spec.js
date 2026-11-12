@@ -15,7 +15,9 @@ const EKRANLAR = [
   ['views/Irsaliyeler.vue', 'irsaliye-arac'],
   ['views/Tahsilat.vue', 'tahsilat-arac'],
   ['views/SiparisTakip.vue', 'takip-filtre'],
-  ['views/Masraflar.vue', 'masraf-arac']
+  ['views/Masraflar.vue', 'masraf-arac'],
+  ['views/Hareketler.vue', 'hareket-filtre-cubugu'],
+  ['components/TeklifListesi.vue', 'teklif-filtre']
 ]
 
 describe('Ortak filtre karti — liste ekranlari', () => {

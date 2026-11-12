@@ -1366,6 +1366,7 @@
     "durumReddedildi": "Rejected",
     "durumSipariseDonustu": "Converted to Order",
     "durumFaturalasti": "Invoiced",
+    "filtreTemizle": "Clear Filters",
     "aramaPlaceholder": "Search Quote No or Account...",
     "teklifNo": "Quote No",
     "rev": "Rev.",

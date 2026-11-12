@@ -14,44 +14,48 @@
         />
       </template>
       <template #end>
-        <TarihHizliSecim v-model="tarihAraligi" />
         <Button
           :label="t('hareketler.excel')"
           icon="pi pi-file-excel"
           class="p-button-sm p-button-outlined"
-          style="margin-right: 4px"
           @click="excelIndir"
         />
         <Button
           :label="t('hareketler.csv')"
           icon="pi pi-download"
           class="p-button-sm p-button-outlined"
-          style="margin-right: 8px"
           @click="csvExport"
-        />
-        <DatePicker
-          v-model="filtreBaslangic"
-          :placeholder="t('hareketler.baslangic')"
-          date-format="dd.mm.yy"
-          class="filter-date"
-          @update:model-value="filtrele"
-        />
-        <DatePicker
-          v-model="filtreBitis"
-          :placeholder="t('hareketler.bitis')"
-          date-format="dd.mm.yy"
-          class="filter-date"
-          @update:model-value="filtrele"
-        />
-        <Button
-          v-if="filtreBaslangic || filtreBitis"
-          icon="pi pi-times"
-          class="p-button-rounded p-button-text p-button-sm"
-          :title="t('hareketler.filtreyiTemizle')"
-          @click="filtreTemizle"
         />
       </template>
     </Toolbar>
+
+    <!-- Kompakt filtre karti: tarih hizli secim + aralik + temizle -->
+    <div class="filtre-kart hareket-filtre-cubugu">
+      <TarihHizliSecim v-model="tarihAraligi" />
+      <span class="filtre-ayrac" />
+      <DatePicker
+        v-model="filtreBaslangic"
+        :placeholder="t('hareketler.baslangic')"
+        date-format="dd.mm.yy"
+        class="filter-date"
+        @update:model-value="filtrele"
+      />
+      <DatePicker
+        v-model="filtreBitis"
+        :placeholder="t('hareketler.bitis')"
+        date-format="dd.mm.yy"
+        class="filter-date"
+        @update:model-value="filtrele"
+      />
+      <span class="filtre-bosluk" />
+      <Button
+        v-if="filtreBaslangic || filtreBitis"
+        :label="t('hareketler.filtreyiTemizle')"
+        icon="pi pi-times"
+        class="p-button-text p-button-sm"
+        @click="filtreTemizle"
+      />
+    </div>
 
     <div
       v-if="loading"
@@ -641,11 +645,38 @@ h1 {
 }
 
 .toolbar {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 14px 18px;
+  padding: 10px 12px;
+}
+
+.hareket-filtre-cubugu .filter-date {
+  min-width: 140px;
+}
+
+.filtre-ayrac {
+  width: 1px;
+  height: 22px;
+  background: var(--border);
+}
+
+.filtre-bosluk {
+  flex: 1 1 auto;
+}
+
+@media (max-width: 768px) {
+  .hareket-filtre-cubugu {
+    align-items: stretch;
+  }
+  .hareket-filtre-cubugu .filter-date {
+    flex: 1 1 100%;
+  }
+  .filtre-ayrac,
+  .filtre-bosluk {
+    display: none;
+  }
 }
 
 .table-container {

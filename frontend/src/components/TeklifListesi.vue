@@ -1,234 +1,244 @@
 <template>
-  <div class="kart-kutu">
-    <DataTable
-      :value="filtrelenmisTeklifler"
-      :loading="yukleniyor"
-      paginator
-      :rows="10"
-      :rows-per-page-options="[10, 25, 50]"
-      striped-rows
-      responsive-layout="scroll"
-      class="p-datatable-sm"
-    >
-      <template #header>
-        <div class="tablo-toolbar">
-          <div class="durum-filtre-chips flex gap-2">
-            <button
-              type="button"
-              :class="['chip-btn', { aktif: seciliDurumFiltre === 'HEPSI' }]"
-              @click="durumFiltrele('HEPSI')"
-            >
-              {{ t('teklifler.tumu') }} ({{ teklifler ? teklifler.length : 0 }})
-            </button>
-            <button
-              type="button"
-              :class="['chip-btn', { aktif: seciliDurumFiltre === 'TASLAK' }]"
-              @click="durumFiltrele('TASLAK')"
-            >
-              {{ t('teklifler.durumTaslak') }}
-            </button>
-            <button
-              type="button"
-              :class="['chip-btn', { aktif: seciliDurumFiltre === 'GONDERILDI' }]"
-              @click="durumFiltrele('GONDERILDI')"
-            >
-              {{ t('teklifler.durumGonderildi') }}
-            </button>
-            <button
-              type="button"
-              :class="['chip-btn', { aktif: seciliDurumFiltre === 'ONAYLANDI' }]"
-              @click="durumFiltrele('ONAYLANDI')"
-            >
-              {{ t('teklifler.durumOnaylandi') }}
-            </button>
-            <button
-              type="button"
-              :class="['chip-btn', { aktif: seciliDurumFiltre === 'SIPARISE_DONUSTU' }]"
-              @click="durumFiltrele('SIPARISE_DONUSTU')"
-            >
-              {{ t('teklifler.durumSipariseDonustu') }}
-            </button>
-          </div>
-          <!-- REDTEAM/Faz3.3: `p-input-icon-left` PrimeVue 4'te KALDIRILDI; o sinif
-               artik uretilmiyor, yani ikon yerlestirme kurali hic uygulanmiyor
-               ve ikon input'un uzerine biniyordu. PrimeVue 4 API'si:
-               IconField + InputIcon. -->
-          <IconField>
-            <InputIcon class="pi pi-search" />
-            <InputText
-              v-model="aramaMetni"
-              :placeholder="t('teklifler.aramaPlaceholder')"
-              class="p-inputtext-sm"
-            />
-          </IconField>
-        </div>
-      </template>
+  <div class="teklif-liste">
+    <div class="filtre-kart teklif-filtre">
+      <div class="durum-filtre-chips">
+        <button
+          type="button"
+          :class="['chip-btn', { aktif: seciliDurumFiltre === 'HEPSI' }]"
+          @click="durumFiltrele('HEPSI')"
+        >
+          {{ t('teklifler.tumu') }} ({{ teklifler ? teklifler.length : 0 }})
+        </button>
+        <button
+          type="button"
+          :class="['chip-btn', { aktif: seciliDurumFiltre === 'TASLAK' }]"
+          @click="durumFiltrele('TASLAK')"
+        >
+          {{ t('teklifler.durumTaslak') }}
+        </button>
+        <button
+          type="button"
+          :class="['chip-btn', { aktif: seciliDurumFiltre === 'GONDERILDI' }]"
+          @click="durumFiltrele('GONDERILDI')"
+        >
+          {{ t('teklifler.durumGonderildi') }}
+        </button>
+        <button
+          type="button"
+          :class="['chip-btn', { aktif: seciliDurumFiltre === 'ONAYLANDI' }]"
+          @click="durumFiltrele('ONAYLANDI')"
+        >
+          {{ t('teklifler.durumOnaylandi') }}
+        </button>
+        <button
+          type="button"
+          :class="['chip-btn', { aktif: seciliDurumFiltre === 'SIPARISE_DONUSTU' }]"
+          @click="durumFiltrele('SIPARISE_DONUSTU')"
+        >
+          {{ t('teklifler.durumSipariseDonustu') }}
+        </button>
+      </div>
+      <span class="filtre-ayrac" />
+      <!-- REDTEAM/Faz3.3: `p-input-icon-left` PrimeVue 4'te KALDIRILDI; o sinif
+           artik uretilmiyor, yani ikon yerlestirme kurali hic uygulanmiyor
+           ve ikon input'un uzerine biniyordu. PrimeVue 4 API'si:
+           IconField + InputIcon. -->
+      <IconField class="teklif-arama">
+        <InputIcon class="pi pi-search" />
+        <InputText
+          v-model="aramaMetni"
+          :placeholder="t('teklifler.aramaPlaceholder')"
+          class="p-inputtext-sm"
+        />
+      </IconField>
+      <span class="teklif-bosluk" />
+      <Button
+        v-if="filtreVar"
+        :label="t('teklifler.filtreTemizle')"
+        icon="pi pi-times"
+        class="p-button-text p-button-sm"
+        data-test="teklif-filtre-temizle"
+        @click="filtreTemizle"
+      />
+    </div>
 
-      <Column
-        field="teklifNo"
-        :header="t('teklifler.teklifNo')"
-        sortable
+    <div class="kart-kutu">
+      <DataTable
+        :value="filtrelenmisTeklifler"
+        :loading="yukleniyor"
+        paginator
+        :rows="10"
+        :rows-per-page-options="[10, 25, 50]"
+        striped-rows
+        responsive-layout="scroll"
+        class="p-datatable-sm"
       >
-        <template #body="{ data }">
-          <div class="flex items-center gap-2">
-            <span class="font-bold text-primary">{{ data.teklifNo }}</span>
+        <Column
+          field="teklifNo"
+          :header="t('teklifler.teklifNo')"
+          sortable
+        >
+          <template #body="{ data }">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-primary">{{ data.teklifNo }}</span>
+              <span
+                v-if="data.revizyonNo > 0"
+                class="badge-rev"
+              >{{ t('teklifler.rev') }}{{ data.revizyonNo }}</span>
+            </div>
+          </template>
+        </Column>
+
+        <Column
+          field="tarih"
+          :header="t('common.date')"
+          sortable
+        >
+          <template #body="{ data }">
+            {{ formatDate(data.tarih) }}
+          </template>
+        </Column>
+
+        <Column
+          field="gecerlilikTarihi"
+          :header="t('teklifler.gecerlilik')"
+          sortable
+        >
+          <template #body="{ data }">
+            <div v-if="data.gecerlilikTarihi">
+              <span>{{ formatDate(data.gecerlilikTarihi) }}</span>
+              <small
+                v-if="isGecmis(data.gecerlilikTarihi) && data.durum !== 'SIPARISE_DONUSTU' && data.durum !== 'FATURALASTI'"
+                class="text-red-500 block"
+              >{{ t('teklifler.suresiDoldu') }}</small>
+            </div>
             <span
-              v-if="data.revizyonNo > 0"
-              class="badge-rev"
-            >{{ t('teklifler.rev') }}{{ data.revizyonNo }}</span>
-          </div>
-        </template>
-      </Column>
+              v-else
+              class="text-muted"
+            >-</span>
+          </template>
+        </Column>
 
-      <Column
-        field="tarih"
-        :header="t('common.date')"
-        sortable
-      >
-        <template #body="{ data }">
-          {{ formatDate(data.tarih) }}
-        </template>
-      </Column>
-
-      <Column
-        field="gecerlilikTarihi"
-        :header="t('teklifler.gecerlilik')"
-        sortable
-      >
-        <template #body="{ data }">
-          <div v-if="data.gecerlilikTarihi">
-            <span>{{ formatDate(data.gecerlilikTarihi) }}</span>
+        <Column
+          field="cariHesapAdi"
+          :header="t('teklifler.musteriCari')"
+          sortable
+        >
+          <template #body="{ data }">
+            <div class="font-medium">
+              {{ data.cariHesapAdi || t('teklifler.genelMusteri') }}
+            </div>
             <small
-              v-if="isGecmis(data.gecerlilikTarihi) && data.durum !== 'SIPARISE_DONUSTU' && data.durum !== 'FATURALASTI'"
-              class="text-red-500 block"
-            >{{ t('teklifler.suresiDoldu') }}</small>
-          </div>
-          <span
-            v-else
-            class="text-muted"
-          >-</span>
-        </template>
-      </Column>
+              v-if="data.cariVergiNo"
+              class="text-muted"
+            >{{ t('teklifler.vknTc') }} {{ data.cariVergiNo }}</small>
+          </template>
+        </Column>
 
-      <Column
-        field="cariHesapAdi"
-        :header="t('teklifler.musteriCari')"
-        sortable
-      >
-        <template #body="{ data }">
-          <div class="font-medium">
-            {{ data.cariHesapAdi || t('teklifler.genelMusteri') }}
-          </div>
-          <small
-            v-if="data.cariVergiNo"
-            class="text-muted"
-          >{{ t('teklifler.vknTc') }} {{ data.cariVergiNo }}</small>
-        </template>
-      </Column>
+        <Column
+          field="kalemler"
+          :header="t('teklifler.kalem')"
+        >
+          <template #body="{ data }">
+            <span class="badge-kalem">{{ t('teklifler.nKalem', { n: data.kalemler?.length || 0 }) }}</span>
+          </template>
+        </Column>
 
-      <Column
-        field="kalemler"
-        :header="t('teklifler.kalem')"
-      >
-        <template #body="{ data }">
-          <span class="badge-kalem">{{ t('teklifler.nKalem', { n: data.kalemler?.length || 0 }) }}</span>
-        </template>
-      </Column>
+        <Column
+          field="genelToplam"
+          :header="t('teklifler.genelToplam')"
+          sortable
+        >
+          <template #body="{ data }">
+            <span class="font-bold text-base text-primary dark:text-gray-100">
+              {{ formatPara(data.genelToplam, data.paraBirimi) }}
+            </span>
+          </template>
+        </Column>
 
-      <Column
-        field="genelToplam"
-        :header="t('teklifler.genelToplam')"
-        sortable
-      >
-        <template #body="{ data }">
-          <span class="font-bold text-base text-primary dark:text-gray-100">
-            {{ formatPara(data.genelToplam, data.paraBirimi) }}
-          </span>
-        </template>
-      </Column>
-
-      <Column
-        field="durum"
-        :header="t('common.status')"
-        sortable
-      >
-        <template #body="{ data }">
-          <Tag
-            :value="durumLabel(data.durum)"
-            :severity="durumSeverity(data.durum)"
-          />
-        </template>
-      </Column>
-
-      <Column
-        :header="t('common.actions')"
-        class="text-right"
-        style="min-width: 220px;"
-      >
-        <template #body="{ data }">
-          <div class="flex justify-end gap-1">
-            <!-- Önizle & Mektup / Proforma PDF -->
-            <Button
-              icon="pi pi-print"
-              class="p-button-text p-button-sm p-button-secondary"
-              :title="t('teklifler.onizleYazdir')"
-              @click="emit('onizle', data)"
+        <Column
+          field="durum"
+          :header="t('common.status')"
+          sortable
+        >
+          <template #body="{ data }">
+            <Tag
+              :value="durumLabel(data.durum)"
+              :severity="durumSeverity(data.durum)"
             />
+          </template>
+        </Column>
 
-            <!-- Revizyon Oluştur -->
-            <Button
-              icon="pi pi-copy"
-              class="p-button-text p-button-sm p-button-info"
-              :title="t('teklifler.yeniRevizyon')"
-              @click="emit('revizyon', data)"
-            />
+        <Column
+          :header="t('common.actions')"
+          class="text-right"
+          style="min-width: 220px;"
+        >
+          <template #body="{ data }">
+            <div class="flex justify-end gap-1">
+              <!-- Önizle & Mektup / Proforma PDF -->
+              <Button
+                icon="pi pi-print"
+                class="p-button-text p-button-sm p-button-secondary"
+                :title="t('teklifler.onizleYazdir')"
+                @click="emit('onizle', data)"
+              />
 
-            <!-- Siparişe Dönüştür -->
-            <Button
-              v-if="data.durum !== 'SIPARISE_DONUSTU' && data.durum !== 'FATURALASTI'"
-              icon="pi pi-shopping-cart"
-              class="p-button-text p-button-sm p-button-success"
-              :title="t('teklifler.sipariseDonustur')"
-              @click="emit('siparis', data)"
-            />
+              <!-- Revizyon Oluştur -->
+              <Button
+                icon="pi pi-copy"
+                class="p-button-text p-button-sm p-button-info"
+                :title="t('teklifler.yeniRevizyon')"
+                @click="emit('revizyon', data)"
+              />
 
-            <!-- Faturaya Dönüştür -->
-            <Button
-              v-if="data.durum !== 'SIPARISE_DONUSTU' && data.durum !== 'FATURALASTI'"
-              icon="pi pi-file"
-              class="p-button-text p-button-sm p-button-warning"
-              :title="t('teklifler.faturayaDonustur')"
-              @click="emit('fatura', data)"
-            />
+              <!-- Siparişe Dönüştür -->
+              <Button
+                v-if="data.durum !== 'SIPARISE_DONUSTU' && data.durum !== 'FATURALASTI'"
+                icon="pi pi-shopping-cart"
+                class="p-button-text p-button-sm p-button-success"
+                :title="t('teklifler.sipariseDonustur')"
+                @click="emit('siparis', data)"
+              />
 
-            <!-- Düzenle -->
-            <Button
-              v-if="data.durum !== 'SIPARISE_DONUSTU' && data.durum !== 'FATURALASTI'"
-              icon="pi pi-pencil"
-              class="p-button-text p-button-sm"
-              :title="t('common.edit')"
-              @click="emit('duzenle', data)"
-            />
+              <!-- Faturaya Dönüştür -->
+              <Button
+                v-if="data.durum !== 'SIPARISE_DONUSTU' && data.durum !== 'FATURALASTI'"
+                icon="pi pi-file"
+                class="p-button-text p-button-sm p-button-warning"
+                :title="t('teklifler.faturayaDonustur')"
+                @click="emit('fatura', data)"
+              />
 
-            <!-- Sil -->
-            <Button
-              v-if="data.durum !== 'SIPARISE_DONUSTU' && data.durum !== 'FATURALASTI'"
-              icon="pi pi-trash"
-              class="p-button-text p-button-sm p-button-danger"
-              :title="t('common.delete')"
-              @click="emit('sil', data)"
-            />
+              <!-- Düzenle -->
+              <Button
+                v-if="data.durum !== 'SIPARISE_DONUSTU' && data.durum !== 'FATURALASTI'"
+                icon="pi pi-pencil"
+                class="p-button-text p-button-sm"
+                :title="t('common.edit')"
+                @click="emit('duzenle', data)"
+              />
+
+              <!-- Sil -->
+              <Button
+                v-if="data.durum !== 'SIPARISE_DONUSTU' && data.durum !== 'FATURALASTI'"
+                icon="pi pi-trash"
+                class="p-button-text p-button-sm p-button-danger"
+                :title="t('common.delete')"
+                @click="emit('sil', data)"
+              />
+            </div>
+          </template>
+        </Column>
+
+        <template #empty>
+          <div class="text-center py-6 text-muted">
+            <i class="pi pi-inbox text-4xl mb-2 block text-gray-400" />
+            {{ t('teklifler.empty') }}
           </div>
         </template>
-      </Column>
-
-      <template #empty>
-        <div class="text-center py-6 text-muted">
-          <i class="pi pi-inbox text-4xl mb-2 block text-gray-400" />
-          {{ t('teklifler.empty') }}
-        </div>
-      </template>
-    </DataTable>
+      </DataTable>
+    </div>
   </div>
 </template>
 
@@ -259,6 +269,15 @@ const filtrelenmisTeklifler = computed(() => {
 // Filtreleme
 const durumFiltrele = (durum) => {
   seciliDurumFiltre.value = durum
+}
+
+const filtreVar = computed(
+  () => !!aramaMetni.value.trim() || seciliDurumFiltre.value !== 'HEPSI'
+)
+
+const filtreTemizle = () => {
+  aramaMetni.value = ''
+  seciliDurumFiltre.value = 'HEPSI'
 }
 
 const isGecmis = (tarihStr) => {
@@ -298,8 +317,42 @@ const durumSeverity = (durum) => {
   border: 1px solid var(--border);
   padding: 16px;
 }
+.teklif-filtre {
+  margin-bottom: 12px;
+}
+.durum-filtre-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.teklif-arama {
+  width: 260px;
+}
+.teklif-arama :deep(.p-inputtext) {
+  width: 100%;
+}
+.filtre-ayrac {
+  width: 1px;
+  height: 22px;
+  background: var(--border);
+}
+.teklif-bosluk {
+  flex: 1 1 auto;
+}
+@media (max-width: 768px) {
+  .teklif-arama {
+    width: 100%;
+  }
+  .filtre-ayrac,
+  .teklif-bosluk {
+    display: none;
+  }
+}
 .chip-btn {
-  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 11px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
