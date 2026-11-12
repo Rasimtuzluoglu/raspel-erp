@@ -52,13 +52,22 @@ public class SohbetController {
 
     @GetMapping("/okunmamis")
     @Operation(summary = "Genel sohbette okunmamış mesaj sayısı",
-            description = "Kullanıcının son gördüğü mesaj id'sinden sonraki genel sohbet mesajlarını sayar.")
-    public ResponseEntity<java.util.Map<String, Long>> genelOkunmamis(
-            @RequestParam(required = false) Long sonOkunanId,
-            HttpServletRequest request) {
+            description = "Kullanıcının sunucuda saklanan son okuma işaretinden sonraki genel sohbet mesajlarını sayar.")
+    public ResponseEntity<java.util.Map<String, Long>> genelOkunmamis(HttpServletRequest request) {
         Long sirketId = (Long) request.getAttribute("sirketId");
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         return ResponseEntity.ok(java.util.Map.of(
-                "okunmamis", sohbetService.genelOkunmamisSayisi(sirketId, sonOkunanId)));
+                "okunmamis", sohbetService.genelOkunmamisSayisi(sirketId, kullaniciId)));
+    }
+
+    @PostMapping("/okundu")
+    @Operation(summary = "Genel sohbeti okundu işaretle",
+            description = "Kullanıcının genel sohbette gördüğü son mesaj id'sini kaydeder.")
+    public ResponseEntity<Void> genelOkundu(@RequestBody java.util.Map<String, Long> body, HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        sohbetService.genelOkunduIsaretle(sirketId, kullaniciId, body != null ? body.get("sonOkunanId") : null);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping

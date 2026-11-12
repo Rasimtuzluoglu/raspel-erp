@@ -652,18 +652,8 @@ const sifreUyariYukle = async () => {
 }
 
 // Faz 3.4: sohbet okunmamış toplamı + ajanda açık görev sayısı.
-// Faz 8: genel sohbet de sayılır ve rozet canlı tazelenir.
-const GENEL_OKUMA_ANAHTARI = 'raspel_sohbet_genel_son_id'
+// Faz 8/9: genel sohbet de sayılır; okuma işareti sunucuda tutulur ve rozet canlı tazelenir.
 let rozetZamanlayici = null
-
-const genelSonOkunanId = () => {
-  try {
-    const deger = Number(localStorage.getItem(GENEL_OKUMA_ANAHTARI) || 0)
-    return deger > 0 ? deger : null
-  } catch {
-    return null
-  }
-}
 
 const rozetleriYukle = async () => {
   let odaOkunmamis = 0
@@ -676,7 +666,7 @@ const rozetleriYukle = async () => {
   }
   let genelOkunmamis = 0
   try {
-    const r = await sohbetAPI.okunmamis(genelSonOkunanId())
+    const r = await sohbetAPI.okunmamis()
     genelOkunmamis = Number(r.data?.okunmamis || 0)
   } catch {
     genelOkunmamis = 0

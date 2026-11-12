@@ -62,13 +62,24 @@ class SohbetControllerTest {
 
     @Test
     void shouldGetGenelOkunmamis() throws Exception {
-        when(sohbetService.genelOkunmamisSayisi(1L, 9L)).thenReturn(4L);
+        when(sohbetService.genelOkunmamisSayisi(1L, 2L)).thenReturn(4L);
 
         mockMvc.perform(get("/api/sohbet/okunmamis")
                         .requestAttr("sirketId", 1L)
-                        .param("sonOkunanId", "9"))
+                        .requestAttr("kullaniciId", 2L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.okunmamis").value(4));
+    }
+
+    @Test
+    void shouldGenelOkunduIsaretle() throws Exception {
+        mockMvc.perform(post("/api/sohbet/okundu")
+                        .requestAttr("sirketId", 1L)
+                        .requestAttr("kullaniciId", 2L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("sonOkunanId", 9L))))
+                .andExpect(status().isNoContent());
+        verify(sohbetService).genelOkunduIsaretle(1L, 2L, 9L);
     }
 
     @Test

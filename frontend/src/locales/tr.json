@@ -4650,6 +4650,8 @@
     "ayrilOnay": "Bu odadan ayrılmak istediğinize emin misiniz?",
     "ayrilKurucuOnay": "Bu odanın kurucususunuz. Ayrılırsanız yönetim en eski üyeye devredilir; son üye ayrılırsa oda silinir. Devam edilsin mi?",
     "odaSil": "Odayı sil",
+    "odaDuzenle": "Odayı düzenle",
+    "odaDuzenlendi": "Oda güncellendi",
     "odaSilOnay": "\"{ad}\" odası ve tüm mesajları kalıcı olarak silinecek. Emin misiniz?",
     "odaSilindi": "Oda silindi",
     "odaMesajlari": "Oda mesajları",

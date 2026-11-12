@@ -359,4 +359,40 @@ class SohbetOdaServiceTest {
 
         verify(messagingTemplate).convertAndSend(eq("/topic/sohbet/1/rozet"), any(Object.class));
     }
+
+    @Test
+    void guncelle_ozelBayraginiDegistirir() {
+        SohbetOda oda = SohbetOda.builder().id(1L).sirketId(1L).olusturanKullaniciId(10L).ozel(false).build();
+        when(odaRepository.findById(1L)).thenReturn(Optional.of(oda));
+        when(kullaniciRepository.findById(10L)).thenReturn(Optional.of(
+                Kullanici.builder().id(10L).role("USER").build()));
+        when(odaRepository.save(any(SohbetOda.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(uyeRepository.findByOdaId(1L)).thenReturn(java.util.List.of(
+                SohbetOdaUye.builder().odaId(1L).kullaniciId(10L).rol("OWNER").build()));
+        when(uyeRepository.findByOdaIdAndKullaniciId(1L, 10L)).thenReturn(Optional.of(
+                SohbetOdaUye.builder().odaId(1L).kullaniciId(10L).rol("OWNER").build()));
+
+        SohbetOdaDTO sonuc = odaService.guncelle(1L,
+                SohbetOdaDTO.builder().ad("Yeni Ad").ozel(true).build(), 1L, 10L);
+
+        assertTrue(oda.isOzel());
+        assertEquals("Yeni Ad", sonuc.getAd());
+    }
+
+    @Test
+    void guncelle_ozelGonderilmezseDegistirmez() {
+        SohbetOda oda = SohbetOda.builder().id(1L).sirketId(1L).olusturanKullaniciId(10L).ozel(true).build();
+        when(odaRepository.findById(1L)).thenReturn(Optional.of(oda));
+        when(kullaniciRepository.findById(10L)).thenReturn(Optional.of(
+                Kullanici.builder().id(10L).role("USER").build()));
+        when(odaRepository.save(any(SohbetOda.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(uyeRepository.findByOdaId(1L)).thenReturn(java.util.List.of(
+                SohbetOdaUye.builder().odaId(1L).kullaniciId(10L).rol("OWNER").build()));
+        when(uyeRepository.findByOdaIdAndKullaniciId(1L, 10L)).thenReturn(Optional.of(
+                SohbetOdaUye.builder().odaId(1L).kullaniciId(10L).rol("OWNER").build()));
+
+        odaService.guncelle(1L, SohbetOdaDTO.builder().ad("Sadece Ad").build(), 1L, 10L);
+
+        assertTrue(oda.isOzel());
+    }
 }

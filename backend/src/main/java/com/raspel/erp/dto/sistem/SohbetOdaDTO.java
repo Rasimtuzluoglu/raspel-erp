@@ -17,8 +17,9 @@ public class SohbetOdaDTO {
     @Size(max = 300, message = "Açıklama en fazla 300 karakter olabilir")
     private String aciklama;
     private Long olusturanKullaniciId;
-    /** Ozel kanal: yalnizca uyeler gorur; katilma yonetici davetiyle olur. */
-    private boolean ozel;
+    /** Ozel kanal: yalnizca uyeler gorur; katilma yonetici davetiyle olur.
+     *  Guncellemede `null` = degistirme (eski istemciler alani gondermez). */
+    private Boolean ozel;
     /** Oda olusturulurken birlikte eklenecek uyeler. */
     private List<Long> uyeIdleri;
     private boolean uyeMi;

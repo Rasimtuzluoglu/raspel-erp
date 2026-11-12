@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 public class SohbetService {
 
     private final SohbetMesajRepository sohbetMesajRepository;
+    private final com.raspel.erp.repository.sistem.SohbetGenelOkumaRepository genelOkumaRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final FaturaRepository faturaRepository;
     private final CariHesapRepository cariHesapRepository;
@@ -80,13 +81,34 @@ public class SohbetService {
 
     /** Genel sohbette kullanıcının son gördüğü mesajdan sonraki kayıt sayısı.
      *
-     *  `sonOkunanId` null ise (cihazda henüz okuma kaydı yok) 0 döner: aksi
-     *  halde yeni cihazda tüm geçmiş "okunmamış" görünürdü.
+     *  Okuma işareti sunucuda tutulur (cihazdan bağımsız). Hiç okuma kaydı yoksa
+     *  0 döner: yeni kullanıcıya tüm geçmiş "okunmamış" gösterilmez.
      */
     @Transactional(readOnly = true)
-    public long genelOkunmamisSayisi(Long sirketId, Long sonOkunanId) {
-        if (sirketId == null || sonOkunanId == null) return 0;
-        return sohbetMesajRepository.countBySirketIdAndOdaIdIsNullAndIdGreaterThan(sirketId, sonOkunanId);
+    public long genelOkunmamisSayisi(Long sirketId, Long kullaniciId) {
+        if (sirketId == null || kullaniciId == null) return 0;
+        Long sonOkunan = genelOkumaRepository.findBySirketIdAndKullaniciId(sirketId, kullaniciId)
+                .map(com.raspel.erp.entity.sistem.SohbetGenelOkuma::getSonOkunanId)
+                .orElse(null);
+        if (sonOkunan == null) return 0;
+        return sohbetMesajRepository.countBySirketIdAndOdaIdIsNullAndIdGreaterThan(sirketId, sonOkunan);
+    }
+
+    /** Genel sohbette okunan son mesajı kaydeder (yalnızca ileri yönde). */
+    @Transactional
+    public void genelOkunduIsaretle(Long sirketId, Long kullaniciId, Long mesajId) {
+        if (sirketId == null || kullaniciId == null || mesajId == null) return;
+        com.raspel.erp.entity.sistem.SohbetGenelOkuma okuma =
+                genelOkumaRepository.findBySirketIdAndKullaniciId(sirketId, kullaniciId)
+                        .orElseGet(() -> com.raspel.erp.entity.sistem.SohbetGenelOkuma.builder()
+                                .sirketId(sirketId)
+                                .kullaniciId(kullaniciId)
+                                .sonOkunanId(0L)
+                                .build());
+        if (okuma.getSonOkunanId() == null || mesajId > okuma.getSonOkunanId()) {
+            okuma.setSonOkunanId(mesajId);
+            genelOkumaRepository.save(okuma);
+        }
     }
 
     @Transactional

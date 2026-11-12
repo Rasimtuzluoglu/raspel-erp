@@ -55,6 +55,16 @@ describe('Faz8.1 - ayrilma/silme guvenligi', () => {
     expect(sohbetScript).toContain("t('sohbet.odaSilOnay'")
   })
 
+  // Faz 9: oda adi/aciklamasi ve ozel kanal bayragi olusturulduktan sonra
+  // degistirilemiyordu; backend destekliyordu ama arayuzde yol yoktu.
+  it('oda duzenleme dialogu ozel kanal dahil kaydeder', () => {
+    expect(sohbet).toContain('v-model:visible="duzenleDialogAc"')
+    expect(sohbetScript).toContain('const odaDuzenleKaydet =')
+    expect(sohbetScript).toContain('sohbetOdaAPI.guncelle(seciliOdaId.value, {')
+    expect(sohbetScript).toContain('ozel: duzenleForm.value.ozel')
+    expect(odaServis).toContain('if (dto.getOzel() != null)')
+  })
+
   it('kurucu ayrilinca yonetim devredilir, son uyede mesajlar temizlenir', () => {
     expect(odaServis).toContain('SohbetOdaUye yeniSahip')
     expect(odaServis).toContain('setRol("OWNER")')
@@ -92,6 +102,14 @@ describe('Faz8.3 - cift gonderim ve hiz siniri', () => {
     expect(odaServis).toContain('hizSiniri.kontrolEt("sohbet-dosya:')
   })
 
+  // Faz 9: cok instance'li kurulumda ortak sayac; Redis yoksa bellek yedegi.
+  it('hiz siniri Redis ile ortak, Redis yoksa bellek yedekli', () => {
+    expect(hizSiniri).toContain('StringRedisTemplate')
+    expect(hizSiniri).toContain('removeRangeByScore')
+    expect(hizSiniri).toContain('yerelKontrol')
+    expect(hizSiniri).toContain('Redis hiz siniri kullanilamadi')
+  })
+
   it('mesaj boyutu DTO seviyesinde sinirli', () => {
     const dto = readFileSync(join(BEK, 'dto', 'sistem', 'SohbetMesajDTO.java'), 'utf8')
     expect(dto).toContain('@Size(max = 4000')
@@ -100,15 +118,25 @@ describe('Faz8.3 - cift gonderim ve hiz siniri', () => {
 
 describe('Faz8.4 - okunmamis rozeti ve sayfalama', () => {
   it('genel sohbet de rozete dahil ve canli tazelenir', () => {
-    expect(sidebar).toContain('sohbetAPI.okunmamis(genelSonOkunanId())')
+    expect(sidebar).toContain('sohbetAPI.okunmamis()')
     expect(sidebar).toContain("window.addEventListener('raspel:sohbet-guncelle', rozetleriYukle)")
     expect(sidebar).toContain('setInterval(rozetleriYukle, 30000)')
     expect(sidebar).toContain('clearInterval(rozetZamanlayici)')
     expect(sohbetScript).toContain("window.dispatchEvent(new CustomEvent('raspel:sohbet-guncelle'))")
   })
 
+  // Faz 9: okuma isareti localStorage yerine sunucuda (cihazdan bagimsiz).
+  it('genel sohbet okuma isareti sunucuda tutulur', () => {
+    expect(api).toContain('okunduGenel(sonOkunanId)')
+    expect(sohbetScript).toContain('sohbetAPI.okunduGenel(son.id)')
+    expect(sohbetScript).not.toContain('raspel_sohbet_genel_son_id')
+    expect(sidebar).not.toContain('raspel_sohbet_genel_son_id')
+    expect(sohbetController).toContain('@PostMapping("/okundu")')
+    expect(sohbetServis).toContain('genelOkunduIsaretle(Long sirketId, Long kullaniciId, Long mesajId)')
+  })
+
   it('genel sohbet cursor ile sayfalanir', () => {
-    expect(api).toContain("okunmamis(sonOkunanId)")
+    expect(api).toContain("okunmamis()")
     expect(sohbetScript).toContain('sohbetAPI.sonMesajlar({ cursor: mesajCursor.value, limit: MESAJ_SAYFA })')
     expect(sohbet).toContain('<div\n            v-if="dahaVar"')
     expect(sohbetServis).toContain('findBySirketIdAndOdaIdIsNullAndIdLessThanOrderByIdDesc')
@@ -179,7 +207,7 @@ describe('Faz8.7 - erisilebilirlik, dil ve birim', () => {
   })
 
   it('yeni sohbet anahtarlari iki dilde de var', () => {
-    const anahtarlar = ['ayrilOnay', 'ayrilKurucuOnay', 'odaSil', 'odaSilOnay', 'ozelKanal', 'ozelKanalAciklama', 'uyelerSec', 'odaMesajlari']
+    const anahtarlar = ['ayrilOnay', 'ayrilKurucuOnay', 'odaSil', 'odaSilOnay', 'odaDuzenle', 'odaDuzenlendi', 'ozelKanal', 'ozelKanalAciklama', 'uyelerSec', 'odaMesajlari']
     for (const k of anahtarlar) {
       expect(tr.sohbet[k], `tr.sohbet.${k}`).toBeTruthy()
       expect(en.sohbet[k], `en.sohbet.${k}`).toBeTruthy()

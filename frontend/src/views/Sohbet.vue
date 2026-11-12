@@ -164,6 +164,14 @@
             />
             <Button
               v-if="odaYoneticisiMi(seciliOda)"
+              icon="pi pi-pencil"
+              class="p-button-sm p-button-text"
+              :title="t('sohbet.odaDuzenle')"
+              :aria-label="t('sohbet.odaDuzenle')"
+              @click="odaDuzenleAc"
+            />
+            <Button
+              v-if="odaYoneticisiMi(seciliOda)"
               icon="pi pi-trash"
               class="p-button-sm p-button-text p-button-danger"
               :title="t('sohbet.odaSil')"
@@ -466,6 +474,53 @@
           icon="pi pi-check"
           :loading="odaKaydediliyor"
           @click="odaOlustur"
+        />
+      </template>
+    </Dialog>
+
+    <!-- Oda Düzenle Dialog -->
+    <Dialog
+      v-model:visible="duzenleDialogAc"
+      :header="t('sohbet.odaDuzenle')"
+      :modal="true"
+      :style="{ width: '440px' }"
+    >
+      <div class="ajanda-form">
+        <div class="field">
+          <label>{{ t('sohbet.odaAdiZorunlu') }}</label>
+          <InputText
+            v-model="duzenleForm.ad"
+            maxlength="100"
+            class="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>{{ t('common.description') }}</label>
+          <InputText
+            v-model="duzenleForm.aciklama"
+            maxlength="300"
+            class="w-full"
+          />
+        </div>
+        <div class="field ozel-kanal-alan">
+          <InputSwitch v-model="duzenleForm.ozel" />
+          <div>
+            <label class="ozel-kanal-etiket">{{ t('sohbet.ozelKanal') }}</label>
+            <small>{{ t('sohbet.ozelKanalAciklama') }}</small>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <Button
+          :label="t('common.cancel')"
+          class="p-button-text"
+          @click="duzenleDialogAc = false"
+        />
+        <Button
+          :label="t('common.save')"
+          icon="pi pi-check"
+          :loading="duzenleKaydediliyor"
+          @click="odaDuzenleKaydet"
         />
       </template>
     </Dialog>
@@ -879,20 +934,12 @@ const gonder = async () => {
   }
 }
 
-/** Genel sohbette okunan son mesaj id'sini saklar (rozet buradan hesaplanir). */
-const GENEL_OKUMA_ANAHTARI = 'raspel_sohbet_genel_son_id'
-const genelOkunanId = () => {
-  try {
-    const deger = Number(localStorage.getItem(GENEL_OKUMA_ANAHTARI) || 0)
-    return deger > 0 ? deger : null
-  } catch {
-    return null
-  }
-}
+/** Genel sohbette okunan son mesajı SUNUCUYA bildirir (cihazdan bağımsız). */
 const genelOkunmamis = ref(0)
+let sonBildirilenOkumaId = 0
 const genelRozetYukle = async () => {
   try {
-    const r = await sohbetAPI.okunmamis(genelOkunanId())
+    const r = await sohbetAPI.okunmamis()
     genelOkunmamis.value = Number(r.data?.okunmamis || 0)
   } catch {
     genelOkunmamis.value = 0
@@ -901,15 +948,13 @@ const genelRozetYukle = async () => {
 const genelOkunduIsaretle = () => {
   const son = mesajlar.value[mesajlar.value.length - 1]
   if (son?.id == null) return
-  try {
-    const onceki = Number(localStorage.getItem(GENEL_OKUMA_ANAHTARI) || 0)
-    if (!onceki || son.id > onceki) {
-      localStorage.setItem(GENEL_OKUMA_ANAHTARI, String(son.id))
-    }
-  } catch {
-    /* localStorage kapali olabilir */
-  }
   genelOkunmamis.value = 0
+  if (son.id <= sonBildirilenOkumaId) return
+  sonBildirilenOkumaId = son.id
+  sohbetAPI.okunduGenel(son.id).catch(() => {
+    // Sunucuya yazılamazsa bir sonraki açılışta tekrar denenir.
+    sonBildirilenOkumaId = 0
+  })
   rozetYenile()
 }
 
@@ -1125,6 +1170,47 @@ const odayiSil = () => {
       }
     }
   })
+}
+
+// --- Oda düzenleme (ad/açıklama/özel kanal) -------------------------------
+const duzenleDialogAc = ref(false)
+const duzenleKaydediliyor = ref(false)
+const duzenleForm = ref({ ad: '', aciklama: '', ozel: false })
+
+const odaDuzenleAc = () => {
+  const oda = seciliOda.value
+  if (!oda) return
+  duzenleForm.value = {
+    ad: oda.ad || '',
+    aciklama: oda.aciklama || '',
+    ozel: oda.ozel === true
+  }
+  duzenleDialogAc.value = true
+}
+
+const odaDuzenleKaydet = async () => {
+  if (!seciliOdaId.value) return
+  if (!duzenleForm.value.ad.trim()) {
+    toastBildirim.uyari(t('sohbet.odaAdiZorunluUyari'))
+    return
+  }
+  duzenleKaydediliyor.value = true
+  try {
+    const r = await sohbetOdaAPI.guncelle(seciliOdaId.value, {
+      ad: duzenleForm.value.ad.trim(),
+      aciklama: duzenleForm.value.aciklama,
+      ozel: duzenleForm.value.ozel
+    })
+    const idx = odalar.value.findIndex((o) => o.id === r.data.id)
+    if (idx >= 0) odalar.value[idx] = r.data
+    duzenleDialogAc.value = false
+    toastBildirim.basarili(t('sohbet.odaDuzenlendi'))
+    rozetYenile()
+  } catch (err) {
+    toastBildirim.hata(err?.response?.data?.message || t('sohbet.islemBasarisiz'))
+  } finally {
+    duzenleKaydediliyor.value = false
+  }
 }
 
 const uyeYonetAc = async () => {

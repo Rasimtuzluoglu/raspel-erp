@@ -4650,6 +4650,8 @@
     "ayrilOnay": "Are you sure you want to leave this room?",
     "ayrilKurucuOnay": "You created this room. If you leave, ownership passes to the longest-standing member; if the last member leaves, the room is deleted. Continue?",
     "odaSil": "Delete room",
+    "odaDuzenle": "Edit room",
+    "odaDuzenlendi": "Room updated",
     "odaSilOnay": "\"{ad}\" and all of its messages will be permanently deleted. Are you sure?",
     "odaSilindi": "Room deleted",
     "odaMesajlari": "Room messages",

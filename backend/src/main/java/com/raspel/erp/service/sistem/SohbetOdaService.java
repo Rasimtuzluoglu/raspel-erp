@@ -93,7 +93,7 @@ public class SohbetOdaService {
                 .sirketId(sirketId)
                 .ad(dto.getAd().trim())
                 .aciklama(dto.getAciklama())
-                .ozel(dto.isOzel())
+                .ozel(Boolean.TRUE.equals(dto.getOzel()))
                 .olusturanKullaniciId(kullaniciId)
                 .build();
         oda = odaRepository.save(oda);
@@ -123,6 +123,10 @@ public class SohbetOdaService {
         }
         if (dto.getAciklama() != null) {
             oda.setAciklama(dto.getAciklama());
+        }
+        // Guncellemede null = "dokunma"; eski istemciler alani gondermez.
+        if (dto.getOzel() != null) {
+            oda.setOzel(dto.getOzel());
         }
         oda = odaRepository.save(oda);
         return dtoUret(oda, kullaniciId);

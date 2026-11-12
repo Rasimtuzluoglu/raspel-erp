@@ -99,8 +99,11 @@ export const sohbetAPI = {
   sonMesajlar(params) {
     return apiClient.get('/sohbet', { params })
   },
-  okunmamis(sonOkunanId) {
-    return apiClient.get('/sohbet/okunmamis', { params: { sonOkunanId } })
+  okunmamis() {
+    return apiClient.get('/sohbet/okunmamis')
+  },
+  okunduGenel(sonOkunanId) {
+    return apiClient.post('/sohbet/okundu', { sonOkunanId })
   },
   gonder(data) {
     return apiClient.post('/sohbet', data)

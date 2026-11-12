@@ -39,6 +39,7 @@ import static org.mockito.Mockito.*;
 class SohbetServiceTest {
 
     @Mock private SohbetMesajRepository sohbetMesajRepository;
+    @Mock private com.raspel.erp.repository.sistem.SohbetGenelOkumaRepository genelOkumaRepository;
     @Mock private SimpMessagingTemplate messagingTemplate;
     @Mock private FaturaRepository faturaRepository;
     @Mock private CariHesapRepository cariHesapRepository;
@@ -78,13 +79,39 @@ class SohbetServiceTest {
 
     @Test
     void genelOkunmamisSayisi_sonOkunanIdIleSayar() {
+        when(genelOkumaRepository.findBySirketIdAndKullaniciId(1L, 5L)).thenReturn(java.util.Optional.of(
+                com.raspel.erp.entity.sistem.SohbetGenelOkuma.builder()
+                        .sirketId(1L).kullaniciId(5L).sonOkunanId(7L).build()));
         when(sohbetMesajRepository.countBySirketIdAndOdaIdIsNullAndIdGreaterThan(1L, 7L)).thenReturn(3L);
-        assertEquals(3L, sohbetService.genelOkunmamisSayisi(1L, 7L));
+        assertEquals(3L, sohbetService.genelOkunmamisSayisi(1L, 5L));
     }
 
     @Test
     void genelOkunmamisSayisi_okumaKaydiYoksaSifir() {
-        assertEquals(0L, sohbetService.genelOkunmamisSayisi(1L, null));
+        when(genelOkumaRepository.findBySirketIdAndKullaniciId(1L, 5L)).thenReturn(java.util.Optional.empty());
+        assertEquals(0L, sohbetService.genelOkunmamisSayisi(1L, 5L));
+    }
+
+    @Test
+    void genelOkunduIsaretle_ileriYondeGunceller() {
+        when(genelOkumaRepository.findBySirketIdAndKullaniciId(1L, 5L)).thenReturn(java.util.Optional.of(
+                com.raspel.erp.entity.sistem.SohbetGenelOkuma.builder()
+                        .sirketId(1L).kullaniciId(5L).sonOkunanId(7L).build()));
+
+        sohbetService.genelOkunduIsaretle(1L, 5L, 9L);
+
+        verify(genelOkumaRepository).save(argThat(o -> o.getSonOkunanId().equals(9L)));
+    }
+
+    @Test
+    void genelOkunduIsaretle_geriyeYazmaz() {
+        when(genelOkumaRepository.findBySirketIdAndKullaniciId(1L, 5L)).thenReturn(java.util.Optional.of(
+                com.raspel.erp.entity.sistem.SohbetGenelOkuma.builder()
+                        .sirketId(1L).kullaniciId(5L).sonOkunanId(9L).build()));
+
+        sohbetService.genelOkunduIsaretle(1L, 5L, 4L);
+
+        verify(genelOkumaRepository, never()).save(any());
     }
 
     @Test
