@@ -45,7 +45,7 @@ const kartlar = computed(() => [
 /* 6 KPI karti: esit yukseklik, nefes alan bosluk. Basliklar tasmasin. */
 .depo-kpi {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 16px;
 }
@@ -77,9 +77,19 @@ const kartlar = computed(() => [
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+@media (min-width: 700px) {
+  .depo-kpi {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1440px) {
+  .depo-kpi {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
 @media (max-width: 640px) {
   .depo-kpi {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
   }
 }
