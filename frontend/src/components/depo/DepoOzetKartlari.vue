@@ -42,10 +42,16 @@ const kartlar = computed(() => [
 </script>
 
 <style scoped>
+/* 6 KPI karti: esit yukseklik, nefes alan bosluk. Basliklar tasmasin. */
 .depo-kpi {
-  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
 }
 .kpi-tikla {
+  display: flex;
+  width: 100%;
   border: none;
   background: transparent;
   padding: 0;
@@ -53,8 +59,28 @@ const kartlar = computed(() => [
   cursor: pointer;
   border-radius: 12px;
 }
+.kpi-tikla :deep(.kpi-kart) {
+  width: 100%;
+  height: 100%;
+}
+.depo-kpi :deep(.kpi-baslik) {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.25;
+}
+.depo-kpi :deep(.kpi-deger) {
+  margin-top: 2px;
+  line-height: 1.15;
+}
 .kpi-tikla:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+@media (max-width: 640px) {
+  .depo-kpi {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
 }
 </style>

@@ -149,6 +149,25 @@ class DepoTransferServiceTest {
     }
 
     @Test
+    void sayfali_tarihVerilmezseSentinelAralikKullanir() {
+        when(depoRepository.findBySirketIdOrderByAdAsc(eq(1L), any()))
+                .thenReturn(org.springframework.data.domain.Page.empty());
+        when(transferRepository.filtreli(eq(1L), isNull(), isNull(), any(), any(), any()))
+                .thenReturn(org.springframework.data.domain.Page.empty());
+        var bas = org.mockito.ArgumentCaptor.forClass(java.time.LocalDateTime.class);
+        var bit = org.mockito.ArgumentCaptor.forClass(java.time.LocalDateTime.class);
+
+        depoTransferService.sayfali(1L, null, null, null, null,
+                org.springframework.data.domain.Pageable.unpaged());
+
+        verify(transferRepository).filtreli(eq(1L), isNull(), isNull(), bas.capture(), bit.capture(), any());
+        assertNotNull(bas.getValue());
+        assertNotNull(bit.getValue());
+        assertTrue(bas.getValue().getYear() <= 1970);
+        assertTrue(bit.getValue().getYear() >= 9999);
+    }
+
+    @Test
     void slaDurumu_kovalariDogruHesaplar() {
         java.time.LocalDateTime simdi = java.time.LocalDateTime.now();
         assertEquals("NORMAL", depoTransferService.slaDurumu(simdi.minusHours(2)));

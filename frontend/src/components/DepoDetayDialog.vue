@@ -3,7 +3,7 @@
     :visible="visible"
     :header="t('depolar.depoDetay')"
     modal
-    :style="{ width: '90%', maxWidth: '720px' }"
+    :style="{ width: '92%', maxWidth: '620px' }"
     :breakpoints="{ '575px': '95vw' }"
     @update:visible="$emit('update:visible', $event)"
   >

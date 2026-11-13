@@ -96,6 +96,16 @@ describe('Depolar operasyon merkezi', () => {
     cy.contains('Toplam Depo').should('be.visible')
   })
 
+  it('yeni depo diyalogu acilir ve kompakt kalir', () => {
+    cy.get('.depo-arac-cubugu').contains('button', 'Yeni Depo').click()
+    cy.get('.p-dialog').should('be.visible').and('contain', 'Kapasite (kalem)')
+    cy.get('.p-dialog').then(($d) => {
+      const w = $d[0].getBoundingClientRect().width
+      expect(w).to.be.lessThan(480)
+    })
+    cy.get('.p-dialog textarea').should('be.visible')
+  })
+
   it('arama filtresini sunucuya iletir ve sayfayi sifirlar', () => {
     cy.intercept({ method: 'GET', pathname: '/api/depolar', query: { q: 'merkez' } }, (req) => {
       req.reply({

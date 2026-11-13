@@ -115,7 +115,7 @@
       v-model:visible="transferDialog"
       :header="t('depolar.depolarArasiTransfer')"
       modal
-      :style="{ width: '90%', maxWidth: '520px' }"
+      :style="{ width: '92%', maxWidth: '460px' }"
     >
       <div class="form-grid">
         <div class="field">
@@ -198,7 +198,7 @@
       v-model:visible="talepOlusturDialog"
       :header="t('depolar.transferTalebiOlustur')"
       modal
-      :style="{ width: '90%', maxWidth: '520px' }"
+      :style="{ width: '92%', maxWidth: '460px' }"
     >
       <div class="form-grid">
         <div class="field">
@@ -274,7 +274,7 @@
       v-model:visible="talepDialog"
       :header="t('depolar.transferTalepleri')"
       :modal="true"
-      :style="{ width: '90%', maxWidth: '720px' }"
+      :style="{ width: '92%', maxWidth: '620px' }"
     >
       <div class="talep-arac">
         <Select
@@ -783,12 +783,23 @@ const talepReddet = async (t) => {
 .form-grid {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+}
+/* Diyaloglar: varsayilan 48px input yuksekligi formu gereksiz sisiriyordu. */
+.field :deep(.p-inputtext),
+.field :deep(.p-select),
+.field :deep(.p-inputnumber-input) {
+  padding: 0.5rem 0.7rem;
+  font-size: 0.875rem;
+}
+.field small {
+  font-size: 11.5px;
+  color: var(--text-muted);
 }
 .field label {
   font-size: 13px;

@@ -26,6 +26,11 @@ describe('Faz11 - Depolar operasyon merkezi (UI)', () => {
   it('KPI seridi tiklanabilir ve geciken talebi gosterir', () => {
     expect(kpi).toContain("$emit('kpi-sec'")
     expect(kpi).toContain('kpiGecikenTalep')
+    // Kartlar birbirine yapisik gorunmesin: izgara + nefes alan bosluk.
+    expect(kpi).toContain('display: grid')
+    expect(kpi).toContain('grid-template-columns')
+    expect(kpi).toContain('gap: 16px')
+    expect(kpi).toContain('height: 100%')
   })
 
   it('liste paneli arama/filtre/sayfalama ve CSV icerir', () => {

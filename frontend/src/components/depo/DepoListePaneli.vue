@@ -306,6 +306,14 @@ defineExpose({ store })
 .doluluk-cubuk span { display: block; height: 100%; background: var(--accent); }
 .depo-hata { display: flex; align-items: center; gap: 8px; color: var(--danger); }
 
+/* Dar ekran: arama tam satir, aksiyonlar sagda. */
+@media (max-width: 640px) {
+  .depo-arac-cubugu { flex-direction: column; align-items: stretch; }
+  .arama-kutu { width: 100%; }
+  .arama-input { width: 100%; min-width: 0; }
+  .arac-sag { margin-left: 0; justify-content: flex-end; flex-wrap: wrap; }
+}
+
 /* Dokunmatik: hedef alanlar en az 44px (WCAG 2.5.8 / plan Task 11). */
 @media (pointer: coarse) {
   .depo-arac-cubugu :deep(.p-button),

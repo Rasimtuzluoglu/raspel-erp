@@ -111,8 +111,14 @@ public class DepoTransferService {
             Long sirketId, Long depoId, String durum,
             java.time.LocalDate baslangic, java.time.LocalDate bitis,
             org.springframework.data.domain.Pageable pageable) {
-        java.time.LocalDateTime bas = baslangic != null ? baslangic.atStartOfDay() : null;
-        java.time.LocalDateTime bit = bitis != null ? bitis.plusDays(1).atStartOfDay() : null;
+        // PostgreSQL parametre tipini `? IS NULL` uzerinden cozemedigi icin
+        // (SQLState 42P18) tarih araligi daima dolu gonderilir.
+        java.time.LocalDateTime bas = baslangic != null
+                ? baslangic.atStartOfDay()
+                : java.time.LocalDateTime.of(1970, 1, 1, 0, 0);
+        java.time.LocalDateTime bit = bitis != null
+                ? bitis.plusDays(1).atStartOfDay()
+                : java.time.LocalDateTime.of(9999, 12, 31, 0, 0);
         String durumFiltre = (durum == null || durum.isBlank() || "TUMU".equals(durum)) ? null : durum;
         var sayfa = transferRepository.filtreli(sirketId, depoId, durumFiltre, bas, bit, pageable);
         var depolar = depoRepository.findBySirketIdOrderByAdAsc(sirketId,

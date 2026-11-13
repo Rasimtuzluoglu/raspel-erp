@@ -1,9 +1,9 @@
 <template>
   <Dialog
-    :visible="gorunur"
+    :visible="visible"
     :header="depo?.id ? t('depolar.depoDuzenle') : t('depolar.yeniDepo')"
     modal
-    :style="{ width: '90%', maxWidth: '540px' }"
+    :style="{ width: '92%', maxWidth: '460px' }"
     @update:visible="$emit('update:visible', $event)"
   >
     <div class="depo-form-grid">
@@ -123,9 +123,17 @@ watch(
 </script>
 
 <style scoped>
-.depo-form-grid { display: flex; flex-direction: column; gap: 12px; }
+.depo-form-grid { display: flex; flex-direction: column; gap: 10px; }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
 .field small { color: var(--text-muted); font-size: 11.5px; }
+/* Diyalog formu kompakt: 48px inputlar 6 alanli formu gereksiz sisiriyordu. */
+.field :deep(.p-inputtext),
+.field :deep(.p-select),
+.field :deep(.p-inputnumber-input),
+.field :deep(.p-textarea) {
+  padding: 0.5rem 0.7rem;
+  font-size: 0.875rem;
+}
 .w-full { width: 100%; }
 </style>

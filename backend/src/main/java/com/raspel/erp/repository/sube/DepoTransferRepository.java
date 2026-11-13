@@ -19,12 +19,15 @@ public interface DepoTransferRepository extends JpaRepository<DepoTransfer, Long
     /** KPI özeti: belirtilen durumdaki transfer talebi sayısı. */
     long countBySirketIdAndDurum(Long sirketId, String durum);
 
-    /** Operasyon listesi: depo (kaynak/hedef), durum ve tarih araligi. */
+    /** Operasyon listesi: depo (kaynak/hedef), durum ve tarih araligi.
+     *  Tarih parametreleri daima dolu gonderilir (1970 / 9999); null bir
+     *  `:param IS NULL` kosulu PostgreSQL'de parametre tipini belirsiz
+     *  biraktigi icin (SQLState 42P18) kullanilmaz. */
     @Query("SELECT t FROM DepoTransfer t WHERE t.sirketId = :sirketId " +
            "AND (:depoId IS NULL OR t.kaynakDepoId = :depoId OR t.hedefDepoId = :depoId) " +
            "AND (:durum IS NULL OR t.durum = :durum) " +
-           "AND (:bas IS NULL OR t.olusturmaTarihi >= :bas) " +
-           "AND (:bit IS NULL OR t.olusturmaTarihi < :bit) " +
+           "AND t.olusturmaTarihi >= :bas " +
+           "AND t.olusturmaTarihi < :bit " +
            "ORDER BY t.id DESC")
     Page<DepoTransfer> filtreli(@Param("sirketId") Long sirketId,
                                 @Param("depoId") Long depoId,
