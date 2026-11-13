@@ -306,4 +306,9 @@ watch([durum, depoId], () => yukle(), { immediate: true })
 .red-sebep { display: block; color: var(--text-muted); font-size: 11.5px; }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .w-full { width: 100%; }
+
+/* Dokunmatik: onay/red hedefleri en az 44px. */
+@media (pointer: coarse) {
+  .depo-transfer-paneli :deep(.p-button) { min-height: 44px; min-width: 44px; }
+}
 </style>

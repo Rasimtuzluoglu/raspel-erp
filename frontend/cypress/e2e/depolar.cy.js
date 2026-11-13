@@ -141,6 +141,24 @@ describe('Depolar operasyon merkezi', () => {
     cy.wait('@stokEkle').its('request.body').should('deep.include', { stokId: 100, miktar: 5 })
   })
 
+  it('yetersiz stokta cikis hatasini kullaniciya gosterir', () => {
+    cy.get('[data-test="depo-tablo"] tbody tr').first().find('button').first().click()
+    cy.get('.eylem-menu').contains('Stokları Gör').click()
+    cy.wait('@stokSayfali')
+
+    cy.get('.stok-islem-form .p-select').click()
+    cy.get('.p-select-option').contains('Vida').click()
+    cy.get('.stok-islem-form .p-inputnumber input').clear().type('99')
+
+    cy.intercept('POST', '/api/depolar/1/stok-cikar', {
+      statusCode: 400,
+      body: { message: 'Yetersiz stok! Mevcut: 3, Çıkış: 99' }
+    }).as('stokCikar')
+    cy.get('.stok-islem-form').contains('button', 'Çıkar').click()
+    cy.wait('@stokCikar')
+    cy.get('.p-toast-message-text').should('contain', 'Yetersiz stok')
+  })
+
   it('transferi onaylar ve denetim ucuna gider', () => {
     cy.contains('[role="tab"]', 'Transferler').click()
     cy.wait('@transferSayfali')
@@ -192,5 +210,67 @@ describe('Depolar operasyon merkezi', () => {
     cy.document().then((doc) => {
       expect(doc.documentElement.scrollWidth).to.be.lessThan(1024 + 24)
     })
+  })
+})
+
+describe('Depolar — USER rolü', () => {
+  beforeEach(() => {
+    cy.intercept('GET', '/api/**', { statusCode: 200, body: [] }).as('catchAll')
+    cy.intercept('POST', '/api/kullanicilar/giris', {
+      statusCode: 200,
+      body: { girisToken: 'test-token', twoFactorGerekli: false, sirketler: [{ id: 1, ad: 'Test' }] }
+    }).as('login')
+    cy.intercept('POST', '/api/kullanicilar/giris-sirket', {
+      statusCode: 200,
+      body: {
+        id: 7, username: 'user', displayName: 'User', role: 'USER',
+        token: 'test-token', sirketId: 1, sirketAdi: 'Test', companyName: 'Test'
+      }
+    }).as('girisSirket')
+    cy.intercept('GET', '/api/kullanicilar/ben', {
+      statusCode: 200,
+      body: { id: 7, username: 'user', displayName: 'User', role: 'USER', sirketId: 1, companyName: 'Test' }
+    }).as('ben')
+    cy.intercept('GET', '/api/yetkiler/roller', ['USER']).as('roller')
+    cy.intercept('GET', '/api/yetkiler/moduller', ['STOK']).as('moduller')
+    cy.intercept('GET', '/api/yetkiler', ['STOK_READ']).as('yetkiler')
+    cy.intercept({ method: 'GET', pathname: '/api/depolar' }, (req) => {
+      const body = req.query.page === undefined
+        ? DEPOLAR
+        : { content: DEPOLAR, totalElements: DEPOLAR.length, totalPages: 1, number: 0, size: 20 }
+      req.reply({ statusCode: 200, body })
+    }).as('depolarListeUser')
+    cy.intercept('GET', '/api/depolar/ozet', { statusCode: 200, body: {} }).as('ozetUser')
+    // Sorumlusu olmadigi depo: USER islem yapamaz.
+    cy.intercept('GET', '/api/depolar/2/stoklar/sayfali*', { statusCode: 200, body: sayfa(STOKLAR) }).as('stokSayfaliUser')
+    cy.intercept('GET', '/api/depo-transferler/sayfali*', { statusCode: 200, body: sayfa(TRANSFERLER) }).as('transferSayfaliUser')
+    cy.intercept('GET', '/api/subeler', { statusCode: 200, body: [] })
+    cy.intercept('GET', '/api/kullanicilar*', { statusCode: 200, body: sayfa([]) })
+    cy.intercept('GET', '/api/stoklar*', { statusCode: 200, body: sayfa([]) })
+
+    cy.visit('/giris')
+    cy.get('[data-test="giris-username"]').type('user')
+    cy.get('[data-test="giris-password"]').type('123456')
+    cy.get('[data-test="giris-buton"]').click()
+    cy.wait('@login')
+    cy.wait('@girisSirket')
+    cy.visit('/depolar')
+    cy.wait('@depolarListeUser')
+  })
+
+  it('stok islem formunu gostermez (sorumlu degil)', () => {
+    cy.get('[data-test="depo-tablo"] tbody tr').eq(1).find('button').first().click()
+    cy.get('.eylem-menu').contains('Stokları Gör').click()
+    cy.wait('@stokSayfaliUser')
+    cy.get('[data-test="depo-stok-tablo"]').should('be.visible')
+    cy.get('.stok-islem-form').should('not.exist')
+  })
+
+  it('transfer onay/red aksiyonlarini gostermez', () => {
+    cy.contains('[role="tab"]', 'Transferler').click()
+    cy.wait('@transferSayfaliUser')
+    cy.get('[data-test="depo-transfer-tablo"]').should('be.visible')
+    cy.get('[data-test="depo-transfer-tablo"] button[aria-label="Onayla"]').should('not.exist')
+    cy.get('[data-test="depo-transfer-tablo"] button[aria-label="Reddet"]').should('not.exist')
   })
 })

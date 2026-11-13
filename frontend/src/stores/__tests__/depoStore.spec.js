@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 
-const sayfali = vi.fn()
+const { sayfali } = vi.hoisted(() => ({ sayfali: vi.fn() }))
 vi.mock('../../api/index.js', () => ({ depoAPI: { sayfali } }))
 
 import { useDepoStore } from '../depoStore.js'

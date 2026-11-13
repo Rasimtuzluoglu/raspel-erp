@@ -63,6 +63,7 @@
       v-if="store.hata"
       class="depo-hata"
       role="alert"
+      aria-live="assertive"
     >
       <i class="pi pi-exclamation-triangle" /> {{ store.hata }}
       <Button
@@ -297,10 +298,19 @@ defineExpose({ store })
 .arac-sag { margin-left: auto; display: flex; gap: 4px; }
 .depo-kartlar { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
 .depo-kart { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: var(--bg-card); display: flex; flex-direction: column; gap: 8px; }
-.depo-kart-ust, .depo-kart-alt, .depo-kart-metrik { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.depo-kart-ust, .depo-kart-metrik { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.depo-kart-alt { display: flex; align-items: center; justify-content: space-between; gap: 8px; position: sticky; bottom: 0; background: var(--bg-card); }
 .depo-kart-satir { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
 .depo-kart-metrik { font-size: 12px; color: var(--text-muted); }
 .doluluk-cubuk { height: 6px; border-radius: 999px; background: var(--bg-secondary); overflow: hidden; }
 .doluluk-cubuk span { display: block; height: 100%; background: var(--accent); }
 .depo-hata { display: flex; align-items: center; gap: 8px; color: var(--danger); }
+
+/* Dokunmatik: hedef alanlar en az 44px (WCAG 2.5.8 / plan Task 11). */
+@media (pointer: coarse) {
+  .depo-arac-cubugu :deep(.p-button),
+  .depo-kart-alt :deep(.p-button),
+  .depo-kartlar :deep(.p-button) { min-height: 44px; }
+  .depo-arac-cubugu :deep(.p-select) { min-height: 44px; }
+}
 </style>

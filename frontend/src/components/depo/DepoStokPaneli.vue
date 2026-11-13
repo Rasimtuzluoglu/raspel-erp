@@ -61,7 +61,10 @@
     </div>
 
     <div class="stok-tablo-ust">
-      <span class="stok-ozet">
+      <span
+        class="stok-ozet"
+        aria-live="polite"
+      >
         {{ toplam }} {{ t('depolar.kalem') }}
       </span>
       <span class="arama-kutu">
@@ -358,4 +361,11 @@ watch(() => props.islemYapabilir, (v) => { if (v) stoklariYukle() }, { immediate
 .filtre { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; }
 .mevcut-stok-bilgi { display: inline-flex; align-items: center; gap: 4px; color: var(--text-muted); }
 .text-danger { color: var(--danger); }
+
+/* Dokunmatik: islem hedefleri en az 44px. */
+@media (pointer: coarse) {
+  .form-row :deep(.p-button),
+  .stok-tablo-ust :deep(.p-button) { min-height: 44px; }
+  .form-row :deep(.p-select) { min-height: 44px; }
+}
 </style>
