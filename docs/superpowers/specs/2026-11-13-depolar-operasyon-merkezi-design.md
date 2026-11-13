@@ -95,7 +95,7 @@ Kurallar:
 
 | Metot | Yol | Parametreler | Dönüş |
 |---|---|---|---|
-| GET | `/api/depolar/sayfali` | `q, subeId, aktif, kritik, page, size` | `Page<DepoDTO>` |
+| GET | `/api/depolar` (mevcut Page) | `q, subeId, aktif, kritik, page, size` | `Page<DepoDTO>` |
 | GET | `/api/depolar/{id}/stoklar/sayfali` | `q, kritik, sifir, page, size` | `Page<DepoStokDTO>` |
 | GET | `/api/depolar/{id}/hareketler` | `tip, page, size` | `Page<DepoHareketDTO>` |
 | GET | `/api/depolar/{id}/ozet` | — | `DepoOzetDTO` |
@@ -132,6 +132,8 @@ Kurallar:
 
 ### 5.4 DTO alanları
 
+- `DepoDetayOzetDTO`: `depoId, kalemSayisi, sifirStokSayisi, kritikStokSayisi,
+  stokDegeri, dolulukYuzde, sonHareketler`
 - `DepoDTO`: `id, ad, adres, yetkili, subeId, subeAdi, aktif, kapasiteKalem,
   sorumluKullaniciId, sorumluKullaniciAd, kalemSayisi, sifirStokSayisi,
   kritikStokSayisi, stokDegeri, dolulukYuzde, kritikMi`
