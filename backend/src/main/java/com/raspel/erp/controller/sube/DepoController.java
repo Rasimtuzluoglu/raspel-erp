@@ -31,6 +31,7 @@ import com.raspel.erp.entity.envanter.Stok;
 public class DepoController {
 
     private final DepoService depoService;
+    private final com.raspel.erp.service.sube.DepoExportService depoExportService;
 
     @GetMapping
     @Operation(summary = "Tüm depoları getir", description = "Filtreli ve sayfalı depo listesi")
@@ -43,6 +44,27 @@ public class DepoController {
             @PageableDefault(size = 20) Pageable pageable) {
         Long sirketId = (Long) req.getAttribute("sirketId");
         return ResponseEntity.ok(depoService.tumunuGetir(sirketId, q, subeId, aktif, kritik, pageable));
+    }
+
+    @GetMapping("/export")
+    @Operation(summary = "Depolar CSV dışa aktarma", description = "tur=liste|stok|transfer")
+    public ResponseEntity<byte[]> export(
+            @RequestParam(defaultValue = "liste") String tur,
+            @RequestParam(required = false) Long depoId,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Long subeId,
+            @RequestParam(required = false) Boolean aktif,
+            @RequestParam(required = false) Boolean kritik,
+            @RequestParam(required = false) Boolean sifir,
+            @RequestParam(required = false) String durum,
+            HttpServletRequest req) {
+        Long sirketId = (Long) req.getAttribute("sirketId");
+        byte[] veri = depoExportService.csv(tur, sirketId, depoId, q, subeId, aktif, kritik, sifir, durum);
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"depolar-" + tur + ".csv\"")
+                .contentType(org.springframework.http.MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(veri);
     }
 
     @GetMapping("/{id}/ozet")
