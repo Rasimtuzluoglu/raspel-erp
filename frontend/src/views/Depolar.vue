@@ -115,7 +115,7 @@
       v-model:visible="transferDialog"
       :header="t('depolar.depolarArasiTransfer')"
       modal
-      :style="{ width: '92%', maxWidth: '460px' }"
+      :style="{ width: 'min(92vw, 460px)' }"
     >
       <div class="form-grid">
         <div class="field">
@@ -198,7 +198,7 @@
       v-model:visible="talepOlusturDialog"
       :header="t('depolar.transferTalebiOlustur')"
       modal
-      :style="{ width: '92%', maxWidth: '460px' }"
+      :style="{ width: 'min(92vw, 460px)' }"
     >
       <div class="form-grid">
         <div class="field">
@@ -274,7 +274,7 @@
       v-model:visible="talepDialog"
       :header="t('depolar.transferTalepleri')"
       :modal="true"
-      :style="{ width: '92%', maxWidth: '620px' }"
+      :style="{ width: 'min(92vw, 620px)' }"
     >
       <div class="talep-arac">
         <Select

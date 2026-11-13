@@ -3,7 +3,7 @@
     :visible="visible"
     :header="depo?.id ? t('depolar.depoDuzenle') : t('depolar.yeniDepo')"
     modal
-    :style="{ width: '92%', maxWidth: '460px' }"
+    :style="{ width: 'min(92vw, 460px)' }"
     @update:visible="$emit('update:visible', $event)"
   >
     <div class="depo-form-grid">

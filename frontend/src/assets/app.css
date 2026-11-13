@@ -2313,7 +2313,10 @@ label .required,
   max-width: 100%;
 }
 .p-dialog {
-  max-width: calc(100vw - 24px) !important;
+  /* Yalnizca tasmayi onleyen bir tavan: diyalog kendi max-width'ini inline
+     verdiginde bu kural ezilmemeli (eski `!important` tum diyaloglari
+     %92 genislige sisiriyordu). */
+  max-width: calc(100vw - 24px);
 }
 .p-dialog .p-dialog-content {
   overflow-x: hidden;
@@ -2587,7 +2590,7 @@ body {
    viewport'tan genis olanlari sinirlar; dar diyaloglarin boyutunu degistirmez. */
 @media (max-width: 1280px) {
   .p-dialog {
-    max-width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px);
   }
 }
 

@@ -145,7 +145,7 @@
       v-model:visible="redDialog"
       :header="t('depolar.reddet')"
       modal
-      :style="{ width: '92%', maxWidth: '400px' }"
+      :style="{ width: 'min(92vw, 400px)' }"
     >
       <div class="field">
         <label>{{ t('depolar.redSebebi') }}</label>
