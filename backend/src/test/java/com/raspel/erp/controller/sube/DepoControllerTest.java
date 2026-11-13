@@ -40,11 +40,21 @@ class DepoControllerTest {
 
     @Test
     void shouldGetAll() throws Exception {
-        when(depoService.tumunuGetir(anyLong(), any(Pageable.class)))
+        when(depoService.tumunuGetir(eq(1L), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(ornek())));
         mockMvc.perform(get("/api/depolar").requestAttr("sirketId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].ad").value("Ana Depo"));
+    }
+
+    @Test
+    void shouldGetDetayOzet() throws Exception {
+        when(depoService.detayOzet(1L)).thenReturn(com.raspel.erp.dto.sube.DepoDetayOzetDTO.builder()
+                .depoId(1L).kalemSayisi(4L).kritikStokSayisi(1L).dolulukYuzde(40).build());
+        mockMvc.perform(get("/api/depolar/1/ozet"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.kalemSayisi").value(4))
+                .andExpect(jsonPath("$.dolulukYuzde").value(40));
     }
 
     @Test

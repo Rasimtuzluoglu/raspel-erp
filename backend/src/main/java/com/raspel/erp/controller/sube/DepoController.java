@@ -2,6 +2,7 @@ package com.raspel.erp.controller.sube;
 
 import com.raspel.erp.dto.sube.DepoDTO;
 import com.raspel.erp.dto.sube.DepoStokDTO;
+import com.raspel.erp.dto.sube.DepoDetayOzetDTO;
 import com.raspel.erp.service.sube.DepoService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -32,10 +33,22 @@ public class DepoController {
     private final DepoService depoService;
 
     @GetMapping
-    @Operation(summary = "Tüm depoları getir", description = "Tüm depoları listeler")
-    public ResponseEntity<Page<DepoDTO>> tumu(HttpServletRequest req, @PageableDefault(size = 50) Pageable pageable) {
+    @Operation(summary = "Tüm depoları getir", description = "Filtreli ve sayfalı depo listesi")
+    public ResponseEntity<Page<DepoDTO>> tumu(
+            HttpServletRequest req,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Long subeId,
+            @RequestParam(required = false) Boolean aktif,
+            @RequestParam(required = false) Boolean kritik,
+            @PageableDefault(size = 20) Pageable pageable) {
         Long sirketId = (Long) req.getAttribute("sirketId");
-        return ResponseEntity.ok(depoService.tumunuGetir(sirketId, pageable));
+        return ResponseEntity.ok(depoService.tumunuGetir(sirketId, q, subeId, aktif, kritik, pageable));
+    }
+
+    @GetMapping("/{id}/ozet")
+    @Operation(summary = "Depo operasyon özeti", description = "Tek depo için KPI ve son hareketler")
+    public ResponseEntity<DepoDetayOzetDTO> detayOzet(@PathVariable Long id) {
+        return ResponseEntity.ok(depoService.detayOzet(id));
     }
 
     @GetMapping("/ozet")
@@ -86,20 +99,44 @@ public class DepoController {
         return ResponseEntity.ok(depoService.depoStoklari(id));
     }
 
+    @GetMapping("/{id}/stoklar/sayfali")
+    @Operation(summary = "Depo stokları (sayfalı)", description = "Arama, kritik/sıfır filtresi ve sayfalama")
+    public ResponseEntity<Page<DepoStokDTO>> stokSayfali(
+            @PathVariable Long id,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Boolean kritik,
+            @RequestParam(required = false) Boolean sifir,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(depoService.stokSayfali(id, q, kritik, sifir, pageable));
+    }
+
+    @GetMapping("/{id}/hareketler")
+    @Operation(summary = "Depo hareket geçmişi", description = "Tip filtresi ve sayfalama ile stok hareketleri")
+    public ResponseEntity<Page<com.raspel.erp.dto.sube.DepoHareketDTO>> hareketler(
+            @PathVariable Long id,
+            @RequestParam(required = false) String tip,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(depoService.hareketler(id, tip, pageable));
+    }
+
     @PostMapping("/{id}/stok-ekle")
     @Operation(summary = "Depoya stok ekle", description = "Depoya stok girişi yapar")
-    public ResponseEntity<DepoStokDTO> stokEkle(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<DepoStokDTO> stokEkle(@PathVariable Long id, @RequestBody Map<String, Object> body,
+                                                HttpServletRequest req) {
         Long stokId = Long.valueOf(body.get("stokId").toString());
         BigDecimal miktar = new BigDecimal(body.get("miktar").toString());
-        return ResponseEntity.ok(depoService.stokEkle(id, stokId, miktar));
+        Long kullaniciId = (Long) req.getAttribute("kullaniciId");
+        return ResponseEntity.ok(depoService.stokEkle(id, stokId, miktar, kullaniciId));
     }
 
     @PostMapping("/{id}/stok-cikar")
     @Operation(summary = "Depodan stok çıkar", description = "Depodan stok çıkışı yapar")
-    public ResponseEntity<DepoStokDTO> stokCikar(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<DepoStokDTO> stokCikar(@PathVariable Long id, @RequestBody Map<String, Object> body,
+                                                 HttpServletRequest req) {
         Long stokId = Long.valueOf(body.get("stokId").toString());
         BigDecimal miktar = new BigDecimal(body.get("miktar").toString());
-        return ResponseEntity.ok(depoService.stokCikar(id, stokId, miktar));
+        Long kullaniciId = (Long) req.getAttribute("kullaniciId");
+        return ResponseEntity.ok(depoService.stokCikar(id, stokId, miktar, kullaniciId));
     }
 
     @PostMapping("/transfer")

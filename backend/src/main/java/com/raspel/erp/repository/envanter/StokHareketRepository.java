@@ -26,6 +26,15 @@ public interface StokHareketRepository extends JpaRepository<StokHareket, Long> 
     @EntityGraph(attributePaths = {"stok", "cariHesap"})
     List<StokHareket> findByStokIdOrderByHareketTarihiDesc(Long stokId);
 
+    @EntityGraph(attributePaths = {"stok"})
+    List<StokHareket> findTop5ByDepoIdOrderByOlusturmaTarihiDesc(Long depoId);
+
+    @EntityGraph(attributePaths = {"stok"})
+    Page<StokHareket> findByDepoIdOrderByOlusturmaTarihiDesc(Long depoId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"stok"})
+    Page<StokHareket> findByDepoIdAndTurOrderByOlusturmaTarihiDesc(Long depoId, String tur, Pageable pageable);
+
     @EntityGraph(attributePaths = {"stok", "cariHesap"})
     List<StokHareket> findByStokSirketIdOrderByHareketTarihiDesc(Long sirketId);
 
