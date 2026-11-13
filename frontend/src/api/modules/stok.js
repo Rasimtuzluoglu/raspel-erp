@@ -129,6 +129,21 @@ export const depoAPI = {
   getAll(params) {
     return apiClient.get('/depolar', { params })
   },
+  sayfali(params) {
+    return apiClient.get('/depolar', { params })
+  },
+  detayOzet(id) {
+    return apiClient.get(`/depolar/${id}/ozet`)
+  },
+  stokSayfali(id, params) {
+    return apiClient.get(`/depolar/${id}/stoklar/sayfali`, { params })
+  },
+  hareketler(id, params) {
+    return apiClient.get(`/depolar/${id}/hareketler`, { params })
+  },
+  export(params) {
+    return apiClient.get('/depolar/export', { params, responseType: 'blob' })
+  },
   ozet() {
     return apiClient.get('/depolar/ozet')
   },
@@ -165,14 +180,17 @@ export const depoTransferAPI = {
   getAll() {
     return apiClient.get('/depo-transferler')
   },
+  sayfali(params) {
+    return apiClient.get('/depo-transferler/sayfali', { params })
+  },
   create(data) {
     return apiClient.post('/depo-transferler', data)
   },
   onayla(id) {
     return apiClient.post(`/depo-transferler/${id}/onayla`)
   },
-  reddet(id) {
-    return apiClient.post(`/depo-transferler/${id}/reddet`)
+  reddet(id, sebep) {
+    return apiClient.post(`/depo-transferler/${id}/reddet`, { sebep })
   }
 }
 
