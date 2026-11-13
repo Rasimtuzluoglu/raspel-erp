@@ -32,6 +32,10 @@ public class DepoTransferService {
     private final StokRepository stokRepository;
     private final TenantChecker tenantChecker;
     private final com.raspel.erp.repository.sube.DepoStokRepository depoStokRepository;
+    private final com.raspel.erp.repository.sistem.KullaniciRepository kullaniciRepository;
+
+    @org.springframework.beans.factory.annotation.Value("${app.depo.transfer-sla-saat:24}")
+    private long slaSaat;
 
     @Transactional(readOnly = true)
     public List<DepoTransferDTO> listele(Long sirketId) {
@@ -102,37 +106,109 @@ public class DepoTransferService {
         return entityToDTO(transferRepository.save(t));
     }
 
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<DepoTransferDTO> sayfali(
+            Long sirketId, Long depoId, String durum,
+            java.time.LocalDate baslangic, java.time.LocalDate bitis,
+            org.springframework.data.domain.Pageable pageable) {
+        java.time.LocalDateTime bas = baslangic != null ? baslangic.atStartOfDay() : null;
+        java.time.LocalDateTime bit = bitis != null ? bitis.plusDays(1).atStartOfDay() : null;
+        String durumFiltre = (durum == null || durum.isBlank() || "TUMU".equals(durum)) ? null : durum;
+        var sayfa = transferRepository.filtreli(sirketId, depoId, durumFiltre, bas, bit, pageable);
+        var depolar = depoRepository.findBySirketIdOrderByAdAsc(sirketId,
+                        org.springframework.data.domain.Pageable.unpaged()).getContent().stream()
+                .collect(Collectors.toMap(d -> d.getId(), d -> d.getAd()));
+        var stoklar = sayfa.getContent().stream().map(DepoTransfer::getStokId).distinct()
+                .map(id -> stokRepository.findById(id).orElse(null))
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toMap(s -> s.getId(), s -> s.getAd()));
+        java.util.Set<Long> kullaniciIdleri = new java.util.HashSet<>();
+        sayfa.getContent().forEach(t -> {
+            if (t.getOlusturanKullaniciId() != null) kullaniciIdleri.add(t.getOlusturanKullaniciId());
+            if (t.getOnaylayanKullaniciId() != null) kullaniciIdleri.add(t.getOnaylayanKullaniciId());
+        });
+        var adlar = kullaniciIdleri.isEmpty() ? java.util.Map.<Long, String>of()
+                : kullaniciRepository.findAllById(kullaniciIdleri).stream()
+                        .collect(Collectors.toMap(k -> k.getId(), k -> k.getDisplayName(), (a, b) -> a));
+        return sayfa.map(t -> entityToDTO(t, depolar, stoklar, adlar));
+    }
+
     @Transactional
     public DepoTransferDTO onayla(Long id) {
+        return onayla(id, null);
+    }
+
+    @Transactional
+    public DepoTransferDTO onayla(Long id, Long kullaniciId) {
         DepoTransfer t = transferRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transfer", id));
         tenantChecker.check(t.getSirketId(), "Transfer");
+        yoneticiKontrol(kullaniciId);
         if (!"BEKLIYOR".equals(t.getDurum())) {
             throw new BusinessException("Bu transfer zaten işlendi. Durum: " + t.getDurum());
         }
         depoService.stokTransfer(t.getKaynakDepoId(), t.getHedefDepoId(), t.getStokId(), t.getMiktar());
         t.setDurum("ONAYLANDI");
         t.setOnayTarihi(LocalDateTime.now());
+        if (kullaniciId != null) t.setOnaylayanKullaniciId(kullaniciId);
         log.info("Depo transferi onaylandı - ID: {}", id);
         return entityToDTO(transferRepository.save(t));
     }
 
     @Transactional
     public DepoTransferDTO reddet(Long id) {
+        return reddet(id, null, "Belirtilmedi");
+    }
+
+    @Transactional
+    public DepoTransferDTO reddet(Long id, Long kullaniciId, String sebep) {
         DepoTransfer t = transferRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transfer", id));
         tenantChecker.check(t.getSirketId(), "Transfer");
+        yoneticiKontrol(kullaniciId);
         if (!"BEKLIYOR".equals(t.getDurum())) {
             throw new BusinessException("Bu transfer zaten işlendi. Durum: " + t.getDurum());
         }
+        if (sebep == null || sebep.trim().length() < 3) {
+            throw new BusinessException("Red gerekçesi en az 3 karakter olmalıdır");
+        }
         t.setDurum("REDDEDILDI");
+        t.setRedTarihi(LocalDateTime.now());
+        t.setRedSebebi(sebep.trim());
+        if (kullaniciId != null) t.setOnaylayanKullaniciId(kullaniciId);
         return entityToDTO(transferRepository.save(t));
     }
 
+    /** SLA kovasi: NORMAL <4s, YAKLASIYOR 4..slaSaat, GECIKTI > slaSaat. */
+    public String slaDurumu(LocalDateTime olusturma) {
+        if (olusturma == null) return "NORMAL";
+        long saat = java.time.Duration.between(olusturma, LocalDateTime.now()).toHours();
+        if (saat < 4) return "NORMAL";
+        return saat < slaSaat ? "YAKLASIYOR" : "GECIKTI";
+    }
+
+    private void yoneticiKontrol(Long kullaniciId) {
+        if (kullaniciId == null) return;
+        boolean admin = kullaniciRepository.findById(kullaniciId)
+                .map(k -> "ADMIN".equalsIgnoreCase(k.getRole())).orElse(false);
+        if (!admin) throw new BusinessException("Transferi yalnızca ADMIN onaylayabilir");
+    }
+
     private DepoTransferDTO entityToDTO(DepoTransfer t) {
-        String kaynakAd = depoRepository.findById(t.getKaynakDepoId()).map(d -> d.getAd()).orElse(null);
-        String hedefAd = depoRepository.findById(t.getHedefDepoId()).map(d -> d.getAd()).orElse(null);
-        String stokAd = stokRepository.findById(t.getStokId()).map(s -> s.getAd()).orElse(null);
+        return entityToDTO(t, java.util.Map.of(), java.util.Map.of(), java.util.Map.of());
+    }
+
+    private DepoTransferDTO entityToDTO(DepoTransfer t, java.util.Map<Long, String> depoAdlari,
+                                        java.util.Map<Long, String> stokAdlari,
+                                        java.util.Map<Long, String> kullaniciAdlari) {
+        String kaynakAd = depoAdlari.containsKey(t.getKaynakDepoId()) ? depoAdlari.get(t.getKaynakDepoId())
+                : depoRepository.findById(t.getKaynakDepoId()).map(d -> d.getAd()).orElse(null);
+        String hedefAd = depoAdlari.containsKey(t.getHedefDepoId()) ? depoAdlari.get(t.getHedefDepoId())
+                : depoRepository.findById(t.getHedefDepoId()).map(d -> d.getAd()).orElse(null);
+        String stokAd = stokAdlari.containsKey(t.getStokId()) ? stokAdlari.get(t.getStokId())
+                : stokRepository.findById(t.getStokId()).map(s -> s.getAd()).orElse(null);
+        long yasSaat = t.getOlusturmaTarihi() == null ? 0
+                : Math.max(0, java.time.Duration.between(t.getOlusturmaTarihi(), LocalDateTime.now()).toHours());
         return DepoTransferDTO.builder()
                 .id(t.getId()).sirketId(t.getSirketId())
                 .kaynakDepoId(t.getKaynakDepoId()).kaynakDepoAd(kaynakAd)
@@ -140,7 +216,14 @@ public class DepoTransferService {
                 .stokId(t.getStokId()).stokAd(stokAd)
                 .miktar(t.getMiktar()).durum(t.getDurum()).aciklama(t.getAciklama())
                 .olusturanKullaniciId(t.getOlusturanKullaniciId())
+                .olusturanKullaniciAd(t.getOlusturanKullaniciId() != null
+                        ? kullaniciAdlari.get(t.getOlusturanKullaniciId()) : null)
+                .onaylayanKullaniciId(t.getOnaylayanKullaniciId())
+                .onaylayanKullaniciAd(t.getOnaylayanKullaniciId() != null
+                        ? kullaniciAdlari.get(t.getOnaylayanKullaniciId()) : null)
                 .olusturmaTarihi(t.getOlusturmaTarihi()).onayTarihi(t.getOnayTarihi())
+                .redTarihi(t.getRedTarihi()).redSebebi(t.getRedSebebi())
+                .yasSaat(yasSaat).slaDurumu(slaDurumu(t.getOlusturmaTarihi()))
                 .build();
     }
 }

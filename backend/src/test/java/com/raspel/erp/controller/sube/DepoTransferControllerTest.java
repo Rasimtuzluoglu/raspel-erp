@@ -15,6 +15,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -55,10 +57,34 @@ class DepoTransferControllerTest {
 
     @Test
     void onayla_donar() throws Exception {
-        when(depoTransferService.onayla(1L)).thenReturn(DepoTransferDTO.builder().id(1L).durum("ONAYLANDI").build());
+        when(depoTransferService.onayla(eq(1L), isNull()))
+                .thenReturn(DepoTransferDTO.builder().id(1L).durum("ONAYLANDI").build());
 
         mockMvc.perform(post("/api/depo-transferler/1/onayla"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.durum").value("ONAYLANDI"));
+    }
+
+    @Test
+    void sayfali_donar() throws Exception {
+        when(depoTransferService.sayfali(eq(1L), isNull(), isNull(), isNull(), isNull(), any()))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(
+                        DepoTransferDTO.builder().id(2L).durum("BEKLIYOR").build())));
+
+        mockMvc.perform(get("/api/depo-transferler/sayfali").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].durum").value("BEKLIYOR"));
+    }
+
+    @Test
+    void reddet_gerekceIleDonar() throws Exception {
+        when(depoTransferService.reddet(eq(1L), isNull(), eq("stok yok")))
+                .thenReturn(DepoTransferDTO.builder().id(1L).durum("REDDEDILDI").redSebebi("stok yok").build());
+
+        mockMvc.perform(post("/api/depo-transferler/1/reddet")
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content("{\"sebep\":\"stok yok\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.redSebebi").value("stok yok"));
     }
 }

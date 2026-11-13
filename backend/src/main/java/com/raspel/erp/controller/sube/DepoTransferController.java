@@ -8,10 +8,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "Depo Transferleri", description = "Depolar arası stok transfer onay akışı API")
 @RestController
@@ -36,6 +41,20 @@ public class DepoTransferController {
         return ResponseEntity.ok(depoTransferService.bekleyenler(sirketId));
     }
 
+    @GetMapping("/sayfali")
+    @Operation(summary = "Transferleri filtreli/sayfalı listele",
+            description = "Depo, durum ve tarih aralığı ile sayfalama")
+    public ResponseEntity<Page<DepoTransferDTO>> sayfali(
+            @RequestParam(required = false) Long depoId,
+            @RequestParam(required = false) String durum,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate baslangic,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate bitis,
+            @PageableDefault(size = 20) Pageable pageable,
+            HttpServletRequest request) {
+        Long sirketId = (Long) request.getAttribute("sirketId");
+        return ResponseEntity.ok(depoTransferService.sayfali(sirketId, depoId, durum, baslangic, bitis, pageable));
+    }
+
     @PostMapping
     @Operation(summary = "Transfer talebi oluştur", description = "Onay bekleyen depo transferi talebi oluşturur")
     public ResponseEntity<DepoTransferDTO> talepOlustur(@jakarta.validation.Valid @RequestBody DepoTransferDTO dto, HttpServletRequest request) {
@@ -47,14 +66,19 @@ public class DepoTransferController {
     @PostMapping("/{id}/onayla")
     @Operation(summary = "Transferi onayla", description = "Bekleyen depo transferini onaylar ve stok hareketini gerçekleştirir")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<DepoTransferDTO> onayla(@PathVariable Long id) {
-        return ResponseEntity.ok(depoTransferService.onayla(id));
+    public ResponseEntity<DepoTransferDTO> onayla(@PathVariable Long id, HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        return ResponseEntity.ok(depoTransferService.onayla(id, kullaniciId));
     }
 
     @PostMapping("/{id}/reddet")
-    @Operation(summary = "Transferi reddet", description = "Bekleyen depo transferini reddeder")
+    @Operation(summary = "Transferi reddet", description = "Bekleyen depo transferini gerekçeyle reddeder")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<DepoTransferDTO> reddet(@PathVariable Long id) {
-        return ResponseEntity.ok(depoTransferService.reddet(id));
+    public ResponseEntity<DepoTransferDTO> reddet(@PathVariable Long id,
+                                                  @RequestBody(required = false) Map<String, String> body,
+                                                  HttpServletRequest request) {
+        Long kullaniciId = (Long) request.getAttribute("kullaniciId");
+        String sebep = body != null ? body.get("sebep") : null;
+        return ResponseEntity.ok(depoTransferService.reddet(id, kullaniciId, sebep));
     }
 }

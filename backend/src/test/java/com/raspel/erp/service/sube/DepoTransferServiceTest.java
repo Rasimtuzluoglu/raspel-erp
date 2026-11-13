@@ -44,11 +44,15 @@ class DepoTransferServiceTest {
     @Mock
     private com.raspel.erp.config.TenantChecker tenantChecker;
 
+    @Mock
+    private com.raspel.erp.repository.sistem.KullaniciRepository kullaniciRepository;
+
     @InjectMocks
     private DepoTransferService depoTransferService;
 
     @BeforeEach
     void setUp() {
+        org.springframework.test.util.ReflectionTestUtils.setField(depoTransferService, "slaSaat", 24L);
         when(depoRepository.findById(anyLong())).thenReturn(Optional.empty());
         when(stokRepository.findById(anyLong())).thenReturn(Optional.empty());
     }
@@ -142,5 +146,65 @@ class DepoTransferServiceTest {
 
         assertEquals("REDDEDILDI", sonuc.getDurum());
         verify(depoService, never()).stokTransfer(anyLong(), anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void slaDurumu_kovalariDogruHesaplar() {
+        java.time.LocalDateTime simdi = java.time.LocalDateTime.now();
+        assertEquals("NORMAL", depoTransferService.slaDurumu(simdi.minusHours(2)));
+        assertEquals("YAKLASIYOR", depoTransferService.slaDurumu(simdi.minusHours(6)));
+        assertEquals("GECIKTI", depoTransferService.slaDurumu(simdi.minusHours(30)));
+        assertEquals("NORMAL", depoTransferService.slaDurumu(null));
+    }
+
+    @Test
+    void onayla_adminOlmayanKullaniciyiReddeder() {
+        DepoTransfer t = bekleyenTransfer();
+        when(transferRepository.findById(1L)).thenReturn(Optional.of(t));
+        when(kullaniciRepository.findById(9L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.sistem.Kullanici.builder().id(9L).role("USER").build()));
+
+        assertThrows(BusinessException.class, () -> depoTransferService.onayla(1L, 9L));
+        verify(depoService, never()).stokTransfer(anyLong(), anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void onayla_onaylayanKullaniciyiKaydeder() {
+        DepoTransfer t = bekleyenTransfer();
+        when(transferRepository.findById(1L)).thenReturn(Optional.of(t));
+        when(transferRepository.save(any(DepoTransfer.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(kullaniciRepository.findById(9L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.sistem.Kullanici.builder().id(9L).role("ADMIN").build()));
+
+        DepoTransferDTO sonuc = depoTransferService.onayla(1L, 9L);
+
+        assertEquals(9L, sonuc.getOnaylayanKullaniciId());
+        assertNotNull(sonuc.getOnayTarihi());
+    }
+
+    @Test
+    void reddet_kisaGerekceyiReddeder() {
+        DepoTransfer t = bekleyenTransfer();
+        when(transferRepository.findById(1L)).thenReturn(Optional.of(t));
+        when(kullaniciRepository.findById(9L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.sistem.Kullanici.builder().id(9L).role("ADMIN").build()));
+
+        assertThrows(BusinessException.class, () -> depoTransferService.reddet(1L, 9L, "ab"));
+    }
+
+    @Test
+    void reddet_gerekceVeDenetimBilgisiniKaydeder() {
+        DepoTransfer t = bekleyenTransfer();
+        when(transferRepository.findById(1L)).thenReturn(Optional.of(t));
+        when(transferRepository.save(any(DepoTransfer.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(kullaniciRepository.findById(9L)).thenReturn(Optional.of(
+                com.raspel.erp.entity.sistem.Kullanici.builder().id(9L).role("ADMIN").build()));
+
+        DepoTransferDTO sonuc = depoTransferService.reddet(1L, 9L, "Stok hasarlı");
+
+        assertEquals("REDDEDILDI", sonuc.getDurum());
+        assertEquals("Stok hasarlı", sonuc.getRedSebebi());
+        assertNotNull(sonuc.getRedTarihi());
+        assertEquals(9L, sonuc.getOnaylayanKullaniciId());
     }
 }
