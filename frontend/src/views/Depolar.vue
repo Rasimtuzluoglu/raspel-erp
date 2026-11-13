@@ -38,333 +38,78 @@
       </template>
     </PageHeader>
 
-    <div class="kpi-grid">
-      <KpiKart
-        :baslik="t('depolar.kpiToplamDepo')"
-        :deger="ozet.toplamDepo"
-        ikon="pi pi-warehouse"
-        :para-birimi="false"
-        renk="#3b82f6"
-      />
-      <KpiKart
-        :baslik="t('depolar.kpiAktifDepo')"
-        :deger="ozet.aktifDepo"
-        ikon="pi pi-check-circle"
-        :para-birimi="false"
-        renk="#10b981"
-      />
-      <KpiKart
-        :baslik="t('depolar.kpiStokKalemi')"
-        :deger="ozet.stokKalemiSayisi"
-        ikon="pi pi-box"
-        :para-birimi="false"
-        renk="#8b5cf6"
-      />
-      <KpiKart
-        :baslik="t('depolar.kpiSifirStok')"
-        :deger="ozet.sifirStokluKalem"
-        ikon="pi pi-exclamation-triangle"
-        :para-birimi="false"
-        renk="#ef4444"
-      />
-      <KpiKart
-        :baslik="t('depolar.kpiBekleyenTalep')"
-        :deger="ozet.bekleyenTalep"
-        ikon="pi pi-list"
-        :para-birimi="false"
-        renk="#f59e0b"
-      />
-    </div>
+    <DepoOzetKartlari
+      :ozet="ozet"
+      :geciken-talep="gecikenTalep"
+      @kpi-sec="kpiSec"
+    />
 
     <TabView v-model:active-index="aktifSekme">
       <TabPanel :header="t('depolar.depolar')">
-        <DataTable
-          v-if="gosterim === 'tablo'"
-          :value="list"
-          striped-rows
-          :loading="yukleniyor"
-        >
-          <template #empty>
-            <EmptyState
-              :message="t('depolar.empty')"
-              :sub-message="t('depolar.emptyHint')"
-              icon="pi pi-warehouse"
-              :action-label="t('depolar.yeniDepo')"
-              action-icon="pi pi-plus"
-              @action="dialogAc()"
-            />
-          </template>
-          <Column
-            field="ad"
-            :header="t('depolar.depoAdi')"
-            sortable
-          />
-          <Column
-            field="subeAdi"
-            :header="t('depolar.bagliSube')"
-          />
-          <Column
-            field="yetkili"
-            :header="t('depolar.sorumlu')"
-          />
-          <Column
-            field="aktif"
-            :header="t('common.status')"
-          >
-            <template #body="{ data }">
-              <Tag
-                :value="data.aktif ? t('status.active') : t('status.passive')"
-                :severity="data.aktif ? 'success' : 'danger'"
-              />
-            </template>
-          </Column>
-          <Column
-            :header="t('common.actions')"
-            style="width: 70px"
-          >
-            <template #body="{ data }">
-              <SatirEylemleri
-                :gorunur="{ duzenle: true, sil: authStore.isAdmin }"
-                :baslik="data.ad"
-                :items="depoMenuItems(data)"
-                @duzenle="dialogAc(data)"
-                @sil="sil(data)"
-              />
-            </template>
-          </Column>
-        </DataTable>
-
-        <div
-          v-else
-          class="depo-kartlar"
-        >
-          <EmptyState
-            v-if="!yukleniyor && list.length === 0"
-            :message="t('depolar.empty')"
-            :sub-message="t('depolar.emptyHint')"
-            icon="pi pi-warehouse"
-            :action-label="t('depolar.yeniDepo')"
-            action-icon="pi pi-plus"
-            @action="dialogAc()"
-          />
-          <div
-            v-for="d in list"
-            :key="d.id"
-            class="depo-kart"
-          >
-            <div class="depo-kart-ust">
-              <strong>{{ d.ad }}</strong>
-              <Tag
-                :value="d.aktif ? t('status.active') : t('status.passive')"
-                :severity="d.aktif ? 'success' : 'danger'"
-              />
-            </div>
-            <div class="depo-kart-satir">
-              <i class="pi pi-building" /> {{ d.subeAdi || '-' }}
-            </div>
-            <div class="depo-kart-satir">
-              <i class="pi pi-user" /> {{ d.yetkili || '-' }}
-            </div>
-            <div class="depo-kart-alt">
-              <Button
-                :label="t('depolar.stoklariGor')"
-                icon="pi pi-box"
-                size="small"
-                text
-                @click="stokGoruntule(d)"
-              />
-              <SatirEylemleri
-                :gorunur="{ duzenle: true, sil: authStore.isAdmin }"
-                :baslik="d.ad"
-                :items="depoMenuItems(d)"
-                @duzenle="dialogAc(d)"
-                @sil="sil(d)"
-              />
-            </div>
-          </div>
-        </div>
+        <DepoListePaneli
+          :subeler="subeListesi"
+          :admin-mi="authStore.isAdmin"
+          :gosterim="gosterim"
+          @gosterim-degistir="gosterimDegistir"
+          @yeni="dialogAc()"
+          @duzenle="dialogAc"
+          @sil="sil"
+          @detay="detayAc"
+          @stoklar="stokGoruntule"
+          @transfer="depodanTransfer"
+        />
       </TabPanel>
 
       <TabPanel
         :header="t('depolar.depoStoklari')"
         :disabled="!seciliDepo"
       >
-        <div
+        <DepoStokPaneli
           v-if="seciliDepo"
-          class="stok-islemleri"
-        >
-          <div class="depo-basligi">
-            <i class="pi pi-warehouse" />
-            <span>{{ seciliDepo.ad }}</span>
-            <Tag
-              v-if="seciliDepo.subeAdi"
-              :value="seciliDepo.subeAdi"
-              severity="secondary"
-            />
-          </div>
-          <div class="stok-ekle-form">
-            <h3>{{ t('depolar.stokEkleCikar') }}</h3>
-            <div class="form-row">
-              <Dropdown
-                v-model="stokForm.stokId"
-                :options="stokOnerileri"
-                option-label="ad"
-                option-value="id"
-                :placeholder="t('depolar.urunSec')"
-                class="w-full"
-                filter
-                @filter="stokAra"
-              />
-              <InputNumber
-                v-model="stokForm.miktar"
-                :placeholder="t('depolar.miktar')"
-                :min="0"
-              />
-              <Button
-                :label="t('depolar.ekle')"
-                icon="pi pi-plus"
-                class="p-button-success"
-                :loading="stokLoading"
-                :disabled="!stokForm.stokId"
-                @click="stokEkle"
-              />
-              <Button
-                :label="t('depolar.cikar')"
-                icon="pi pi-minus"
-                class="p-button-warning"
-                :loading="stokLoading"
-                :disabled="!stokForm.stokId"
-                @click="stokCikar"
-              />
-            </div>
-            <small
-              v-if="seciliStokMevcut"
-              class="mevcut-stok-bilgi"
-            >
-              <i class="pi pi-info-circle" />
-              {{ t('depolar.mevcutStok') }}: <strong>{{ formatMiktar(seciliStokMevcut.miktar) }}</strong>
-              {{ seciliStokMevcut.birim || '' }}
-            </small>
-          </div>
+          :depo="seciliDepo"
+          :islem-yapabilir="islemYapabilir(seciliDepo)"
+          @hareket-goster="hareketGoster"
+          @ozet-yenile="ozetYukle"
+        />
+        <EmptyState
+          v-else
+          icon="pi pi-warehouse"
+          :message="t('depolar.onceDepoSecin')"
+        />
+      </TabPanel>
 
-          <div class="stok-tablo-ust">
-            <span class="stok-ozet">
-              {{ depoStoklari.length }} {{ t('depolar.kalem') }} ·
-              {{ t('depolar.toplamMiktar') }}: {{ formatMiktar(depoStokToplam) }}
-            </span>
-            <span class="arama-kutu">
-              <i class="pi pi-search" />
-              <InputText
-                v-model="depoStokArama"
-                :placeholder="t('depolar.stokAra')"
-                class="arama-input"
-              />
-            </span>
-          </div>
+      <TabPanel :header="t('depolar.transferler')">
+        <DepoTransferPaneli
+          :depolar="list"
+          :admin-mi="authStore.isAdmin"
+          @yenile="ozetYukle"
+        />
+      </TabPanel>
 
-          <DataTable
-            :value="filtreliDepoStoklari"
-            striped-rows
-            size="small"
-          >
-            <template #empty>
-              <EmptyState
-                icon="pi pi-box"
-                :message="depoStokArama ? t('common.noData') : t('depolar.stokYok')"
-              />
-            </template>
-            <Column
-              field="stokKodu"
-              :header="t('depolar.stokKodu')"
-              sortable
-            />
-            <Column
-              field="stokAd"
-              :header="t('depolar.urunAdi')"
-              sortable
-            />
-            <Column
-              field="birim"
-              :header="t('depolar.birim')"
-            />
-            <Column
-              field="miktar"
-              :header="t('depolar.miktar')"
-              sortable
-            >
-              <template #body="{ data }">
-                <span :class="{ 'text-danger': Number(data.miktar) <= 0 }">{{ formatMiktar(data.miktar) }}</span>
-                <Tag
-                  v-if="Number(data.miktar) <= 0"
-                  :value="t('depolar.kpiSifirStok')"
-                  severity="danger"
-                  class="sifir-etiket"
-                />
-              </template>
-            </Column>
-          </DataTable>
-        </div>
+      <TabPanel
+        :header="t('depolar.hareketler')"
+        :disabled="!seciliDepo"
+      >
+        <DepoHareketPaneli
+          v-if="seciliDepo"
+          :depo="seciliDepo"
+        />
+        <EmptyState
+          v-else
+          icon="pi pi-history"
+          :message="t('depolar.onceDepoSecin')"
+        />
       </TabPanel>
     </TabView>
 
-    <Dialog
+    <DepoFormDialog
       v-model:visible="dialog"
-      :header="dialogHeader"
-      modal
-      :style="{ width: '90%', maxWidth: '520px' }"
-    >
-      <div class="form-grid">
-        <div class="field">
-          <label>{{ t('depolar.depoAdiZorunlu') }}</label><InputText
-            v-model="form.ad"
-            class="w-full"
-          />
-        </div>
-        <div class="field">
-          <label>{{ t('depolar.bagliSubeZorunlu') }}</label><Dropdown
-            v-model="form.subeId"
-            :options="subeListesi"
-            option-label="ad"
-            option-value="id"
-            :placeholder="t('depolar.subeSec')"
-            class="w-full"
-          />
-        </div>
-        <div class="field">
-          <label>{{ t('depolar.sorumlu') }}</label><InputText
-            v-model="form.yetkili"
-            class="w-full"
-          />
-        </div>
-        <div class="field">
-          <label>{{ t('depolar.adres') }}</label><Textarea
-            v-model="form.adres"
-            rows="2"
-            class="w-full"
-          />
-        </div>
-        <div
-          v-if="duzenleme"
-          class="field"
-        >
-          <label>{{ t('status.active') }}</label><InputSwitch v-model="form.aktif" />
-        </div>
-      </div>
-      <template #footer>
-        <Button
-          :label="t('common.cancel')"
-          icon="pi pi-times"
-          class="p-button-text"
-          @click="dialog = false"
-        />
-        <Button
-          :label="t('common.save')"
-          icon="pi pi-check"
-          :loading="kaydediliyor"
-          @click="kaydet"
-        />
-      </template>
-    </Dialog>
+      :depo="duzenlenenDepo"
+      :subeler="subeListesi"
+      :kullanicilar="kullanicilar"
+      :kaydediliyor="kaydediliyor"
+      @kaydet="kaydet"
+    />
 
     <Dialog
       v-model:visible="transferDialog"
@@ -638,36 +383,45 @@ import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useStokOnerileri } from '../composables/useStokOnerileri.js'
-import { depoAPI, subeAPI, depoTransferAPI } from '../api/index.js'
+import { depoAPI, subeAPI, depoTransferAPI, kullaniciAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/authStore.js'
+import { useDepoStore } from '../stores/depoStore.js'
+import { useDepoYetki } from '../composables/useDepoYetki.js'
 import EmptyState from '../components/EmptyState.vue'
-import KpiKart from '../components/KpiKart.vue'
 import DepoDetayDialog from '../components/DepoDetayDialog.vue'
+import DepoOzetKartlari from '../components/depo/DepoOzetKartlari.vue'
+import DepoListePaneli from '../components/depo/DepoListePaneli.vue'
+import DepoStokPaneli from '../components/depo/DepoStokPaneli.vue'
+import DepoTransferPaneli from '../components/depo/DepoTransferPaneli.vue'
+import DepoHareketPaneli from '../components/depo/DepoHareketPaneli.vue'
+import DepoFormDialog from '../components/depo/DepoFormDialog.vue'
 
 const { t } = useI18n()
 const toast = useToast()
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
 const authStore = useAuthStore()
+const depoStore = useDepoStore()
+const { islemYapabilir } = useDepoYetki()
 const list = ref([])
 const subeListesi = ref([])
+const kullanicilar = ref([])
+const gecikenTalep = ref(0)
+const duzenlenenDepo = ref(null)
 
 // Depo stok girişi ve transfer dropdown'ları sunucu aramalı. Önceden
 // parametresiz `stokAPI.getAll()` çağrılıyordu ve backend'in 50 kayıtlık
 // varsayılan tavanına takılıyordu: 50. stoktan sonrası hiçbir depoya
 // giriş/transfer yapılamıyordu, kullanıcı sessizce eksik listede kalıyordu.
 const { oneriler: stokOnerileri, ara: stokAra, hemenAra: stokOnerileriYukle } = useStokOnerileri()
-const depoStoklari = ref([])
 const seciliDepo = ref(null)
 const yukleniyor = ref(false)
 const kaydediliyor = ref(false)
-const stokLoading = ref(false)
 const transferLoading = ref(false)
 const dialog = ref(false)
 const duzenleme = ref(false)
 const transferDialog = ref(false)
 const form = ref({ ad: '', subeId: null, yetkili: '', adres: '', aktif: true })
-const stokForm = ref({ stokId: null, miktar: 0 })
 const transferForm = ref({ kaynakDepoId: null, hedefDepoId: null, stokId: null, miktar: 0 })
 
 // Sekme + gorunum tercihleri. "Stoklari gor" depo stoklari sekmesini acar.
@@ -682,11 +436,6 @@ const gosterimDegistir = () => {
 // Depo 360 detay modali.
 const detayDialog = ref(false)
 const secili360 = ref(null)
-
-const depoMenuItems = (d) => [
-  { etiket: t('depolar.detayGor'), ikon: 'pi pi-eye', grup: t('depolar.depo'), islem: () => detayAc(d) },
-  { etiket: t('depolar.stoklariGor'), ikon: 'pi pi-box', grup: t('depolar.depo'), islem: () => stokGoruntule(d) }
-]
 
 const detayAc = (d) => {
   secili360.value = d
@@ -711,21 +460,6 @@ const depodanTransfer = (d) => {
 }
 
 // --- Depo stoklari sekmesi: arama + ozet ---
-const depoStokArama = ref('')
-const filtreliDepoStoklari = computed(() => {
-  const q = depoStokArama.value.trim().toLowerCase()
-  if (!q) return depoStoklari.value
-  return depoStoklari.value.filter((s) =>
-    (s.stokAd || '').toLowerCase().includes(q) || (s.stokKodu || '').toLowerCase().includes(q)
-  )
-})
-const depoStokToplam = computed(() =>
-  depoStoklari.value.reduce((acc, s) => acc + (Number(s?.miktar) || 0), 0)
-)
-const seciliStokMevcut = computed(() =>
-  depoStoklari.value.find((s) => s.stokId === stokForm.value.stokId) || null
-)
-
 // --- Transfer: kaynak depo stoklari + sonrasi onizleme ---
 const kaynakStoklari = ref([])
 const kaynakDegisti = async () => {
@@ -828,8 +562,6 @@ const durumEtiket = (d) => {
 }
 const durumSeverity = (d) => (d === 'BEKLIYOR' ? 'warning' : d === 'ONAYLANDI' ? 'success' : 'danger')
 
-const dialogHeader = computed(() => (duzenleme.value ? t('depolar.depoDuzenle') : t('depolar.yeniDepo')))
-
 // KPI ozeti (depo/stok/talep sayilari).
 const ozet = ref({
   toplamDepo: 0,
@@ -847,6 +579,23 @@ const ozetYukle = async () => {
   } catch {
     /* ozet alinamazsa KPI'lar sifirda kalir; liste akisini engellemez */
   }
+  try {
+    const r = await depoTransferAPI.sayfali({ durum: 'BEKLIYOR', page: 0, size: 100 })
+    gecikenTalep.value = (r.data?.content || []).filter((t) => t.slaDurumu === 'GECIKTI').length
+  } catch {
+    gecikenTalep.value = 0
+  }
+}
+
+const kpiSec = ({ anahtar }) => {
+  if (anahtar === 'talep' || anahtar === 'geciken') aktifSekme.value = 2
+  else aktifSekme.value = 0
+}
+
+const hareketGoster = ({ stokId }) => {
+  if (!seciliDepo.value) return
+  void stokId
+  aktifSekme.value = 3
 }
 
 // Miktar (adet) bicimi: para birimi DEGIL. "1.250" / "1.250,5".
@@ -867,8 +616,15 @@ onMounted(async () => {
     const [depoRes, subeRes] = await Promise.all([depoAPI.getAll(), subeAPI.getAll()])
     list.value = unwrapList(depoRes)
     subeListesi.value = unwrapList(subeRes)
+    try {
+      const k = await kullaniciAPI.getAll({ size: 500 })
+      kullanicilar.value = unwrapList(k)
+    } catch {
+      kullanicilar.value = []
+    }
     // Dropdown ilk açılışta boş görünmesin diye ilk sayfa bir kez çekilir.
     stokOnerileriYukle()
+    await depoStore.yukle()
     ozetYukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('depolar.hataVeri'))
@@ -877,12 +633,14 @@ onMounted(async () => {
 })
 
 const dialogAc = (data) => {
+  duzenlenenDepo.value = data || null
   duzenleme.value = !!data
   form.value = data ? { ...data } : { ad: '', subeId: null, yetkili: '', adres: '', aktif: true }
   dialog.value = true
 }
 
-const kaydet = async () => {
+const kaydet = async (gelen) => {
+  if (gelen) form.value = { ...form.value, ...gelen }
   if (!form.value.ad || !form.value.ad.trim()) {
     toastBildirim.uyari(t('depolar.adZorunlu'))
     return
@@ -903,6 +661,7 @@ const kaydet = async () => {
     dialog.value = false
     const r = await depoAPI.getAll()
     list.value = unwrapList(r)
+    await depoStore.yukle()
     ozetYukle()
   } catch (err) {
     toastBildirim.hata(err?.response?.data?.message || t('depolar.islemBasarisiz'))
@@ -921,6 +680,7 @@ const sil = (data) => {
       try {
         await depoAPI.delete(data.id)
         list.value = list.value.filter((x) => x.id !== data.id)
+        await depoStore.yukle()
         toast.add({ severity: 'success', summary: t('depolar.silindi'), detail: t('depolar.depoSilindi'), life: 3000 })
         ozetYukle()
       } catch (err) {
@@ -930,47 +690,11 @@ const sil = (data) => {
   })
 }
 
-const stokGoruntule = async (depo) => {
+const stokGoruntule = (depo) => {
   seciliDepo.value = depo
   detayDialog.value = false
   // Depo secilince "Depo Stoklari" sekmesi otomatik acilir.
   aktifSekme.value = 1
-  try {
-    const r = await depoAPI.getStoklar(depo.id)
-    depoStoklari.value = r.data
-  } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || t('depolar.stoklarYuklenemedi'))
-  }
-}
-
-const stokEkle = async () => {
-  if (!stokForm.value.stokId || !stokForm.value.miktar) return
-  stokLoading.value = true
-  try {
-    await depoAPI.stokEkle(seciliDepo.value.id, { stokId: stokForm.value.stokId, miktar: stokForm.value.miktar })
-    const r = await depoAPI.getStoklar(seciliDepo.value.id)
-    depoStoklari.value = r.data
-    toastBildirim.basarili(t('depolar.stokEklendi'))
-  } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || t('depolar.stokEklemeBasarisiz'))
-  }
-  stokLoading.value = false
-  ozetYukle()
-}
-
-const stokCikar = async () => {
-  if (!stokForm.value.stokId || !stokForm.value.miktar) return
-  stokLoading.value = true
-  try {
-    await depoAPI.stokCikar(seciliDepo.value.id, { stokId: stokForm.value.stokId, miktar: stokForm.value.miktar })
-    const r = await depoAPI.getStoklar(seciliDepo.value.id)
-    depoStoklari.value = r.data
-    toastBildirim.basarili(t('depolar.stokCikarildi'))
-  } catch (err) {
-    toastBildirim.hata(err?.response?.data?.message || t('depolar.stokCikarmaBasarisiz'))
-  }
-  stokLoading.value = false
-  ozetYukle()
 }
 
 const transferYap = async () => {
@@ -1056,22 +780,10 @@ const talepReddet = async (t) => {
 .depolar-container :deep(.p-tabview-tab-header) {
   white-space: nowrap;
 }
-.kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
-  gap: 12px;
-  margin-bottom: 1rem;
-}
 .form-grid {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-.form-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
 }
 .field {
   display: flex;
@@ -1086,96 +798,8 @@ const talepReddet = async (t) => {
 .w-full {
   width: 100%;
 }
-.stok-islemleri {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.depo-basligi {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 15px;
-  font-weight: 600;
-}
-.depo-basligi i {
-  color: var(--accent);
-}
-.stok-ekle-form {
-  background: var(--bg-secondary);
-  padding: 16px;
-  border-radius: 8px;
-}
-.stok-ekle-form h3 {
-  margin: 0 0 12px;
-  font-size: 15px;
-}
 .text-danger {
   color: #f87171;
-}
-.depo-kartlar {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
-  gap: 12px;
-}
-.depo-kart {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 14px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 1rem;
-}
-.depo-kart-ust {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.depo-kart-ust strong {
-  font-size: 1rem;
-  color: var(--text-primary);
-  min-width: 0;
-}
-.depo-kart-satir {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.82rem;
-  color: var(--text-secondary);
-}
-.depo-kart-alt {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: auto;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-}
-.mevcut-stok-bilgi {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 10px;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-.mevcut-stok-bilgi strong {
-  color: var(--primary-color, var(--accent));
-}
-.stok-tablo-ust {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.stok-ozet {
-  font-size: 0.82rem;
-  color: var(--text-secondary);
-  font-weight: 600;
 }
 .arama-kutu {
   position: relative;
@@ -1194,9 +818,6 @@ const talepReddet = async (t) => {
 .arama-input {
   width: 100%;
   padding-left: 32px;
-}
-.sifir-etiket {
-  margin-left: 8px;
 }
 .transfer-etki {
   display: flex;
@@ -1234,20 +855,12 @@ const talepReddet = async (t) => {
 
 /* Mobil: form satirlari ve arac cubuklari alt alta. */
 @media (max-width: 640px) {
-  .form-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .stok-tablo-ust,
   .talep-arac {
     flex-direction: column;
     align-items: stretch;
   }
   .arama-kutu {
     min-width: 0;
-  }
-  .stok-ekle-form {
-    padding: 12px;
   }
 }
 </style>

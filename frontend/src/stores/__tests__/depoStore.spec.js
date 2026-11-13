@@ -4,7 +4,7 @@ import { setActivePinia, createPinia } from 'pinia'
 const sayfali = vi.fn()
 vi.mock('../../api/index.js', () => ({ depoAPI: { sayfali } }))
 
-const { useDepoStore } = await import('../depoStore.js')
+import { useDepoStore } from '../depoStore.js'
 
 describe('depoStore', () => {
   beforeEach(() => {
