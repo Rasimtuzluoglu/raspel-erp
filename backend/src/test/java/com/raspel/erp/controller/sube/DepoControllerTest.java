@@ -33,6 +33,7 @@ class DepoControllerTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
     @MockBean private DepoService depoService;
+    @MockBean private com.raspel.erp.service.sube.DepoExportService depoExportService;
 
     private DepoDTO ornek() {
         return DepoDTO.builder().id(1L).ad("Ana Depo").subeId(1L).aktif(true).build();
@@ -64,6 +65,33 @@ class DepoControllerTest {
                 .andExpect(status().isOk());
     }
 
+    @Test
+    void shouldExportCsv() throws Exception {
+        when(depoExportService.csv(anyString(), anyLong(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn("\uFEFF\"Depo\"\n\"Ana Depo\"".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        mockMvc.perform(get("/api/depolar/export").requestAttr("sirketId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition",
+                        "attachment; filename=\"depolar-liste.csv\""));
+    }
+
+    @Test
+    void shouldGetStokSayfali() throws Exception {
+        when(depoService.stokSayfali(eq(1L), isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        mockMvc.perform(get("/api/depolar/1/stoklar/sayfali"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray());
+    }
+
+    @Test
+    void shouldGetHareketler() throws Exception {
+        when(depoService.hareketler(eq(1L), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        mockMvc.perform(get("/api/depolar/1/hareketler"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray());
+    }
     @Test
     void shouldCreate() throws Exception {
         when(depoService.olustur(any(DepoDTO.class))).thenReturn(ornek());
