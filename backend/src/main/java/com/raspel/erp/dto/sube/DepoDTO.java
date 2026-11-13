@@ -21,4 +21,13 @@ public class DepoDTO {
     private Long sirketId;
     private Boolean aktif;
     private LocalDateTime olusturmaTarihi;
+    private Integer kapasiteKalem;
+    private Long sorumluKullaniciId;
+    private String sorumluKullaniciAd;
+    private Long kalemSayisi;
+    private Long sifirStokSayisi;
+    private Long kritikStokSayisi;
+    private java.math.BigDecimal stokDegeri;
+    private Integer dolulukYuzde;
+    private Boolean kritikMi;
 }

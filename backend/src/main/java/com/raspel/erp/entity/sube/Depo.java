@@ -28,6 +28,14 @@ public class Depo {
     @Column(name = "sube_id", nullable = false)
     private Long subeId;
 
+    /** SKU (kalem) kapasitesi; null ise doluluk hesaplanmaz. */
+    @Column(name = "kapasite_kalem")
+    private Integer kapasiteKalem;
+
+    /** Depo sorumlusu; null ise stok islem yetkisi ADMIN'dedir. */
+    @Column(name = "sorumlu_kullanici_id")
+    private Long sorumluKullaniciId;
+
     @Column(name = "sirket_id", nullable = false)
     private Long sirketId;
 

@@ -17,5 +17,9 @@ public class DepoStokDTO {
     private String stokKodu;
     private String birim;
     private BigDecimal miktar;
+    private BigDecimal minMiktar;
+    private BigDecimal ortalamaMaliyet;
+    private BigDecimal deger;
+    private Boolean kritikMi;
     private LocalDateTime olusturmaTarihi;
 }

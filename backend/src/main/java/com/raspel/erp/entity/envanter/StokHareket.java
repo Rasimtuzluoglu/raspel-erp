@@ -51,6 +51,10 @@ public class StokHareket {
     @Column(name = "kaynak_id")
     private Long kaynakId;
 
+    /** Islemi yapan kullanici (manuel depo islemi/transferde dolar). */
+    @Column(name = "kullanici_id")
+    private Long kullaniciId;
+
     /** Seri/lot kaydı (seri takibi yapılan ürünlerde). */
     @Column(name = "seri_id")
     private Long seriId;

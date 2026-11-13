@@ -48,6 +48,16 @@ public class DepoTransfer {
     @Column(name = "onay_tarihi")
     private LocalDateTime onayTarihi;
 
+    /** Transferi onaylayan veya reddeden ADMIN. */
+    @Column(name = "onaylayan_kullanici_id")
+    private Long onaylayanKullaniciId;
+
+    @Column(name = "red_tarihi")
+    private LocalDateTime redTarihi;
+
+    @Column(name = "red_sebebi", length = 500)
+    private String redSebebi;
+
     @PrePersist
     protected void onCreate() {
         if (olusturmaTarihi == null) olusturmaTarihi = LocalDateTime.now();

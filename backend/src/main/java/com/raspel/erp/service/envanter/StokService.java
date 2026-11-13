@@ -636,6 +636,7 @@ public class StokService {
                 .kaynakTip(dto.getKaynakTip() != null && !dto.getKaynakTip().isBlank()
                         ? dto.getKaynakTip() : "MANUEL")
                 .kaynakId(dto.getKaynakId())
+                .kullaniciId(dto.getKullaniciId())
                 .build();
 
         stokRepository.save(stok);
@@ -943,6 +944,7 @@ public class StokService {
                 .seriNo(seriNo)
                 .kaynakTip(h.getKaynakTip())
                 .kaynakId(h.getKaynakId())
+                .kullaniciId(h.getKullaniciId())
                 .agirlik(agirlik)
                 .olusturmaTarihi(h.getOlusturmaTarihi()).build();
     }

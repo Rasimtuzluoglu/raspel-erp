@@ -33,6 +33,7 @@ public class StokHareketDTO {
     private String cariHesapAd;
     private Long depoId;
     private String depoAd;
+    private Long kullaniciId;
     private String kaynakTip;
     private Long kaynakId;
     private Long seriId;

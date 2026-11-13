@@ -29,6 +29,13 @@ public class DepoTransferDTO {
     private String durum;
     private String aciklama;
     private Long olusturanKullaniciId;
+    private String olusturanKullaniciAd;
     private LocalDateTime olusturmaTarihi;
     private LocalDateTime onayTarihi;
+    private Long onaylayanKullaniciId;
+    private String onaylayanKullaniciAd;
+    private Long yasSaat;
+    private String slaDurumu;
+    private LocalDateTime redTarihi;
+    private String redSebebi;
 }
