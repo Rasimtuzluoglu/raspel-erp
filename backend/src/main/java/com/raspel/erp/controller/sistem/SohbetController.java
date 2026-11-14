@@ -25,6 +25,17 @@ public class SohbetController {
     private final SohbetService sohbetService;
     private final com.raspel.erp.service.sistem.AiService aiService;
 
+    /** SSE akisinin azami suresi (2 dk). */
+    private static final long SSE_TIMEOUT_MS = 120_000L;
+
+    /**
+     * Sinirli, paylasilan SSE havuzu (AsyncConfig). Test dilimlerinde bean
+     * bulunmayabilir; o durumda gorev cagiran thread'de calisir.
+     */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    @org.springframework.beans.factory.annotation.Qualifier("sohbetSseExecutor")
+    private java.util.concurrent.Executor sseExecutor;
+
     @GetMapping("/ai-dashboard-ozet")
     @Operation(summary = "Dashboard AI özeti",
             description = "Şirketin güncel verilerinden yapay zeka ile kısa bir yönetici özeti üretir (AI yapılandırılmış olmalıdır)")
@@ -126,32 +137,64 @@ public class SohbetController {
         Long sirketId = (Long) request.getAttribute("sirketId");
         Long kullaniciId = (Long) request.getAttribute("kullaniciId");
         com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        // Zaman asimi ve paylasilan havuz: her istek icin yeni thread acmak
+        // (Executors.newSingleThreadExecutor + 0L timeout) kimlik dogrulamis
+        // bir kullanicinin thread/memory tuketmesine (DoS) yol aciyordu.
         org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter =
-                new org.springframework.web.servlet.mvc.method.annotation.SseEmitter(0L);
-        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor();
-        executor.execute(() -> {
+                new org.springframework.web.servlet.mvc.method.annotation.SseEmitter(SSE_TIMEOUT_MS);
+        java.util.concurrent.atomic.AtomicBoolean kapandi = new java.util.concurrent.atomic.AtomicBoolean(false);
+        emitter.onCompletion(() -> kapandi.set(true));
+        emitter.onTimeout(() -> {
+            kapandi.set(true);
+            emitter.complete();
+        });
+        emitter.onError(e -> kapandi.set(true));
+        Runnable gorev = () -> {
             try {
                 sohbetService.aiSorgulaStream(soru, sirketId, kullaniciId, token -> {
+                    if (kapandi.get()) return;
                     try {
                         emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
                                 .name("token").data(objectMapper.writeValueAsString(token)));
                     } catch (Exception e) {
-                        log.warn("SSE token gönderilemedi: {}", e.getMessage());
+                        kapandi.set(true);
+                        log.debug("SSE token gönderilemedi (istemci ayrıldı): {}", e.getMessage());
                     }
                 });
-                emitter.complete();
             } catch (Exception e) {
                 log.error("AI akış sorgusu başarısız: {}", e.getMessage());
+                if (!kapandi.get()) {
+                    try {
+                        emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                                .name("error").data(objectMapper.writeValueAsString(
+                                        "AI yanıtı alınamadı: " + e.getMessage())));
+                    } catch (Exception ignored) {
+                    }
+                }
+            } finally {
+                kapandi.set(true);
                 try {
-                    emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
-                            .name("error").data(objectMapper.writeValueAsString("AI yanıtı alınamadı: " + e.getMessage())));
+                    emitter.complete();
                 } catch (Exception ignored) {
                 }
-                emitter.complete();
-            } finally {
-                executor.shutdown();
             }
-        });
+        };
+        try {
+            if (sseExecutor != null) {
+                sseExecutor.execute(gorev);
+            } else {
+                gorev.run();
+            }
+        } catch (java.util.concurrent.RejectedExecutionException e) {
+            log.warn("SSE havuzu dolu, istek reddedildi (kullaniciId={})", kullaniciId);
+            try {
+                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                        .name("error").data(objectMapper.writeValueAsString(
+                                "Şu anda çok fazla AI isteği var, lütfen biraz sonra tekrar deneyin.")));
+            } catch (Exception ignored) {
+            }
+            emitter.complete();
+        }
         return emitter;
     }
 }

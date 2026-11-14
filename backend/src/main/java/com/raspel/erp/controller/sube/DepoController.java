@@ -87,7 +87,8 @@ public class DepoController {
     }
 
     @PostMapping
-    @Operation(summary = "Yeni depo oluştur", description = "Yeni bir depo oluşturur")
+    @Operation(summary = "Yeni depo oluştur", description = "Yeni bir depo oluşturur (yalnızca ADMIN)")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<DepoDTO> olustur(@Valid @RequestBody DepoDTO dto, HttpServletRequest req) {
         Long sirketId = (Long) req.getAttribute("sirketId");
         dto.setSirketId(sirketId);
@@ -95,7 +96,8 @@ public class DepoController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Depo güncelle", description = "Depo bilgilerini günceller")
+    @Operation(summary = "Depo güncelle", description = "Depo bilgilerini günceller (yalnızca ADMIN)")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<DepoDTO> guncelle(@PathVariable Long id, @Valid @RequestBody DepoDTO dto) {
         return ResponseEntity.ok(depoService.guncelle(id, dto));
     }

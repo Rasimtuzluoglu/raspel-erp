@@ -86,7 +86,7 @@
           :message="t('depolar.empty')"
           :sub-message="t('depolar.emptyHint')"
           icon="pi pi-warehouse"
-          :action-label="t('depolar.yeniDepo')"
+          :action-label="adminMi ? t('depolar.yeniDepo') : ''"
           action-icon="pi pi-plus"
           @action="$emit('yeni')"
         />

@@ -23,6 +23,7 @@
           @click="talepDialogAc"
         />
         <Button
+          v-if="authStore.isAdmin"
           :label="t('depolar.yeniDepo')"
           icon="pi pi-plus"
           @click="dialogAc()"

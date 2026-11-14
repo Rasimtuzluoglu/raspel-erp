@@ -22,7 +22,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/audit-log")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+// Denetim kayıtları tüm kullanıcıların işlemlerini ve güvenlik olaylarını
+// (başarısız giriş vb.) içerir; okuma yalnız platform yöneticisine açıktır.
+// UI rotası da (`/denetim`) ADMIN'e kısıtlıdır.
+@PreAuthorize("hasRole('ADMIN')")
 public class AuditLogController {
 
     private final AuditLogService auditLogService;

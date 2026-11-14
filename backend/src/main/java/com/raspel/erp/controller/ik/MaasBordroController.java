@@ -20,7 +20,10 @@ import org.springframework.data.web.PageableDefault;
 @RestController
 @RequestMapping("/api/maas-bordro")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'USER', 'MUHASEBE')")
+// Bordro tüm çalışanların ücret verisini taşır: okuma/yazma yalnız ADMIN ve
+// MUHASEBE. Sınıf düzeyi kural USER'ı da kapsıyordu ve metot düzeyi koruma
+// olmayan POST/PUT uçlarıyla sıradan kullanıcı bordro oluşturabiliyordu.
+@PreAuthorize("hasAnyRole('ADMIN', 'MUHASEBE')")
 public class MaasBordroController {
 
     private final MaasBordroService maasBordroService;

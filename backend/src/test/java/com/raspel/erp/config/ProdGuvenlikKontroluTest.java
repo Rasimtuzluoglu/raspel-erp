@@ -25,6 +25,7 @@ class ProdGuvenlikKontroluTest {
         ReflectionTestUtils.setField(kontrol, "corsAllowedOrigins", "https://erp.raspel.com");
         ReflectionTestUtils.setField(kontrol, "frontendUrl", "https://erp.raspel.com");
         ReflectionTestUtils.setField(kontrol, "strictDomains", false);
+        ReflectionTestUtils.setField(kontrol, "httpsOnly", false);
         return kontrol;
     }
 
@@ -89,6 +90,16 @@ class ProdGuvenlikKontroluTest {
     void strictDomainsGercekAlanAdiKabulEdilir() {
         ProdGuvenlikKontrolu kontrol = olustur(true);
         ReflectionTestUtils.setField(kontrol, "strictDomains", true);
+        ReflectionTestUtils.setField(kontrol, "httpsOnly", true);
         assertDoesNotThrow(kontrol::kontrol);
+    }
+
+    @Test
+    void strictDomainsHttpsZorunludur() {
+        // HTTPS kapaliyken JWT cookie'si Secure olmadan HTTP uzerinden gonderilir.
+        ProdGuvenlikKontrolu kontrol = olustur(true);
+        ReflectionTestUtils.setField(kontrol, "strictDomains", true);
+        ReflectionTestUtils.setField(kontrol, "httpsOnly", false);
+        assertThrows(IllegalStateException.class, kontrol::kontrol);
     }
 }

@@ -10,6 +10,8 @@
 - [ ] `REDIS_PASSWORD` ortam degiskeni guclu bir degerle ayarlandi
 - [ ] `RABBITMQ_PASSWORD` ortam degiskeni guclu bir degerle ayarlandi
 - [ ] `GRAFANA_PASSWORD` ortam degiskeni guclu bir degerle ayarlandi
+- [ ] `APP_SECURITY_HTTPS_ONLY=true` (prod + `STRICT_DOMAINS=true` iken uygulama aksi halde BASLAMAZ: cookie `Secure` olmadan HTTP'ye duser)
+- [ ] `APP_SECURITY_STRICT_DOMAINS=true` (CORS/frontend URL'de localhost reddedilir)
 - [ ] `DASHBOARD_BASIC_AUTH` ortam degiskeni htpasswd hash'i ile ayarlandi
 - [ ] `DASHBOARD_MIDDLEWARES=dashboard-auth@file` ayarlandi (yoksa dashboard basicAuth KORUMASIZ kalir; port 8080 loopback'te oldugu icin disaridan acilmaz ama iceriden herkes erisebilir)
 - [ ] `app.cors.allowed-origins` gercek domain'i iceriyor

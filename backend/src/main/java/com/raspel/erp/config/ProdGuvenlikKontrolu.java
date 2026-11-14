@@ -68,6 +68,14 @@ public class ProdGuvenlikKontrolu {
     @Value("${app.security.strict-domains:false}")
     private boolean strictDomains;
 
+    /**
+     * Gercek alan adi/strict modda cerezlerin Secure olmasi ve HSTS'in aktif
+     * olmasi zorunludur. Yerel HTTP kurulumlari (localhost) bu bayragi acmadigi
+     * icin etkilenmez.
+     */
+    @Value("${app.security.https-only:false}")
+    private boolean httpsOnly;
+
     /** Repoda/varsayilanlarda bulunan zayif parolalar prod'da kabul edilmez. */
     private static final Set<String> ZAYIF_PAROLALAR = Set.of(
             "postgres", "raspel", "raspelredis2026", "raspel123", "password", "passw0rd",
@@ -151,6 +159,14 @@ public class ProdGuvenlikKontrolu {
                     && (frontendUrl.contains("localhost") || frontendUrl.contains("127.0.0.1"))) {
                 throw new IllegalStateException(
                         "prod profilinde APP_FRONTEND_URL gercek alan adi olmalidir (localhost kabul edilmez).");
+            }
+            // JWT cookie'si HttpOnly + SameSite=Strict; ancak HTTPS zorunlu
+            // degilse Secure bayragi kapali kalir ve oturum HTTP uzerinden
+            // tasinabilir. Gercek alan adinda bunu fail-fast ile engelle.
+            if (!httpsOnly) {
+                throw new IllegalStateException(
+                        "prod profilinde APP_SECURITY_HTTPS_ONLY=true olmalidir; aksi halde oturum cerezi "
+                                + "Secure olmadan HTTP uzerinden gonderilebilir.");
             }
         }
         log.info("Prod guvenlik kontrolu tamam: JWT_SECRET, AI_ENCRYPTION_KEY, depolama kredileri ve CORS dogrulandi.");
