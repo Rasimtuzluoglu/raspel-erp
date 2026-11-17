@@ -31,6 +31,14 @@ public interface NotRepository extends JpaRepository<Not, Long> {
     Page<Not> findBySirketIdAndKullaniciIdAndCariHesapIdIsNullOrderByOlusturmaTarihiDesc(
             Long sirketId, Long kullaniciId, Pageable pageable);
 
+    /** Saha "Bugün" özeti: kullanıcının bugün oluşturduğu not/ziyaret sayısı. */
+    long countBySirketIdAndKullaniciIdAndOlusturmaTarihiBetween(
+            Long sirketId, Long kullaniciId, java.time.LocalDateTime bas, java.time.LocalDateTime bit);
+
+    /** Saha "Bugün" özeti: kullanıcının son not/ziyaret zamanı. */
+    java.util.Optional<Not> findTop1BySirketIdAndKullaniciIdOrderByOlusturmaTarihiDesc(
+            Long sirketId, Long kullaniciId);
+
     long countByCariHesapId(Long cariHesapId);
     void deleteByCariHesapId(Long cariHesapId);
 }

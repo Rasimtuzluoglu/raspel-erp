@@ -65,6 +65,7 @@ public class RedisConfig implements org.springframework.cache.annotation.Caching
                 .cacheDefaults(defaultCacheConfig)
                 .withCacheConfiguration("dashboard", defaultCacheConfig.entryTtl(Duration.ofMinutes(2)))
                 .withCacheConfiguration("kokpit", defaultCacheConfig.entryTtl(Duration.ofSeconds(30)))
+                .withCacheConfiguration("sahaOzet", defaultCacheConfig.entryTtl(Duration.ofSeconds(60)))
                 .withCacheConfiguration("cariHesaplar", defaultCacheConfig.entryTtl(Duration.ofMinutes(10)))
                 .withCacheConfiguration("faturalar", defaultCacheConfig.entryTtl(Duration.ofMinutes(5)))
                 .withCacheConfiguration("stoklar", defaultCacheConfig.entryTtl(Duration.ofMinutes(10)))
@@ -106,6 +107,7 @@ public class RedisConfig implements org.springframework.cache.annotation.Caching
                 // Statik TTL'ler cacheManagerCustomizer ile ayni degerleri kullanir.
                 .withCacheConfiguration("dashboard", defaultCacheConfig.entryTtl(Duration.ofMinutes(2)))
                 .withCacheConfiguration("kokpit", defaultCacheConfig.entryTtl(Duration.ofSeconds(30)))
+                .withCacheConfiguration("sahaOzet", defaultCacheConfig.entryTtl(Duration.ofSeconds(60)))
                 .withCacheConfiguration("cariHesaplar", defaultCacheConfig.entryTtl(Duration.ofMinutes(10)))
                 .withCacheConfiguration("faturalar", defaultCacheConfig.entryTtl(Duration.ofMinutes(5)))
                 .withCacheConfiguration("stoklar", defaultCacheConfig.entryTtl(Duration.ofMinutes(10)))

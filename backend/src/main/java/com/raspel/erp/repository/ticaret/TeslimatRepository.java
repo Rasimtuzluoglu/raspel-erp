@@ -14,6 +14,14 @@ public interface TeslimatRepository extends JpaRepository<Teslimat, Long> {
     List<Teslimat> findBySirketIdAndDriverIdOrderByOlusturmaTarihiDesc(Long sirketId, Long driverId);
     List<Teslimat> findBySirketId(Long sirketId);
     long countBySirketIdAndDriverIdAndDurumIn(Long sirketId, Long driverId, List<String> durumlar);
+
+    long countBySirketIdAndDriverIdAndDurum(Long sirketId, Long driverId, String durum);
+
+    long countBySirketIdAndDriverIdAndTeslimTarihiBetweenAndDurum(
+            Long sirketId, Long driverId, java.time.LocalDateTime bas, java.time.LocalDateTime bit, String durum);
+
+    long countBySirketIdAndDriverIdAndBeklenenTeslimTarihiBeforeAndDurumNotIn(
+            Long sirketId, Long driverId, LocalDate tarih, java.util.Collection<String> durumlar);
     List<Teslimat> findByDurumInAndBeklenenTeslimTarihiBeforeAndGecikmeBildirildiFalse(List<String> durumlar, LocalDate tarih);
     List<Teslimat> findBySirketIdAndSiparisId(Long sirketId, Long siparisId);
 
