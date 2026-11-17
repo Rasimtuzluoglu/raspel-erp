@@ -2620,3 +2620,61 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ==========================================================================
+   Arama kutulari - tek gorsel dil
+   --------------------------------------------------------------------------
+   Bazi ekranlar buyuteci input'un uzerine absolute konumlandirip sol dolgu
+   veriyordu; PrimeVue `.p-inputtext` dolgusu bu kurali ezince ikon placeholder
+   metninin uzerine biniyordu (Denetim, Teslimatlar, Depolar talep...). Diger
+   ekranlar ise ikonu kutunun icinde ayri oge olarak kullaniyordu. Dordu de
+   artik ayni "pill" gorunumunde: ikon solda ayri oge, input cercevesiz,
+   metin ikonla cakismaz.
+   ========================================================================== */
+:where(.arama-kutu, .arac-arama, .tablo-arama, .surucu-arama) {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 10px);
+  background: var(--bg-card);
+}
+:where(.arama-kutu, .arac-arama, .tablo-arama, .surucu-arama):focus-within {
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+:where(.arama-kutu, .arac-arama, .tablo-arama, .surucu-arama) > i.pi-search {
+  position: static !important;
+  left: auto !important;
+  top: auto !important;
+  transform: none !important;
+  margin: 0 !important;
+  flex-shrink: 0;
+  color: var(--text-muted) !important;
+  font-size: 13px !important;
+  pointer-events: none;
+}
+:where(.arama-kutu, .arac-arama, .tablo-arama, .surucu-arama) .arama-input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding-left: 0 !important;
+}
+/* IconField (PrimeVue) icindeki arama ikonu: genel `.p-inputtext` kurali
+   `padding: 8px 12px !important` ile PrimeVue'nun hesapladigi sol dolguyu
+   eziyordu; ikon metnin uzerine biniyordu. Burada form field dolgusu (12px)
+   ve ikon boyutu (1rem) ile ayni hesap acikca yazilir. */
+.p-iconfield .p-inputtext {
+  padding-inline-start: 2.5rem !important;
+}
+.p-iconfield .p-inputicon {
+  color: var(--text-muted) !important;
+  font-size: 0.875rem !important;
+}
