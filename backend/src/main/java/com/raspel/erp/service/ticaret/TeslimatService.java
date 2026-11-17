@@ -619,6 +619,19 @@ public class TeslimatService {
                 .anyMatch(p -> k.getId().equals(p.getKullaniciId()));
     }
 
+    /** Teslim edilecek faturanın carisinden iletişim numarası (yoksa null). */
+    private String musteriTelefonu(Teslimat t) {
+        if (t.getFaturaId() == null) return null;
+        try {
+            return faturaRepository.findById(t.getFaturaId())
+                    .map(Fatura::getCariHesap)
+                    .map(com.raspel.erp.entity.finans.CariHesap::getTelefon)
+                    .orElse(null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private TeslimatDTO toDTO(Teslimat t, String driverAd) {
         boolean gecikti = t.getBeklenenTeslimTarihi() != null
                 && t.getBeklenenTeslimTarihi().isBefore(LocalDate.now())
@@ -636,6 +649,7 @@ public class TeslimatService {
                 .beklenenTeslimTarihi(t.getBeklenenTeslimTarihi())
                 .teslimatFoto(t.getTeslimatFoto())
                 .musteriAdi(t.getMusteriAdi())
+                .musteriTelefon(musteriTelefonu(t))
                 .durum(t.getDurum())
                 .notlar(t.getNotlar())
                 .olusturmaTarihi(t.getOlusturmaTarihi())

@@ -21,6 +21,8 @@ public class TeslimatDTO {
     private LocalDate beklenenTeslimTarihi;
     private String teslimatFoto;
     private String musteriAdi;
+    /** Fatura carisinden gelen iletişim numarası (saha navigasyon/arama için). */
+    private String musteriTelefon;
     private String durum;
     private String notlar;
     private LocalDateTime olusturmaTarihi;

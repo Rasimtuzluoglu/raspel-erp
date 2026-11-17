@@ -458,4 +458,42 @@ class TeslimatServiceTest {
 
         assertEquals("IPTAL", t.getDurum());
     }
+
+    @Test
+    void getir_musteriTelefonunuFaturaCarisindenDoldurur() {
+        Teslimat t = Teslimat.builder()
+                .id(5L).sirketId(1L).faturaId(10L).driverId(9L).durum("BEKLEMEDE")
+                .build();
+        when(teslimatRepository.findById(5L)).thenReturn(Optional.of(t));
+        com.raspel.erp.entity.finans.CariHesap cari = com.raspel.erp.entity.finans.CariHesap.builder()
+                .id(3L).telefon("0500 111 22 33").build();
+        when(faturaRepository.findById(10L)).thenReturn(Optional.of(
+                Fatura.builder().id(10L).cariHesap(cari).build()));
+        when(kullaniciRepository.findById(9L)).thenReturn(Optional.of(
+                Kullanici.builder().id(9L).role("DRIVER").build()));
+        when(kullaniciRepository.findById(99L)).thenReturn(Optional.of(
+                Kullanici.builder().id(99L).role("USER").build()));
+
+        TeslimatDTO dto = teslimatService.getir(5L, 1L, 99L);
+
+        assertEquals("0500 111 22 33", dto.getMusteriTelefon());
+    }
+
+    @Test
+    void getir_cariYoksaTelefonNull() {
+        Teslimat t = Teslimat.builder()
+                .id(6L).sirketId(1L).faturaId(11L).driverId(9L).durum("BEKLEMEDE")
+                .build();
+        when(teslimatRepository.findById(6L)).thenReturn(Optional.of(t));
+        when(faturaRepository.findById(11L)).thenReturn(Optional.of(
+                Fatura.builder().id(11L).build()));
+        when(kullaniciRepository.findById(9L)).thenReturn(Optional.of(
+                Kullanici.builder().id(9L).role("DRIVER").build()));
+        when(kullaniciRepository.findById(99L)).thenReturn(Optional.of(
+                Kullanici.builder().id(99L).role("USER").build()));
+
+        TeslimatDTO dto = teslimatService.getir(6L, 1L, 99L);
+
+        assertNull(dto.getMusteriTelefon());
+    }
 }
