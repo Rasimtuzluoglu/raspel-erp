@@ -16,14 +16,14 @@ describe('Faz3E — Saha Portalı', () => {
     expect(saha).toMatch(/@media \(max-width: 640px\)/)
     // Ortak stil dosyasinda tek kolona inen form satiri.
     expect(ortak).toMatch(/\.saha-satir-2\s*\{\s*grid-template-columns: 1fr/)
-    // PrimeVue v4 tablist sinifi: .p-tabview-tablist (eski .p-tabview-nav degil).
-    expect(saha).toMatch(/\.p-tabview-tablist/)
-    expect(saha).toMatch(/scrollable/)
+    // Sekmeler PrimeVue TabView yerine yatay kaydirmali segmented kontroldur.
+    expect(saha).toMatch(/class="saha-segmentler"/)
+    expect(saha).toMatch(/\.saha-segmentler[\s\S]*?overflow-x:\s*auto/)
   })
 
   it('çevrimdışı kuyruk bekleyen sayısı görünür + elle senkron', () => {
-    expect(saha).toMatch(/kuyrukBekliyor/)
-    expect(saha).toMatch(/const kuyrukSenkronizeEdiliyor/)
+    expect(saha).toMatch(/<SahaKuyrukCubugu/)
+    expect(saha).toMatch(/const kuyrukSenkronize/)
   })
 
   it('sipariş panelinde i18n boşlukları giderildi (ham metin yok)', () => {
