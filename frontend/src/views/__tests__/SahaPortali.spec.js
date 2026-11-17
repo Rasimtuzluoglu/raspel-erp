@@ -169,14 +169,22 @@ describe('SahaPortali', () => {
     await wrapper.get('[data-test="saha-sekme-talepler"]').trigger('click')
     await flushPromises()
 
-    expect(api.personelIzinAPI.getAll).toHaveBeenCalledTimes(1)
     expect(api.personelMasrafTalepAPI.getKullaniciTalepleri).toHaveBeenCalledTimes(1)
+    expect(api.personelIzinAPI.getAll).not.toHaveBeenCalled()
     expect(api.notAPI.getAll).not.toHaveBeenCalled()
+
+    await wrapper.get('[data-test="saha-talep-izin"]').trigger('click')
+    await flushPromises()
+
+    expect(api.personelIzinAPI.getAll).toHaveBeenCalledTimes(1)
 
     await wrapper.get('[data-test="saha-sekme-ziyaret"]').trigger('click')
     await flushPromises()
 
     expect(api.notAPI.getAll).toHaveBeenCalledTimes(1)
+    // Alt sekme tekrar açıldığında önbellekten döner (ek istek yok).
+    await wrapper.get('[data-test="saha-sekme-talepler"]').trigger('click')
+    await flushPromises()
     expect(api.personelIzinAPI.getAll).toHaveBeenCalledTimes(1)
   })
 
@@ -239,5 +247,139 @@ describe('SahaPortali', () => {
 
     expect(api.teslimatAPI.teslimEt).toHaveBeenCalledTimes(1)
     expect(wrapper.find('[data-test="saha-kuyruk-cubugu"]').exists()).toBe(false)
+  })
+
+  it('eski siparis kuyrugu teslimEtSiparis ile gonderilir', async () => {
+    localStorage.setItem('raspel_saha_kuyrugu', JSON.stringify([
+      {
+        tur: 'TESLIMAT',
+        siparisId: 7,
+        teslimAlanAd: 'Eski Müşteri',
+        teslimNotu: '',
+        imzaDataUrl: 'data:image/png;base64,ESKI'
+      }
+    ]))
+
+    wrapper = await kur()
+    await flushPromises()
+
+    expect(api.teslimatAPI.teslimEtSiparis).toHaveBeenCalledTimes(1)
+    expect(api.teslimatAPI.teslimEtSiparis.mock.calls[0][0]).toBe(7)
+    expect(api.teslimatAPI.teslimEt).not.toHaveBeenCalled()
+  })
+
+  it('talepler sekmesi tek istekle acilir, izinler alt sekmede yuklenir', async () => {
+    localStorage.setItem('raspel_saha_sekme', 'talepler')
+    wrapper = await kur()
+
+    expect(api.personelMasrafTalepAPI.getKullaniciTalepleri).toHaveBeenCalledTimes(1)
+    expect(api.personelIzinAPI.getAll).not.toHaveBeenCalled()
+
+    await wrapper.get('[data-test="saha-talep-izin"]').trigger('click')
+    await flushPromises()
+
+    expect(api.personelIzinAPI.getAll).toHaveBeenCalledTimes(1)
+  })
+
+  it('tahsilat sekmesi acilista yalniz kasa istegi yapar', async () => {
+    localStorage.setItem('raspel_saha_sekme', 'tahsilat')
+    wrapper = await kur()
+
+    expect(api.sahaAPI.ozet).toHaveBeenCalledTimes(1)
+    expect(api.kasaAPI.getAll).toHaveBeenCalledTimes(1)
+    expect(api.bankaAPI.getAll).not.toHaveBeenCalled()
+
+    const durum = wrapper.vm.$.setupState
+    durum.tahsilatForm.odemeYontemi = 'HAVALE'
+    await nextTick()
+    await flushPromises()
+
+    expect(api.bankaAPI.getAll).toHaveBeenCalledTimes(1)
+  })
+
+  it('tahsilat hata sonrasi ayni idempotency anahtarini kullanir', async () => {
+    api.tahsilatAPI.gir
+      .mockRejectedValueOnce(new Error('zaman asimi'))
+      .mockResolvedValueOnce({ data: {} })
+    wrapper = await kur()
+
+    const durum = wrapper.vm.$.setupState
+    durum.tahsilatForm.cariHesapId = 3
+    durum.tahsilatForm.tutar = 100
+    await durum.tahsilatKaydet()
+    await durum.tahsilatKaydet()
+
+    const birinciAnahtar = api.tahsilatAPI.gir.mock.calls[0][1]
+    const ikinciAnahtar = api.tahsilatAPI.gir.mock.calls[1][1]
+    expect(birinciAnahtar).toBeTruthy()
+    expect(ikinciAnahtar).toBe(birinciAnahtar)
+  })
+
+  it('gonderim hatasinda imza sheet acik kalir ve kuyruk secenegi sunar', async () => {
+    api.teslimatAPI.teslimEt.mockRejectedValueOnce({
+      response: { status: 500, data: { message: 'sunucu hatasi' } }
+    })
+    wrapper = await kur()
+
+    await imzaSheetAc(wrapper)
+    await wrapper.get('[data-test="saha-imza-gonder"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="saha-imza-sheet"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="saha-imza-kuyruk"]').exists()).toBe(true)
+  })
+
+  it('baska kullanicinin kuyruk kaydi gonderilmez', async () => {
+    localStorage.setItem('raspel_saha_kuyruk_depo', JSON.stringify([
+      {
+        id: 'yabanci-1',
+        clientKey: 'yabanci-key',
+        tur: 'TESLIMAT',
+        payload: { teslimatId: 5, teslimAlanAd: 'X' },
+        dosyalar: [],
+        durum: 'BEKLIYOR',
+        deneme: 0,
+        sonHata: null,
+        olusturma: '2026-11-17T08:00:00Z',
+        sirketId: 1,
+        kullaniciId: 999
+      }
+    ]))
+
+    wrapper = await kur()
+    await flushPromises()
+
+    expect(api.teslimatAPI.teslimEt).not.toHaveBeenCalled()
+    expect(wrapper.find('[data-test="saha-kuyruk-cubugu"]').text()).toContain('1')
+  })
+
+  it('masraf fisi yuklenemezse kayit kuyrukta kalir ve talep tekrarlanmaz', async () => {
+    api.personelMasrafTalepAPI.create.mockResolvedValue({ data: { id: 55 } })
+    api.belgeAPI.yukle.mockRejectedValueOnce(new Error('depolama hatasi'))
+    localStorage.setItem('raspel_saha_kuyruk_depo', JSON.stringify([
+      {
+        id: 'masraf-1',
+        clientKey: 'masraf-key',
+        tur: 'MASRAF',
+        payload: { tur: 'MASRAF', kategori: 'YAKIT', tutar: 100, aciklama: 'yakit' },
+        dosyalar: [{ ad: 'fis.jpg', mime: 'image/jpeg', dataUrl: 'data:image/jpeg;base64,FIS' }],
+        durum: 'BEKLIYOR',
+        deneme: 0,
+        sonHata: null,
+        olusturma: '2026-11-17T08:00:00Z',
+        sirketId: 1,
+        kullaniciId: 9
+      }
+    ]))
+
+    wrapper = await kur()
+    await flushPromises()
+
+    expect(api.personelMasrafTalepAPI.create).toHaveBeenCalledTimes(1)
+    expect(api.belgeAPI.yukle).toHaveBeenCalledTimes(1)
+    const depo = JSON.parse(localStorage.getItem('raspel_saha_kuyruk_depo') || '[]')
+    expect(depo).toHaveLength(1)
+    expect(depo[0].payload.olusanId).toBe(55)
+    expect(depo[0].deneme).toBe(1)
   })
 })

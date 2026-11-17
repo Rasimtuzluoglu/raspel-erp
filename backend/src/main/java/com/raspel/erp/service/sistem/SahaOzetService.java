@@ -4,6 +4,7 @@ import com.raspel.erp.dto.sistem.SahaOzetDTO;
 import com.raspel.erp.entity.sistem.Not;
 import com.raspel.erp.repository.ik.PersonelIzinRepository;
 import com.raspel.erp.repository.ik.PersonelMasrafTalepRepository;
+import com.raspel.erp.repository.ik.PersonelRepository;
 import com.raspel.erp.repository.sistem.NotRepository;
 import com.raspel.erp.repository.ticaret.TeslimatRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class SahaOzetService {
     private final NotRepository notRepository;
     private final PersonelIzinRepository personelIzinRepository;
     private final PersonelMasrafTalepRepository personelMasrafTalepRepository;
+    private final PersonelRepository personelRepository;
 
     @Cacheable(cacheNames = "sahaOzet", key = "#sirketId + ':' + #kullaniciId")
     @Transactional(readOnly = true)
@@ -56,8 +58,13 @@ public class SahaOzetService {
         Optional<Not> sonNot = notRepository
                 .findTop1BySirketIdAndKullaniciIdOrderByOlusturmaTarihiDesc(sirketId, kullaniciId);
 
-        long bekleyenIzin = personelIzinRepository.countByDurumAndSirketId("BEKLEMEDE", sirketId);
-        long bekleyenMasraf = personelMasrafTalepRepository.countBySirketIdAndDurum(sirketId, "BEKLEMEDE");
+        long bekleyenIzin = 0L;
+        Long personelId = personelIdBul(kullaniciId);
+        if (personelId != null) {
+            bekleyenIzin = personelIzinRepository.countByPersonelIdAndDurum(personelId, "BEKLEMEDE");
+        }
+        long bekleyenMasraf = personelMasrafTalepRepository
+                .countBySirketIdAndKullaniciIdAndDurum(sirketId, kullaniciId, "BEKLEMEDE");
 
         return SahaOzetDTO.builder()
                 .tarih(bugun)
@@ -78,8 +85,18 @@ public class SahaOzetService {
                 .build();
     }
 
-    private SahaOzetDTO bosOzet(LocalDate bugun) {
-        return SahaOzetDTO.builder()
+    /** Oturum kullanıcısının personel kaydı (yoksa null). Tenant dışına çıkmaz. */
+    private Long personelIdBul(Long kullaniciId) {
+        try {
+            return personelRepository.findByKullaniciId(kullaniciId)
+                    .map(com.raspel.erp.entity.ik.Personel::getId)
+                    .orElse(null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private SahaOzetDTO bosOzet(LocalDate bugun) {        return SahaOzetDTO.builder()
                 .tarih(bugun)
                 .teslimat(SahaOzetDTO.Teslimat.builder().build())
                 .ziyaret(SahaOzetDTO.Ziyaret.builder().build())

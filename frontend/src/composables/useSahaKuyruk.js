@@ -14,16 +14,43 @@ function yeniClientKey() {
   return `saha-${yeniId()}`
 }
 
-/** Eski localStorage kayıtlarını yeni şemaya çevirir (NOT → ZIYARET). */
+/** Eski localStorage kayıtlarını yeni şemaya çevirir (NOT → ZIYARET, imza → dosyalar). */
 function eskidenYeni(eski) {
   if (!eski || !eski.tur) return null
-  const { tur: eskiTur, clientKey, dosyalar, durum, deneme, sonHata, olusturma, id, payload, ...kalan } = eski
+  const {
+    tur: eskiTur,
+    clientKey,
+    dosyalar,
+    durum,
+    deneme,
+    sonHata,
+    olusturma,
+    id,
+    payload,
+    imzaDataUrl,
+    fotoDataUrl,
+    ...kalan
+  } = eski
+
+  const yeniPayload = payload && typeof payload === 'object' ? { ...payload } : { ...kalan }
+  const yeniDosyalar = Array.isArray(dosyalar) ? [...dosyalar] : []
+  const referans = yeniPayload.siparisId ?? yeniPayload.teslimatId ?? id ?? 'eski'
+
+  // Spec §5.4: eski imza/foto alanları `dosyalar` dizisine taşınır; imza
+  // kaybolursa teslim kanıtı olmadan gönderim yapılamaz.
+  if (imzaDataUrl) {
+    yeniDosyalar.push({ ad: `imza-${referans}.png`, mime: 'image/png', dataUrl: imzaDataUrl })
+  }
+  if (fotoDataUrl) {
+    yeniDosyalar.push({ ad: `teslim-${referans}.jpg`, mime: 'image/jpeg', dataUrl: fotoDataUrl })
+  }
+
   return {
     id: id || yeniId(),
     clientKey: clientKey || yeniClientKey(),
     tur: eskiTur === 'NOT' ? 'ZIYARET' : eskiTur,
-    payload: payload && typeof payload === 'object' ? payload : kalan,
-    dosyalar: Array.isArray(dosyalar) ? dosyalar : [],
+    payload: yeniPayload,
+    dosyalar: yeniDosyalar,
     durum: durum || DURUM.BEKLIYOR,
     deneme: deneme || 0,
     sonHata: sonHata || null,
@@ -39,8 +66,12 @@ function kaliciHata(hata) {
 
 function hataMesaji(hata) {
   const veri = hata?.response?.data
-  if (typeof veri === 'string' && veri.trim()) return veri.trim()
-  if (veri?.message) return String(veri.message)
+  if (veri && typeof veri === 'object' && veri.message) return String(veri.message)
+  // Düz metin gövde proxy/HTML sayfası olabilir; ham gövde kullanıcıya gösterilmez.
+  if (typeof veri === 'string') {
+    const temiz = veri.trim()
+    if (temiz && temiz.length <= 160 && !temiz.includes('<')) return temiz
+  }
   return hata?.message ? String(hata.message) : 'Gönderilemedi'
 }
 
@@ -97,16 +128,21 @@ export function useSahaKuyruk({ gondericiler = {}, depo = varsayilanDepo() } = {
       return
     }
     if (Array.isArray(eski)) {
+      let tasinamadi = 0
       for (const kayit of eski) {
         const donusen = eskidenYeni(kayit)
         if (!donusen) continue
         try {
           await depo.ekle(donusen)
         } catch {
+          tasinamadi += 1
           depolamaKisitli.value = true
           yedegeYaz(donusen)
         }
       }
+      // Taşınamayan kayıt varken eski anahtar silinmez: veri kaybı yerine
+      // bir sonraki açılışta yeniden denenir.
+      if (tasinamadi > 0) return
     }
     try {
       localStorage.removeItem(ESKI_ANAHTAR)
@@ -115,11 +151,49 @@ export function useSahaKuyruk({ gondericiler = {}, depo = varsayilanDepo() } = {
     }
   }
 
+  /** Depoya yazılamamış (kota/özel mod) kayıtları geri kazanır. */
+  async function yedektenKurtar() {
+    if (typeof localStorage === 'undefined') return
+    let yedek = []
+    try {
+      const ham = localStorage.getItem(YEDEK_ANAHTAR)
+      const veri = ham ? JSON.parse(ham) : []
+      yedek = Array.isArray(veri) ? veri : []
+    } catch {
+      yedek = []
+    }
+    if (!yedek.length) return
+
+    const kalanlar = []
+    for (const kayit of yedek) {
+      try {
+        await depo.ekle(kayit)
+      } catch {
+        kalanlar.push(kayit)
+      }
+    }
+    try {
+      if (kalanlar.length) {
+        localStorage.setItem(YEDEK_ANAHTAR, JSON.stringify(kalanlar))
+      } else {
+        localStorage.removeItem(YEDEK_ANAHTAR)
+      }
+    } catch {
+      // yedek anahtarı yazılamıyorsa kayıtlar yedekte kalır
+    }
+  }
+
   async function yukle() {
     yukleniyor.value = true
     try {
       await eskiKuyruguTasi()
-      kuyruk.value = await depo.liste()
+      await yedektenKurtar()
+      const liste = await depo.liste()
+      kuyruk.value = (liste || []).slice().sort((a, b) => {
+        const sol = String(a?.olusturma || '')
+        const sag = String(b?.olusturma || '')
+        return sol.localeCompare(sag)
+      })
     } catch (e) {
       sonHata.value = hataMesaji(e)
       kuyruk.value = []
@@ -139,7 +213,10 @@ export function useSahaKuyruk({ gondericiler = {}, depo = varsayilanDepo() } = {
       durum: DURUM.BEKLIYOR,
       deneme: 0,
       sonHata: null,
-      olusturma: kayit.olusturma || new Date().toISOString()
+      olusturma: kayit.olusturma || new Date().toISOString(),
+      // Kaydı oluşturan oturum: paylaşılan cihazda başka kullanıcı göndermesin.
+      sirketId: kayit.sirketId ?? null,
+      kullaniciId: kayit.kullaniciId ?? null
     }
     try {
       await depo.ekle(yeni)
@@ -175,7 +252,7 @@ export function useSahaKuyruk({ gondericiler = {}, depo = varsayilanDepo() } = {
         if (typeof gonderici !== 'function') continue
 
         try {
-          await gonderici(kayit)
+          await gonderici(kayit, { guncelle: (guncel) => depo.guncelle(guncel) })
           await kaldir(kayit.id)
           gonderilen += 1
         } catch (e) {

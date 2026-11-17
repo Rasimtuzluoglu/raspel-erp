@@ -59,6 +59,9 @@ public interface PersonelIzinRepository extends JpaRepository<PersonelIzin, Long
     @Query("SELECT COUNT(i) FROM PersonelIzin i JOIN Personel p ON i.personelId = p.id WHERE i.durum = :durum AND p.sirketId = :sirketId")
     long countByDurumAndSirketId(String durum, Long sirketId);
 
+    /** Saha özeti: yalnız oturum kullanıcısının personel kaydına ait bekleyen izinler. */
+    long countByPersonelIdAndDurum(Long personelId, String durum);
+
     @Query("SELECT COUNT(i) FROM PersonelIzin i JOIN Personel p ON i.personelId = p.id WHERE i.durum = 'ONAYLANDI' AND i.baslangic <= :bugun AND i.bitis >= :bugun AND p.sirketId = :sirketId")
     long countBugunIzinliAndSirketId(LocalDate bugun, Long sirketId);
 }

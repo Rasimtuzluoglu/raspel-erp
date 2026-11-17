@@ -10,6 +10,7 @@ const DB_ADI = 'raspel-saha'
 const DB_SURUM = 1
 const MAGAZA = 'kuyruk'
 const LS_ANAHTAR = 'raspel_saha_kuyruk_depo'
+const LS_YEDEK_ANAHTAR = 'raspel_saha_kuyrugu_yedek'
 
 function kopyala(kayit) {
   return kayit ? { ...kayit, payload: { ...(kayit.payload || {}) }, dosyalar: [...(kayit.dosyalar || [])] } : kayit
@@ -45,12 +46,32 @@ export function localStorageDeposu() {
       return []
     }
   }
+  const okuYedek = () => {
+    try {
+      const ham = localStorage.getItem(LS_YEDEK_ANAHTAR)
+      const veri = ham ? JSON.parse(ham) : []
+      return Array.isArray(veri) ? veri : []
+    } catch {
+      return []
+    }
+  }
   const yaz = (kayitlar) => {
     localStorage.setItem(LS_ANAHTAR, JSON.stringify(kayitlar))
   }
   return {
     async liste() {
-      return oku().map(kopyala)
+      const ana = oku()
+      const yedek = okuYedek()
+      if (!yedek.length) return ana.map(kopyala)
+      // Kota hatası nedeniyle yedeğe düşmüş kayıtları ana anahtara taşı.
+      const birlesik = [...ana, ...yedek.filter((y) => !ana.some((a) => a.id === y.id))]
+      try {
+        yaz(birlesik)
+        localStorage.removeItem(LS_YEDEK_ANAHTAR)
+      } catch {
+        // yer yoksa yedek anahtarı korunur; kayıt kaybolmaz
+      }
+      return birlesik.map(kopyala)
     },
     async ekle(kayit) {
       const kayitlar = oku()
@@ -115,11 +136,32 @@ export function indexedDbDeposu() {
         })
     )
 
-  return {
+  const idb = {
     liste: () => calistir('readonly', (m) => m.getAll()).then((k) => (k || []).map(kopyala)),
     ekle: (kayit) => calistir('readwrite', (m) => m.put(kopyala(kayit))),
     guncelle: (kayit) => calistir('readwrite', (m) => m.put(kopyala(kayit))),
     sil: (id) => calistir('readwrite', (m) => m.delete(id))
+  }
+
+  // IndexedDB çalışma anında bozulursa (özel mod, kota, bloklu) oturum
+  // ortasında localStorage'a düş: kayıt sessizce kaybolmasın.
+  let yerelDepo = null
+  const yedekDepo = () => (yerelDepo || (yerelDepo = localStorageDeposu()))
+
+  const sar = (ad) => async (...args) => {
+    if (yerelDepo) return yedekDepo()[ad](...args)
+    try {
+      return await idb[ad](...args)
+    } catch {
+      return yedekDepo()[ad](...args)
+    }
+  }
+
+  return {
+    liste: sar('liste'),
+    ekle: sar('ekle'),
+    guncelle: sar('guncelle'),
+    sil: sar('sil')
   }
 }
 

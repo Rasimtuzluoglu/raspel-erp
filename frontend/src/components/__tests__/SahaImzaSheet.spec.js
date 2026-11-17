@@ -97,6 +97,20 @@ describe('SahaImzaSheet', () => {
     expect(wrapper.emitted('gonder')).toBeUndefined()
   })
 
+  it('cevrimici iken de kuyruk secenegi sunulur (gonderim hatasi icin)', async () => {
+    const wrapper = kur()
+
+    const kuyrukDugmesi = wrapper.get('[data-test="saha-imza-kuyruk"]')
+    expect(kuyrukDugmesi.exists()).toBe(true)
+
+    await adGir(wrapper, 'Ali Veli')
+    await imzala(wrapper)
+    await kuyrukDugmesi.trigger('click')
+
+    expect(wrapper.emitted('kuyrukla')).toHaveLength(1)
+    expect(wrapper.emitted('gonder')).toBeUndefined()
+  })
+
   it('kapat dugmesi update:visible false yayar', async () => {
     const wrapper = kur()
 

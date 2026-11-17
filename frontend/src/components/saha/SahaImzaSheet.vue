@@ -147,9 +147,8 @@
         <span>{{ t('sahaPortali.gonder') }}</span>
       </button>
       <button
-        v-else
         type="button"
-        class="saha-imza-birincil"
+        :class="cevrimici ? 'saha-imza-ikincil' : 'saha-imza-birincil'"
         data-test="saha-imza-kuyruk"
         :disabled="gonderilemez"
         :aria-busy="kaydediliyor ? 'true' : 'false'"

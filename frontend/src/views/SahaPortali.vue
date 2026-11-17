@@ -318,97 +318,145 @@
       data-test="saha-sekme-icerik-talepler"
       role="tabpanel"
     >
-      <div class="saha-baslik-satir">
-        <h2><i class="pi pi-receipt saha-baslik-ikon" />{{ t('sahaPortali.masrafAvansTaleplerim') }}</h2>
-        <Button
-          :label="t('sahaPortali.yeniMasrafAvans')"
-          icon="pi pi-plus"
-          class="p-button-primary p-button-sm"
-          @click="yeniMasrafModal = true"
-        />
+      <div
+        class="saha-alt-segmentler"
+        role="tablist"
+      >
+        <button
+          type="button"
+          role="tab"
+          class="saha-alt-segment"
+          :class="{ 'saha-alt-segment--aktif': talepBolumu === 'masraf' }"
+          :aria-selected="talepBolumu === 'masraf'"
+          data-test="saha-talep-masraf"
+          @click="talepBolumuSec('masraf')"
+        >
+          <i
+            class="pi pi-receipt"
+            aria-hidden="true"
+          />
+          {{ t('sahaPortali.masraflar') }}
+          <span
+            v-if="bekleyenMasrafSayisi > 0"
+            class="tab-badge"
+          >{{ bekleyenMasrafSayisi }}</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="saha-alt-segment"
+          :class="{ 'saha-alt-segment--aktif': talepBolumu === 'izin' }"
+          :aria-selected="talepBolumu === 'izin'"
+          data-test="saha-talep-izin"
+          @click="talepBolumuSec('izin')"
+        >
+          <i
+            class="pi pi-calendar-plus"
+            aria-hidden="true"
+          />
+          {{ t('sahaPortali.izinler') }}
+          <span
+            v-if="bekleyenIzinSayisi > 0"
+            class="tab-badge"
+          >{{ bekleyenIzinSayisi }}</span>
+        </button>
       </div>
 
-      <div
-        v-if="masraflar && masraflar.length > 0"
-        class="expense-list"
-      >
+      <template v-if="talepBolumu === 'masraf'">
+        <div class="saha-baslik-satir">
+          <h2><i class="pi pi-receipt saha-baslik-ikon" />{{ t('sahaPortali.masrafAvansTaleplerim') }}</h2>
+          <Button
+            :label="t('sahaPortali.yeniMasrafAvans')"
+            icon="pi pi-plus"
+            class="p-button-primary p-button-sm"
+            @click="yeniMasrafModal = true"
+          />
+        </div>
+
         <div
-          v-for="m in masraflar"
-          :key="m.id"
-          class="expense-card"
+          v-if="masraflar && masraflar.length > 0"
+          class="expense-list"
         >
-          <div class="expense-left">
-            <div class="expense-ustsatir">
-              <span class="expense-type-badge">{{ m.tur === 'AVANS' ? t('sahaPortali.avansTalebi') : m.kategori }}</span>
-              <Tag
-                :value="m.durum"
-                :severity="talepDurumSeverity(m.durum)"
-                rounded
-              />
+          <div
+            v-for="m in masraflar"
+            :key="m.id"
+            class="expense-card"
+          >
+            <div class="expense-left">
+              <div class="expense-ustsatir">
+                <span class="expense-type-badge">{{ m.tur === 'AVANS' ? t('sahaPortali.avansTalebi') : m.kategori }}</span>
+                <Tag
+                  :value="m.durum"
+                  :severity="talepDurumSeverity(m.durum)"
+                  rounded
+                />
+              </div>
+              <p class="expense-desc">
+                {{ m.aciklama || '-' }}
+              </p>
+              <small class="expense-date">{{ formatTarih(m.tarih) }}</small>
             </div>
-            <p class="expense-desc">
-              {{ m.aciklama || '-' }}
-            </p>
-            <small class="expense-date">{{ formatTarih(m.tarih) }}</small>
-          </div>
-          <div class="expense-right">
-            <span class="expense-amount">{{ formatPara(m.tutar) }}</span>
+            <div class="expense-right">
+              <span class="expense-amount">{{ formatPara(m.tutar) }}</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <EmptyState
-        v-else
-        icon="pi pi-wallet"
-        :message="t('sahaPortali.masrafBos')"
-      />
-
-      <div class="saha-baslik-satir saha-baslik-satir--ikinci">
-        <h2><i class="pi pi-calendar-plus saha-baslik-ikon" />{{ t('sahaPortali.izinTaleplerim') }}</h2>
-        <Button
-          :label="t('sahaPortali.yeniIzinTalebi')"
-          icon="pi pi-plus"
-          class="p-button-primary p-button-sm"
-          @click="yeniIzinModal = true"
+        <EmptyState
+          v-else
+          icon="pi pi-wallet"
+          :message="t('sahaPortali.masrafBos')"
         />
-      </div>
+      </template>
 
-      <div
-        v-if="izinler && izinler.length > 0"
-        class="expense-list"
-      >
+      <template v-else>
+        <div class="saha-baslik-satir">
+          <h2><i class="pi pi-calendar-plus saha-baslik-ikon" />{{ t('sahaPortali.izinTaleplerim') }}</h2>
+          <Button
+            :label="t('sahaPortali.yeniIzinTalebi')"
+            icon="pi pi-plus"
+            class="p-button-primary p-button-sm"
+            @click="yeniIzinModal = true"
+          />
+        </div>
+
         <div
-          v-for="i in izinler"
-          :key="i.id"
-          class="expense-card"
+          v-if="izinler && izinler.length > 0"
+          class="expense-list"
         >
-          <div class="expense-left">
-            <div class="expense-ustsatir">
-              <strong class="izin-tur">{{ i.izinTuru }}</strong>
-              <Tag
-                :value="i.durum"
-                :severity="talepDurumSeverity(i.durum)"
-                rounded
-              />
+          <div
+            v-for="i in izinler"
+            :key="i.id"
+            class="expense-card"
+          >
+            <div class="expense-left">
+              <div class="expense-ustsatir">
+                <strong class="izin-tur">{{ i.izinTuru }}</strong>
+                <Tag
+                  :value="i.durum"
+                  :severity="talepDurumSeverity(i.durum)"
+                  rounded
+                />
+              </div>
+              <p class="expense-desc">
+                <i class="pi pi-calendar izin-takvim-ikon" />
+                {{ formatTarih(i.baslangic) }} → {{ formatTarih(i.bitis) }}
+                <span class="izin-gun">({{ i.gunSayisi }} {{ t('sahaPortali.gun') }})</span>
+              </p>
+              <small
+                v-if="i.aciklama"
+                class="expense-date"
+              >{{ i.aciklama }}</small>
             </div>
-            <p class="expense-desc">
-              <i class="pi pi-calendar izin-takvim-ikon" />
-              {{ formatTarih(i.baslangic) }} → {{ formatTarih(i.bitis) }}
-              <span class="izin-gun">({{ i.gunSayisi }} {{ t('sahaPortali.gun') }})</span>
-            </p>
-            <small
-              v-if="i.aciklama"
-              class="expense-date"
-            >{{ i.aciklama }}</small>
           </div>
         </div>
-      </div>
 
-      <EmptyState
-        v-else
-        icon="pi pi-calendar"
-        :message="t('sahaPortali.izinBos')"
-      />
+        <EmptyState
+          v-else
+          icon="pi pi-calendar"
+          :message="t('sahaPortali.izinBos')"
+        />
+      </template>
     </section>
 
     <!-- TAHSİLAT -->
@@ -906,6 +954,8 @@ const masraflar = ref([])
 const kasalar = ref([])
 const bankalar = ref([])
 const gorevSayisi = ref(0)
+const talepBolumu = ref('masraf')
+const izinlerYuklendi = ref(false)
 
 const siralamaIdleri = ref([])
 try {
@@ -926,10 +976,18 @@ const {
   gonderiliyor: kuyrukGonderiliyor,
   depolamaKisitli: kuyrukDepolamaKisitli,
   yukle: kuyrukYukle,
-  ekle: kuyrukEkle,
+  ekle: kuyrukEkleHam,
   kaldir: kuyrukKaldir,
   senkronize: kuyrukSenkronizeHam
 } = useSahaKuyruk({ gondericiler: kuyrukGondericileri() })
+
+/** Kuyruğa oturum damgası ekler: paylaşılan cihazda başka kullanıcı göndermesin. */
+const kuyrukEkle = (kayit) =>
+  kuyrukEkleHam({
+    ...kayit,
+    sirketId: authStore?.sirketId ?? null,
+    kullaniciId: kullaniciId.value ?? null
+  })
 
 // ---- Formlar ----
 const yeniSiparisModal = ref(false)
@@ -1090,40 +1148,72 @@ const ziyaretleriYukle = async () => {
   }
 }
 
-const talepleriYukle = async () => {
+const masraflariYukle = async () => {
   yukleniyor.value = true
   try {
-    const [izinRes, masrafRes] = await Promise.allSettled([
-      personelIzinAPI.getAll({ size: 100 }),
-      personelMasrafTalepAPI.getKullaniciTalepleri()
-    ])
-    if (izinRes.status === 'fulfilled') izinler.value = unwrapList(izinRes.value)
-    if (masrafRes.status === 'fulfilled') masraflar.value = unwrapList(masrafRes.value)
+    masraflar.value = unwrapList(await personelMasrafTalepAPI.getKullaniciTalepleri())
+  } catch {
+    masraflar.value = []
   } finally {
     yukleniyor.value = false
   }
 }
 
-const tahsilatVerileriniYukle = async () => {
+const izinleriYukle = async () => {
   yukleniyor.value = true
   try {
-    const [kasaRes, bankaRes] = await Promise.allSettled([
-      kasaAPI.getAll({ size: 200 }),
-      bankaAPI.getAll({ size: 200 })
-    ])
-    if (kasaRes.status === 'fulfilled') kasalar.value = unwrapList(kasaRes.value)
-    if (bankaRes.status === 'fulfilled') bankalar.value = unwrapList(bankaRes.value)
+    izinler.value = unwrapList(await personelIzinAPI.getAll({ size: 100 }))
+    izinlerYuklendi.value = true
+  } catch {
+    izinler.value = []
   } finally {
     yukleniyor.value = false
   }
 }
+
+const talepBolumuSec = async (bolum) => {
+  if (bolum !== 'masraf' && bolum !== 'izin') return
+  talepBolumu.value = bolum
+  if (bolum === 'izin' && !izinlerYuklendi.value) await izinleriYukle()
+}
+
+const tahsilatVerileriniYukle = async () => {
+  // Açılışta tek istek: varsayılan ödeme yöntemi NAKİT olduğu için yalnız kasalar.
+  yukleniyor.value = true
+  try {
+    kasalar.value = unwrapList(await kasaAPI.getAll({ size: 200 }))
+  } catch {
+    kasalar.value = []
+  } finally {
+    yukleniyor.value = false
+  }
+}
+
+const bankalarYuklendi = ref(false)
+const bankalariYukle = async () => {
+  if (bankalarYuklendi.value) return
+  try {
+    bankalar.value = unwrapList(await bankaAPI.getAll({ size: 200 }))
+    bankalarYuklendi.value = true
+  } catch {
+    bankalar.value = []
+  }
+}
+
+// Havale/kart seçilince banka seçenekleri tembel yüklenir (açılışta ek istek yok).
+watch(
+  () => tahsilatForm.value.odemeYontemi,
+  (yontem) => {
+    if (yontem && yontem !== 'NAKIT') bankalariYukle()
+  }
+)
 
 const sekmeYukle = async (sekme, { zorla = false } = {}) => {
   const son = sonYukleme.get(sekme) || 0
   if (!zorla && son && Date.now() - son < TAZELEME_MS) return
   if (sekme === 'teslimat') await teslimatlariYukle()
   else if (sekme === 'ziyaret') await ziyaretleriYukle()
-  else if (sekme === 'talepler') await talepleriYukle()
+  else if (sekme === 'talepler') await masraflariYukle()
   else if (sekme === 'tahsilat') await tahsilatVerileriniYukle()
   sonYukleme.set(sekme, Date.now())
 }
@@ -1164,39 +1254,106 @@ const siralaKarti = (id, yon) => {
 }
 
 // ---- Çevrimdışı kuyruk göndericileri ----
+const sahiplikHatasi = (mesaj) => ({
+  response: { status: 422, data: { message: mesaj } },
+  message: mesaj
+})
+
+/** Kayıt başka bir kullanıcı/şirket oturumunda oluşturulduysa gönderilmez. */
+function sahiplikKontrol(kayit) {
+  const sirket = authStore?.sirketId ?? null
+  const kullanici = kullaniciId.value ?? null
+  if (kayit.sirketId && sirket && String(kayit.sirketId) !== String(sirket)) {
+    throw sahiplikHatasi(t('sahaPortali.kuyrukBaskaKullanici'))
+  }
+  if (kayit.kullaniciId && kullanici && String(kayit.kullaniciId) !== String(kullanici)) {
+    throw sahiplikHatasi(t('sahaPortali.kuyrukBaskaKullanici'))
+  }
+}
+
 function kuyrukGondericileri() {
   return {
     TESLIMAT: async (kayit) => {
+      sahiplikKontrol(kayit)
       const imza = (kayit.dosyalar || []).find((d) => String(d.ad || '').startsWith('imza'))
       const foto = (kayit.dosyalar || []).find((d) => String(d.ad || '').startsWith('teslim'))
       const imzaDosyasi = imza?.dataUrl ? veriUrlesiDosyaya(imza.dataUrl, imza.ad || 'imza.png') : undefined
-      await teslimatAPI.teslimEt(
-        kayit.payload.teslimatId,
-        { teslimAlanAd: kayit.payload.teslimAlanAd, teslimNotu: kayit.payload.teslimNotu },
-        imzaDosyasi
-      )
-      if (foto?.dataUrl) {
+      const govde = {
+        teslimAlanAd: kayit.payload.teslimAlanAd,
+        teslimNotu: kayit.payload.teslimNotu
+      }
+      const teslimatId = kayit.payload.teslimatId
+      const siparisId = kayit.payload.siparisId
+      if (teslimatId) {
+        await teslimatAPI.teslimEt(teslimatId, govde, imzaDosyasi)
+        if (foto?.dataUrl) {
+          try {
+            await teslimatAPI.fotoYukle(
+              teslimatId,
+              veriUrlesiDosyaya(foto.dataUrl, foto.ad || 'teslim.jpg')
+            )
+          } catch {
+            // fotoğraf yüklenemedi; teslim kaydı yine de tamamlandı
+          }
+        }
+        return
+      }
+      // Eski (localStorage) kuyruk kayıtları sipariş üzerinden teslim edilir.
+      if (siparisId) {
+        await teslimatAPI.teslimEtSiparis(siparisId, govde, imzaDosyasi)
+        return
+      }
+      throw {
+        response: { status: 422, data: { message: t('sahaPortali.eksikBilgi') } },
+        message: t('sahaPortali.eksikBilgi')
+      }
+    },
+    ZIYARET: async (kayit) => {
+      sahiplikKontrol(kayit)
+      await notAPI.create(kayit.payload)
+      const foto = (kayit.dosyalar || [])[0]
+      if (foto?.dataUrl && kayit.payload.cariHesapId) {
         try {
-          await teslimatAPI.fotoYukle(kayit.payload.teslimatId, veriUrlesiDosyaya(foto.dataUrl, foto.ad || 'teslim.jpg'))
+          await belgeAPI.yukle(
+            'CariHesap',
+            kayit.payload.cariHesapId,
+            veriUrlesiDosyaya(foto.dataUrl, foto.ad || 'ziyaret.jpg')
+          )
         } catch {
-          // fotoğraf yüklenemedi; teslim kaydı yine de tamamlandı
+          // ziyaret kaydı oluştu; fotoğraf sonradan elle yüklenebilir
         }
       }
     },
-    ZIYARET: (kayit) => notAPI.create(kayit.payload),
-    MASRAF: async (kayit) => {
-      const olusan = await personelMasrafTalepAPI.create(kayit.payload)
+    MASRAF: async (kayit, yardimci) => {
+      sahiplikKontrol(kayit)
+      // Kısmi gönderim: talep bir kez oluşturulur; fiş yüklenemezse kayıt
+      // kuyrukta kalır ve yeniden denemede yalnız belge yüklenir.
+      let talepId = kayit.payload.olusanId
+      if (!talepId) {
+        const olusan = await personelMasrafTalepAPI.create(kayit.payload)
+        talepId = olusan?.data?.id
+        if (talepId) {
+          kayit.payload.olusanId = talepId
+          if (typeof yardimci?.guncelle === 'function') await yardimci.guncelle(kayit)
+        }
+      }
       const fis = (kayit.dosyalar || [])[0]
-      if (fis?.dataUrl && olusan?.data?.id) {
-        try {
-          await belgeAPI.yukle('MasrafTalep', olusan.data.id, veriUrlesiDosyaya(fis.dataUrl, fis.ad || 'fis.jpg'))
-        } catch {
-          // fiş yüklenemedi
-        }
+      if (fis?.dataUrl && talepId) {
+        await belgeAPI.yukle(
+          'MasrafTalep',
+          talepId,
+          veriUrlesiDosyaya(fis.dataUrl, fis.ad || 'fis.jpg')
+        )
       }
     },
-    IZIN: (kayit) => personelIzinAPI.create(kayit.payload),
-    TAHSILAT: (kayit) => tahsilatAPI.gir(kayit.payload, kayit.clientKey)
+    IZIN: (kayit) => {
+      sahiplikKontrol(kayit)
+      return personelIzinAPI.create(kayit.payload)
+    },
+    TAHSILAT: (kayit) => {
+      sahiplikKontrol(kayit)
+      return tahsilatAPI.gir(kayit.payload, kayit.clientKey)
+    }
   }
 }
 
@@ -1311,6 +1468,9 @@ const imzaKuyrukla = async (govde) => {
 const durumSecenekleri = ['BEKLEMEDE', 'YOLDA', 'IPTAL']
 
 const durumDialogAc = (teslimat) => {
+  // Teslim edilmiş kaydın durumu imzalı teslim akışıyla yönetilir; buradan
+  // yeniden gönderilirse sunucu geçersiz durum alır.
+  if (teslimat?.durum === 'TESLIM_EDILDI') return
   seciliTeslimat.value = teslimat
   seciliYeniDurum.value = teslimat?.durum || 'YOLDA'
   durumSecModal.value = true
@@ -1373,7 +1533,7 @@ const izinTalepGonder = async () => {
       toast.add({
         severity: 'info',
         summary: t('sahaPortali.cevrimdisi'),
-        detail: t('sahaPortali.cevrimdisiKaydedildi'),
+        detail: kuyrukBilgiDetayi(),
         life: 4000
       })
       return
@@ -1386,9 +1546,9 @@ const izinTalepGonder = async () => {
       life: 3000
     })
     yeniIzinModal.value = false
-    sonYukleme.delete('talepler')
-    await talepleriYukle()
-    sonYukleme.set('talepler', Date.now())
+    sonYukleme.delete('talepler-izin')
+    await izinleriYukle()
+    sonYukleme.set('talepler-izin', Date.now())
   } catch (err) {
     toast.add({
       severity: 'error',
@@ -1432,7 +1592,7 @@ const masrafTalepGonder = async () => {
       toast.add({
         severity: 'info',
         summary: t('sahaPortali.cevrimdisi'),
-        detail: t('sahaPortali.cevrimdisiKaydedildi'),
+        detail: kuyrukBilgiDetayi(),
         life: 4000
       })
       return
@@ -1454,7 +1614,7 @@ const masrafTalepGonder = async () => {
     })
     yeniMasrafModal.value = false
     sonYukleme.delete('talepler')
-    await talepleriYukle()
+    await masraflariYukle()
     sonYukleme.set('talepler', Date.now())
   } catch (err) {
     toast.add({
@@ -1553,7 +1713,9 @@ const ziyaretKaydet = async () => {
       toast.add({
         severity: 'info',
         summary: t('sahaPortali.cevrimdisi'),
-        detail: t('sahaPortali.cevrimdisiZiyaretKuyruk'),
+        detail: kuyrukDepolamaKisitli.value
+          ? t('sahaPortali.cevrimdisiKuyrukDolu')
+          : t('sahaPortali.cevrimdisiZiyaretKuyruk'),
         life: 4000
       })
       ziyaretForm.value.notlar = ''
@@ -1707,7 +1869,20 @@ const hizliSiparisKaydet = async () => {
   }
 }
 
-// ---- Tahsilat (yalnız çevrimiçi; idempotency anahtarıyla) ----
+// ---- Tahsilat (idempotency anahtarı form dolduğunda üretilir ve hata
+// durumunda korunur; ağ zaman aşımında ikinci kayıt oluşmaz) ----
+const tahsilatClientKey = ref(null)
+
+const anahtarUret = () =>
+  typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `saha-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+
+const kuyrukBilgiDetayi = () =>
+  kuyrukDepolamaKisitli.value
+    ? t('sahaPortali.cevrimdisiKuyrukDolu')
+    : t('sahaPortali.cevrimdisiKaydedildi')
+
 const tahsilatKaydet = async () => {
   if (!tahsilatForm.value.cariHesapId || !tahsilatForm.value.tutar || tahsilatForm.value.tutar <= 0) {
     toast.add({
@@ -1728,19 +1903,23 @@ const tahsilatKaydet = async () => {
     aciklama: tahsilatForm.value.aciklama || t('sahaPortali.sahaTahsilati'),
     hareketTarihi: getLocalDateString()
   }
+  if (!tahsilatClientKey.value) tahsilatClientKey.value = anahtarUret()
+  const anahtar = tahsilatClientKey.value
   try {
     if (!navigator.onLine) {
-      await kuyrukEkle({ tur: 'TAHSILAT', payload: govde })
+      await kuyrukEkle({ tur: 'TAHSILAT', payload: govde, clientKey: anahtar })
+      tahsilatClientKey.value = null
       tahsilatForm.value = { cariHesapId: null, tutar: null, odemeYontemi: 'NAKIT', kasaId: null, bankaId: null, aciklama: '' }
       toast.add({
         severity: 'info',
         summary: t('sahaPortali.cevrimdisi'),
-        detail: t('sahaPortali.cevrimdisiKaydedildi'),
+        detail: kuyrukBilgiDetayi(),
         life: 5000
       })
       return
     }
-    await tahsilatAPI.gir(govde)
+    await tahsilatAPI.gir(govde, anahtar)
+    tahsilatClientKey.value = null
     toast.add({
       severity: 'success',
       summary: t('sahaPortali.basarili'),
@@ -1750,11 +1929,12 @@ const tahsilatKaydet = async () => {
     tahsilatForm.value = { cariHesapId: null, tutar: null, odemeYontemi: 'NAKIT', kasaId: null, bankaId: null, aciklama: '' }
     await ozetYukle({ zorla: true })
   } catch (err) {
+    // Anahtar korunur: kullanıcı tekrar denerese aynı istek mükerrer yazılmaz.
     toast.add({
       severity: 'error',
       summary: t('sahaPortali.hata'),
       detail: err?.response?.data?.message || err.message,
-      life: 3000
+      life: 4000
     })
   } finally {
     tahsilatGonderiliyor.value = false
@@ -1979,6 +2159,39 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 12px;
   min-width: 0;
+}
+
+/* Talep alt sekmeleri (masraf/izin): her biri tek istekle yüklenir. */
+.saha-alt-segmentler {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+.saha-alt-segment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1 1 0;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  min-width: 0;
+}
+.saha-alt-segment--aktif {
+  border-color: var(--accent-border, var(--accent));
+  color: var(--accent);
+  background: var(--accent-soft, var(--bg-secondary));
+}
+.saha-alt-segment:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .saha-teslimat-liste {

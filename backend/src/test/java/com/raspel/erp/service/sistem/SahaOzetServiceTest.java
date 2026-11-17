@@ -1,8 +1,10 @@
 package com.raspel.erp.service.sistem;
 
+import com.raspel.erp.entity.ik.Personel;
 import com.raspel.erp.entity.sistem.Not;
 import com.raspel.erp.repository.ik.PersonelIzinRepository;
 import com.raspel.erp.repository.ik.PersonelMasrafTalepRepository;
+import com.raspel.erp.repository.ik.PersonelRepository;
 import com.raspel.erp.repository.sistem.NotRepository;
 import com.raspel.erp.repository.ticaret.TeslimatRepository;
 import org.junit.jupiter.api.Test;
@@ -28,6 +30,7 @@ class SahaOzetServiceTest {
     @Mock private NotRepository notRepository;
     @Mock private PersonelIzinRepository personelIzinRepository;
     @Mock private PersonelMasrafTalepRepository personelMasrafTalepRepository;
+    @Mock private PersonelRepository personelRepository;
     @InjectMocks private SahaOzetService service;
 
     private void surucuVerisiHazirla(Long sirketId, Long kullaniciId) {
@@ -50,8 +53,25 @@ class SahaOzetServiceTest {
                         .baslik("Ziyaret")
                         .olusturmaTarihi(LocalDateTime.now())
                         .build()));
-        when(personelIzinRepository.countByDurumAndSirketId("BEKLEMEDE", sirketId)).thenReturn(1L);
-        when(personelMasrafTalepRepository.countBySirketIdAndDurum(sirketId, "BEKLEMEDE")).thenReturn(2L);
+        when(personelRepository.findByKullaniciId(kullaniciId))
+                .thenReturn(Optional.of(Personel.builder().id(77L).sirketId(sirketId).build()));
+        when(personelIzinRepository.countByPersonelIdAndDurum(77L, "BEKLEMEDE")).thenReturn(1L);
+        when(personelMasrafTalepRepository.countBySirketIdAndKullaniciIdAndDurum(
+                sirketId, kullaniciId, "BEKLEMEDE")).thenReturn(2L);
+    }
+
+    @Test
+    void ozet_talepleriKullaniciyaGoreSayar() {
+        surucuVerisiHazirla(1L, 9L);
+
+        service.ozet(1L, 9L);
+
+        verify(personelMasrafTalepRepository)
+                .countBySirketIdAndKullaniciIdAndDurum(1L, 9L, "BEKLEMEDE");
+        verify(personelIzinRepository).countByPersonelIdAndDurum(77L, "BEKLEMEDE");
+        // Şirket geneli sayımlar kullanılmamalı: başka personelin talebi sızmasın.
+        verify(personelIzinRepository, never()).countByDurumAndSirketId(anyString(), anyLong());
+        verify(personelMasrafTalepRepository, never()).countBySirketIdAndDurum(anyLong(), anyString());
     }
 
     @Test
