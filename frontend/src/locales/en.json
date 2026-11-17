@@ -4273,6 +4273,15 @@
     "ipucu": "Use your finger or mouse to sign."
   },
   "sahaPortali": {
+    "bugun": "Today",
+    "bugunTeslimat": "Deliveries",
+    "bugunZiyaret": "Visits",
+    "bugunTalepler": "My Requests",
+    "bugunAktifTeslimat": "{n} active",
+    "bugunTeslimEdilen": "{n} delivered",
+    "bugunGeciken": "{n} overdue",
+    "bugunBekleyenIzin": "{n} leave",
+    "bugunBekleyenMasraf": "{n} expense",
     "aktifSahaSiparisleri": "Active Field Orders",
     "siparisKisa": "Order",
     "ara": "Call",

@@ -4273,6 +4273,15 @@
     "ipucu": "İmzalamak için parmağınızı veya fareyi kullanın."
   },
   "sahaPortali": {
+    "bugun": "Bugün",
+    "bugunTeslimat": "Teslimat",
+    "bugunZiyaret": "Ziyaret",
+    "bugunTalepler": "Taleplerim",
+    "bugunAktifTeslimat": "{n} aktif",
+    "bugunTeslimEdilen": "{n} teslim edildi",
+    "bugunGeciken": "{n} geciken",
+    "bugunBekleyenIzin": "{n} izin",
+    "bugunBekleyenMasraf": "{n} masraf",
     "aktifSahaSiparisleri": "Aktif Saha Siparişleri",
     "siparisKisa": "Sipariş",
     "ara": "Ara",
