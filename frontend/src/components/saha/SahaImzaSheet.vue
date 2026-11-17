@@ -60,6 +60,7 @@
       </div>
 
       <div class="saha-imza-foto">
+        <span class="saha-imza-etiket">{{ t('sahaPortali.imzaFotoOpsiyonel') }}</span>
         <input
           ref="fotoGirdi"
           type="file"
