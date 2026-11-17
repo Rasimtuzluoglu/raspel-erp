@@ -54,6 +54,10 @@ public class TahsilatController {
 
     private final com.raspel.erp.service.sistem.IdempotencyService idempotencyService;
 
+    /** Çevrimdışı kuyruktan gelebilecek tahsilat için idempotency penceresi (saat). */
+    @org.springframework.beans.factory.annotation.Value("${app.saha.tahsilat-idempotency-saat:24}")
+    private long sahaIdempotencySaat;
+
     @GetMapping
     @Operation(summary = "Tahsilat özeti", description = "Ödenmemiş alacakların cari bazlı yaşlandırma özetini getirir; q/aralik/sadeceGecikmis/minTutar filtreleri yalnız cari listesini daraltır")
     public ResponseEntity<TahsilatDTO> ozet(
@@ -159,7 +163,8 @@ public class TahsilatController {
         String anahtar = null;
         if (idempotencyKey != null && !idempotencyKey.isBlank()) {
             anahtar = "idem:tahsilat:" + (sirketId != null ? sirketId : 0L) + ":" + idempotencyKey.trim();
-            if (!idempotencyService.deneKilit(anahtar)) {
+            if (!idempotencyService.deneKilit(anahtar,
+                    java.time.Duration.ofHours(sahaIdempotencySaat))) {
                 // Aynı anahtarla ikinci istek: ya ilk istek hâlâ sürüyor ya da
                 // bu TTL içinde tamamlanmış. İkisinde de tekrar tahsilat YAPILMAZ.
                 throw new com.raspel.erp.exception.BusinessException(
@@ -179,7 +184,8 @@ public class TahsilatController {
             if (anahtar != null) {
                 Object hareketId = sonuc.get("hareketId");
                 if (hareketId instanceof Number n) {
-                    idempotencyService.tamamla(anahtar, n.longValue());
+                    idempotencyService.tamamla(anahtar, n.longValue(),
+                        java.time.Duration.ofHours(sahaIdempotencySaat));
                 } else {
                     // Sonuç okunabilir değilse kilidi hemen bırak: yeniden denemede
                     // yeni tahsilat yapılabilsin (sunucu tarafında zaten tutar

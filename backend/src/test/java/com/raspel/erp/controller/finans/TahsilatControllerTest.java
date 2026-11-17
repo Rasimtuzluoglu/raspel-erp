@@ -76,7 +76,7 @@ class TahsilatControllerTest {
      */
     @Test
     void tahsilatGir_ayniAnahtarlaIkinciIstekReddedilir() throws Exception {
-        when(idempotencyService.deneKilit("idem:tahsilat:0:k1")).thenReturn(false);
+        when(idempotencyService.deneKilit(eq("idem:tahsilat:0:k1"), any(java.time.Duration.class))).thenReturn(false);
 
         mockMvc.perform(post("/api/tahsilat")
                         .header("X-Idempotency-Key", "k1")
@@ -90,7 +90,7 @@ class TahsilatControllerTest {
 
     @Test
     void tahsilatGir_basariliKayittaKilitTamamlanir() throws Exception {
-        when(idempotencyService.deneKilit("idem:tahsilat:0:k2")).thenReturn(true);
+        when(idempotencyService.deneKilit(eq("idem:tahsilat:0:k2"), any(java.time.Duration.class))).thenReturn(true);
         when(tahsilatService.tahsilatGir(eq(1L), eq(new BigDecimal("500.00")), eq("NAKIT"),
                 eq(null), eq(null), eq(null), eq(null), eq(null),
                 eq(null), eq(null), eq(null), eq(null), eq(5L), eq(null), eq(null)))
@@ -102,12 +102,12 @@ class TahsilatControllerTest {
                         .content(GIRIS_JSON))
                 .andExpect(status().isCreated());
 
-        verify(idempotencyService).tamamla("idem:tahsilat:0:k2", 88L);
+        verify(idempotencyService).tamamla(eq("idem:tahsilat:0:k2"), eq(88L), any(java.time.Duration.class));
     }
 
     @Test
     void tahsilatGir_hataDurumundaKilitSerbestBirakilir() throws Exception {
-        when(idempotencyService.deneKilit("idem:tahsilat:0:k3")).thenReturn(true);
+        when(idempotencyService.deneKilit(eq("idem:tahsilat:0:k3"), any(java.time.Duration.class))).thenReturn(true);
         when(tahsilatService.tahsilatGir(eq(1L), eq(new BigDecimal("500.00")), eq("NAKIT"),
                 eq(null), eq(null), eq(null), eq(null), eq(null),
                 eq(null), eq(null), eq(null), eq(null), eq(5L), eq(null), eq(null)))

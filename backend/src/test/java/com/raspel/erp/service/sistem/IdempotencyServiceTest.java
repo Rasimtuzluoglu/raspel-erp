@@ -58,4 +58,28 @@ class IdempotencyServiceTest {
         assertTrue(service.deneKilit(anahtar));
         assertTrue(service.tamamlananSonuc(anahtar).isEmpty());
     }
+
+    @Test
+    void ttlAsimindaKilitYenidenAlinabilir() {
+        String anahtar = "idem:ttl:1";
+        assertTrue(service.deneKilit(anahtar, java.time.Duration.ZERO));
+        assertTrue(service.deneKilit(anahtar, java.time.Duration.ZERO));
+    }
+
+    @Test
+    void ttlIcindeIkinciKilitAlinamaz() {
+        String anahtar = "idem:ttl:2";
+        assertTrue(service.deneKilit(anahtar, java.time.Duration.ofMinutes(1)));
+        assertFalse(service.deneKilit(anahtar, java.time.Duration.ofMinutes(1)));
+    }
+
+    @Test
+    void ttlIleTamamlananSonucDoner() {
+        String anahtar = "idem:ttl:3";
+        assertTrue(service.deneKilit(anahtar, java.time.Duration.ofHours(24)));
+        service.tamamla(anahtar, 7L, java.time.Duration.ofHours(24));
+
+        assertEquals(7L, service.tamamlananSonuc(anahtar).orElseThrow());
+        assertFalse(service.deneKilit(anahtar, java.time.Duration.ofHours(24)));
+    }
 }

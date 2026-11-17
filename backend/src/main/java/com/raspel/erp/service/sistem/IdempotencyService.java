@@ -32,18 +32,35 @@ public class IdempotencyService {
 
     /** Anahtarı bu istek için rezerve eder. false ise başka bir istek işliyor/tamamladı. */
     public boolean deneKilit(String anahtar) {
+        return deneKilit(anahtar, VARSAYILAN_TTL);
+    }
+
+    /**
+     * Belirtilen TTL ile rezerve eder. Cevrimdisi kuyruk gibi saatler sonra
+     * tekrar gonderilebilen para hareketleri icin uzun TTL kullanilir.
+     */
+    public boolean deneKilit(String anahtar, Duration ttl) {
+        Duration sure = ttl == null || ttl.isNegative() ? VARSAYILAN_TTL : ttl;
         StringRedisTemplate redis = redisVarsa();
         if (redis != null) {
             try {
-                Boolean alindi = redis.opsForValue().setIfAbsent(anahtar, ISLENIYOR, VARSAYILAN_TTL);
+                Boolean alindi = redis.opsForValue().setIfAbsent(anahtar, ISLENIYOR, sure);
                 return Boolean.TRUE.equals(alindi);
             } catch (Exception e) {
-                log.warn("Idempotency Redis kilidi alınamadı, yerel kilide geçiliyor: {}", e.getMessage());
+                log.warn("Idempotency Redis kilidi alinamadi, yerel kilide geciliyor: {}", e.getMessage());
             }
         }
-        long sonKullanma = System.currentTimeMillis() + VARSAYILAN_TTL.toMillis();
+        long sonKullanma = System.currentTimeMillis() + sure.toMillis();
         yerelTemizle();
-        return yerel.putIfAbsent(anahtar, new YerelKayit(ISLENIYOR, sonKullanma)) == null;
+        final boolean[] alindi = {false};
+        yerel.compute(anahtar, (k, mevcut) -> {
+            if (mevcut == null || mevcut.suresiDoldu()) {
+                alindi[0] = true;
+                return new YerelKayit(ISLENIYOR, sonKullanma);
+            }
+            return mevcut;
+        });
+        return alindi[0];
     }
 
     /** İşlem tamamlandıysa oluşan kaydın ID'sini döner. */
@@ -64,18 +81,24 @@ public class IdempotencyService {
 
     /** İşlemi başarıyla tamamlandı olarak işaretler. */
     public void tamamla(String anahtar, Long kayitId) {
+        tamamla(anahtar, kayitId, VARSAYILAN_TTL);
+    }
+
+    /** Tamamlanan işlemi belirtilen TTL ile işaretler (çevrimdışı kuyruk için uzun TTL). */
+    public void tamamla(String anahtar, Long kayitId, Duration ttl) {
+        Duration sure = ttl == null || ttl.isNegative() ? VARSAYILAN_TTL : ttl;
         String deger = TAMAM + kayitId;
         StringRedisTemplate redis = redisVarsa();
         if (redis != null) {
             try {
-                redis.opsForValue().set(anahtar, deger, VARSAYILAN_TTL);
+                redis.opsForValue().set(anahtar, deger, sure);
                 yerel.remove(anahtar);
                 return;
             } catch (Exception e) {
                 log.warn("Idempotency Redis yazılamadı, yerel kayda yazılıyor: {}", e.getMessage());
             }
         }
-        yerel.put(anahtar, new YerelKayit(deger, System.currentTimeMillis() + VARSAYILAN_TTL.toMillis()));
+        yerel.put(anahtar, new YerelKayit(deger, System.currentTimeMillis() + sure.toMillis()));
     }
 
     /** İşlem başarısız olduysa rezervasyonu serbest bırakır (sonraki deneme çalışsın). */
@@ -116,7 +139,7 @@ public class IdempotencyService {
 
     private record YerelKayit(String deger, long sonKullanma) {
         boolean suresiDoldu() {
-            return System.currentTimeMillis() > sonKullanma;
+            return System.currentTimeMillis() >= sonKullanma;
         }
     }
 }
