@@ -35,8 +35,8 @@ export const useKokpitStore = defineStore('kokpit', () => {
   const akisYukleniyor = ref(false)
   const akisHata = ref(null)
 
-  const akisYukle = async (limit = 8) => {
-    const adet = Math.max(1, Math.min(Number(limit) || 8, 50))
+  const akisYukle = async (limit = 20) => {
+    const adet = Math.max(1, Math.min(Number(limit) || 20, 50))
     akisYukleniyor.value = true
     akisHata.value = null
     try {
@@ -50,6 +50,29 @@ export const useKokpitStore = defineStore('kokpit', () => {
       return []
     } finally {
       akisYukleniyor.value = false
+    }
+  }
+
+  // Bekleyen işler: `/api/dashboard/gorevler` (izin, masraf, satın alma,
+  // sipariş, vadesi geçen, kritik stok, bekleyen teslimat).
+  const gorevler = ref([])
+  const gorevlerYukleniyor = ref(false)
+  const gorevlerHata = ref(null)
+
+  const gorevlerYukle = async () => {
+    gorevlerYukleniyor.value = true
+    gorevlerHata.value = null
+    try {
+      const response = await dashboardAPI.gorevler()
+      gorevler.value = Array.isArray(response.data) ? response.data : []
+      return gorevler.value
+    } catch (err) {
+      gorevlerHata.value = hataMesaji(err)
+      gorevler.value = []
+      console.error('Bekleyen gorevler yuklenemedi:', err)
+      return []
+    } finally {
+      gorevlerYukleniyor.value = false
     }
   }
 
@@ -172,6 +195,10 @@ export const useKokpitStore = defineStore('kokpit', () => {
     akisYukleniyor,
     akisHata,
     akisYukle,
+    gorevler,
+    gorevlerYukleniyor,
+    gorevlerHata,
+    gorevlerYukle,
     getKokpit,
     donemDegistir,
     paraBirimiDegistir,

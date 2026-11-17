@@ -136,12 +136,31 @@ const apiMockla = () => {
     body: { duzen: null }
   }).as('tercihler')
 
-  const akisVerisi = [
-    { tur: 'TAHSILAT', baslik: 'Tahsilat: Müşteri A', aciklama: 'FTR-1', tutar: 1500, tarih: new Date().toISOString(), route: '/faturalar', ikon: 'pi pi-wallet', renk: '#10b981' },
-    { tur: 'FATURA', baslik: 'Fatura kesildi: FTR-2', aciklama: 'Müşteri B', tutar: 2400, tarih: new Date().toISOString(), route: '/faturalar', ikon: 'pi pi-file', renk: '#3b82f6' },
-    { tur: 'ODEME', baslik: 'Ödeme: Tedarikçi A', aciklama: null, tutar: 900, tarih: new Date(Date.now() - 3 * 3600000).toISOString(), route: '/faturalar', ikon: 'pi pi-credit-card', renk: '#f59e0b' }
-  ]
+  const akisVerisi = Array.from({ length: 12 }, (_, i) => {
+    const turler = ['TAHSILAT', 'FATURA', 'ODEME', 'SIPARIS']
+    const tur = turler[i % turler.length]
+    return {
+      tur,
+      baslik: `${tur} kaydı ${i + 1}`,
+      aciklama: i % 3 === 0 ? 'Açıklama' : null,
+      tutar: 1000 + i * 100,
+      tarih: new Date(Date.now() - i * 600000).toISOString(),
+      route: '/faturalar',
+      ikon: 'pi pi-file',
+      renk: '#3b82f6'
+    }
+  })
   cy.intercept('GET', '**/api/dashboard/akis*', { statusCode: 200, body: akisVerisi }).as('akis')
+
+  cy.intercept('GET', '**/api/dashboard/gorevler*', {
+    statusCode: 200,
+    body: [
+      { tur: 'ONAY_IZIN', baslik: 'İzin Onayı', adet: 2, tutar: null, oncelik: 90, route: '/onaylar?tur=IZIN', ikon: 'pi pi-calendar', renk: '#3b82f6' },
+      { tur: 'ONAY_MASRAF', baslik: 'Masraf Onayı', adet: 1, tutar: 2500, oncelik: 85, route: '/onaylar?tur=MASRAF', ikon: 'pi pi-wallet', renk: '#f59e0b' },
+      { tur: 'VADESI_GECEN', baslik: 'Vadesi Geçen', adet: 3, tutar: 15000, oncelik: 95, route: '/tahsilat', ikon: 'pi pi-exclamation-triangle', renk: '#ef4444' },
+      { tur: 'KRITIK_STOK', baslik: 'Kritik Stok', adet: 5, tutar: null, oncelik: 82, route: '/stoklar?kritik=1', ikon: 'pi pi-box', renk: '#8b5cf6' }
+    ]
+  }).as('gorevler')
 
   cy.intercept('PUT', '**/api/dashboard/tercihler*', (req) => {
     req.reply({ statusCode: 200, body: { duzen: req.body?.duzen || null } })
@@ -168,6 +187,7 @@ const anasayfaAc = () => {
   cy.url().should('not.include', '/giris')
   cy.wait('@kokpit', { timeout: 20000 })
   cy.wait('@akis', { timeout: 20000 })
+  cy.wait('@gorevler', { timeout: 20000 })
   cy.get('[data-test="finans-ozet-bandi"]', { timeout: 20000 }).should('be.visible')
 }
 
@@ -192,9 +212,12 @@ describe('Anasayfa finans kokpiti', () => {
     // İlk ekran öncelikleri: hızlı işlemler, son işlemler, bekleyen işler.
     cy.get('[data-test="kokpit-hizli-islemler"]').should('be.visible')
     cy.get('[data-test="kokpit-akis"]').should('be.visible')
-    cy.contains('[data-test="kokpit-akis"]', 'Tahsilat: Müşteri A').should('be.visible')
+    cy.contains('[data-test="kokpit-akis"]', 'TAHSILAT kaydı 1').should('be.visible')
+    cy.get('[data-test="kokpit-akis"] [data-test^="akis-oge-"]').should('have.length', 8)
+    cy.get('[data-test="akis-tumunu-gor"]').should('contain', '12')
     cy.get('[data-test="kokpit-bekleyen-isler"]').should('be.visible')
-    cy.get('[data-test="bekleyen-oge-vadesiGecen"]').should('be.visible')
+    cy.get('[data-test="bekleyen-oge-ONAY_IZIN"]').should('be.visible')
+    cy.get('[data-test="bekleyen-oge-VADESI_GECEN"]').should('be.visible')
 
     cy.get('[data-test="kokpit-bolum-nakit"]').should('be.visible')
     cy.get('[data-test="kokpit-bolum-alacakVerecek"]').should('be.visible')
@@ -211,6 +234,41 @@ describe('Anasayfa finans kokpiti', () => {
 
     cy.get('[data-test="akis-oge-0"]').click()
     cy.url().should('include', '/faturalar')
+  })
+
+  it('kokpit-akis: tumunu gor/ac ve tur filtresi', () => {
+    cy.viewport(1440, 900)
+    anasayfaAc()
+
+    cy.get('[data-test="akis-tumunu-gor"]').click()
+    cy.get('[data-test="kokpit-akis"] [data-test^="akis-oge-"]').should('have.length', 12)
+    cy.get('[data-test="akis-tumunu-gor"]').click()
+    cy.get('[data-test="kokpit-akis"] [data-test^="akis-oge-"]').should('have.length', 8)
+
+    cy.get('[data-test="akis-filtre-FATURA"]').click()
+    cy.get('[data-test="kokpit-akis"] [data-test^="akis-oge-"]').should('have.length', 3)
+    cy.get('[data-test="kokpit-akis"]').should('contain', 'FATURA kaydı')
+  })
+
+  it('kokpit-bekleyen: gorev satiri sorguyla yonlendirir', () => {
+    cy.viewport(1440, 900)
+    anasayfaAc()
+
+    cy.get('[data-test="bekleyen-oge-ONAY_IZIN"]').click()
+    cy.url().should('include', '/onaylar')
+    cy.url().should('include', 'tur=IZIN')
+  })
+
+  it('kokpit-yogunluk: kompakt/ferah gecisi kalici', () => {
+    cy.viewport(1440, 900)
+    anasayfaAc()
+
+    cy.get('[data-test="dashboard-kokpit"]').should('have.class', 'kokpit-sayfa--kompakt')
+    cy.get('[data-test="kokpit-yogunluk"]').click()
+    cy.get('[data-test="dashboard-kokpit"]').should('have.class', 'kokpit-sayfa--ferah')
+    cy.window().then((win) => {
+      expect(win.localStorage.getItem('raspel_dashboard_yogunluk')).to.eq('ferah')
+    })
   })
 
   it('kokpit-takvim: varsayilan kapali, acilinca takvim gorunur', () => {
@@ -283,7 +341,7 @@ describe('Anasayfa finans kokpiti', () => {
     cy.get('[data-test="kokpit-onay-katman"]').should('not.exist')
   })
 
-  it('kokpit-390px: yatay taşma yok, bölümler tek kolon', () => {
+  it('kokpit-390px: yatay tasma yok, mobil sikistirma uygulanir', () => {
     cy.viewport(390, 844)
     anasayfaAc()
 
@@ -292,7 +350,15 @@ describe('Anasayfa finans kokpiti', () => {
       const kolonlar = window.getComputedStyle($grid[0]).gridTemplateColumns.split(' ').filter(Boolean)
       expect(kolonlar.length).to.eq(1)
     })
-    cy.get('[data-test="vadesi-gecen-tablo"] tbody tr').first().should('be.visible')
+    // Mobil: akış 5 kayıt, bekleyen işler 3 kayıt + "tümünü gör".
+    cy.get('[data-test="kokpit-akis"] [data-test^="akis-oge-"]').should('have.length', 5)
+    cy.get('[data-test="kokpit-bekleyen-isler"] [data-test^="bekleyen-oge-"]').should('have.length', 3)
+    cy.get('[data-test="bekleyen-tumunu-gor"]').should('be.visible')
+    // Hızlı işlemler mobilde 2 kolon.
+    cy.get('[data-test="kokpit-hizli-islemler"] .hizli-liste').should(($liste) => {
+      const kolonlar = window.getComputedStyle($liste[0]).gridTemplateColumns.split(' ').filter(Boolean)
+      expect(kolonlar.length).to.eq(2)
+    })
     yatayTasmaYok()
   })
 

@@ -1,16 +1,19 @@
 <template>
   <div
     class="kokpit-sayfa"
+    :class="`kokpit-sayfa--${yogunluk}`"
     data-test="dashboard-kokpit"
   >
     <KokpitGlobalFiltre
       :donem="kokpitStore.donem"
       :para-birimi="kokpitStore.paraBirimi"
       :canli="canliGosterge"
+      :yogunluk="yogunluk"
       :son-guncelleme="kokpitStore.sonGuncelleme"
       :yukleniyor="kokpitStore.yukleniyor"
       @update:donem="donemDegistir"
       @update:para-birimi="paraBirimiDegistir"
+      @update:yogunluk="yogunlukDegistir"
       @canli-degistir="canliDegistir"
       @yenile="yenile"
       @excel="excelIndir"
@@ -90,7 +93,7 @@
         :yukleniyor="ilkYukleme"
         :para-birimi="kokpitStore.paraBirimi"
         :onay-gorebilir="onayGorebilir"
-        @oge-sec="kritikOgeSec"
+        @oge-sec="gorevSec"
         @onaylar="onayDialogAcik = true"
       />
     </div>
@@ -233,6 +236,21 @@ const hizliTahsilatTur = ref('TAHSILAT')
 const hizliTahsilatCariId = ref(null)
 const onayDialogAcik = ref(false)
 
+// Görünüm yoğunluğu: kompakt (varsayılan) / ferah; tercih kalıcı.
+const YOGUNLUK_ANAHTAR = 'raspel_dashboard_yogunluk'
+const YOGUNLUKLAR = ['kompakt', 'ferah']
+const yogunluk = ref('kompakt')
+
+const yogunlukDegistir = (deger) => {
+  if (!YOGUNLUKLAR.includes(deger)) return
+  yogunluk.value = deger
+  try {
+    localStorage.setItem(YOGUNLUK_ANAHTAR, deger)
+  } catch {
+    /* depolama kapalıysa oturum boyunca bellekte kalır */
+  }
+}
+
 // Alt bölgeler (içgörüler + nakit takvimi) görünür olunca mount edilir:
 // ilk boyamada DOM ve grafik maliyeti oluşmaz.
 const altBolge = ref(null)
@@ -265,12 +283,38 @@ const bekleyenOnaySayisi = computed(() => {
   return Number(oge?.adet) || 0
 })
 
-// Bekleyen işler kartı: yalnız eylem gerektiren kalemler (likidite trendi hariç).
-const bekleyenIsler = computed(() =>
-  (gosterilenKokpit.value?.kritikDurum || []).filter((oge) =>
-    ['bekleyenOnay', 'vadesiGecen', 'kritikStok'].includes(oge.anahtar)
-  )
-)
+// Bekleyen işler kartı: `/api/dashboard/gorevler` (izin, masraf, satın alma,
+// sipariş, vadesi geçen, kritik stok, bekleyen teslimat). Uç alınamazsa kokpitteki
+// kritik durum kalemlerine düşer; sayfa boş kalmaz.
+const gorevSeviyesi = (oncelik) => {
+  const sayi = Number(oncelik) || 0
+  if (sayi >= 90) return 'KRITIK'
+  if (sayi >= 82) return 'WARN'
+  return 'BILGI'
+}
+
+const bekleyenIsler = computed(() => {
+  const birim = kokpitStore.paraBirimi
+  const gorevler = Array.isArray(kokpitStore.gorevler) ? kokpitStore.gorevler : []
+  if (gorevler.length > 0) {
+    return gorevler
+      .filter((gorev) => Number(gorev.adet) > 0 || Number(gorev.tutar) > 0)
+      .slice(0, 6)
+      .map((gorev) => ({
+        anahtar: gorev.tur,
+        etiket: gorev.baslik,
+        adet: gorev.adet,
+        tutar: gorev.tutar !== null && gorev.tutar !== undefined && birim !== 'TRY'
+          ? dovizStore.convert(Number(gorev.tutar), 'TRY', birim)
+          : gorev.tutar,
+        seviye: gorevSeviyesi(gorev.oncelik),
+        route: gorev.route
+      }))
+  }
+  return (gosterilenKokpit.value?.kritikDurum || [])
+    .filter((oge) => ['bekleyenOnay', 'vadesiGecen', 'kritikStok'].includes(oge.anahtar))
+    .map((oge) => ({ ...oge, route: oge.hedef?.route || null }))
+})
 
 // Akış tutarları seçili para birimine çevrilir (kokpitteki dönüşümle aynı kur).
 const gosterilenAkis = computed(() => {
@@ -465,7 +509,8 @@ const canliTazele = () => {
     canliZamanlayici = null
     if (canli.aktif.value) {
       kokpitStore.getKokpit()
-      kokpitStore.akisYukle(8)
+      kokpitStore.akisYukle(20)
+      kokpitStore.gorevlerYukle()
     }
   }, CANLI_YENILEME_GECIKME_MS)
 }
@@ -530,14 +575,41 @@ const yenile = async () => {
     clearTimeout(canliZamanlayici)
     canliZamanlayici = null
   }
-  await Promise.all([kokpitStore.getKokpit(), kokpitStore.akisYukle(8)])
+  await Promise.all([
+    kokpitStore.getKokpit(),
+    kokpitStore.akisYukle(20),
+    kokpitStore.gorevlerYukle()
+  ])
   if (!kokpitStore.hata) {
     duyuru.value = t('dashboard.canliGuncellendi')
   }
 }
 
 const akisYenile = () => {
-  kokpitStore.akisYukle(8)
+  kokpitStore.akisYukle(20)
+}
+
+/** `route` stringini ({path, query}) biçimine çevirir. */
+const rotaCoz = (rota) => {
+  if (!rota) return null
+  const [path, sorgu] = String(rota).split('?')
+  const query = {}
+  if (sorgu) {
+    new URLSearchParams(sorgu).forEach((deger, anahtar) => {
+      query[anahtar] = deger
+    })
+  }
+  return { path: path || '/', query }
+}
+
+const gorevSec = (oge) => {
+  const hedef = rotaCoz(oge?.route)
+  if (hedef) {
+    router.push(hedef)
+    return
+  }
+  // Route yoksa eski davranış: tahsilat/onay diyaloğu veya türe göre ekran.
+  kritikOgeSec(oge)
 }
 
 /** Akış satırı: backend'in verdiği hedefe git; yoksa türe göre makul ekran. */
@@ -685,6 +757,7 @@ watch(
 
 onMounted(async () => {
   kokpitStore.donem = kayitliDeger(DONEM_ANAHTAR, DONEMLER, 'BU_AY')
+  yogunluk.value = kayitliDeger(YOGUNLUK_ANAHTAR, YOGUNLUKLAR, 'kompakt')
   const baslangicPara = kayitliDeger(PARA_ANAHTAR, PARALAR, 'TRY')
   kokpitStore.paraBirimiDegistir(baslangicPara)
   dovizStore.aktifParaBirimi = baslangicPara
@@ -693,8 +766,9 @@ onMounted(async () => {
     : dovizStore.kurlariYukle()
   await Promise.all([
     kokpitStore.getKokpit(),
+    kokpitStore.akisYukle(20),
+    kokpitStore.gorevlerYukle(),
     kokpitStore.tercihYukle(),
-    kokpitStore.akisYukle(8),
     kurlariYukle
   ])
 
@@ -727,17 +801,30 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .kokpit-sayfa {
+  --kokpit-bosluk: 14px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--kokpit-bosluk);
   min-width: 0;
   padding: 12px 14px 24px;
+}
+/* Kullanıcı tercihi: ferah görünüm. */
+.kokpit-sayfa--ferah {
+  --kokpit-bosluk: 22px;
+}
+.kokpit-sayfa--ferah :deep(.akis-satir),
+.kokpit-sayfa--ferah :deep(.bekleyen-satir) {
+  padding-top: 11px;
+  padding-bottom: 11px;
+}
+.kokpit-sayfa--ferah :deep(.hizli-islem) {
+  min-height: 48px;
 }
 /* Hero: sol (KPI + kritik), sağ (hızlı işlemler). */
 .kokpit-hero {
   display: grid;
   grid-template-columns: minmax(0, 2.4fr) minmax(220px, 1fr);
-  gap: 16px;
+  gap: var(--kokpit-bosluk);
   align-items: stretch;
   min-width: 0;
 }
@@ -754,7 +841,7 @@ onBeforeUnmount(() => {
 .kokpit-orta {
   display: grid;
   grid-template-columns: minmax(0, 2.4fr) minmax(220px, 1fr);
-  gap: 16px;
+  gap: var(--kokpit-bosluk);
   align-items: stretch;
   min-width: 0;
 }
@@ -773,7 +860,7 @@ onBeforeUnmount(() => {
 .kokpit-alt {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--kokpit-bosluk);
   min-width: 0;
 }
 .kokpit-takvim {
@@ -823,7 +910,7 @@ onBeforeUnmount(() => {
 .kokpit-bolumler {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--kokpit-bosluk);
   min-width: 0;
 }
 .kokpit-bolum {

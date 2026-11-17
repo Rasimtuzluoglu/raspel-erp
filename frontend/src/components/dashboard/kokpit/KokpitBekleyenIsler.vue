@@ -43,7 +43,7 @@
       class="bekleyen-liste"
     >
       <li
-        v-for="oge in ogeler"
+        v-for="oge in gorunen"
         :key="oge.anahtar"
       >
         <button
@@ -68,6 +68,22 @@
     </ul>
 
     <button
+      v-if="gizliSayi > 0"
+      type="button"
+      class="bekleyen-tumu"
+      data-test="bekleyen-tumunu-gor"
+      :aria-expanded="genisletildi"
+      @click="genisletildi = !genisletildi"
+    >
+      <template v-if="genisletildi">
+        {{ t('dashboard.akisDahaAz') }}
+      </template>
+      <template v-else>
+        {{ t('dashboard.akisTumunuGor', { n: gizliSayi }) }}
+      </template>
+    </button>
+
+    <button
       v-if="onayGorebilir"
       type="button"
       class="bekleyen-alt"
@@ -84,9 +100,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatPara } from '../../../utils/format.js'
+import { useMobilEkran } from '../../../composables/useMobilEkran.js'
 
 const props = defineProps({
   ogeler: { type: Array, default: () => [] },
@@ -101,10 +118,27 @@ const { t, te } = useI18n()
 const ANAHTARLAR = {
   vadesiGecen: 'dashboard.kokpitKritikSeritVadesiGecen',
   kritikStok: 'dashboard.kokpitKritikSeritKritikStok',
-  bekleyenOnay: 'dashboard.kokpitKritikSeritBekleyenOnay'
+  bekleyenOnay: 'dashboard.kokpitKritikSeritBekleyenOnay',
+  // /api/dashboard/gorevler türleri (Bekleyen İşler kartı).
+  VADESI_GECEN: 'dashboard.gorevTuruVadesiGecen',
+  KRITIK_STOK: 'dashboard.gorevTuruKritikStok',
+  ONAY_IZIN: 'dashboard.gorevTuruOnayIzin',
+  ONAY_MASRAF: 'dashboard.gorevTuruOnayMasraf',
+  ONAY_SATINALMA: 'dashboard.gorevTuruOnaySatinalma',
+  ONAY_SIPARIS: 'dashboard.gorevTuruOnaySiparis',
+  BEKLEYEN_TESLIMAT: 'dashboard.gorevTuruBekleyenTeslimat'
 }
 
+const mobil = useMobilEkran()
+const genisletildi = ref(false)
+
 const ogeSayisi = computed(() => props.ogeler.length)
+
+/** Mobilde ilk 3 kalem; "Tümünü gör" ile tamamı. */
+const gorunen = computed(() => (
+  mobil.value && !genisletildi.value ? props.ogeler.slice(0, 3) : props.ogeler
+))
+const gizliSayi = computed(() => props.ogeler.length - gorunen.value.length)
 
 const etiket = (oge) => {
   const anahtar = ANAHTARLAR[oge?.anahtar]
@@ -248,6 +282,26 @@ const degerMetni = (oge) => {
   font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
+}
+.bekleyen-tumu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px dashed var(--border);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.bekleyen-tumu:hover,
+.bekleyen-tumu:focus-visible {
+  border-color: var(--accent-border);
+  color: var(--accent);
 }
 .bekleyen-alt:hover,
 .bekleyen-alt:focus-visible {

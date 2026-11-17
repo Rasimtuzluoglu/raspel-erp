@@ -14,7 +14,8 @@ vi.mock('../../api/index.js', () => ({
     kokpit: vi.fn(),
     tercihGetir: vi.fn(),
     tercihKaydet: vi.fn(),
-    akis: vi.fn()
+    akis: vi.fn(),
+    gorevler: vi.fn()
   },
   excelAPI: {
     dashboard: vi.fn()
@@ -193,6 +194,12 @@ describe('Dashboard kokpiti', () => {
         { tur: 'TAHSILAT', baslik: 'Tahsilat: Müşteri A', tutar: 1500, tarih: new Date().toISOString(), route: '/faturalar', ikon: 'pi pi-wallet', renk: '#10b981' }
       ]
     })
+    dashboardAPI.gorevler.mockResolvedValue({
+      data: [
+        { tur: 'ONAY_IZIN', baslik: 'İzin onayı bekliyor', adet: 2, tutar: null, oncelik: 90, route: '/onaylar?tur=IZIN' },
+        { tur: 'VADESI_GECEN', baslik: 'Vadesi geçen fatura', adet: 3, tutar: 15000, oncelik: 95, route: '/tahsilat' }
+      ]
+    })
     excelAPI.dashboard.mockResolvedValue({ data: new Blob(['x']) })
   })
 
@@ -225,7 +232,7 @@ describe('Dashboard kokpiti', () => {
     const wrapper = mountDashboard()
     await flushPromises()
 
-    expect(dashboardAPI.akis).toHaveBeenCalledWith({ limit: 8 })
+    expect(dashboardAPI.akis).toHaveBeenCalledWith({ limit: 20 })
     const satir = wrapper.find('[data-test="akis-oge-0"]')
     expect(satir.exists()).toBe(true)
     expect(satir.text()).toContain('Tahsilat: Müşteri A')
@@ -239,6 +246,45 @@ describe('Dashboard kokpiti', () => {
 
     expect(wrapper.find('[data-test="kokpit-akis-hata"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="finans-ozet-bandi"]').exists()).toBe(true)
+  })
+
+  it('bekleyenIslerGorevlerUcundanGelir', async () => {
+    const wrapper = mountDashboard()
+    await flushPromises()
+
+    expect(dashboardAPI.gorevler).toHaveBeenCalled()
+    const izin = wrapper.find('[data-test="bekleyen-oge-ONAY_IZIN"]')
+    expect(izin.exists()).toBe(true)
+    expect(izin.text()).toContain('2')
+  })
+
+  it('bekleyenIsRouteSorgusuylaYonlendirir', async () => {
+    const wrapper = mountDashboard()
+    await flushPromises()
+
+    await wrapper.find('[data-test="bekleyen-oge-ONAY_IZIN"]').trigger('click')
+
+    expect(routerPush).toHaveBeenCalledWith({ path: '/onaylar', query: { tur: 'IZIN' } })
+  })
+
+  it('yogunlukTercihiDegisirVeSaklanir', async () => {
+    const wrapper = mountDashboard()
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="dashboard-kokpit"]').classes()).toContain('kokpit-sayfa--kompakt')
+
+    await wrapper.find('[data-test="kokpit-yogunluk"]').trigger('click')
+
+    expect(wrapper.find('[data-test="dashboard-kokpit"]').classes()).toContain('kokpit-sayfa--ferah')
+    expect(localStorage.getItem('raspel_dashboard_yogunluk')).toBe('ferah')
+  })
+
+  it('kayitliYogunlukAcilistaUygulanir', async () => {
+    localStorage.setItem('raspel_dashboard_yogunluk', 'ferah')
+    const wrapper = mountDashboard()
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="dashboard-kokpit"]').classes()).toContain('kokpit-sayfa--ferah')
   })
 
   it('nakitTakvimiTiklayincaAcilir', async () => {

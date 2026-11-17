@@ -8,7 +8,8 @@ vi.mock('../../api/index.js', () => ({
     kokpit: vi.fn(),
     tercihGetir: vi.fn(),
     tercihKaydet: vi.fn(),
-    akis: vi.fn()
+    akis: vi.fn(),
+    gorevler: vi.fn()
   }
 }))
 
@@ -159,5 +160,32 @@ describe('kokpitStore', () => {
     // Kokpit verisi korunur.
     expect(store.kokpit.ozet).toHaveLength(1)
     expect(store.hata).toBeNull()
+  })
+
+  it('gorevlerYukleListeyiDoldurur', async () => {
+    dashboardAPI.gorevler.mockResolvedValue({
+      data: [
+        { tur: 'ONAY_IZIN', adet: 2, oncelik: 90, route: '/onaylar?tur=IZIN' },
+        { tur: 'KRITIK_STOK', adet: 0, oncelik: 70, route: '/stoklar?kritik=1' }
+      ]
+    })
+
+    const sonuc = await store.gorevlerYukle()
+
+    expect(dashboardAPI.gorevler).toHaveBeenCalled()
+    expect(store.gorevler).toHaveLength(2)
+    expect(sonuc).toHaveLength(2)
+    expect(store.gorevlerHata).toBeNull()
+    expect(store.gorevlerYukleniyor).toBe(false)
+  })
+
+  it('gorevlerHatasiAkisiBozmaz', async () => {
+    dashboardAPI.gorevler.mockRejectedValueOnce(new Error('gorevler yok'))
+
+    await store.gorevlerYukle()
+
+    expect(store.gorevler).toEqual([])
+    expect(store.gorevlerHata).toBe('gorevler yok')
+    expect(store.gorevlerYukleniyor).toBe(false)
   })
 })

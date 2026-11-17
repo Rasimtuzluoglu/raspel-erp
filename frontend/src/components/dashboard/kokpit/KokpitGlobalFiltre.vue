@@ -65,6 +65,22 @@
         {{ canli ? t('dashboard.kokpitCanli') : t('dashboard.kokpitCanliKapali') }}
       </button>
 
+      <button
+        type="button"
+        class="kokpit-ikon-buton"
+        :aria-label="`${t('dashboard.yogunluk')}: ${yogunluk === 'ferah' ? t('dashboard.yogunlukFerah') : t('dashboard.yogunlukKompakt')}`"
+        :title="yogunluk === 'ferah' ? t('dashboard.yogunlukKompakt') : t('dashboard.yogunlukFerah')"
+        :aria-pressed="yogunluk === 'ferah'"
+        data-test="kokpit-yogunluk"
+        @click="emit('update:yogunluk', yogunluk === 'ferah' ? 'kompakt' : 'ferah')"
+      >
+        <i
+          class="pi"
+          :class="yogunluk === 'ferah' ? 'pi-align-justify' : 'pi-arrows-alt'"
+          aria-hidden="true"
+        />
+      </button>
+
       <span
         v-if="sonGuncelleme"
         class="kokpit-guncelleme"
@@ -155,6 +171,7 @@ defineProps({
   donem: { type: String, default: 'BU_AY' },
   paraBirimi: { type: String, default: 'TRY' },
   canli: { type: Boolean, default: true },
+  yogunluk: { type: String, default: 'kompakt' },
   sonGuncelleme: { type: [Date, String], default: null },
   yukleniyor: { type: Boolean, default: false }
 })
@@ -162,6 +179,7 @@ defineProps({
 const emit = defineEmits([
   'update:donem',
   'update:paraBirimi',
+  'update:yogunluk',
   'canli-degistir',
   'yenile',
   'excel',
