@@ -1,76 +1,105 @@
 <template>
   <section
-    class="kokpit-hizli-islemler"
+    class="kokpit-hizli-islemler kart"
     data-test="kokpit-hizli-islemler"
     :aria-label="t('dashboard.hizliIslemler')"
   >
-    <router-link
-      to="/faturalar?yeni=1"
-      class="hizli-islem"
-      data-test="hizli-yeni-fatura"
-    >
-      <i
-        class="pi pi-file-plus"
-        aria-hidden="true"
-      />
-      <span>{{ t('dashboard.yeniFatura') }}</span>
-    </router-link>
+    <header class="hizli-baslik">
+      <h2 class="hizli-baslik-metin">
+        {{ t('dashboard.hizliIslemler') }}
+      </h2>
+    </header>
 
-    <button
-      type="button"
-      class="hizli-islem"
-      data-test="hizli-tahsilat"
-      @click="emit('tahsilat')"
-    >
-      <i
-        class="pi pi-wallet"
-        aria-hidden="true"
-      />
-      <span>{{ t('dashboard.kokpitTahsilat') }}</span>
-    </button>
+    <div class="hizli-liste">
+      <button
+        type="button"
+        class="hizli-islem"
+        data-test="hizli-tahsilat"
+        @click="emit('tahsilat')"
+      >
+        <i
+          class="pi pi-wallet"
+          aria-hidden="true"
+        />
+        <span class="hizli-etiket">{{ t('dashboard.kokpitTahsilat') }}</span>
+        <i
+          class="pi pi-angle-right hizli-ok"
+          aria-hidden="true"
+        />
+      </button>
 
-    <button
-      type="button"
-      class="hizli-islem"
-      data-test="hizli-odeme"
-      @click="emit('odeme')"
-    >
-      <i
-        class="pi pi-credit-card"
-        aria-hidden="true"
-      />
-      <span>{{ t('dashboard.kokpitHizliOdeme') }}</span>
-    </button>
+      <button
+        type="button"
+        class="hizli-islem"
+        data-test="hizli-odeme"
+        @click="emit('odeme')"
+      >
+        <i
+          class="pi pi-credit-card"
+          aria-hidden="true"
+        />
+        <span class="hizli-etiket">{{ t('dashboard.kokpitHizliOdeme') }}</span>
+        <i
+          class="pi pi-angle-right hizli-ok"
+          aria-hidden="true"
+        />
+      </button>
 
-    <router-link
-      to="/masraflar?yeni=1"
-      class="hizli-islem"
-      data-test="hizli-masraf"
-    >
-      <i
-        class="pi pi-receipt"
-        aria-hidden="true"
-      />
-      <span>{{ t('dashboard.kokpitHizliMasraf') }}</span>
-    </router-link>
+      <router-link
+        to="/faturalar?yeni=1"
+        class="hizli-islem"
+        data-test="hizli-yeni-fatura"
+      >
+        <i
+          class="pi pi-file-plus"
+          aria-hidden="true"
+        />
+        <span class="hizli-etiket">{{ t('dashboard.yeniFatura') }}</span>
+        <i
+          class="pi pi-angle-right hizli-ok"
+          aria-hidden="true"
+        />
+      </router-link>
 
-    <button
-      v-if="onayGorebilir"
-      type="button"
-      class="hizli-islem"
-      data-test="hizli-onaylar"
-      @click="emit('onaylar')"
-    >
-      <i
-        class="pi pi-check-square"
-        aria-hidden="true"
-      />
-      <span>{{ t('dashboard.onaylar') }}</span>
-      <span
-        v-if="bekleyenOnay > 0"
-        class="hizli-islem-rozet"
-      >{{ bekleyenOnay }}</span>
-    </button>
+      <router-link
+        to="/masraflar?yeni=1"
+        class="hizli-islem"
+        data-test="hizli-masraf"
+      >
+        <i
+          class="pi pi-receipt"
+          aria-hidden="true"
+        />
+        <span class="hizli-etiket">{{ t('dashboard.kokpitHizliMasraf') }}</span>
+        <i
+          class="pi pi-angle-right hizli-ok"
+          aria-hidden="true"
+        />
+      </router-link>
+
+      <button
+        v-if="onayGorebilir"
+        type="button"
+        class="hizli-islem"
+        data-test="hizli-onaylar"
+        @click="emit('onaylar')"
+      >
+        <i
+          class="pi pi-check-square"
+          aria-hidden="true"
+        />
+        <span class="hizli-etiket">{{ t('dashboard.onaylar') }}</span>
+        <span
+          v-if="bekleyenOnay > 0"
+          class="hizli-islem-rozet"
+        >{{ bekleyenOnay }}</span>
+        <i
+          v-else
+          class="pi pi-angle-right hizli-ok"
+          aria-hidden="true"
+        />
+      </button>
+    </div>
   </section>
 </template>
 
@@ -88,29 +117,48 @@ const { t } = useI18n()
 
 <style scoped>
 .kokpit-hizli-islemler {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   min-width: 0;
+  height: 100%;
+}
+.hizli-baslik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px;
+}
+.hizli-baslik-metin {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+.hizli-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .hizli-islem {
   position: relative;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 38px;
-  padding: 6px 9px;
+  gap: 9px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-card);
   color: var(--text-secondary);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   text-decoration: none;
-  white-space: nowrap;
+  text-align: left;
   cursor: pointer;
-  overflow: hidden;
   transition:
     border-color var(--dur-fast) var(--ease-standard),
     background var(--dur-fast) var(--ease-standard),
@@ -128,32 +176,31 @@ const { t } = useI18n()
 }
 .hizli-islem i {
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: 13px;
 }
-.hizli-islem span {
+.hizli-etiket {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hizli-ok {
+  color: var(--text-muted);
+  font-size: 10px;
 }
 .hizli-islem-rozet {
   flex-shrink: 0;
-  min-width: 17px;
-  padding: 1px 4px;
+  min-width: 18px;
+  padding: 1px 5px;
   border-radius: var(--radius-pill);
   background: var(--danger-soft);
   color: var(--danger);
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 700;
   text-align: center;
 }
-@media (max-width: 900px) {
-  .kokpit-hizli-islemler {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-@media (max-width: 520px) {
-  .kokpit-hizli-islemler {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+@media (pointer: coarse) {
   .hizli-islem {
     min-height: 44px;
   }

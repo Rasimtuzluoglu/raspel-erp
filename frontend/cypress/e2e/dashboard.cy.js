@@ -136,6 +136,13 @@ const apiMockla = () => {
     body: { duzen: null }
   }).as('tercihler')
 
+  const akisVerisi = [
+    { tur: 'TAHSILAT', baslik: 'Tahsilat: Müşteri A', aciklama: 'FTR-1', tutar: 1500, tarih: new Date().toISOString(), route: '/faturalar', ikon: 'pi pi-wallet', renk: '#10b981' },
+    { tur: 'FATURA', baslik: 'Fatura kesildi: FTR-2', aciklama: 'Müşteri B', tutar: 2400, tarih: new Date().toISOString(), route: '/faturalar', ikon: 'pi pi-file', renk: '#3b82f6' },
+    { tur: 'ODEME', baslik: 'Ödeme: Tedarikçi A', aciklama: null, tutar: 900, tarih: new Date(Date.now() - 3 * 3600000).toISOString(), route: '/faturalar', ikon: 'pi pi-credit-card', renk: '#f59e0b' }
+  ]
+  cy.intercept('GET', '**/api/dashboard/akis*', { statusCode: 200, body: akisVerisi }).as('akis')
+
   cy.intercept('PUT', '**/api/dashboard/tercihler*', (req) => {
     req.reply({ statusCode: 200, body: { duzen: req.body?.duzen || null } })
   }).as('tercihKaydet')
@@ -160,6 +167,7 @@ const anasayfaAc = () => {
   })
   cy.url().should('not.include', '/giris')
   cy.wait('@kokpit', { timeout: 20000 })
+  cy.wait('@akis', { timeout: 20000 })
   cy.get('[data-test="finans-ozet-bandi"]', { timeout: 20000 }).should('be.visible')
 }
 
@@ -171,20 +179,47 @@ const yatayTasmaYok = () => {
 }
 
 describe('Anasayfa finans kokpiti', () => {
-  it('kokpit-ilk-yukleme: özet, kritik şerit ve dört bölüm görünür', () => {
+  it('kokpit-ilk-yukleme: oncelikli metrikler, akis ve bekleyen isler gorunur', () => {
     cy.viewport(1440, 900)
     anasayfaAc()
 
     cy.contains('h1', 'Finans Masası').should('be.visible')
-    cy.get('[data-test="finans-ozet-bandi"] [data-test^="kpi-"]').should('have.length', 8)
+    // Öncelikli 4 KPI büyük kart; kalan 4 metrik kompakt çip.
+    cy.get('[data-test="finans-ozet-bandi"] .finans-ust [data-test^="kpi-"]').should('have.length', 4)
+    cy.get('[data-test="finans-ikincil"] [data-test^="kpi-alt-"]').should('have.length', 4)
     cy.get('[data-test="kritik-durum-seridi"]').should('be.visible')
+
+    // İlk ekran öncelikleri: hızlı işlemler, son işlemler, bekleyen işler.
+    cy.get('[data-test="kokpit-hizli-islemler"]').should('be.visible')
+    cy.get('[data-test="kokpit-akis"]').should('be.visible')
+    cy.contains('[data-test="kokpit-akis"]', 'Tahsilat: Müşteri A').should('be.visible')
+    cy.get('[data-test="kokpit-bekleyen-isler"]').should('be.visible')
+    cy.get('[data-test="bekleyen-oge-vadesiGecen"]').should('be.visible')
+
     cy.get('[data-test="kokpit-bolum-nakit"]').should('be.visible')
     cy.get('[data-test="kokpit-bolum-alacakVerecek"]').should('be.visible')
     cy.get('[data-test="kokpit-bolum-karMarj"]').should('be.visible')
     cy.get('[data-test="kokpit-bolum-faturaSiparis"]').should('be.visible')
-    cy.get('[data-test="nakit-bolumu"]').should('be.visible')
-    cy.get('[data-test="nakit-takvimi"]').should('be.visible')
+    // Nakit takvimi varsayılan kapalı (ikincil bölge).
+    cy.get('[data-test="nakit-takvimi"]').should('not.exist')
     yatayTasmaYok()
+  })
+
+  it('kokpit-akis: satira tiklayinca ilgili ekrana gider', () => {
+    cy.viewport(1440, 900)
+    anasayfaAc()
+
+    cy.get('[data-test="akis-oge-0"]').click()
+    cy.url().should('include', '/faturalar')
+  })
+
+  it('kokpit-takvim: varsayilan kapali, acilinca takvim gorunur', () => {
+    cy.viewport(1440, 900)
+    anasayfaAc()
+
+    cy.get('[data-test="kokpit-takvim-ac"]').scrollIntoView().click()
+    cy.get('[data-test="nakit-takvimi"]').should('be.visible')
+    cy.get('[data-test="kokpit-takvim-ac"]').should('have.attr', 'aria-expanded', 'true')
   })
 
   it('kokpit-donem-filtresi: dönem değişince yeni istek gider', () => {
@@ -210,6 +245,7 @@ describe('Anasayfa finans kokpiti', () => {
     cy.viewport(1440, 900)
     anasayfaAc()
 
+    cy.get('[data-test="kokpit-menu"]').click()
     cy.get('[data-test="kokpit-ozellestir"]').click()
     cy.get('[data-test="kokpit-ozellestirme"]').should('be.visible')
 
@@ -264,6 +300,7 @@ describe('Anasayfa finans kokpiti', () => {
     cy.viewport(1440, 900)
     anasayfaAc()
 
+    cy.get('[data-test="kokpit-menu"]').click()
     cy.get('[data-test="kokpit-excel"]').click()
     cy.wait('@excel')
   })

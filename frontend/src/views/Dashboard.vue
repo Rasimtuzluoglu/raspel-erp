@@ -18,54 +18,86 @@
       @ozellestir="ozellestirmeAcik = true"
     />
 
-    <KokpitHizliIslemler
-      :bekleyen-onay="bekleyenOnaySayisi"
-      :onay-gorebilir="onayGorebilir"
-      @tahsilat="hizliTahsilatAc('TAHSILAT')"
-      @odeme="hizliTahsilatAc('ODEME')"
-      @onaylar="onayDialogAcik = true"
-    />
+    <div class="kokpit-hero">
+      <div class="kokpit-hero-sol">
+        <p
+          class="sr-only"
+          role="status"
+          aria-live="polite"
+        >
+          {{ duyuru }}
+        </p>
 
-    <p
-      class="sr-only"
-      role="status"
-      aria-live="polite"
-    >
-      {{ duyuru }}
-    </p>
+        <div
+          v-if="kokpitStore.hata && !kokpit"
+          class="kokpit-hata"
+          role="alert"
+          data-test="kokpit-hata"
+        >
+          <i
+            class="pi pi-exclamation-triangle"
+            aria-hidden="true"
+          />
+          <span>{{ kokpitStore.hata }}</span>
+          <button
+            type="button"
+            class="kokpit-hata-buton"
+            @click="yenile"
+          >
+            {{ t('dashboard.yenidenDene') }}
+          </button>
+        </div>
 
-    <div
-      v-if="kokpitStore.hata && !kokpit"
-      class="kokpit-hata"
-      role="alert"
-      data-test="kokpit-hata"
-    >
-      <i
-        class="pi pi-exclamation-triangle"
-        aria-hidden="true"
+        <FinansOzetBandi
+          :kpi="kpi"
+          :yukleniyor="ilkYukleme"
+          :para-birimi="kokpitStore.paraBirimi"
+        />
+
+        <KritikDurumSeridi
+          :ogeler="kritikDurum"
+          :yukleniyor="ilkYukleme"
+          :para-birimi="kokpitStore.paraBirimi"
+          @oge-sec="kritikOgeSec"
+        />
+      </div>
+
+      <KokpitHizliIslemler
+        class="kokpit-hero-sag"
+        :bekleyen-onay="bekleyenOnaySayisi"
+        :onay-gorebilir="onayGorebilir"
+        @tahsilat="hizliTahsilatAc('TAHSILAT')"
+        @odeme="hizliTahsilatAc('ODEME')"
+        @onaylar="onayDialogAcik = true"
       />
-      <span>{{ kokpitStore.hata }}</span>
-      <button
-        type="button"
-        class="kokpit-hata-buton"
-        @click="yenile"
-      >
-        {{ t('dashboard.yenidenDene') }}
-      </button>
     </div>
 
-    <FinansOzetBandi
-      :kpi="kpi"
-      :yukleniyor="ilkYukleme"
-      :para-birimi="kokpitStore.paraBirimi"
-    />
+    <div class="kokpit-orta">
+      <KokpitAkis
+        class="kokpit-orta-akis"
+        :olaylar="gosterilenAkis"
+        :yukleniyor="kokpitStore.akisYukleniyor"
+        :hata="kokpitStore.akisHata"
+        :para-birimi="kokpitStore.paraBirimi"
+        :canli="canliGosterge"
+        @sec="akisSec"
+        @yenile="akisYenile"
+      />
 
-    <KritikDurumSeridi
-      :ogeler="kritikDurum"
-      :yukleniyor="ilkYukleme"
-      :para-birimi="kokpitStore.paraBirimi"
-      @oge-sec="kritikOgeSec"
-    />
+      <KokpitBekleyenIsler
+        class="kokpit-orta-bekleyen"
+        :ogeler="bekleyenIsler"
+        :yukleniyor="ilkYukleme"
+        :para-birimi="kokpitStore.paraBirimi"
+        :onay-gorebilir="onayGorebilir"
+        @oge-sec="kritikOgeSec"
+        @onaylar="onayDialogAcik = true"
+      />
+    </div>
+
+    <h2 class="kokpit-bolum-baslik">
+      {{ t('dashboard.detayliAnaliz') }}
+    </h2>
 
     <div
       class="kokpit-bolumler"
@@ -100,17 +132,49 @@
       @kaydet="tercihiKaydet"
     />
 
-    <KokpitIcgoruler
-      :icgoruler="icgoruler"
-      :yukleniyor="ilkYukleme"
-    />
+    <div
+      ref="altBolge"
+      class="kokpit-alt"
+    >
+      <template v-if="altGorunur">
+        <KokpitIcgoruler
+          :icgoruler="icgoruler"
+          :yukleniyor="ilkYukleme"
+        />
 
-    <KokpitNakitTakvimi
-      :projeksiyon="nakitProjeksiyon"
-      :takvim="nakitTakvim"
-      :yukleniyor="ilkYukleme"
-      :para-birimi="kokpitStore.paraBirimi"
-    />
+        <section class="kokpit-takvim">
+          <button
+            type="button"
+            class="kokpit-takvim-baslik"
+            :aria-expanded="nakitTakvimiAcik"
+            aria-controls="kokpit-nakit-takvimi"
+            data-test="kokpit-takvim-ac"
+            @click="nakitTakvimiAcik = !nakitTakvimiAcik"
+          >
+            <i
+              class="pi pi-calendar"
+              aria-hidden="true"
+            />
+            <span>{{ t('dashboard.kokpitNakitTakvimBaslik') }}</span>
+            <i
+              class="pi pi-angle-down kokpit-takvim-ok"
+              :class="{ 'kokpit-takvim-ok--acik': nakitTakvimiAcik }"
+              aria-hidden="true"
+            />
+          </button>
+
+          <KokpitNakitTakvimi
+            v-if="nakitTakvimiAcik"
+            id="kokpit-nakit-takvimi"
+            :projeksiyon="nakitProjeksiyon"
+            :takvim="nakitTakvim"
+            :yukleniyor="ilkYukleme"
+            :para-birimi="kokpitStore.paraBirimi"
+            baslik-gizle
+          />
+        </section>
+      </template>
+    </div>
 
     <KokpitTahsilatDialog
       v-model:visible="hizliTahsilatAcik"
@@ -152,6 +216,8 @@ import FaturaSiparisBolumu from '../components/dashboard/kokpit/FaturaSiparisBol
 import KokpitOzellestirme from '../components/dashboard/kokpit/KokpitOzellestirme.vue'
 import KokpitIcgoruler from '../components/dashboard/kokpit/KokpitIcgoruler.vue'
 import KokpitNakitTakvimi from '../components/dashboard/kokpit/KokpitNakitTakvimi.vue'
+import KokpitAkis from '../components/dashboard/kokpit/KokpitAkis.vue'
+import KokpitBekleyenIsler from '../components/dashboard/kokpit/KokpitBekleyenIsler.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -166,6 +232,13 @@ const hizliTahsilatAcik = ref(false)
 const hizliTahsilatTur = ref('TAHSILAT')
 const hizliTahsilatCariId = ref(null)
 const onayDialogAcik = ref(false)
+
+// Alt bölgeler (içgörüler + nakit takvimi) görünür olunca mount edilir:
+// ilk boyamada DOM ve grafik maliyeti oluşmaz.
+const altBolge = ref(null)
+const altGorunur = ref(false)
+const nakitTakvimiAcik = ref(false)
+let altGozlemci = null
 
 const kokpit = computed(() => kokpitStore.kokpit)
 const gosterilenKokpit = computed(() =>
@@ -190,6 +263,24 @@ const bekleyenOnaySayisi = computed(() => {
     (kritik) => kritik.anahtar === 'bekleyenOnay'
   )
   return Number(oge?.adet) || 0
+})
+
+// Bekleyen işler kartı: yalnız eylem gerektiren kalemler (likidite trendi hariç).
+const bekleyenIsler = computed(() =>
+  (gosterilenKokpit.value?.kritikDurum || []).filter((oge) =>
+    ['bekleyenOnay', 'vadesiGecen', 'kritikStok'].includes(oge.anahtar)
+  )
+)
+
+// Akış tutarları seçili para birimine çevrilir (kokpitteki dönüşümle aynı kur).
+const gosterilenAkis = computed(() => {
+  const birim = kokpitStore.paraBirimi
+  const liste = Array.isArray(kokpitStore.akis) ? kokpitStore.akis : []
+  if (birim === 'TRY') return liste
+  return liste.map((olay) => {
+    if (olay?.tutar === null || olay?.tutar === undefined) return olay
+    return { ...olay, tutar: dovizStore.convert(Number(olay.tutar), 'TRY', birim) }
+  })
 })
 
 const BILESENLER = {
@@ -227,7 +318,9 @@ const bolumVerisi = (anahtar) => gosterilenKokpit.value?.[anahtar] || null
  */
 const paraBirimineCevir = (kaynak, birim, doviz) => {
   if (!kaynak || birim === 'TRY') return kaynak
-  const veri = JSON.parse(JSON.stringify(kaynak))
+  // Sığ kopya yeterli: aşağıda dönüştürülen her alan yeni nesnelerle değiştirilir.
+  // (Eski `JSON.parse(JSON.stringify(...))` tüm kokpiti kopyalıyordu.)
+  const veri = { ...kaynak }
   const para = (deger) => {
     if (deger === null || deger === undefined) return deger
     const sayi = Number(deger)
@@ -370,7 +463,10 @@ const canliTazele = () => {
   if (canliZamanlayici !== null) clearTimeout(canliZamanlayici)
   canliZamanlayici = setTimeout(() => {
     canliZamanlayici = null
-    if (canli.aktif.value) kokpitStore.getKokpit()
+    if (canli.aktif.value) {
+      kokpitStore.getKokpit()
+      kokpitStore.akisYukle(8)
+    }
   }, CANLI_YENILEME_GECIKME_MS)
 }
 
@@ -434,10 +530,32 @@ const yenile = async () => {
     clearTimeout(canliZamanlayici)
     canliZamanlayici = null
   }
-  await kokpitStore.getKokpit()
+  await Promise.all([kokpitStore.getKokpit(), kokpitStore.akisYukle(8)])
   if (!kokpitStore.hata) {
     duyuru.value = t('dashboard.canliGuncellendi')
   }
+}
+
+const akisYenile = () => {
+  kokpitStore.akisYukle(8)
+}
+
+/** Akış satırı: backend'in verdiği hedefe git; yoksa türe göre makul ekran. */
+const akisSec = (olay) => {
+  if (olay?.route) {
+    router.push({ path: olay.route, query: {} })
+    return
+  }
+  const TUR_ROTA = {
+    FATURA: '/faturalar',
+    TAHSILAT: '/hareketler',
+    ODEME: '/hareketler',
+    SIPARIS: '/siparisler',
+    STOK: '/stoklar',
+    ONAY: '/onaylar'
+  }
+  const rota = TUR_ROTA[olay?.tur]
+  if (rota) router.push({ path: rota })
 }
 
 const detayaGit = (hedef) => {
@@ -576,8 +694,34 @@ onMounted(async () => {
   await Promise.all([
     kokpitStore.getKokpit(),
     kokpitStore.tercihYukle(),
+    kokpitStore.akisYukle(8),
     kurlariYukle
   ])
+
+  // Alt bölgeleri görünür olunca (300px önce) mount et. Eleman zaten
+  // görünürdeyse (kısa sayfa / test ortamı) beklemeden aç.
+  if (typeof IntersectionObserver !== 'function' || !altBolge.value) {
+    altGorunur.value = true
+    return
+  }
+  const konum = altBolge.value.getBoundingClientRect()
+  if (konum.height === 0 || konum.top < window.innerHeight) {
+    altGorunur.value = true
+    return
+  }
+  altGozlemci = new IntersectionObserver((girdiler) => {
+    if (girdiler.some((girdi) => girdi.isIntersecting)) {
+      altGorunur.value = true
+      altGozlemci?.disconnect()
+      altGozlemci = null
+    }
+  }, { rootMargin: '300px 0px' })
+  altGozlemci.observe(altBolge.value)
+})
+
+onBeforeUnmount(() => {
+  altGozlemci?.disconnect()
+  altGozlemci = null
 })
 </script>
 
@@ -585,14 +729,101 @@ onMounted(async () => {
 .kokpit-sayfa {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
   min-width: 0;
   padding: 12px 14px 24px;
+}
+/* Hero: sol (KPI + kritik), sağ (hızlı işlemler). */
+.kokpit-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 2.4fr) minmax(220px, 1fr);
+  gap: 16px;
+  align-items: stretch;
+  min-width: 0;
+}
+.kokpit-hero-sol {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.kokpit-hero-sag {
+  min-width: 0;
+}
+/* Orta: son işlemler + bekleyen işler. */
+.kokpit-orta {
+  display: grid;
+  grid-template-columns: minmax(0, 2.4fr) minmax(220px, 1fr);
+  gap: 16px;
+  align-items: stretch;
+  min-width: 0;
+}
+.kokpit-orta-akis,
+.kokpit-orta-bekleyen {
+  min-width: 0;
+}
+.kokpit-bolum-baslik {
+  margin: 4px 0 -6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+.kokpit-alt {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.kokpit-takvim {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.kokpit-takvim-baslik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+.kokpit-takvim-baslik:hover,
+.kokpit-takvim-baslik:focus-visible {
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+.kokpit-takvim-baslik:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.kokpit-takvim-ok {
+  margin-left: auto;
+  font-size: 11px;
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+.kokpit-takvim-ok--acik {
+  transform: rotate(180deg);
+}
+@media (max-width: 1100px) {
+  .kokpit-hero,
+  .kokpit-orta {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .kokpit-bolumler {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 16px;
   min-width: 0;
 }
 .kokpit-bolum {

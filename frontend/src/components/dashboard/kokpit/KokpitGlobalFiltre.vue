@@ -88,45 +88,60 @@
             aria-hidden="true"
           />
         </button>
-        <button
-          type="button"
-          class="kokpit-ikon-buton"
-          :aria-label="t('dashboard.kokpitExcel')"
-          :title="t('dashboard.kokpitExcel')"
-          data-test="kokpit-excel"
-          @click="emit('excel')"
-        >
-          <i
-            class="pi pi-file-excel"
-            aria-hidden="true"
-          />
-        </button>
-        <button
-          type="button"
-          class="kokpit-ikon-buton"
-          :aria-label="t('dashboard.kokpitPdf')"
-          :title="t('dashboard.kokpitPdf')"
-          data-test="kokpit-pdf"
-          @click="emit('pdf')"
-        >
-          <i
-            class="pi pi-file-pdf"
-            aria-hidden="true"
-          />
-        </button>
-        <button
-          type="button"
-          class="kokpit-ikon-buton"
-          :aria-label="t('dashboard.kokpitOzellestir')"
-          :title="t('dashboard.kokpitOzellestir')"
-          data-test="kokpit-ozellestir"
-          @click="emit('ozellestir')"
-        >
-          <i
-            class="pi pi-sliders-h"
-            aria-hidden="true"
-          />
-        </button>
+        <details class="kokpit-menu">
+          <summary
+            class="kokpit-ikon-buton kokpit-menu-ozet"
+            :aria-label="t('dashboard.kokpitMenu')"
+            :title="t('dashboard.kokpitMenu')"
+            data-test="kokpit-menu"
+          >
+            <i
+              class="pi pi-ellipsis-h"
+              aria-hidden="true"
+            />
+          </summary>
+          <div class="kokpit-menu-panel">
+            <button
+              type="button"
+              class="kokpit-menu-oge"
+              :aria-label="t('dashboard.kokpitExcel')"
+              data-test="kokpit-excel"
+              @click="emit('excel')"
+            >
+              <i
+                class="pi pi-file-excel"
+                aria-hidden="true"
+              />
+              {{ t('dashboard.kokpitExcel') }}
+            </button>
+            <button
+              type="button"
+              class="kokpit-menu-oge"
+              :aria-label="t('dashboard.kokpitPdf')"
+              data-test="kokpit-pdf"
+              @click="emit('pdf')"
+            >
+              <i
+                class="pi pi-file-pdf"
+                aria-hidden="true"
+              />
+              {{ t('dashboard.kokpitPdf') }}
+            </button>
+            <button
+              type="button"
+              class="kokpit-menu-oge"
+              :aria-label="t('dashboard.kokpitOzellestir')"
+              data-test="kokpit-ozellestir"
+              @click="emit('ozellestir')"
+            >
+              <i
+                class="pi pi-sliders-h"
+                aria-hidden="true"
+              />
+              {{ t('dashboard.kokpitOzellestir') }}
+            </button>
+          </div>
+        </details>
       </div>
     </div>
   </header>
@@ -299,6 +314,52 @@ const PARA_BIRIMLERI = ['TRY', 'USD', 'EUR']
 .kokpit-islemler {
   display: inline-flex;
   gap: 3px;
+}
+/* Excel/PDF/özelleştirme tek "⋯" menüsünde: üst bar sade kalır. */
+.kokpit-menu {
+  position: relative;
+}
+.kokpit-menu-ozet {
+  list-style: none;
+}
+.kokpit-menu-ozet::-webkit-details-marker {
+  display: none;
+}
+.kokpit-menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: var(--z-menu, 1250);
+  display: flex;
+  flex-direction: column;
+  min-width: 190px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  box-shadow: var(--elev-2, 0 12px 32px rgba(0, 0, 0, 0.35));
+}
+.kokpit-menu-oge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.kokpit-menu-oge:hover,
+.kokpit-menu-oge:focus-visible {
+  background: var(--bg-secondary);
+  color: var(--accent);
+}
+.kokpit-menu-oge:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 .kokpit-ikon-buton {
   display: inline-flex;

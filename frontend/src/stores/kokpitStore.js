@@ -29,6 +29,30 @@ export const useKokpitStore = defineStore('kokpit', () => {
 
   const hataMesaji = (err) => (err?.message ? String(err.message) : 'Bilinmeyen hata')
 
+  // Son işlem akışı: `GET /api/dashboard/akis` (tek istek, limit ile).
+  // Kokpit yanıtından bağımsızdır; hata olsa bile sayfanın geri kalanı çizilir.
+  const akis = ref([])
+  const akisYukleniyor = ref(false)
+  const akisHata = ref(null)
+
+  const akisYukle = async (limit = 8) => {
+    const adet = Math.max(1, Math.min(Number(limit) || 8, 50))
+    akisYukleniyor.value = true
+    akisHata.value = null
+    try {
+      const response = await dashboardAPI.akis({ limit: adet })
+      akis.value = Array.isArray(response.data) ? response.data.slice(0, adet) : []
+      return akis.value
+    } catch (err) {
+      akisHata.value = hataMesaji(err)
+      akis.value = []
+      console.error('Islem akisi yuklenemedi:', err)
+      return []
+    } finally {
+      akisYukleniyor.value = false
+    }
+  }
+
   const gecerliBolumler = (liste) =>
     Array.isArray(liste) ? liste.filter((anahtar, index) =>
       KOKPIT_BOLUMLERI.includes(anahtar) && liste.indexOf(anahtar) === index) : []
@@ -144,6 +168,10 @@ export const useKokpitStore = defineStore('kokpit', () => {
     tercihKaydediliyor,
     tercihHata,
     gorunurBolumler,
+    akis,
+    akisYukleniyor,
+    akisHata,
+    akisYukle,
     getKokpit,
     donemDegistir,
     paraBirimiDegistir,

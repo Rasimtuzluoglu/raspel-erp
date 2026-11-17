@@ -6,10 +6,16 @@
   >
     <header class="nakit-takvim-ust">
       <div>
-        <h2 class="nakit-takvim-baslik">
+        <h2
+          v-if="!baslikGizle"
+          class="nakit-takvim-baslik"
+        >
           {{ t('dashboard.kokpitNakitTakvimBaslik') }}
         </h2>
-        <p class="nakit-takvim-alt">
+        <p
+          v-if="!baslikGizle"
+          class="nakit-takvim-alt"
+        >
           {{ t('dashboard.kokpitNakitTakvimAlt') }}
         </p>
         <p
@@ -120,7 +126,9 @@ const props = defineProps({
   projeksiyon: { type: Object, default: null },
   takvim: { type: Object, default: null },
   yukleniyor: { type: Boolean, default: false },
-  paraBirimi: { type: String, default: 'TRY' }
+  paraBirimi: { type: String, default: 'TRY' },
+  /** Kapalı/açılır sarmalayıcı kullanıldığında iç başlığı gizler. */
+  baslikGizle: { type: Boolean, default: false }
 })
 
 const { t, locale } = useI18n()

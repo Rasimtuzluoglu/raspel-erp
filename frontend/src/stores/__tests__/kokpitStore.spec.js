@@ -7,7 +7,8 @@ vi.mock('../../api/index.js', () => ({
   dashboardAPI: {
     kokpit: vi.fn(),
     tercihGetir: vi.fn(),
-    tercihKaydet: vi.fn()
+    tercihKaydet: vi.fn(),
+    akis: vi.fn()
   }
 }))
 
@@ -120,5 +121,43 @@ describe('kokpitStore', () => {
         gorunurBolumler: KOKPIT_BOLUMLERI
       }
     })
+  })
+
+  it('akisYukleLimitGonderirVeListeyiSinirlar', async () => {
+    const olaylar = Array.from({ length: 12 }, (_, i) => ({ tur: 'FATURA', baslik: `F-${i}` }))
+    dashboardAPI.akis.mockResolvedValue({ data: olaylar })
+
+    const sonuc = await store.akisYukle(8)
+
+    expect(dashboardAPI.akis).toHaveBeenCalledWith({ limit: 8 })
+    expect(store.akis).toHaveLength(8)
+    expect(sonuc).toHaveLength(8)
+    expect(store.akisYukleniyor).toBe(false)
+    expect(store.akisHata).toBeNull()
+  })
+
+  it('akisYukleLimitUstSiniriUygular', async () => {
+    dashboardAPI.akis.mockResolvedValue({ data: [] })
+
+    await store.akisYukle(500)
+    expect(dashboardAPI.akis).toHaveBeenLastCalledWith({ limit: 50 })
+
+    await store.akisYukle(-5)
+    expect(dashboardAPI.akis).toHaveBeenLastCalledWith({ limit: 1 })
+  })
+
+  it('akisHatasiKokpitiBozmaz', async () => {
+    dashboardAPI.kokpit.mockResolvedValue({ data: { ozet: [{ anahtar: 'ciro' }] } })
+    await store.getKokpit('BU_AY')
+    dashboardAPI.akis.mockRejectedValueOnce(new Error('akis kapali'))
+
+    await store.akisYukle(8)
+
+    expect(store.akis).toEqual([])
+    expect(store.akisHata).toBe('akis kapali')
+    expect(store.akisYukleniyor).toBe(false)
+    // Kokpit verisi korunur.
+    expect(store.kokpit.ozet).toHaveLength(1)
+    expect(store.hata).toBeNull()
   })
 })

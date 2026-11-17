@@ -13,7 +13,8 @@ vi.mock('../../api/index.js', () => ({
   dashboardAPI: {
     kokpit: vi.fn(),
     tercihGetir: vi.fn(),
-    tercihKaydet: vi.fn()
+    tercihKaydet: vi.fn(),
+    akis: vi.fn()
   },
   excelAPI: {
     dashboard: vi.fn()
@@ -187,6 +188,11 @@ describe('Dashboard kokpiti', () => {
     dashboardAPI.kokpit.mockResolvedValue({ data: kokpitVerisi() })
     dashboardAPI.tercihGetir.mockResolvedValue({ data: { duzen: null } })
     dashboardAPI.tercihKaydet.mockResolvedValue({ data: { duzen: null } })
+    dashboardAPI.akis.mockResolvedValue({
+      data: [
+        { tur: 'TAHSILAT', baslik: 'Tahsilat: Müşteri A', tutar: 1500, tarih: new Date().toISOString(), route: '/faturalar', ikon: 'pi pi-wallet', renk: '#10b981' }
+      ]
+    })
     excelAPI.dashboard.mockResolvedValue({ data: new Blob(['x']) })
   })
 
@@ -208,7 +214,41 @@ describe('Dashboard kokpiti', () => {
     expect(wrapper.find('[data-test="kokpit-bolum-karMarj"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="kokpit-bolum-faturaSiparis"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="nakit-bolumu"]').exists()).toBe(true)
+    // Akış ve bekleyen işler ilk ekranda; nakit takvimi varsayılan kapalı.
+    expect(wrapper.find('[data-test="kokpit-akis"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="kokpit-bekleyen-isler"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="kokpit-takvim-ac"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="nakit-takvimi"]').exists()).toBe(false)
+  })
+
+  it('akisYuklenirVeParaBirimiIleBicimlenir', async () => {
+    const wrapper = mountDashboard()
+    await flushPromises()
+
+    expect(dashboardAPI.akis).toHaveBeenCalledWith({ limit: 8 })
+    const satir = wrapper.find('[data-test="akis-oge-0"]')
+    expect(satir.exists()).toBe(true)
+    expect(satir.text()).toContain('Tahsilat: Müşteri A')
+    expect(satir.text()).toContain('1.500')
+  })
+
+  it('akisHatasiSayfayiBozmaz', async () => {
+    dashboardAPI.akis.mockRejectedValueOnce(new Error('akis yok'))
+    const wrapper = mountDashboard()
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="kokpit-akis-hata"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="finans-ozet-bandi"]').exists()).toBe(true)
+  })
+
+  it('nakitTakvimiTiklayincaAcilir', async () => {
+    const wrapper = mountDashboard()
+    await flushPromises()
+
+    await wrapper.find('[data-test="kokpit-takvim-ac"]').trigger('click')
+
     expect(wrapper.find('[data-test="nakit-takvimi"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="kokpit-takvim-ac"]').attributes('aria-expanded')).toBe('true')
   })
 
   it('donemDegisinceYeniIstekGider', async () => {

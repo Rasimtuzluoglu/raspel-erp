@@ -56,14 +56,16 @@ describe('kokpit üst bandı', () => {
     expect(wrapper.emitted('ozellestir')).toHaveLength(1)
   })
 
-  it('kpiBandiSekizMetrikGosterir', () => {
+  it('kpiBandiDortBuyukDortKompaktMetrikGosterir', () => {
     const wrapper = mount(FinansOzetBandi, {
       ...mountOptions,
       props: { kpi: kpiListesi, paraBirimi: 'TRY' }
     })
 
-    expect(wrapper.findAllComponents(MetrikKutu)).toHaveLength(8)
-    expect(wrapper.find('[data-test="kpi-netNakit"]').exists()).toBe(true)
+    // Öncelikli 4 metrik büyük kart olarak, kalan 4 metrik kompakt çip olarak.
+    expect(wrapper.findAllComponents(MetrikKutu)).toHaveLength(4)
+    expect(wrapper.find('[data-test="kpi-netNakit"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="kpi-alt-netNakit"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="kpi-marj"]').text()).toContain('26,6%')
   })
 
