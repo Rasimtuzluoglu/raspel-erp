@@ -34,6 +34,9 @@ defineProps({
   etiket: { type: String, default: '' }
 })
 
+/** Çizim bittiğinde güncel imzayı dataURL olarak yayar (temizlenince null). */
+const emit = defineEmits(['imza-degisti'])
+
 const canvas = ref(null)
 const cizili = ref(false)
 let ctx = null
@@ -61,6 +64,7 @@ const temizle = () => {
     ctx.clearRect(0, 0, canvas.value.width, canvas.value.height)
   }
   cizili.value = false
+  emit('imza-degisti', null)
 }
 
 const nokta = (e) => {
@@ -101,7 +105,14 @@ const cizTouch = (e) => {
 }
 
 const bitir = () => {
+  if (!ciziyor) return
   ciziyor = false
+  if (!cizili.value || !canvas.value) return
+  try {
+    emit('imza-degisti', canvas.value.toDataURL('image/png'))
+  } catch {
+    emit('imza-degisti', null)
+  }
 }
 
 const bosMu = () => !cizili.value
