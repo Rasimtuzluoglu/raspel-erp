@@ -378,6 +378,8 @@
     "confirmDelete": "Are you sure you want to delete this record?",
     "favorites": "Favorites",
     "selectedRecords": "{n} record(s) selected",
+    "selectedRecordsShort": "record(s) selected",
+    "pageRecords": "· on page {n}",
     "clearSelection": "Clear Selection",
     "skipToContent": "Skip to content",
     "searchPlaceholder": "Search...",

@@ -7,7 +7,11 @@
       >
         <div class="batch-info">
           <i class="pi pi-check-square" />
-          <span><strong>{{ selection ? selection.length : 0 }}</strong> {{ $t('common.selectedRecords', { n: selection.length }) }}</span>
+          <span>
+            <strong>{{ selection ? selection.length : 0 }}</strong>
+            {{ $t('common.selectedRecordsShort') }}
+            <span class="batch-sayfa">{{ $t('common.pageRecords', { n: filtrelenmisDeger.length }) }}</span>
+          </span>
         </div>
         <div class="batch-buttons">
           <slot name="batch-actions" />
@@ -236,6 +240,12 @@ watch(
 .batch-info i {
   color: var(--accent);
   font-size: 16px;
+}
+
+.batch-sayfa {
+  margin-left: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .batch-buttons {

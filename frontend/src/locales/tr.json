@@ -378,6 +378,8 @@
     "confirmDelete": "Bu kaydı silmek istediğinize emin misiniz?",
     "favorites": "Sık Kullanılanlar",
     "selectedRecords": "{n} kayıt seçildi",
+    "selectedRecordsShort": "kayıt seçildi",
+    "pageRecords": "· sayfada {n}",
     "clearSelection": "Seçimi Temizle",
     "skipToContent": "İçeriğe atla",
     "searchPlaceholder": "Ara...",

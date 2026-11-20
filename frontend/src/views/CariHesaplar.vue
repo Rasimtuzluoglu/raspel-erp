@@ -3508,9 +3508,13 @@ h3 {
 }
 .table-container :deep(.cari-secim-kolon) {
   left: 0;
+  width: 56px;
+  min-width: 56px;
+  max-width: 56px;
+  padding: 8px;
 }
 .table-container :deep(.cari-ad-kolon) {
-  left: 3rem;
+  left: 56px;
   box-shadow: 8px 0 12px -12px rgba(0, 0, 0, 0.8);
 }
 .table-container :deep(.cari-islem-kolon) {
@@ -3521,6 +3525,18 @@ h3 {
 .table-container :deep(thead .cari-ad-kolon),
 .table-container :deep(thead .cari-islem-kolon) {
   z-index: 3;
+}
+/* Seçim kutusu: görsel kutu 20 px, dokunma alanı 40×40 px (telefon hedefi). */
+.table-container :deep(.cari-secim-kolon .p-checkbox) {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.table-container :deep(.cari-secim-kolon .p-checkbox-box) {
+  width: 20px;
+  height: 20px;
 }
 .table-container :deep(.cari-islem-kolon .satir-islemler) {
   flex-wrap: nowrap;
