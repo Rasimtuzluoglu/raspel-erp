@@ -535,13 +535,14 @@ img {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 10px;
+  min-height: 38px;
+  padding: 8px 10px;
   color: var(--text-secondary);
   text-decoration: none;
   border-radius: var(--radius-sm);
   font-size: 13px;
   font-weight: 500;
-  transition: color var(--dur-base) var(--ease-standard), background var(--dur-base) var(--ease-standard);
+  transition: color var(--dur-fast) var(--ease-standard), background var(--dur-fast) var(--ease-standard);
 }
 .sidebar-menu a:hover {
   color: var(--text-primary);

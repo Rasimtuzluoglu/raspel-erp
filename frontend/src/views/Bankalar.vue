@@ -81,7 +81,14 @@
       v-else-if="gosterim === 'tablo'"
       class="table-container"
     >
+      <ListeDurumu
+        v-if="loading || yuklemeHatasi"
+        :yukleniyor="loading"
+        :hata="yuklemeHatasi"
+        :yeniden-dene="bankalariYukle"
+      />
       <AppDataTable
+        v-else
         :value="bankaStore.bankalar"
         striped-rows
         :rows="10"
@@ -453,6 +460,7 @@ import { useRouter } from 'vue-router'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
 import { useBankaStore } from '../stores/bankaStore.js'
+import ListeDurumu from '../components/ListeDurumu.vue'
 import { useAuthStore } from '../stores/authStore.js'
 import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
 import { useFormKorumasi } from '../composables/useFormKorumasi.js'
@@ -568,6 +576,22 @@ const ibanGecerli = computed(() => {
   return s === '' || IBAN_TR_RE.test(s)
 })
 
+const yuklemeHatasi = ref('')
+
+const bankalariYukle = async () => {
+  loading.value = true
+  yuklemeHatasi.value = ''
+  try {
+    await bankaStore.getAllBankalar()
+    ozetYukle()
+  } catch {
+    yuklemeHatasi.value = t('bankalar.hataYukleme')
+    toastBildirim.hata(t('bankalar.hataYukleme'))
+  } finally {
+    loading.value = false
+  }
+}
+
 onMounted(async () => {
   // Kayitli tercih yoksa kucuk ekranda kart gorunumu varsayilan.
   if (!localStorage.getItem(GORUNUM_ANAHTAR)
@@ -575,15 +599,7 @@ onMounted(async () => {
       && window.matchMedia('(max-width: 768px)').matches) {
     gosterim.value = 'kart'
   }
-  loading.value = true
-  try {
-    await bankaStore.getAllBankalar()
-    ozetYukle()
-  } catch {
-    toastBildirim.hata(t('bankalar.hataYukleme'))
-  } finally {
-    loading.value = false
-  }
+  await bankalariYukle()
 })
 
 const openDialog = () => {

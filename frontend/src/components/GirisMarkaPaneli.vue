@@ -49,13 +49,29 @@
       <LoginPreview />
     </div>
 
-    <p class="gmp-guven">
-      <i
-        class="pi pi-shield"
-        aria-hidden="true"
-      />
-      <span>{{ t('giris.guvenSatiri') }}</span>
-    </p>
+    <ul class="gmp-guven">
+      <li class="gmp-guven-rozet">
+        <i
+          class="pi pi-shield"
+          aria-hidden="true"
+        />
+        <span>{{ t('giris.guvenKvkk') }}</span>
+      </li>
+      <li class="gmp-guven-rozet">
+        <i
+          class="pi pi-lock"
+          aria-hidden="true"
+        />
+        <span>{{ t('giris.guvenSsl') }}</span>
+      </li>
+      <li class="gmp-guven-rozet">
+        <i
+          class="pi pi-key"
+          aria-hidden="true"
+        />
+        <span>{{ t('giris.guven2fa') }}</span>
+      </li>
+    </ul>
   </aside>
 </template>
 
@@ -115,19 +131,24 @@ const markaLogo = '/logo-icon.png'
 
 .gmp-degerler {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
   margin: 4px 0 0;
   padding: 0;
   list-style: none;
 }
 
 .gmp-degerler li {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  font-size: 13.5px;
-  line-height: 1.55;
+  gap: 7px;
+  padding: 5px 10px 5px 6px;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid var(--giris-aksan-yumusak-2);
+  background: var(--giris-aksan-yumusak);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
   color: var(--giris-metin-2);
 }
 
@@ -135,14 +156,13 @@ const markaLogo = '/logo-icon.png'
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
-  border-radius: 9px;
+  border-radius: 50%;
   background: var(--giris-aksan-yumusak);
-  border: 1px solid var(--giris-aksan-yumusak-2);
   color: var(--giris-aksan-parlak);
-  font-size: 13px;
+  font-size: 11px;
 }
 
 .gmp-vitrin {
@@ -150,17 +170,29 @@ const markaLogo = '/logo-icon.png'
 }
 
 .gmp-guven {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gmp-guven-rozet {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  margin: 0;
-  font-size: 12px;
-  font-weight: 600;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid var(--giris-aksan-yumusak-2);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   color: var(--giris-metin-3);
 }
 
-.gmp-guven i {
-  font-size: 12px;
+.gmp-guven-rozet i {
+  font-size: 11px;
   color: var(--giris-aksan);
 }
 
