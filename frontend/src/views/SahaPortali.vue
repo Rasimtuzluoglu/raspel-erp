@@ -218,6 +218,7 @@
             <label>{{ t('sahaPortali.ziyaretMusteriZorunlu') }}</label>
             <Dropdown
               v-model="ziyaretForm.cariHesapId"
+              data-test="saha-ziyaret-cari"
               :options="cariSonuclari"
               option-label="ad"
               option-value="id"
@@ -240,6 +241,7 @@
             <label>{{ t('sahaPortali.gorusmeNotlariZorunlu') }}</label>
             <Textarea
               v-model="ziyaretForm.notlar"
+              data-test="saha-ziyaret-notlar"
               rows="4"
               :placeholder="t('sahaPortali.notlarPlaceholder')"
               class="w-full"
@@ -273,6 +275,7 @@
             </label>
           </div>
           <Button
+            data-test="saha-ziyaret-gonder"
             :label="t('sahaPortali.ziyaretIlet')"
             icon="pi pi-send"
             class="p-button-primary w-full mt-2 font-bold"
@@ -368,6 +371,8 @@
           <h2><i class="pi pi-receipt saha-baslik-ikon" />{{ t('sahaPortali.masrafAvansTaleplerim') }}</h2>
           <Button
             :label="t('sahaPortali.yeniMasrafAvans')"
+            data-test="saha-masraf-yeni"
+
             icon="pi pi-plus"
             class="p-button-primary p-button-sm"
             @click="yeniMasrafModal = true"
@@ -415,6 +420,8 @@
           <h2><i class="pi pi-calendar-plus saha-baslik-ikon" />{{ t('sahaPortali.izinTaleplerim') }}</h2>
           <Button
             :label="t('sahaPortali.yeniIzinTalebi')"
+            data-test="saha-izin-yeni"
+
             icon="pi pi-plus"
             class="p-button-primary p-button-sm"
             @click="yeniIzinModal = true"
@@ -477,6 +484,7 @@
             <label>{{ t('sahaPortali.musteriZorunlu') }}</label>
             <Dropdown
               v-model="tahsilatForm.cariHesapId"
+              data-test="saha-tahsilat-cari"
               :options="cariSonuclari"
               option-label="ad"
               option-value="id"
@@ -492,6 +500,7 @@
               <label>{{ t('sahaPortali.tutarZorunlu') }}</label>
               <input
                 v-model.number="tahsilatForm.tutar"
+                data-test="saha-tahsilat-tutar"
                 type="number"
                 min="1"
                 step="0.01"
@@ -552,6 +561,7 @@
             :label="t('sahaPortali.tahsilatiKaydet')"
             icon="pi pi-check"
             class="p-button-success w-full font-bold"
+            data-test="saha-tahsilat-kaydet"
             :loading="tahsilatGonderiliyor"
             @click="tahsilatKaydet"
           />
@@ -764,6 +774,7 @@
             <label>{{ t('sahaPortali.baslangic') }}</label>
             <InputText
               v-model="izinForm.baslangic"
+              data-test="saha-izin-baslangic"
               type="date"
               class="w-full"
             />
@@ -772,6 +783,7 @@
             <label>{{ t('sahaPortali.bitis') }}</label>
             <InputText
               v-model="izinForm.bitis"
+              data-test="saha-izin-bitis"
               type="date"
               class="w-full"
             />
@@ -797,6 +809,7 @@
           :label="t('sahaPortali.talebiGonder')"
           icon="pi pi-send"
           class="p-button-primary font-bold"
+          data-test="saha-izin-gonder"
           :loading="izinGonderiliyor"
           @click="izinTalepGonder"
         />
@@ -844,6 +857,7 @@
           <label>{{ t('sahaPortali.tutarZorunlu') }}</label>
           <input
             v-model.number="masrafForm.tutar"
+            data-test="saha-masraf-tutar"
             type="number"
             min="1"
             step="0.01"
@@ -856,6 +870,7 @@
           <label>{{ t('sahaPortali.aciklamaZorunlu') }}</label>
           <InputText
             v-model="masrafForm.aciklama"
+            data-test="saha-masraf-aciklama"
             :placeholder="t('sahaPortali.masrafAciklamaPlaceholder')"
             class="w-full"
           />
@@ -883,6 +898,7 @@
           :label="t('sahaPortali.talebiGonder')"
           icon="pi pi-send"
           class="p-button-primary font-bold"
+          data-test="saha-masraf-gonder"
           :loading="masrafGonderiliyor"
           @click="masrafTalepGonder"
         />

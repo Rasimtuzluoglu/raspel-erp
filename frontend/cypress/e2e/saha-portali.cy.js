@@ -13,7 +13,8 @@ const oturumVerisi = {
     username: 'saha',
     displayName: 'Ali Sürücü',
     role: 'USER',
-    sahaKullanici: true
+    sahaKullanici: true,
+    personelId: 3
   },
   companyName: 'Test Şirketi',
   sirketId: 1,
@@ -64,6 +65,14 @@ const apiMockla = () => {
   cy.intercept('GET', '**/api/kasalar*', { statusCode: 200, body: [] }).as('kasalar')
   cy.intercept('GET', '**/api/bankalar*', { statusCode: 200, body: [] }).as('bankalar')
   cy.intercept('POST', '**/api/deliveries/*/teslim*', { statusCode: 200, body: { id: 5 } }).as('teslim')
+  cy.intercept('GET', '**/api/cari-hesaplar/search*', {
+    statusCode: 200,
+    body: [{ id: 3, ad: 'Test Musteri', telefon: '05001112233' }]
+  }).as('cariArama')
+  cy.intercept('POST', '**/api/notlar', { statusCode: 200, body: { id: 71 } }).as('ziyaretKaydet')
+  cy.intercept('POST', '**/api/personel-masraf-talepler', { statusCode: 200, body: { id: 81 } }).as('masrafKaydet')
+  cy.intercept('POST', '**/api/personel-izin', { statusCode: 200, body: { id: 91 } }).as('izinKaydet')
+  cy.intercept('POST', '**/api/tahsilat', { statusCode: 200, body: { id: 101 } }).as('tahsilatKaydet')
 }
 
 const sahaAc = (cevrimici = true) => {
@@ -121,6 +130,22 @@ const imzaCiz = () => {
     .trigger('mousedown', { offsetX: 20, offsetY: 30, force: true })
     .trigger('mousemove', { offsetX: 90, offsetY: 60, force: true })
     .trigger('mouseup', { force: true })
+}
+
+/** PrimeVue Select (Dropdown) içinden sunucu aramasıyla cari seçer. */
+const cariSec = (kanca) => {
+  cy.get(kanca).click()
+  cy.get('.p-select-filter, .p-dropdown-filter').first().type('Test')
+  cy.wait('@cariArama', { timeout: 20000 })
+  cy.get('.p-select-option, .p-dropdown-item').first().click()
+}
+
+/** Test tarayıcısını yeniden çevrimiçi yapar ve `online` olayını tetikler. */
+const cevrimiciYap = () => {
+  cy.window().then((win) => {
+    Object.defineProperty(win.navigator, 'onLine', { configurable: true, get: () => true })
+    win.dispatchEvent(new win.Event('online'))
+  })
 }
 
 describe('Saha Portalı', () => {
@@ -211,6 +236,99 @@ describe('Saha Portalı', () => {
     })
 
     cy.wait('@teslim', { timeout: 20000 })
+    cy.get('[data-test="saha-kuyruk-cubugu"]', { timeout: 10000 }).should('not.exist')
+  })
+
+  it('saha-cevrimdisi-ziyaret: ziyaret kuyruga girer, online gonderilir', () => {
+    cy.viewport(390, 844)
+    sahaAc(false)
+
+    cy.get('[data-test="saha-sekme-ziyaret"]').scrollIntoView().click()
+    cariSec('[data-test="saha-ziyaret-cari"]')
+    cy.get('[data-test="saha-ziyaret-notlar"]').type('Vitrin kontrolu yapildi')
+    cy.get('[data-test="saha-ziyaret-gonder"]').click()
+
+    cy.get('[data-test="saha-kuyruk-cubugu"]', { timeout: 10000 }).should('be.visible')
+    kuyrukKayitlari().then((kayitlar) => {
+      const kayit = kayitlar.find((k) => k.tur === 'ZIYARET')
+      expect(kayit, 'ZIYARET kaydi').to.exist
+      expect(kayit.payload.icerik).to.contain('Vitrin')
+      expect(kayit.payload.cariHesapId).to.eq(3)
+    })
+
+    cevrimiciYap()
+    cy.wait('@ziyaretKaydet', { timeout: 20000 })
+    cy.get('[data-test="saha-kuyruk-cubugu"]', { timeout: 10000 }).should('not.exist')
+  })
+
+  it('saha-cevrimdisi-masraf: masraf talebi kuyruga girer, online gonderilir', () => {
+    cy.viewport(390, 844)
+    sahaAc(false)
+
+    cy.get('[data-test="saha-sekme-talepler"]').scrollIntoView().click()
+    cy.get('[data-test="saha-masraf-yeni"]').click()
+    cy.get('[data-test="saha-masraf-tutar"]').clear().type('150')
+    cy.get('[data-test="saha-masraf-aciklama"]').type('Yakit fisi')
+    cy.get('[data-test="saha-masraf-gonder"]').click()
+
+    cy.get('[data-test="saha-kuyruk-cubugu"]', { timeout: 10000 }).should('be.visible')
+    kuyrukKayitlari().then((kayitlar) => {
+      const kayit = kayitlar.find((k) => k.tur === 'MASRAF')
+      expect(kayit, 'MASRAF kaydi').to.exist
+      expect(kayit.payload.tutar).to.eq(150)
+    })
+
+    cevrimiciYap()
+    cy.wait('@masrafKaydet', { timeout: 20000 })
+    cy.get('[data-test="saha-kuyruk-cubugu"]', { timeout: 10000 }).should('not.exist')
+  })
+
+  it('saha-cevrimdisi-izin: izin talebi kuyruga girer, online gonderilir', () => {
+    cy.viewport(390, 844)
+    sahaAc(false)
+
+    cy.get('[data-test="saha-sekme-talepler"]').scrollIntoView().click()
+    cy.get('[data-test="saha-talep-izin"]').click()
+    cy.get('[data-test="saha-izin-yeni"]').click()
+    cy.get('[data-test="saha-izin-gonder"]').click()
+
+    cy.get('[data-test="saha-kuyruk-cubugu"]', { timeout: 10000 }).should('be.visible')
+    kuyrukKayitlari().then((kayitlar) => {
+      const kayit = kayitlar.find((k) => k.tur === 'IZIN')
+      expect(kayit, 'IZIN kaydi').to.exist
+      expect(kayit.payload.personelId).to.eq(3)
+      expect(kayit.payload.gunSayisi).to.be.greaterThan(0)
+    })
+
+    cevrimiciYap()
+    cy.wait('@izinKaydet', { timeout: 20000 })
+    cy.get('[data-test="saha-kuyruk-cubugu"]', { timeout: 10000 }).should('not.exist')
+  })
+
+  it('saha-cevrimdisi-tahsilat: ayni idempotency anahtariyla gonderilir', () => {
+    cy.viewport(390, 844)
+    sahaAc(false)
+
+    cy.get('[data-test="saha-sekme-tahsilat"]').scrollIntoView().click()
+    cariSec('[data-test="saha-tahsilat-cari"]')
+    cy.get('[data-test="saha-tahsilat-tutar"]').clear().type('250')
+    cy.get('[data-test="saha-tahsilat-kaydet"]').click()
+
+    cy.get('[data-test="saha-kuyruk-cubugu"]', { timeout: 10000 }).should('be.visible')
+    let anahtar = null
+    kuyrukKayitlari().then((kayitlar) => {
+      const kayit = kayitlar.find((k) => k.tur === 'TAHSILAT')
+      expect(kayit, 'TAHSILAT kaydi').to.exist
+      expect(kayit.payload.tutar).to.eq(250)
+      anahtar = kayit.clientKey
+      expect(anahtar, 'idempotency anahtari').to.be.a('string').and.not.be.empty
+    })
+
+    cevrimiciYap()
+    cy.wait('@tahsilatKaydet', { timeout: 20000 }).then(({ request }) => {
+      const gonderilen = request.headers['x-idempotency-key'] || request.headers['X-Idempotency-Key']
+      expect(gonderilen).to.eq(anahtar)
+    })
     cy.get('[data-test="saha-kuyruk-cubugu"]', { timeout: 10000 }).should('not.exist')
   })
 })
