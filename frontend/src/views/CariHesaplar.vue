@@ -906,76 +906,11 @@
           <span>{{ t('cariHesaplar.hareketlerBaslik') }}</span>
         </div>
       </template>
-      <div class="hareket-info">
-        <h3>{{ selectedCariHesap?.ad }}</h3>
-        <div class="bakiye-ozet">
-          <div class="ozet-satir">
-            <span class="ozet-etiket">{{ t('cariHesaplar.toplamTahsilat') }}</span>
-            <span class="positive">{{ formatCurrency(toplamTahsilat) }}</span>
-          </div>
-          <div class="ozet-satir">
-            <span class="ozet-etiket">{{ t('cariHesaplar.toplamOdeme') }}</span>
-            <span class="negative">{{ formatCurrency(toplamOdeme) }}</span>
-          </div>
-          <div class="ozet-satir">
-            <span class="ozet-etiket">{{ t('cariHesaplar.toplamBorclandirma') }}</span>
-            <span class="negative">{{ formatCurrency(toplamBorclandirma) }}</span>
-          </div>
-          <div class="ozet-satir ozet-bakiye">
-            <span class="ozet-etiket">{{ t('cariHesaplar.guncelBakiye') }}</span>
-            <strong :class="guncelBakiye >= 0 ? 'positive' : 'negative'">{{ formatCurrency(guncelBakiye) }}</strong>
-          </div>
-        </div>
-      </div>
-
-      <div class="ekstre-arac">
-        <div class="ekstre-hizli">
-          <Button
-            :label="t('cariHesaplar.buAy')"
-            text
-            class="p-button-sm"
-            @click="hizliAralik('buAy')"
-          />
-          <Button
-            :label="t('cariHesaplar.gecenAy')"
-            text
-            class="p-button-sm"
-            @click="hizliAralik('gecenAy')"
-          />
-          <Button
-            :label="t('cariHesaplar.buYil')"
-            text
-            class="p-button-sm"
-            @click="hizliAralik('buYil')"
-          />
-          <Button
-            :label="t('cariHesaplar.tumu')"
-            text
-            class="p-button-sm"
-            @click="hizliAralik('tum')"
-          />
-        </div>
-        <DatePicker
-          v-model="ekstreBaslangic"
-          :placeholder="t('cariHesaplar.ekstreBaslangic')"
-          date-format="dd.mm.yy"
-          show-icon
-          class="ekstre-tarih"
-        />
-        <DatePicker
-          v-model="ekstreBitis"
-          :placeholder="t('cariHesaplar.ekstreBitis')"
-          date-format="dd.mm.yy"
-          show-icon
-          class="ekstre-tarih"
-        />
-        <Button
-          :label="t('cariHesaplar.ekstreYazdir')"
-          icon="pi pi-print"
-          class="p-button-sm p-button-outlined"
-          @click="cariEkstreYazdir"
-        />
-      </div>
+      <CariHareketBasligi
+        :cari="selectedCariHesap"
+        :ozet="hareketOzeti"
+        @ekstre="ekstreGonder"
+      />
 
       <div
         v-if="cariHareketlerYukleniyor"
@@ -1720,6 +1655,7 @@ import { formatCurrency } from '../utils/format.js'
 import { escapeHtml } from '../utils/escapeHtml.js'
 import { fisPenceresiAcVeYazdir } from '../utils/fisYazdir.js'
 import { useI18n } from 'vue-i18n'
+import CariHareketBasligi from '../components/cari/CariHareketBasligi.vue'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
@@ -2066,24 +2002,6 @@ const etiketOner = (event) => {
     .slice(0, 20)
 }
 
-/** Ekstre tarih araligi icin hizli secimler (yazdirma araligini belirler). */
-const hizliAralik = (tip) => {
-  const b = new Date()
-  if (tip === 'tum') {
-    ekstreBaslangic.value = null
-    ekstreBitis.value = null
-  } else if (tip === 'buAy') {
-    ekstreBaslangic.value = new Date(b.getFullYear(), b.getMonth(), 1)
-    ekstreBitis.value = new Date(b.getFullYear(), b.getMonth() + 1, 0)
-  } else if (tip === 'gecenAy') {
-    ekstreBaslangic.value = new Date(b.getFullYear(), b.getMonth() - 1, 1)
-    ekstreBitis.value = new Date(b.getFullYear(), b.getMonth(), 0)
-  } else if (tip === 'buYil') {
-    ekstreBaslangic.value = new Date(b.getFullYear(), 0, 1)
-    ekstreBitis.value = new Date(b.getFullYear(), 11, 31)
-  }
-}
-
 const toplamTahsilat = computed(() =>
   cariHareketler.value.filter((h) => h.tur === 'TAHSILAT').reduce((s, h) => s + (h.tutar || 0), 0)
 )
@@ -2134,6 +2052,21 @@ const cariHareketlerBakiye = computed(() => {
 const tarihIso = (d) => {
   const x = new Date(d)
   return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
+}
+
+// Cari 360 kartı başlığı (CariHareketBasligi) bağlantısı
+const hareketOzeti = computed(() => ({
+  tahsilat: toplamTahsilat.value,
+  odeme: toplamOdeme.value,
+  borclandirma: toplamBorclandirma.value,
+  bakiye: guncelBakiye.value
+}))
+
+/** Başlık bileşeninden gelen aralıkla ekstre yazdırır. */
+const ekstreGonder = ({ baslangic, bitis }) => {
+  ekstreBaslangic.value = baslangic
+  ekstreBitis.value = bitis
+  cariEkstreYazdir()
 }
 
 const cariEkstreYazdir = async () => {
