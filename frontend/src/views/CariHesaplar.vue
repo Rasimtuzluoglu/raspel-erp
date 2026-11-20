@@ -912,79 +912,11 @@
         @ekstre="ekstreGonder"
       />
 
-      <div
-        v-if="cariHareketlerYukleniyor"
-        class="loading"
+      <CariHareketTablosu
+        :hareketler="cariHareketler"
+        :bakiye="cariHareketlerBakiye"
+        :yukleniyor="cariHareketlerYukleniyor"
       >
-        <p><i class="pi pi-spin pi-spinner" /> {{ t('cariHesaplar.hareketlerYukleniyor') }}</p>
-      </div>
-
-      <div
-        v-else
-        class="table-container"
-      >
-        <AppDataTable
-          :value="cariHareketlerBakiye"
-          striped-rows
-          :rows="10"
-          :paginator="true"
-          size="small"
-        >
-          <Column
-            field="hareketTarihi"
-            :header="t('common.date')"
-            style="width: 120px"
-          >
-            <template #body="slotProps">
-              {{ formatDate(slotProps.data.hareketTarihi) }}
-            </template>
-          </Column>
-          <Column
-            field="tur"
-            :header="t('cariHesaplar.tur')"
-            style="width: 100px"
-          >
-            <template #body="slotProps">
-              <span :class="['badge', hareketBadgeSinifi(slotProps.data.tur)]">
-                {{ hareketTuruEtiketi(slotProps.data.tur) }}
-              </span>
-            </template>
-          </Column>
-          <Column
-            field="tutar"
-            :header="t('common.amount')"
-            style="width: 120px"
-          >
-            <template #body="slotProps">
-              <span :class="slotProps.data.tur === 'TAHSILAT' ? 'positive' : 'negative'">
-                {{ slotProps.data.tur === 'TAHSILAT' ? '+' : '-' }}{{ formatCurrency(slotProps.data.tutar) }}
-              </span>
-            </template>
-          </Column>
-          <Column
-            field="aciklama"
-            :header="t('common.description')"
-          />
-          <Column
-            field="bakiye"
-            :header="t('cariHesaplar.bakiye')"
-            style="width: 130px"
-          >
-            <template #body="slotProps">
-              <span :class="slotProps.data.bakiye >= 0 ? 'positive' : 'negative'">
-                {{ formatCurrency(slotProps.data.bakiye) }}
-              </span>
-            </template>
-          </Column>
-          <template #empty>
-            <EmptyState
-              v-if="cariHareketler && cariHareketler.length === 0"
-              :message="t('cariHesaplar.hareketYok')"
-              icon="pi pi-list"
-            />
-          </template>
-        </AppDataTable>
-
         <TabView
           scrollable
           class="cari-sekmeler"
@@ -1223,7 +1155,7 @@
             </div>
           </TabPanel>
         </TabView>
-      </div>
+      </CariHareketTablosu>
 
       <template #footer>
         <Button
@@ -1656,6 +1588,7 @@ import { escapeHtml } from '../utils/escapeHtml.js'
 import { fisPenceresiAcVeYazdir } from '../utils/fisYazdir.js'
 import { useI18n } from 'vue-i18n'
 import CariHareketBasligi from '../components/cari/CariHareketBasligi.vue'
+import CariHareketTablosu from '../components/cari/CariHareketTablosu.vue'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
@@ -2157,8 +2090,6 @@ const cariEkstreYazdir = async () => {
 
 const hareketTuruEtiketi = (tur) =>
   ({ TAHSILAT: t('cariHesaplar.tahsilat'), ODEME: t('cariHesaplar.odeme'), BORC: t('cariHesaplar.borclandirma') })[tur] || tur
-const hareketBadgeSinifi = (tur) =>
-  ({ TAHSILAT: 'tahsilat', ODEME: 'odeme', BORC: 'borclandirma' })[tur] || 'odeme'
 
 const ibanGecerli = computed(() => {
   const val = (form.value.iban || '').replace(/\s/g, '').toUpperCase()
