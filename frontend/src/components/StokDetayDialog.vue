@@ -599,6 +599,7 @@
 </template>
 
 <script setup>
+import { GRAFIK } from '../utils/grafikRenkleri.js'
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { stokAPI, depoAPI } from '../api/index.js'
@@ -759,22 +760,22 @@ const fiyatSerisiVerisi = computed(() => ({
   datasets: [
     {
       label: t('stoklar.analiz.ortalamaAlis'),
-      borderColor: '#10b981',
+      borderColor: GRAFIK.yesil,
       backgroundColor: 'rgba(16, 185, 129, 0.12)',
       fill: true,
       tension: 0.35,
       pointRadius: 4,
-      pointBackgroundColor: '#10b981',
+      pointBackgroundColor: GRAFIK.yesil,
       data: aylik.value.map((a) => a.ortalamaAlisFiyati ?? 0)
     },
     {
       label: t('stoklar.analiz.ortalamaSatis'),
-      borderColor: '#3b82f6',
+      borderColor: GRAFIK.mavi,
       backgroundColor: 'rgba(59, 130, 246, 0.12)',
       fill: true,
       tension: 0.35,
       pointRadius: 4,
-      pointBackgroundColor: '#3b82f6',
+      pointBackgroundColor: GRAFIK.mavi,
       data: aylik.value.map((a) => a.ortalamaSatisFiyati ?? 0)
     }
   ]

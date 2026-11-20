@@ -49,25 +49,25 @@
           :baslik="t('karlilik.ciro')"
           :deger="veri.ozet.ciro"
           ikon="pi pi-shopping-cart"
-          renk="#3b82f6"
+          :renk="GRAFIK.mavi"
         />
         <KpiKart
           :baslik="t('karlilik.maliyet')"
           :deger="veri.ozet.maliyet"
           ikon="pi pi-box"
-          renk="#f59e0b"
+          :renk="GRAFIK.amber"
         />
         <KpiKart
           :baslik="t('karlilik.brutKar')"
           :deger="veri.ozet.brutKar"
           ikon="pi pi-chart-line"
-          renk="#10b981"
+          :renk="GRAFIK.yesil"
         />
         <KpiKart
           :baslik="t('karlilik.brutKarMarji')"
           :deger="veri.ozet.brutKarMarji"
           ikon="pi pi-percentage"
-          renk="#8b5cf6"
+          :renk="GRAFIK.mor"
           :para-birimi="false"
         />
       </div>
@@ -364,6 +364,7 @@
 </template>
 
 <script setup>
+import { GRAFIK, SERI } from '../utils/grafikRenkleri.js'
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { raporAPI } from '../api/index.js'
@@ -435,7 +436,7 @@ const yukle = async () => {
   }
 }
 
-const renkler = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#a3e635']
+const renkler = SERI
 
 // ---- Drill-down: satıra tıklayınca alt kırılım + belge dökümü ----
 const detayDialog = ref(false)
@@ -479,9 +480,9 @@ const trendData = computed(() => {
   return {
     labels: tr.map((x) => x.ay),
     datasets: [
-      { label: t('karlilik.ciro'), data: tr.map((x) => x.ciro), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,.15)', fill: true, tension: 0.3 },
-      { label: t('karlilik.maliyet'), data: tr.map((x) => x.maliyet), borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,.15)', fill: true, tension: 0.3 },
-      { label: t('karlilik.brutKar'), data: tr.map((x) => x.brutKar), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.15)', fill: true, tension: 0.3 }
+      { label: t('karlilik.ciro'), data: tr.map((x) => x.ciro), borderColor: GRAFIK.mavi, backgroundColor: 'rgba(59,130,246,.15)', fill: true, tension: 0.3 },
+      { label: t('karlilik.maliyet'), data: tr.map((x) => x.maliyet), borderColor: GRAFIK.amber, backgroundColor: 'rgba(245,158,11,.15)', fill: true, tension: 0.3 },
+      { label: t('karlilik.brutKar'), data: tr.map((x) => x.brutKar), borderColor: GRAFIK.yesil, backgroundColor: 'rgba(16,185,129,.15)', fill: true, tension: 0.3 }
     ]
   }
 })
@@ -491,7 +492,7 @@ const kirilimData = computed(() => {
   return {
     labels: top.map((x) => x.ad),
     datasets: [
-      { label: t('karlilik.brutKar'), data: top.map((x) => x.brutKar), backgroundColor: top.map((x) => (x.brutKar < 0 ? '#ef4444' : '#10b981')) }
+      { label: t('karlilik.brutKar'), data: top.map((x) => x.brutKar), backgroundColor: top.map((x) => (x.brutKar < 0 ? GRAFIK.kirmizi : GRAFIK.yesil)) }
     ]
   }
 })

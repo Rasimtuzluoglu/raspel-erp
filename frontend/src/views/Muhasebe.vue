@@ -742,6 +742,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { GRAFIK } from '../utils/grafikRenkleri.js'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
 import { useConfirm } from 'primevue/useconfirm'
@@ -818,7 +819,7 @@ const bilancoChartData = computed(() => ({
   labels: [t('muhasebe.aktif'), t('muhasebe.pasif')],
   datasets: [{
     data: [Number(bilanco.value.aktifToplam) || 0, Number(bilanco.value.pasifToplam) || 0],
-    backgroundColor: ['#3b82f6', '#f59e0b']
+    backgroundColor: [GRAFIK.mavi, GRAFIK.amber]
   }]
 }))
 
@@ -831,7 +832,7 @@ const karZararChartData = computed(() => ({
       Number(karZarar.value.giderToplam) || 0,
       Number(karZarar.value.netKar) || 0
     ],
-    backgroundColor: ['#10b981', '#ef4444', '#3b82f6']
+    backgroundColor: [GRAFIK.yesil, GRAFIK.kirmizi, GRAFIK.mavi]
   }]
 }))
 

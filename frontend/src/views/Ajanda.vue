@@ -32,27 +32,27 @@
         :baslik="t('ajanda.kpiBugun')"
         :deger="ozet.bugunOlay"
         ikon="pi pi-sun"
-        renk="#3b82f6"
+        :renk="GRAFIK.mavi"
         :para-birimi="false"
       />
       <KpiKart
         :baslik="t('ajanda.kpiBuAyVade')"
         :deger="ozet.buAyVadeToplam"
         ikon="pi pi-money-bill"
-        renk="#f59e0b"
+        :renk="GRAFIK.amber"
       />
       <KpiKart
         :baslik="t('ajanda.kpiBekleyen')"
         :deger="ozet.bekleyenGorev"
         ikon="pi pi-check-square"
-        renk="#8b5cf6"
+        :renk="GRAFIK.mor"
         :para-birimi="false"
       />
       <KpiKart
         :baslik="t('ajanda.kpiGecikmis')"
         :deger="ozet.gecikmisGorev"
         ikon="pi pi-exclamation-circle"
-        renk="#ef4444"
+        :renk="GRAFIK.kirmizi"
         :para-birimi="false"
       />
     </div>
@@ -549,6 +549,7 @@
 </template>
 
 <script setup>
+import { GRAFIK } from '../utils/grafikRenkleri.js'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'

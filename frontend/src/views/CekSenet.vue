@@ -37,7 +37,7 @@
           :baslik="t('cekSenet.kpiPortfoy')"
           :deger="ozet.portfoy || 0"
           ikon="pi pi-credit-card"
-          renk="#3b82f6"
+          :renk="GRAFIK.mavi"
           :para-birimi="false"
         >
           <template #alt>
@@ -48,14 +48,14 @@
           :baslik="t('cekSenet.kpiTeminatta')"
           :deger="ozet.teminatta || 0"
           ikon="pi pi-shield"
-          renk="#f59e0b"
+          :renk="GRAFIK.amber"
           :para-birimi="false"
         />
         <KpiKart
           :baslik="t('cekSenet.kpiVadesiGecen')"
           :deger="ozet.vadesiGecen || 0"
           ikon="pi pi-exclamation-triangle"
-          renk="#ef4444"
+          :renk="GRAFIK.kirmizi"
           :para-birimi="false"
           trend-iyi-yonu="asagi"
         />
@@ -63,14 +63,14 @@
           :baslik="t('cekSenet.kpiBuAy')"
           :deger="ozet.buAyVadesiGelen || 0"
           ikon="pi pi-calendar-clock"
-          renk="#14b8a6"
+          :renk="GRAFIK.teal"
           :para-birimi="false"
         />
         <KpiKart
           :baslik="t('cekSenet.kpiProtesto')"
           :deger="ozet.protesto || 0"
           ikon="pi pi-ban"
-          renk="#64748b"
+          :renk="GRAFIK.gri"
           :para-birimi="false"
         />
       </template>
@@ -1038,6 +1038,7 @@
 </template>
 
 <script setup>
+import { GRAFIK } from '../utils/grafikRenkleri.js'
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useConfirm } from 'primevue/useconfirm'

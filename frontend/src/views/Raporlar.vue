@@ -26,7 +26,7 @@
     >
       <span class="favori-baslik"><i
         class="pi pi-star-fill"
-        style="color: #fbbf24"
+        :style="{ color: GRAFIK.amberAcik }"
       /> {{ t('raporlar.sikKullanilanlar') }}</span>
       <Button
         v-for="r in favoriRaporlar"
@@ -926,6 +926,7 @@
 </template>
 
 <script setup>
+import { GRAFIK } from '../utils/grafikRenkleri.js'
 import { ref, onMounted, watch, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
@@ -1148,7 +1149,7 @@ const ggChartData = computed(() => {
     datasets: [{
       label: t('raporlar.netTutar'),
       data: liste.map((x) => Number(x.net) || 0),
-      backgroundColor: liste.map((x) => ((Number(x.net) || 0) < 0 ? '#ef4444' : '#10b981'))
+      backgroundColor: liste.map((x) => ((Number(x.net) || 0) < 0 ? GRAFIK.kirmizi : GRAFIK.yesil))
     }]
   }
 })
@@ -1159,7 +1160,7 @@ const kdvChartData = computed(() => {
     labels: [t('raporlar.cikisKdvSatis'), t('raporlar.girisKdvAlis')],
     datasets: [{
       data: [Number(d?.toplamKdvCikis) || 0, Number(d?.toplamKdvGiris) || 0],
-      backgroundColor: ['#3b82f6', '#f59e0b']
+      backgroundColor: [GRAFIK.mavi, GRAFIK.amber]
     }]
   }
 })
@@ -1171,7 +1172,7 @@ const ckChartData = computed(() => {
     datasets: [{
       label: t('raporlar.kar'),
       data: liste.map((x) => Number(x.kar) || 0),
-      backgroundColor: liste.map((x) => ((Number(x.kar) || 0) < 0 ? '#ef4444' : '#10b981'))
+      backgroundColor: liste.map((x) => ((Number(x.kar) || 0) < 0 ? GRAFIK.kirmizi : GRAFIK.yesil))
     }]
   }
 })

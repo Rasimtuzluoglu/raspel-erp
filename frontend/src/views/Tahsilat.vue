@@ -44,7 +44,7 @@
             :baslik="t('tahsilat.toplamAlacak')"
             :deger="ozet?.toplamAlacak || 0"
             ikon="pi pi-wallet"
-            renk="#3b82f6"
+            :renk="GRAFIK.mavi"
           >
             <template #alt>
               {{ t('tahsilat.cariSayisi', { n: (ozet?.cariler || []).length }) }}
@@ -61,7 +61,7 @@
             :baslik="t('tahsilat.vadesiGecmis')"
             :deger="ozet?.vadesiGecmisToplam || 0"
             ikon="pi pi-exclamation-triangle"
-            renk="#ef4444"
+            :renk="GRAFIK.kirmizi"
             trend-iyi-yonu="asagi"
           >
             <template #alt>
@@ -79,7 +79,7 @@
             :baslik="t('tahsilat.otuzGunIcinde')"
             :deger="ozet?.vadesiYaklasanToplam || 0"
             ikon="pi pi-calendar-clock"
-            renk="#f59e0b"
+            :renk="GRAFIK.amber"
           />
         </button>
         <button
@@ -92,7 +92,7 @@
             :baslik="t('tahsilat.kpiBuAyTahsilat')"
             :deger="buAyTahsilat"
             ikon="pi pi-chart-line"
-            renk="#10b981"
+            :renk="GRAFIK.yesil"
           >
             <template #alt>
               {{ t('tahsilat.tahsilatSayisiAlt', { n: buAyPerformans?.tahsilatSayisi || 0 }) }}
@@ -109,7 +109,7 @@
             :baslik="t('tahsilat.kpiHedefGerceklesme')"
             :deger="hedefGerceklesme || 0"
             ikon="pi pi-percentage"
-            :renk="hedefGerceklesme != null && hedefGerceklesme >= 100 ? '#10b981' : '#8b5cf6'"
+            :renk="hedefGerceklesme != null && hedefGerceklesme >= 100 ? GRAFIK.yesil : GRAFIK.mor"
             :para-birimi="false"
           >
             <template #deger>
@@ -956,6 +956,7 @@
 </template>
 
 <script setup>
+import { GRAFIK } from '../utils/grafikRenkleri.js'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'

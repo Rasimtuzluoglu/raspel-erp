@@ -28,35 +28,35 @@
         :baslik="t('anomaliler.kpiToplam')"
         :deger="anomaliler.length"
         ikon="pi pi-shield"
-        renk="#3b82f6"
+        :renk="GRAFIK.mavi"
         :para-birimi="false"
       />
       <KpiKart
         :baslik="t('anomaliler.kpiKritik')"
         :deger="kritikYuksekSayisi"
         ikon="pi pi-exclamation-triangle"
-        renk="#ef4444"
+        :renk="GRAFIK.kirmizi"
         :para-birimi="false"
       />
       <KpiKart
         :baslik="t('anomaliler.kpiOrta')"
         :deger="ortaSayisi"
         ikon="pi pi-exclamation-circle"
-        renk="#f59e0b"
+        :renk="GRAFIK.amber"
         :para-birimi="false"
       />
       <KpiKart
         :baslik="t('anomaliler.kpiDusuk')"
         :deger="dusukSayisi"
         ikon="pi pi-info-circle"
-        renk="#64748b"
+        :renk="GRAFIK.gri"
         :para-birimi="false"
       />
       <KpiKart
         :baslik="t('anomaliler.kpiIp')"
         :deger="ipListesi.length"
         ikon="pi pi-lock"
-        renk="#8b5cf6"
+        :renk="GRAFIK.mor"
         :para-birimi="false"
       />
     </div>
@@ -383,6 +383,7 @@
 </template>
 
 <script setup>
+import { GRAFIK } from '../utils/grafikRenkleri.js'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToastBildirim } from '../composables/useToastBildirim.js'
