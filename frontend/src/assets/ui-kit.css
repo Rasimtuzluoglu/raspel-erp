@@ -1,0 +1,106 @@
+/**
+ * Ortak görsel primitifler (makyaj katmanı).
+ *
+ * Amaç: aynı kart/rozet/başlık/sayı dilini tek yerden yönetmek. Renk ve ölçü
+ * değerleri yalnızca `app.css` token'larından gelir; burada sabit renk yoktur.
+ * Mevcut bileşen sınıflarına dokunmaz, eklemelidir.
+ */
+
+/* Kart: liste/kutu yüzeyi. Tıklanabilir kartlarda `rp-kart--etkilesim` ekleyin. */
+.rp-kart {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-kart);
+  min-width: 0;
+}
+
+.rp-kart--etkilesim {
+  transition:
+    border-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+}
+
+.rp-kart--etkilesim:hover {
+  border-color: var(--accent-border);
+  box-shadow: var(--shadow-yukari);
+}
+
+/* Rozet: durum etiketleri. Varsayılan nötr; semantik varyantlar aşağıda. */
+.rp-rozet {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-bold);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.rp-rozet--ok {
+  color: var(--success);
+  background: var(--success-soft);
+  border-color: var(--success-border);
+}
+
+.rp-rozet--uyari {
+  color: var(--warning);
+  background: var(--warning-soft);
+  border-color: var(--warning-border);
+}
+
+.rp-rozet--hata {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-color: var(--danger-border);
+}
+
+.rp-rozet--notr {
+  color: var(--text-muted);
+  background: var(--bg-muted);
+  border-color: var(--border);
+}
+
+/* Sayı/para hücreleri: hizalı rakamlar için. */
+.rp-sayi {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Sağa hizalı sayı sütunu (tablo hücreleri). */
+.rp-sayi--sag {
+  text-align: right;
+}
+
+/* Bölüm başlıkları (sayfa başlığı PageHeader'da kalır). */
+.rp-baslik-2 {
+  margin: 0;
+  font-size: var(--font-2xl);
+  line-height: 1.25;
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.rp-baslik-3 {
+  margin: 0;
+  font-size: var(--font-xl);
+  line-height: 1.3;
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.005em;
+  color: var(--text-primary);
+}
+
+/* Etkileşimli öğelerde ince geçiş (150 ms). */
+.rp-gecis {
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+}

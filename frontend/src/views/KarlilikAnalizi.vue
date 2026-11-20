@@ -599,7 +599,7 @@ onMounted(yukle)
   border: 1px solid rgba(245, 158, 11, 0.4);
 }
 .uyari-baslik {
-  color: #f59e0b;
+  color: var(--warning);
   font-weight: 600;
 }
 .uyari-satir {
@@ -615,20 +615,20 @@ onMounted(yukle)
   color: var(--text-primary);
 }
 .uyari-marj {
-  color: #ef4444;
+  color: var(--danger);
   font-weight: 600;
 }
 .uyari-tutar {
-  color: #ef4444;
+  color: var(--danger);
   min-width: 110px;
   text-align: right;
 }
 .pozitif {
-  color: #10b981;
+  color: var(--success);
   font-weight: 600;
 }
 .negatif {
-  color: #ef4444;
+  color: var(--danger);
   font-weight: 600;
 }
 .kirilim-tablo :deep(.p-datatable-tbody > tr) {

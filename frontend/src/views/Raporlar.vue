@@ -1529,11 +1529,11 @@ import { formatTarih as formatDate, getLocalDateString, vadeRiskSinifi } from '.
 }
 .raporlar-nav-yildiz:hover {
   opacity: 0.9;
-  color: #fbbf24;
+  color: var(--warning);
 }
 .raporlar-nav-yildiz.favori {
   opacity: 1;
-  color: #fbbf24;
+  color: var(--warning);
 }
 .rapor-icerik {
   min-width: 0;
@@ -1635,11 +1635,11 @@ import { formatTarih as formatDate, getLocalDateString, vadeRiskSinifi } from '.
 }
 .rapor-sekme-baslik .pi-star:hover {
   opacity: 0.8;
-  color: #fbbf24;
+  color: var(--warning);
 }
 .rapor-sekme-baslik .pi-star.favori {
   opacity: 1;
-  color: #fbbf24;
+  color: var(--warning);
 }
 .rapor-sekme-baslik .pi-star.favori:before {
   content: '\e936';
@@ -1759,16 +1759,16 @@ import { formatTarih as formatDate, getLocalDateString, vadeRiskSinifi } from '.
   color: var(--success);
 }
 .risk-az {
-  background: #fff3e0;
-  color: #e65100;
+  background: var(--warning-soft);
+  color: var(--warning);
 }
 .risk-orta {
   background: var(--danger-soft);
   color: var(--danger);
 }
 .risk-yuksek {
-  background: #fce4ec;
-  color: #880e4f;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 /* Yaşlandırma kova özeti: her kova bir kart, altında payı. Kartlar yatayda
    kaydırılabilir; 5 kova dar ekranda sığmaz. */

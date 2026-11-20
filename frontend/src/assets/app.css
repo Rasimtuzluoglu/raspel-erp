@@ -58,6 +58,11 @@
   --elev-2: 0 8px 24px rgba(0, 0, 0, 0.35);
   --elev-3: 0 16px 40px rgba(0, 0, 0, 0.45);
 
+  /* Kart/ust katman gölgeleri ve odak halkası (tek otorite) */
+  --shadow-kart: var(--elev-1);
+  --shadow-yukari: var(--elev-2);
+  --focus-ring: 0 0 0 2px var(--accent-border);
+
   /* Olcek: hareket */
   --dur-fast: 0.15s;
   --dur-base: 0.2s;
@@ -91,6 +96,9 @@
   --info: #3b82f6;
   --info-soft: rgba(59, 130, 246, 0.15);
   --info-border: rgba(59, 130, 246, 0.32);
+  --purple: #8b5cf6;
+  --purple-soft: rgba(139, 92, 246, 0.15);
+  --purple-border: rgba(139, 92, 246, 0.32);
 
   /* Renk paleti (tema-bagimsiz sabit tonlar) — kural icinde hex tekrari yerine
      tek otorite. Degerler mevcut gorunumu birebir korur. */
@@ -159,6 +167,9 @@
   --elev-1: 0 2px 10px rgba(15, 23, 42, 0.06);
   --elev-2: 0 8px 24px rgba(15, 23, 42, 0.1);
   --elev-3: 0 16px 40px rgba(15, 23, 42, 0.14);
+  --shadow-kart: var(--elev-1);
+  --shadow-yukari: var(--elev-2);
+  --focus-ring: 0 0 0 2px var(--accent-border);
 }
 
 /* Semantik yardımcı sınıflar (uygulama temasına göre) */
@@ -2677,4 +2688,16 @@ body {
 .p-iconfield .p-inputicon {
   color: var(--text-muted) !important;
   font-size: 0.875rem !important;
+}
+
+/* Hareket azaltma tercihi: tum gecis ve animasyonlar kapanir (erisilebilirlik).
+   Bilesenlerde ayrica kural yazmaya gerek kalmaz. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
 }

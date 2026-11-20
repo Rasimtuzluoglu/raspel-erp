@@ -450,6 +450,7 @@
             v-if="faturaStore.faturalar && faturaStore.faturalar.length === 0"
             :message="t('faturalar.empty')"
             :sub-message="t('faturalar.emptyHint')"
+            illustrasyon="liste"
             icon="pi pi-file"
             :action-label="t('faturalar.emptyAction')"
             action-icon="pi pi-plus"

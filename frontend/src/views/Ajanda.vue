@@ -336,6 +336,7 @@
           <EmptyState
             v-if="!filtrelenmisGorevler.length"
             icon="pi pi-check-square"
+            illustrasyon="liste"
             :message="gorevler.length ? t('ajanda.filtreSonucYok') : t('ajanda.gorevYok')"
           />
 
@@ -1172,7 +1173,7 @@ onMounted(() => {
   border-radius: 50%;
 }
 .olay-nokta.vade {
-  background: #f59e0b;
+  background: var(--warning);
 }
 .olay-nokta.gorev {
   background: var(--accent);
@@ -1262,25 +1263,25 @@ onMounted(() => {
   background: var(--text-muted);
 }
 .cip-nokta.vade {
-  background: #f59e0b;
+  background: var(--warning);
 }
 .cip-nokta.gorev {
   background: var(--accent);
 }
 .cip-nokta.kisisel {
-  background: #22c55e;
+  background: var(--success);
 }
 .cip-nokta.hatirlatici {
-  background: #ef4444;
+  background: var(--danger);
 }
 .vade-ikon {
-  color: #f59e0b;
+  color: var(--warning);
 }
 .gorev-ikon {
   color: var(--accent);
 }
 .hatirlatici-ikon {
-  color: #ef4444;
+  color: var(--danger);
 }
 .gorev-ozet {
   background: var(--bg-card);
@@ -1420,7 +1421,7 @@ onMounted(() => {
   border-radius: 4px;
 }
 .gorev-sil:hover {
-  color: #ef4444;
+  color: var(--danger);
   background: rgba(239, 68, 68, 0.1);
 }
 .ajanda-form {

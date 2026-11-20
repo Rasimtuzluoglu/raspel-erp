@@ -1776,7 +1776,7 @@ onUnmounted(() => {
 .gecikme-pill {
   margin-left: 8px;
   background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
+  color: var(--danger);
   font-size: 11px;
   font-weight: 700;
   padding: 2px 8px;
@@ -1785,7 +1785,7 @@ onUnmounted(() => {
 .vade-pill {
   margin-left: 8px;
   background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
+  color: var(--success);
   font-size: 11px;
   font-weight: 700;
   padding: 2px 8px;

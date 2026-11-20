@@ -954,10 +954,10 @@ watch(
   font-variant-numeric: tabular-nums;
 }
 .kpi-hucre > strong.kritik {
-  color: #f87171;
+  color: var(--danger);
 }
 .kpi-hucre > strong.normal {
-  color: #4ade80;
+  color: var(--success);
 }
 .depo-dagilim-liste {
   display: flex;
@@ -1027,10 +1027,10 @@ watch(
   color: var(--text-primary);
 }
 .detail-value.normal {
-  color: #4ade80;
+  color: var(--success);
 }
 .detail-value.kritik {
-  color: #f87171;
+  color: var(--danger);
 }
 .form-section-title {
   font-size: 13px;
@@ -1051,7 +1051,7 @@ watch(
   padding: 14px;
   border-radius: 8px;
   background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
+  color: var(--danger);
   font-size: 13px;
 }
 .analiz-ozet {
@@ -1142,26 +1142,26 @@ watch(
 }
 .badge.giris {
   background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
+  color: var(--success);
 }
 .badge.cikis {
   background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
+  color: var(--danger);
 }
 .badge.alis {
   background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
+  color: var(--success);
 }
 .badge.satis {
   background: var(--accent-soft-strong);
   color: var(--accent);
 }
 .positive {
-  color: #4ade80;
+  color: var(--success);
   font-weight: 700;
 }
 .negative {
-  color: #f87171;
+  color: var(--danger);
   font-weight: 700;
 }
 </style>

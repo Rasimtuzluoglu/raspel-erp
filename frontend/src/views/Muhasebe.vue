@@ -1163,14 +1163,14 @@ const karZararExcelIndir = async () => {
 }
 .zorunlu::after {
   content: ' *';
-  color: #ef4444;
+  color: var(--danger);
 }
 .hata-mesaj {
-  color: #ef4444;
+  color: var(--danger);
   font-size: 12px;
 }
 :deep(.p-invalid) {
-  border-color: #ef4444 !important;
+  border-color: var(--danger) !important;
 }
 .fis-kalemler {
   margin-top: 16px;
@@ -1212,11 +1212,11 @@ const karZararExcelIndir = async () => {
   min-width: min(240px, 100%);
 }
 .pozitif {
-  color: #10b981;
+  color: var(--success);
   font-weight: 600;
 }
 .negatif {
-  color: #ef4444;
+  color: var(--danger);
   font-weight: 600;
 }
 .finansal-grid {
@@ -1248,10 +1248,10 @@ const karZararExcelIndir = async () => {
   color: var(--text-primary);
 }
 .net-kar-kutusu .kar {
-  color: #10b981;
+  color: var(--success);
 }
 .net-kar-kutusu .zarar {
-  color: #ef4444;
+  color: var(--danger);
 }
 .grafik-kutu {
   margin-top: 16px;

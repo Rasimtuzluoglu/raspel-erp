@@ -279,6 +279,7 @@
           <EmptyState
             :message="filtreAktifMi() ? t('stoklar.eslesenYok') : t('stoklar.empty')"
             :sub-message="filtreAktifMi() ? '' : t('stoklar.emptyHint')"
+            illustrasyon="depo"
             icon="pi pi-box"
             :action-label="filtreAktifMi() ? '' : t('stoklar.emptyAction')"
             action-icon="pi pi-plus"

@@ -2251,8 +2251,8 @@ onBeforeUnmount(() => {
 }
 .protesto-sec.aktif {
   background: rgba(239, 68, 68, 0.14);
-  border-color: #ef4444;
-  color: #ef4444;
+  border-color: var(--danger);
+  color: var(--danger);
 }
 .protesto-sec:focus-visible {
   outline: 2px solid var(--accent);
@@ -2371,16 +2371,16 @@ onBeforeUnmount(() => {
   color: #14b8a6;
 }
 .aging-gecikmis .aging-deger {
-  color: #ef4444;
+  color: var(--danger);
 }
 .aging-orta .aging-deger {
-  color: #f97316;
+  color: var(--warning);
 }
 .aging-yuksek .aging-deger {
-  color: #dc2626;
+  color: var(--danger);
 }
 .aging-kritik .aging-deger {
-  color: #991b1b;
+  color: var(--danger);
 }
 .takvim-kart {
   border: 1px solid var(--border);
@@ -2552,7 +2552,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #ef4444;
+  color: var(--danger);
 }
 .modal-ozet {
   display: flex;
@@ -2567,7 +2567,7 @@ onBeforeUnmount(() => {
   font-weight: 600;
 }
 .hata-metin {
-  color: #ef4444;
+  color: var(--danger);
   font-size: 12px;
 }
 .w-full {

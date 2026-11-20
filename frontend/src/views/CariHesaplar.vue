@@ -424,6 +424,7 @@
             v-if="cariHesapStore?.cariHesaplar?.length === 0"
             :message="t('cariHesaplar.empty')"
             :sub-message="t('cariHesaplar.emptyHint')"
+            illustrasyon="liste"
             icon="pi pi-users"
             :action-label="t('cariHesaplar.emptyAction')"
             action-icon="pi pi-plus"

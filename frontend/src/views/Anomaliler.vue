@@ -139,6 +139,7 @@
         <EmptyState
           v-else-if="anomaliler.length === 0"
           icon="pi pi-check-circle"
+          illustrasyon="liste"
           :message="t('anomaliler.bosBaslik')"
           :sub-message="t('anomaliler.bosAciklama')"
         />
@@ -795,7 +796,7 @@ onMounted(() => {
 }
 .success-icon {
   font-size: 3.5rem;
-  color: #22c55e;
+  color: var(--success);
   margin-bottom: 1rem;
 }
 .anomali-grid {
@@ -812,10 +813,10 @@ onMounted(() => {
   padding: 1.25rem;
 }
 .anomali-card.kritik, .anomali-card.yuksek {
-  border-left-color: #ef4444;
+  border-left-color: var(--danger);
 }
 .anomali-card.orta {
-  border-left-color: #f59e0b;
+  border-left-color: var(--warning);
 }
 .anomali-card.dusuk {
   border-left-color: var(--accent);
@@ -922,11 +923,11 @@ onMounted(() => {
 }
 .badge.kritik, .badge.yuksek {
   background: rgba(239, 68, 68, 0.25);
-  color: #f87171;
+  color: var(--danger);
 }
 .badge.orta {
   background: rgba(245, 158, 11, 0.25);
-  color: #fbbf24;
+  color: var(--warning);
 }
 .badge.dusuk {
   background: var(--accent-soft-strong);
@@ -961,6 +962,6 @@ onMounted(() => {
   border-radius: 6px;
   padding: 0.6rem 0.8rem;
   font-size: 0.875rem;
-  color: #38bdf8;
+  color: var(--info);
 }
 </style>

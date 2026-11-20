@@ -195,6 +195,7 @@
       <EmptyState
         v-if="!yukleniyor && !teslimatlar.length"
         icon="pi pi-truck"
+        illustrasyon="depo"
         :message="t('sahaPortali.bosSaha')"
       />
     </section>

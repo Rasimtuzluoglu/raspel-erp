@@ -160,6 +160,7 @@
             v-if="bankaStore.bankalar.length === 0"
             :message="t('bankalar.empty')"
             :sub-message="t('bankalar.emptyHint')"
+            illustrasyon="liste"
             icon="pi pi-building"
             :action-label="t('bankalar.yeniBanka')"
             action-icon="pi pi-plus"
