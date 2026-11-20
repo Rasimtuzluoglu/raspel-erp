@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="cari-hesaplar-container">
     <PageHeader
       :title="t('cariHesaplar.title')"
@@ -114,7 +114,7 @@
         :key="f.tip"
         type="button"
         class="cari-filtre-cip"
-        :aria-label="`${f.etiket} — ${t('cariHesaplar.filtreKaldir')}`"
+        :aria-label="`${f.etiket} â€” ${t('cariHesaplar.filtreKaldir')}`"
         @click="filtreCipKaldir(f.tip)"
       >
         {{ f.etiket }}
@@ -319,8 +319,8 @@
           style="width: 140px"
         >
           <template #body="slotProps">
-            <!-- Temsilci performans raporu bu alana göre gruplar; atanmamış
-                 cariler raporda tek satırda toplanıyor. -->
+            <!-- Temsilci performans raporu bu alana gÃ¶re gruplar; atanmamÄ±ÅŸ
+                 cariler raporda tek satÄ±rda toplanÄ±yor. -->
             <span v-if="slotProps.data.temsilciAd">{{ slotProps.data.temsilciAd }}</span>
             <span
               v-else
@@ -337,9 +337,9 @@
           style="width: 140px"
         >
           <template #body="slotProps">
-            <!-- Bakiye işareti kuralı: negatif = cari bize borçlu (ALACAK).
-                 Önceden `>= 0` kontrolü borçlu müşteriyi kırmızı "alacak"
-                 rozetiyle gösteriyordu. -->
+            <!-- Bakiye iÅŸareti kuralÄ±: negatif = cari bize borÃ§lu (ALACAK).
+                 Ã–nceden `>= 0` kontrolÃ¼ borÃ§lu mÃ¼ÅŸteriyi kÄ±rmÄ±zÄ± "alacak"
+                 rozetiyle gÃ¶steriyordu. -->
             <span
               class="bakiye-rozet gizli-veri"
               :class="odenecekMi(slotProps.data.bakiye) ? 'borc' : 'alacak'"
@@ -920,7 +920,6 @@
         <TabView
           scrollable
           class="cari-sekmeler"
-          @update:active-index="cariSekmeDegisti"
         >
           <TabPanel :header="t('cariHesaplar.gecmisFaturalarTab')">
             <CariFaturalarSekmesi
@@ -930,117 +929,20 @@
           </TabPanel>
 
           <TabPanel :header="t('cariHesaplar.ozelFiyatlar')">
-            <div class="cari-ozel-fiyatlar">
-              <div class="cari-not-baslik">
-                <h4>
-                  <i
-                    class="pi pi-tag"
-                    style="margin-right: 6px"
-                  />{{ t('cariHesaplar.ozelFiyatlar') }}
-                </h4>
-              </div>
-              <div
-                v-for="f in cariOzelFiyatlar"
-                :key="f.id"
-                class="ozel-fiyat-satir"
-              >
-                <span class="ozel-fiyat-urun">{{ f.stokAd }}</span>
-                <span class="ozel-fiyat-tutar">{{ formatCurrency(f.fiyat) }}</span>
-                <Button
-                  icon="pi pi-trash"
-                  :aria-label="$t('common.delete')"
-                  class="p-button-rounded p-button-text p-button-danger p-button-sm"
-                  @click="cariOzelFiyatSil(f)"
-                />
-              </div>
-              <div class="ozel-fiyat-ekle">
-                <!-- Sunucu aramali stok secici. Sayfa acilisinda 1000 kayit
-                     cekiliyordu, ama bu dropdown yalnizca "Ozel Fiyatlar"
-                     sekmesine girildiginde gorunuyor; 1000. stoktan sonrasi
-                     zaten secilemiyordu. -->
-                <Dropdown
-                  v-model="ozelFiyatStok"
-                  :options="stokOnerileri"
-                  option-label="ad"
-                  option-value="id"
-                  :placeholder="t('cariHesaplar.urunSec')"
-                  filter
-                  filter-by="ad,stokKodu,barkod"
-                  class="ozel-fiyat-stok-select"
-                  @filter="stokAra"
-                />
-                <InputNumber
-                  v-model="ozelFiyatTutar"
-                  mode="currency"
-                  currency="TRY"
-                  locale="tr-TR"
-                  :min-fraction-digits="2"
-                  :placeholder="t('cariHesaplar.fiyat')"
-                  class="ozel-fiyat-tutar-input"
-                />
-                <Button
-                  icon="pi pi-plus"
-                  :label="t('cariHesaplar.ekle')"
-                  size="small"
-                  @click="cariOzelFiyatEkle"
-                />
-              </div>
-            </div>
+            <CariOzelFiyatlarSekmesi
+              :ozel-fiyatlar="cariOzelFiyatlar"
+              @ekle="ozelFiyatEkleGonder"
+              @sil="cariOzelFiyatSil"
+            />
           </TabPanel>
 
           <TabPanel :header="t('cariHesaplar.gecmisteAldigiUrunler')">
-            <div
-              v-if="sonUrunler && sonUrunler.length > 0"
-              class="cari-urunler"
-            >
-              <div class="cari-not-baslik">
-                <h4>
-                  <i
-                    class="pi pi-box"
-                    style="margin-right: 6px"
-                  />{{ t('cariHesaplar.gecmisteAldigiUrunler') }}
-                </h4>
-              </div>
-              <div class="cari-urunler-grid">
-                <button
-                  v-for="u in sonUrunler"
-                  :key="u.stokId"
-                  type="button"
-                  class="cari-urun-chip"
-                  @click="urunFiyatGecmisiGoster(u)"
-                >
-                  <span class="cari-urun-ad">{{ u.stokAd }}</span>
-                  <span class="cari-urun-bilgi">{{ u.sonAlisTarihi }} · {{ t('cariHesaplar.nAdet', { n: u.adet }) }}</span>
-                  <span class="cari-urun-fiyat">{{ formatCurrency(u.sonBirimFiyat) }}</span>
-                </button>
-              </div>
-              <div
-                v-if="seciliUrunFiyatGecmisi"
-                class="cari-urun-fiyat-gecmisi"
-              >
-                <div class="fg-baslik">
-                  <span><i class="pi pi-chart-line" /> {{ seciliUrunFiyatGecmisi.urunAd }} — {{ t('cariHesaplar.fiyatGecmisi') }}</span>
-                  <button
-                    type="button"
-                    class="fg-kapat"
-                    :aria-label="t('common.close')"
-                    @click="seciliUrunFiyatGecmisi = null"
-                  >
-                    <i class="pi pi-times" />
-                  </button>
-                </div>
-                <div
-                  v-for="(k, i) in seciliUrunFiyatGecmisi.gecmis"
-                  :key="i"
-                  class="fg-satir"
-                >
-                  <span class="fg-tarih">{{ formatDate(k.tarih) }}</span>
-                  <span class="fg-fatura">{{ k.faturaNumarasi }}</span>
-                  <span class="fg-adet">{{ t('cariHesaplar.nAdet', { n: k.adet }) }}</span>
-                  <span class="fg-fiyat">{{ formatCurrency(k.birimFiyat) }}</span>
-                </div>
-              </div>
-            </div>
+            <CariUrunGecmisiSekmesi
+              :son-urunler="sonUrunler"
+              :secili="seciliUrunFiyatGecmisi"
+              @goster="urunFiyatGecmisiGoster"
+              @kapat="urunFiyatKapat"
+            />
           </TabPanel>
 
           <TabPanel :header="t('cariHesaplar.gorusmeNotlari')">
@@ -1459,7 +1361,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useCariHesapStore } from '../stores/cariHesapStore.js'
 import { useAuthStore } from '../stores/authStore.js'
 import { useRouter, useRoute } from 'vue-router'
-import { excelAPI, hareketAPI, notAPI, faturaAPI, stokAPI, cariHesapAPI, uploadAPI, kullaniciAPI, raporAPI } from '../api/index.js'
+import { excelAPI, hareketAPI, notAPI, faturaAPI, cariHesapAPI, uploadAPI, kullaniciAPI, raporAPI } from '../api/index.js'
 import { resimDogrula } from '../utils/dosyaDogrula.js'
 import { resimSikistir } from '../utils/resimSikistir.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
@@ -1487,6 +1389,8 @@ import CariHareketBasligi from '../components/cari/CariHareketBasligi.vue'
 import CariHareketTablosu from '../components/cari/CariHareketTablosu.vue'
 import CariFaturalarSekmesi from '../components/cari/CariFaturalarSekmesi.vue'
 import CariNotlarSekmesi from '../components/cari/CariNotlarSekmesi.vue'
+import CariOzelFiyatlarSekmesi from '../components/cari/CariOzelFiyatlarSekmesi.vue'
+import CariUrunGecmisiSekmesi from '../components/cari/CariUrunGecmisiSekmesi.vue'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
@@ -1500,8 +1404,8 @@ const { kopyala } = usePanoyaKopyala()
 const { t } = useI18n()
 
 const tabloYogunluk = ref('comfortable')
-// Varsayılan görünümde yalnızca günlük kullanım için gereken kolonlar açık.
-// ID, yetkili, kredi limiti, temsilci ve etiketler kolon ayarlarından açılabilir.
+// VarsayÄ±lan gÃ¶rÃ¼nÃ¼mde yalnÄ±zca gÃ¼nlÃ¼k kullanÄ±m iÃ§in gereken kolonlar aÃ§Ä±k.
+// ID, yetkili, kredi limiti, temsilci ve etiketler kolon ayarlarÄ±ndan aÃ§Ä±labilir.
 const varsayilanKolonGorunurluk = {
   id: false,
   yetkiliKisi: false,
@@ -1539,8 +1443,8 @@ useKisayollar({
     showDialog.value = false
   },
   kaydet: () => saveCariHesap(),
-  // Ctrl+K: arama kutusuna odaklan. Önceden placeholder'da "Ctrl+F" yazıyordu
-  // ama hiçbir kısayol bağlı değildi (tarayıcının kendi bul işlevi açılıyordu).
+  // Ctrl+K: arama kutusuna odaklan. Ã–nceden placeholder'da "Ctrl+F" yazÄ±yordu
+  // ama hiÃ§bir kÄ±sayol baÄŸlÄ± deÄŸildi (tarayÄ±cÄ±nÄ±n kendi bul iÅŸlevi aÃ§Ä±lÄ±yordu).
   ara: () => {
     const el = aramaGirdiRef.value?.$el || aramaGirdiRef.value
     el?.focus?.()
@@ -1574,7 +1478,7 @@ const saving = ref(false)
 const editingId = ref(null)
 const cariHareketler = ref([])
 const cariHareketlerYukleniyor = ref(false)
-// Faz 2.2: tarih aralıklı ekstre (boşsa tüm hareketler yazdırılır).
+// Faz 2.2: tarih aralÄ±klÄ± ekstre (boÅŸsa tÃ¼m hareketler yazdÄ±rÄ±lÄ±r).
 const ekstreBaslangic = ref(null)
 const ekstreBitis = ref(null)
 const selectedCariHesaplar = ref([])
@@ -1590,7 +1494,7 @@ onUnmounted(() => {
 const filtreTur = ref(null)
 const filtreBakiye = ref(null)
 const filtreEtiket = ref('')
-// Değerler backend'in beklediği ASCII sabitler; etiketler yerelleştirilir.
+// DeÄŸerler backend'in beklediÄŸi ASCII sabitler; etiketler yerelleÅŸtirilir.
 const cariTurSecenekleri = computed(() => [
   { label: t('cariTur.musteri'), value: 'Musteri' },
   { label: t('cariTur.tedarikci'), value: 'Tedarikci' },
@@ -1630,21 +1534,21 @@ const aktifSecenekleri = computed(() => [
   { label: t('common.active'), value: true },
   { label: t('common.passive'), value: false }
 ])
-// Faz 2.9: cari çalışma para birimi.
+// Faz 2.9: cari Ã§alÄ±ÅŸma para birimi.
 const paraBirimiSecenekleri = [
-  { label: 'TRY (₺)', value: 'TRY' },
+  { label: 'TRY (â‚º)', value: 'TRY' },
   { label: 'USD ($)', value: 'USD' },
-  { label: 'EUR (€)', value: 'EUR' },
-  { label: 'GBP (£)', value: 'GBP' }
+  { label: 'EUR (â‚¬)', value: 'EUR' },
+  { label: 'GBP (Â£)', value: 'GBP' }
 ]
 
 /**
- * Bakiye işareti kuralı (backend ile aynı): negatif = cari bize borçlu
- * (tahsil edilecek), pozitif = biz cariye borçluyuz (ödenecek).
- * Renk ve ok yönü KPI kartlarıyla aynı olmalı; bu yüzden pozitif bakiye
- * kırmızı "ödenecek", negatif bakiye yeşil "tahsil edilecek" gösterilir.
+ * Bakiye iÅŸareti kuralÄ± (backend ile aynÄ±): negatif = cari bize borÃ§lu
+ * (tahsil edilecek), pozitif = biz cariye borÃ§luyuz (Ã¶denecek).
+ * Renk ve ok yÃ¶nÃ¼ KPI kartlarÄ±yla aynÄ± olmalÄ±; bu yÃ¼zden pozitif bakiye
+ * kÄ±rmÄ±zÄ± "Ã¶denecek", negatif bakiye yeÅŸil "tahsil edilecek" gÃ¶sterilir.
  * @param {number|null} bakiye
- * @returns {boolean} true → biz ödeyeceğiz (borç)
+ * @returns {boolean} true â†’ biz Ã¶deyeceÄŸiz (borÃ§)
  */
 const odenecekMi = (bakiye) => Number(bakiye || 0) > 0
 
@@ -1659,7 +1563,7 @@ const cariOzetYukle = async () => {
   }
 }
 
-// Faz 2.1: kredi limitini aşan cariler (risk listesi).
+// Faz 2.1: kredi limitini aÅŸan cariler (risk listesi).
 const riskliCarilerAc = async () => {
   riskDialogVisible.value = true
   if (riskliCariler.value.length) return
@@ -1674,7 +1578,7 @@ const riskliCarilerAc = async () => {
   }
 }
 
-// Faz 2.3: seçili carilerde toplu alan güncelleme.
+// Faz 2.3: seÃ§ili carilerde toplu alan gÃ¼ncelleme.
 const topluGuncelleAc = () => {
   topluForm.value = { tur: null, krediLimiti: null, odemeVadesi: null, aktif: null }
   topluDialogVisible.value = true
@@ -1705,7 +1609,7 @@ const topluGuncelleKaydet = async () => {
   }
 }
 
-// Faz 2.5: cari çoklu adres yönetimi.
+// Faz 2.5: cari Ã§oklu adres yÃ¶netimi.
 const bosAdresForm = () => ({ baslik: '', adres: '', il: '', ilce: '', yetkiliKisi: '', telefon: '', varsayilan: false })
 
 const adresleriYukle = async () => {
@@ -1755,7 +1659,7 @@ const adresSil = async (a) => {
   }
 }
 
-// Faz 2.8: açılış fişi / devir kaydı.
+// Faz 2.8: aÃ§Ä±lÄ±ÅŸ fiÅŸi / devir kaydÄ±.
 const acilisAc = (c) => {
   acilisCari.value = c
   acilisForm.value = { tutar: null, tarih: new Date(), aciklama: '' }
@@ -1801,21 +1705,21 @@ const filtreDegisti = () => {
   loadCariHesaplar(0, cariSayfaBoyutu.value)
 }
 
-/** KPI kartına tıklama: aynı filtreye tekrar basınca filtre kaldırılır. */
+/** KPI kartÄ±na tÄ±klama: aynÄ± filtreye tekrar basÄ±nca filtre kaldÄ±rÄ±lÄ±r. */
 const kpiBakiyeFiltre = (yon) => {
   filtreBakiye.value = filtreBakiye.value === yon ? null : yon
   cariSayfa.value = 0
   loadCariHesaplar(0, cariSayfaBoyutu.value)
 }
 
-// Faz 2.4: etiket filtresi (Enter/odak kaybında uygula).
+// Faz 2.4: etiket filtresi (Enter/odak kaybÄ±nda uygula).
 const filtreEtiketAra = () => {
   cariSayfa.value = 0
   loadCariHesaplar(0, cariSayfaBoyutu.value)
 }
 
-// Etiket autocomplete: şirkette kullanılan etiketler bir kez yüklenir,
-// yazarken istemci tarafında filtrelenir (ek istek yok).
+// Etiket autocomplete: ÅŸirkette kullanÄ±lan etiketler bir kez yÃ¼klenir,
+// yazarken istemci tarafÄ±nda filtrelenir (ek istek yok).
 const tumEtiketler = ref([])
 const etiketOnerileri = ref([])
 const etiketleriYukle = async () => {
@@ -1879,13 +1783,13 @@ const cariHareketlerBakiye = computed(() => {
   })
 })
 
-// Faz 2.2: Date nesnesini YYYY-MM-DD'ye çevirir.
+// Faz 2.2: Date nesnesini YYYY-MM-DD'ye Ã§evirir.
 const tarihIso = (d) => {
   const x = new Date(d)
   return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
 }
 
-// Cari 360 kartı başlığı (CariHareketBasligi) bağlantısı
+// Cari 360 kartÄ± baÅŸlÄ±ÄŸÄ± (CariHareketBasligi) baÄŸlantÄ±sÄ±
 const hareketOzeti = computed(() => ({
   tahsilat: toplamTahsilat.value,
   odeme: toplamOdeme.value,
@@ -1893,7 +1797,7 @@ const hareketOzeti = computed(() => ({
   bakiye: guncelBakiye.value
 }))
 
-/** Başlık bileşeninden gelen aralıkla ekstre yazdırır. */
+/** BaÅŸlÄ±k bileÅŸeninden gelen aralÄ±kla ekstre yazdÄ±rÄ±r. */
 const ekstreGonder = ({ baslangic, bitis }) => {
   ekstreBaslangic.value = baslangic
   ekstreBitis.value = bitis
@@ -1909,7 +1813,7 @@ const cariEkstreYazdir = async () => {
   let sonBakiye = guncelBakiye.value
   try {
     if (aralikli) {
-      // Faz 2.2: sunucudan tarih aralıklı, devir/yürüyen bakiyeli ekstre.
+      // Faz 2.2: sunucudan tarih aralÄ±klÄ±, devir/yÃ¼rÃ¼yen bakiyeli ekstre.
       const r = await raporAPI.cariEkstre({
         cariHesapId: cari.id,
         baslangic: tarihIso(ekstreBaslangic.value),
@@ -1970,7 +1874,7 @@ const cariEkstreYazdir = async () => {
         <button onclick="window.print()">${escapeHtml(t('common.print'))}</button>
       </div>
       <h1>${escapeHtml(t('cariHesaplar.ekstreBaslik'))}</h1>
-      <h2>${escapeHtml(cari.ad || '')}${aralikMetni ? ' — ' + escapeHtml(aralikMetni) : ''}</h2>
+      <h2>${escapeHtml(cari.ad || '')}${aralikMetni ? ' â€” ' + escapeHtml(aralikMetni) : ''}</h2>
       <table><thead><tr>
         <th>${escapeHtml(t('common.date'))}</th>
         <th>${escapeHtml(t('cariHesaplar.tur'))}</th>
@@ -2068,7 +1972,7 @@ const fotoSec = async (e) => {
 const { temizle: formTemizle } = useFormKorumasi(form)
 
 onMounted(async () => {
-  // 360° görünümlerden çapraz gezinme: arama terimini uygula.
+  // 360Â° gÃ¶rÃ¼nÃ¼mlerden Ã§apraz gezinme: arama terimini uygula.
   const q = route?.query?.q
   if (typeof q === 'string' && q.trim()) aramaMetni.value = q.trim()
   await loadCariHesaplar()
@@ -2298,8 +2202,8 @@ const editCariHesap = (cariHesap) => {
     yetkiliTelefon: cariHesap.yetkiliTelefon || '',
     krediLimiti: cariHesap.krediLimiti || null,
     odemeVadesi: cariHesap.odemeVadesi ?? 0,
-    // temsilciAd denormalize alan; raporlar bu alana göre gruplar, bu yüzden
-    // seçim değiştiğinde isimle birlikte gönderilir.
+    // temsilciAd denormalize alan; raporlar bu alana gÃ¶re gruplar, bu yÃ¼zden
+    // seÃ§im deÄŸiÅŸtiÄŸinde isimle birlikte gÃ¶nderilir.
     temsilciId: cariHesap.temsilciId ?? null,
     temsilciAd: cariHesap.temsilciAd || null,
     notlar: cariHesap.notlar || '',
@@ -2366,9 +2270,9 @@ const saveCariHesap = async () => {
     formTemizle()
     alanHatalari.value = {}
     closeDialog()
-    // Liste ve KPI yeniden sorgulanır. `createCrudStore.add/update` yeni kaydı
-    // listenin SONUNA ekliyor ve toplam kaydı güncellemiyordu; özellikle
-    // sayfalı/aramalı listede kayıt hiç görünmüyor ya da yanlış sayfada kalıyordu.
+    // Liste ve KPI yeniden sorgulanÄ±r. `createCrudStore.add/update` yeni kaydÄ±
+    // listenin SONUNA ekliyor ve toplam kaydÄ± gÃ¼ncellemiyordu; Ã¶zellikle
+    // sayfalÄ±/aramalÄ± listede kayÄ±t hiÃ§ gÃ¶rÃ¼nmÃ¼yor ya da yanlÄ±ÅŸ sayfada kalÄ±yordu.
     await Promise.allSettled([loadCariHesaplar(), cariOzetYukle()])
   } catch (error) {
     const mesaj = error?.response?.data?.message || ''
@@ -2398,7 +2302,7 @@ const deleteCariHesap = async (id) => {
   try {
     await cariHesapStore.deleteCariHesap(id)
     toastBildirim.basarili(t('cariHesaplar.silindi'))
-    // Silinen kayıt liste ve KPI'dan da düşmeli.
+    // Silinen kayÄ±t liste ve KPI'dan da dÃ¼ÅŸmeli.
     await Promise.allSettled([loadCariHesaplar(), cariOzetYukle()])
   } catch (error) {
     toastBildirim.hata(t('cariHesaplar.silmeHata'))
@@ -2481,10 +2385,10 @@ const tahsilatAc = async (cariHesap) => {
   }
 }
 
-// Tahsilat/borçlandırma sonrası yenileme.
-// ÖNCE getAllCariHesaplar() çağrılıyordu; bu parametresiz (size=50) tüm şirket
-// sayfasını getirip listeyi eziyor, dolayısıyla kullanıcının arama/tür/bakiye
-// filtresi ve bulunduğu sayfa sessizce kayboluyordu. KPI kartları (ozet) de
+// Tahsilat/borÃ§landÄ±rma sonrasÄ± yenileme.
+// Ã–NCE getAllCariHesaplar() Ã§aÄŸrÄ±lÄ±yordu; bu parametresiz (size=50) tÃ¼m ÅŸirket
+// sayfasÄ±nÄ± getirip listeyi eziyor, dolayÄ±sÄ±yla kullanÄ±cÄ±nÄ±n arama/tÃ¼r/bakiye
+// filtresi ve bulunduÄŸu sayfa sessizce kayboluyordu. KPI kartlarÄ± (ozet) de
 // filtreyi yok sayar; o da yenilenmeli.
 const islemSonrasiYenile = async () => {
   try {
@@ -2555,46 +2459,9 @@ const adresAc360 = () => {
 const cariOzelFiyatlar = ref([])
 const ozelFiyatStok = ref(null)
 const ozelFiyatTutar = ref(null)
-// Özel fiyat ekleme sekmesindeki stok seçici sunucu aramalı. Sayfa açılışında
-// 1000 kayıt çekiliyordu ve dropdown yalnızca bu sekme açıldığında göründüğü
-// için hem gereksiz ağ trafiği hem de 1000. stoktan sonrasının seçilememesi
-// anlamına geliyordu.
-const stokOnerileri = ref([])
-let stokAramaZamanlayici = null
-let stokAramaSeq = 0
-
-const stokAra = (event) => {
-  const q = (event?.filter ?? event?.query ?? '').toString().trim()
-  const benimSeq = ++stokAramaSeq
-  if (stokAramaZamanlayici) clearTimeout(stokAramaZamanlayici)
-  stokAramaZamanlayici = setTimeout(async () => {
-    try {
-      const r = await stokAPI.ara(q)
-      if (benimSeq !== stokAramaSeq) return
-      stokOnerileri.value = unwrapList(r)
-    } catch {
-      if (benimSeq === stokAramaSeq) stokOnerileri.value = []
-    }
-  }, 250)
-}
-
-// Sekme ilk açıldığında boş öneri listesiyle karşılaşılmasın.
-const ozelFiyatSekmesiAcildi = async () => {
-  if (stokOnerileri.value.length) return
-  try {
-    const r = await stokAPI.ara('')
-    stokOnerileri.value = unwrapList(r)
-  } catch {
-    stokOnerileri.value = []
-  }
-}
-
-// Hareket dialog'undaki sekmeler: 0 = Geçmiş Faturalar, 1 = Özel Fiyatlar,
-// 2 = Geçmişte Aldığı Ürünler, 3 = Görüşme Notları.
-const cariSekmeDegisti = (idx) => {
-  if (idx === 1) ozelFiyatSekmesiAcildi()
-}
-
+// Ã–zel fiyat ekleme sekmesindeki stok seÃ§ici sunucu aramalÄ±. Sayfa aÃ§Ä±lÄ±ÅŸÄ±nda
+// 1000 kayÄ±t Ã§ekiliyordu ve dropdown yalnÄ±zca bu sekme aÃ§Ä±ldÄ±ÄŸÄ±nda gÃ¶rÃ¼ndÃ¼ÄŸÃ¼
+// iÃ§in hem gereksiz aÄŸ trafiÄŸi hem de 1000. stoktan sonrasÄ±nÄ±n seÃ§ilememesi
 const cariOzelFiyatlariYukle = async (cariId) => {
   try {
     const r = await cariHesapAPI.getFiyatlar(cariId)
@@ -2602,6 +2469,13 @@ const cariOzelFiyatlariYukle = async (cariId) => {
   } catch {
     cariOzelFiyatlar.value = []
   }
+}
+
+/** Özel fiyat sekmesinden gelen değerlerle kaydeder. */
+const ozelFiyatEkleGonder = ({ stokId, tutar }) => {
+  ozelFiyatStok.value = stokId
+  ozelFiyatTutar.value = tutar
+  cariOzelFiyatEkle()
 }
 
 const cariOzelFiyatEkle = async () => {
@@ -2680,6 +2554,11 @@ const sonUrunleriYukle = async (cariId) => {
 
 const seciliUrunFiyatGecmisi = ref(null)
 
+/** Ürün fiyat geçmişi panelini kapatır. */
+const urunFiyatKapat = () => {
+  seciliUrunFiyatGecmisi.value = null
+}
+
 const urunFiyatGecmisiGoster = async (urun) => {
   if (!selectedCariHesap.value || !urun.stokId) return
   try {
@@ -2702,7 +2581,7 @@ const cariNotlariYukle = async (cariId) => {
   }
 }
 
-/** Not sekmesinden gelen içerikle not ekler. */
+/** Not sekmesinden gelen iÃ§erikle not ekler. */
 const notEkleGonder = ({ baslik, onem }) => {
   yeniCariNot.value = baslik
   yeniCariNotOnem.value = onem
@@ -3261,7 +3140,7 @@ h3 {
   border-radius: 12px;
   padding: 14px;
 }
-/* Yatay kaydırmada kimlik ve işlem kolonları görünür kalsın. */
+/* Yatay kaydÄ±rmada kimlik ve iÅŸlem kolonlarÄ± gÃ¶rÃ¼nÃ¼r kalsÄ±n. */
 .table-container :deep(.cari-secim-kolon),
 .table-container :deep(.cari-ad-kolon),
 .table-container :deep(.cari-islem-kolon) {
@@ -3289,7 +3168,7 @@ h3 {
 .table-container :deep(thead .cari-islem-kolon) {
   z-index: 3;
 }
-/* Seçim kutusu: görsel kutu 20 px, dokunma alanı 40×40 px (telefon hedefi). */
+/* SeÃ§im kutusu: gÃ¶rsel kutu 20 px, dokunma alanÄ± 40Ã—40 px (telefon hedefi). */
 .table-container :deep(.cari-secim-kolon .p-checkbox) {
   width: 40px;
   height: 40px;
