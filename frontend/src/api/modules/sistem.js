@@ -573,3 +573,12 @@ export const kitaplikAPI = {
   }
 }
 
+
+/**
+ * Frontend hata telemetrisi (log + metrik; veritabani yok).
+ */
+export const telemetriAPI = {
+  hata(data) {
+    return apiClient.post('/telemetri/hata', data)
+  }
+}

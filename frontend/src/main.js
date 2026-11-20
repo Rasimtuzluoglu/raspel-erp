@@ -28,6 +28,8 @@ const RaspelPreset = definePreset(Lara, {
 import App from './App.vue'
 import router from './router/index.js'
 import i18n, { dilleriYukle } from './i18n.js'
+import { hataRaporlamayiBaslat } from './utils/hataRaporlama.js'
+import { telemetriAPI } from './api/index.js'
 import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
 
@@ -156,11 +158,47 @@ console.warn = (...args) => {
   _orijinalWarn.apply(console, args)
 }
 
+// Frontend hata telemetrisi: yalniz uretim derlemesinde gonderilir; oturum
+// yoksa veya ag kapaliysa kayit cihazda kuyruga alinir.
+const hataRaporlayici = hataRaporlamayiBaslat({
+  gonderici: (govde) => telemetriAPI.hata(govde),
+  surum: __APP_VERSION__,
+  tarayici: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+  kimlikVarMi: () => {
+    try {
+      // Oturum "beni hatırla" kapalıyken sessionStorage'da tutulur.
+      return !!(
+        localStorage.getItem('raspel_erp_auth') ||
+        sessionStorage.getItem('raspel_erp_auth')
+      )
+    } catch {
+      return false
+    }
+  }
+})
+if (import.meta.env.PROD) {
+  hataRaporlayici.dinleyicileriKur()
+  window.addEventListener('online', () => {
+    hataRaporlayici.kuyruguBosalt()
+  })
+  // Oturum sonradan açılırsa bekleyen kayıtlar bir dakika içinde gönderilir.
+  setInterval(() => {
+    if (navigator.onLine) hataRaporlayici.kuyruguBosalt()
+  }, 60_000)
+}
+
 // Vue genel hata yakalayici: bir gorunum cokerse beyaz ekran yerine
 // kullaniciya bilgi ver ve gerekiyorsa onbellek kurtarmasini tetikle.
 app.config.errorHandler = (err, instance, info) => {
   // eslint-disable-next-line no-console
   console.error('[RasPel] Uygulama hatasi:', err, info)
+  if (import.meta.env.PROD) {
+    hataRaporlayici.hataYakala({
+      tur: 'vue',
+      mesaj: err?.message || String(err),
+      stack: err?.stack || String(info || '')
+    })
+  }
 }
 
 // Yakalanmayan Promise redleri (or. store action'lari) konsolda kaybolmasin;
@@ -172,6 +210,13 @@ window.addEventListener('unhandledrejection', (event) => {
   if (reason && (reason.name === 'AbortError' || reason.code === 'ERR_CANCELED')) return
   // eslint-disable-next-line no-console
   console.error('[RasPel] Yakalanmayan promise hatasi:', reason)
+  if (import.meta.env.PROD) {
+    hataRaporlayici.hataYakala({
+      tur: 'promise',
+      mesaj: reason?.message || String(reason || ''),
+      stack: reason?.stack
+    })
+  }
 })
 
 // Dil mesajlari (tr/en ~300 KB) tembel yuklenir: ana pakete gomulmez.

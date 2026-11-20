@@ -68,6 +68,7 @@ export {
 } from './modules/sistem.js'
 export { dashboardAPI, raporAPI, yoneticiKokpitAPI } from './modules/rapor.js'
 export { sahaAPI } from './modules/saha.js'
+export { telemetriAPI } from './modules/sistem.js'
 
 export { uploadAPI, backupAPI, excelAPI, importAPI, pdfAPI, belgeAPI } from './modules/dosya.js'
 
