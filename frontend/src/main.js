@@ -27,8 +27,7 @@ const RaspelPreset = definePreset(Lara, {
 })
 import App from './App.vue'
 import router from './router/index.js'
-import i18n from './i18n.js'
-
+import i18n, { dilleriYukle } from './i18n.js'
 import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
 
@@ -103,7 +102,6 @@ app.config.globalProperties.formatDate = formatDate
 app.config.globalProperties.formatDateTime = formatDateTime
 
 app.use(createPinia())
-app.use(router)
 app.use(PrimeVue, {
     theme: {
       preset: RaspelPreset,
@@ -176,7 +174,18 @@ window.addEventListener('unhandledrejection', (event) => {
   console.error('[RasPel] Yakalanmayan promise hatasi:', reason)
 })
 
-app.mount('#app')
+// Dil mesajlari (tr/en ~300 KB) tembel yuklenir: ana pakete gomulmez.
+// Mesajlar hazir olmadan router kurulmaz/mount edilmez; aksi halde ilk
+// ekranda ceviri anahtarlari gorunur.
+dilleriYukle()
+  .catch((hata) => {
+    // eslint-disable-next-line no-console
+    console.error('[RasPel] Dil dosyalari yuklenemedi:', hata)
+  })
+  .then(() => {
+    app.use(router)
+    app.mount('#app')
+  })
 
 overlayZoomFixBaslat()
 
