@@ -923,57 +923,10 @@
           @update:active-index="cariSekmeDegisti"
         >
           <TabPanel :header="t('cariHesaplar.gecmisFaturalarTab')">
-            <div
-              v-if="cariFaturalar && cariFaturalar.length > 0"
-              class="cari-faturalar"
-            >
-              <div class="cari-not-baslik">
-                <h4>
-                  <i
-                    class="pi pi-file"
-                    style="margin-right: 6px"
-                  />{{ t('cariHesaplar.gecmisFaturalar', { n: cariFaturalar.length }) }}
-                </h4>
-              </div>
-              <AppDataTable
-                :value="cariFaturalar"
-                size="small"
-                striped-rows
-                :rows="5"
-                :paginator="cariFaturalar.length > 5"
-              >
-                <Column :header="t('cariHesaplar.faturaNo')">
-                  <template #body="{ data }">
-                    <a
-                      class="fatura-link"
-                      @click="faturaDetayAc(data)"
-                    >{{ data.faturaNumarasi }}</a>
-                  </template>
-                </Column>
-                <Column :header="t('common.date')">
-                  <template #body="{ data }">
-                    {{ formatDate(data.tarih) }}
-                  </template>
-                </Column>
-                <Column :header="t('cariHesaplar.tur')">
-                  <template #body="{ data }">
-                    {{ data.tur === 'SATIS' ? t('cariHesaplar.satis') : t('cariHesaplar.alis') }}
-                  </template>
-                </Column>
-                <Column :header="t('common.amount')">
-                  <template #body="{ data }">
-                    <span class="positive">{{ formatCurrency(data.genelToplam) }}</span>
-                  </template>
-                </Column>
-                <Column :header="t('common.status')">
-                  <template #body="{ data }">
-                    <span :class="['badge', data.odemeDurumu === 'ODENDI' ? 'tahsilat' : 'odeme']">
-                      {{ data.odemeDurumu === 'ODENDI' ? t('cariHesaplar.odendi') : data.odemeDurumu === 'KISMI_ODENDI' ? t('cariHesaplar.kismi') : t('cariHesaplar.odenmedi') }}
-                    </span>
-                  </template>
-                </Column>
-              </AppDataTable>
-            </div>
+            <CariFaturalarSekmesi
+              :faturalar="cariFaturalar"
+              @fatura-detay="faturaDetayAc"
+            />
           </TabPanel>
 
           <TabPanel :header="t('cariHesaplar.ozelFiyatlar')">
@@ -1091,68 +1044,11 @@
           </TabPanel>
 
           <TabPanel :header="t('cariHesaplar.gorusmeNotlari')">
-            <div class="cari-notlar">
-              <div class="cari-not-baslik">
-                <h4>
-                  <i
-                    class="pi pi-pen-to-square"
-                    style="margin-right: 6px"
-                  />{{ t('cariHesaplar.gorusmeNotlari') }}
-                </h4>
-              </div>
-              <div class="cari-not-ekle">
-                <Dropdown
-                  v-model="yeniCariNotOnem"
-                  :options="notOnemSecenekleri"
-                  option-label="label"
-                  option-value="value"
-                  class="not-onem-select"
-                />
-                <InputText
-                  v-model="yeniCariNot"
-                  :placeholder="t('cariHesaplar.yeniNotPlaceholder')"
-                  @keyup.enter="cariNotEkle"
-                />
-                <Button
-                  icon="pi pi-plus"
-                  :aria-label="$t('common.add')"
-                  class="p-button-sm"
-                  @click="cariNotEkle"
-                />
-              </div>
-              <div
-                v-if="(!cariNotlar || !cariNotlar.length)"
-                class="cari-not-bos"
-              >
-                {{ t('cariHesaplar.notYok') }}
-              </div>
-              <div
-                v-for="n in cariNotlar"
-                :key="n.id"
-                class="cari-not-satir"
-              >
-                <div class="cari-not-icerik">
-                  <div class="cari-not-baslik-satir">
-                    <strong>{{ n.baslik }}</strong>
-                    <span
-                      v-if="n.onemDerecesi && n.onemDerecesi !== 'NORMAL'"
-                      class="not-onem-rozet"
-                      :class="n.onemDerecesi.toLowerCase()"
-                    >
-                      {{ n.onemDerecesi === 'YUKSEK' ? t('cariHesaplar.yuksek') : t('cariHesaplar.kritik') }}
-                    </span>
-                  </div>
-                  <p>{{ n.icerik }}</p>
-                  <small>{{ formatTarihSaat(n.olusturmaTarihi, '') }}</small>
-                </div>
-                <Button
-                  icon="pi pi-trash"
-                  :aria-label="$t('common.delete')"
-                  class="p-button-rounded p-button-text p-button-danger p-button-sm"
-                  @click="cariNotSil(n)"
-                />
-              </div>
-            </div>
+            <CariNotlarSekmesi
+              :notlar="cariNotlar"
+              @ekle="notEkleGonder"
+              @sil="cariNotSil"
+            />
           </TabPanel>
         </TabView>
       </CariHareketTablosu>
@@ -1589,6 +1485,8 @@ import { fisPenceresiAcVeYazdir } from '../utils/fisYazdir.js'
 import { useI18n } from 'vue-i18n'
 import CariHareketBasligi from '../components/cari/CariHareketBasligi.vue'
 import CariHareketTablosu from '../components/cari/CariHareketTablosu.vue'
+import CariFaturalarSekmesi from '../components/cari/CariFaturalarSekmesi.vue'
+import CariNotlarSekmesi from '../components/cari/CariNotlarSekmesi.vue'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
@@ -2795,12 +2693,6 @@ const urunFiyatGecmisiGoster = async (urun) => {
 const cariNotlar = ref([])
 const yeniCariNot = ref('')
 const yeniCariNotOnem = ref('NORMAL')
-const notOnemSecenekleri = computed(() => [
-  { label: t('cariHesaplar.normal'), value: 'NORMAL' },
-  { label: t('cariHesaplar.yuksek'), value: 'YUKSEK' },
-  { label: t('cariHesaplar.kritik'), value: 'KRITIK' }
-])
-
 const cariNotlariYukle = async (cariId) => {
   try {
     const r = await notAPI.cariNotlari(cariId)
@@ -2808,6 +2700,13 @@ const cariNotlariYukle = async (cariId) => {
   } catch {
     cariNotlar.value = []
   }
+}
+
+/** Not sekmesinden gelen içerikle not ekler. */
+const notEkleGonder = ({ baslik, onem }) => {
+  yeniCariNot.value = baslik
+  yeniCariNotOnem.value = onem
+  cariNotEkle()
 }
 
 const cariNotEkle = async () => {
@@ -2882,7 +2781,7 @@ const islemMenusu = computed(() => [
 ])
 
 
-import { formatTarih as formatDate, formatTarihSaat } from '../utils/format.js'
+import { formatTarih as formatDate } from '../utils/format.js'
 </script>
 
 <style scoped>
