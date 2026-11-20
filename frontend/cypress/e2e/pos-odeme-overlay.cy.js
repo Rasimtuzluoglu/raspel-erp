@@ -21,6 +21,12 @@ describe('POS odeme overlay (posYeniAkis)', () => {
     cy.get('.pos-container').should('exist')
   })
 
+  // Ödeme Al butonu boş sepette pasiftir; overlay testleri için önce ürün eklenir.
+  const sepetDoldur = () => {
+    cy.get('input.komut-kutu-girdi').type('1234567890{enter}')
+    cy.get('.sepet-item').should('have.length', 1)
+  }
+
   it('yeni akista satir ici odeme paneli yerine tek "Ödeme Al" aksiyonu gorunur', () => {
     cy.get('.yeni-odeme-btn').should('be.visible').and('contain', 'Ödeme Al')
     // Eski katlanir odeme basligi YOK
@@ -28,6 +34,7 @@ describe('POS odeme overlay (posYeniAkis)', () => {
   })
 
   it('"Ödeme Al" overlay i acar; tus takimi gorunur', () => {
+    sepetDoldur()
     cy.get('.yeni-odeme-btn').click()
     cy.get('.p-dialog').should('be.visible')
     cy.get('.odeme-keypad').should('be.visible')
@@ -35,11 +42,12 @@ describe('POS odeme overlay (posYeniAkis)', () => {
   })
 
   it('tus takimina basmak alinan nakit tutarini gunceller', () => {
+    sepetDoldur()
     cy.get('.yeni-odeme-btn').click()
     cy.get('.odeme-keypad .keypad-tus').filter(':contains("1")').first().click()
     cy.get('.odeme-keypad .keypad-tus').filter(':contains("0")').first().click()
     // Ekranda 10 (₺10,00 / 10) gorunmeli
-    cy.get('.keypad-ekran').should('contain', '10')
+    cy.get('.odeme-keypad .tutar-stat-deger').should('contain', '10')
   })
 
   it('overlay den satis tamamlanir ve overlay kapanir', () => {
