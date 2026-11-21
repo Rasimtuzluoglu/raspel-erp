@@ -93,8 +93,8 @@ const sahaAc = (cevrimici = true) => {
     }
   })
   cy.url().should('include', '/saha-portali')
-  cy.wait('@ozet', { timeout: 20000 })
-  cy.wait('@teslimatlar', { timeout: 20000 })
+  // Ağ beklemesi yerine görünür UI beklenir: CI'da istek zamanlaması değişebiliyor.
+  cy.get('[data-test="saha-ozet-kartlari"]', { timeout: 25000 }).should('be.visible')
 }
 
 const yatayTasmaYok = () => {
