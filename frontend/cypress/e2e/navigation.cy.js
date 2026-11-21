@@ -41,7 +41,7 @@ describe('Navigation', () => {
     })
 
     cy.visit('/giris')
-    cy.get('input[placeholder="Kullanıcı Adı"]').type('admin')
+    cy.get('[data-test="giris-username"]').type('admin')
     cy.get('input[type="password"]').type('Admin123!')
     cy.contains('Giriş Yap').click()
     cy.wait('@login')
@@ -56,7 +56,7 @@ describe('Navigation', () => {
 
   it('should navigate to Dashboard', () => {
     cy.contains('Ana Sayfa').click()
-    cy.get('.dashboard-container').should('be.visible')
+    cy.get('[data-test="dashboard-kokpit"]').should('be.visible')
   })
 
   it('should navigate to Cari Hesaplar', () => {

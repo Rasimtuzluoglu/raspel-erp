@@ -48,7 +48,7 @@ describe('Teslimatlar - Şoför Görünümü', () => {
     })
 
     cy.visit('/giris')
-    cy.get('input[placeholder="Kullanıcı Adı"]').type('sofor')
+    cy.get('[data-test="giris-username"]').type('sofor')
     cy.get('input[type="password"]').type('Sofor123!')
     cy.contains('Giriş Yap').click()
     cy.wait('@login')
@@ -68,16 +68,17 @@ describe('Teslimatlar - Şoför Görünümü', () => {
     cy.get('.teslimat-kart.sofor-gorunum').should('have.length', 1)
     cy.contains('.teslimat-kart', 'Acme Ltd.').should('exist')
     cy.contains('.teslimat-kart', 'Test Mah.').should('exist')
-    cy.contains('.durum-btn', 'Yolda').should('exist')
-    cy.contains('.durum-btn', 'Teslim Et').should('exist')
+    // Şoförde durum dropdown'u yok; aksiyonlar menüde ve "Teslim Et & İmzala" butonunda.
+    cy.get('.teslimat-kart .durum-dropdown').should('not.exist')
+    cy.contains('button', 'Teslim Et & İmzala').should('be.visible')
     // Şoför listesi (yönetici seçimi) gizli
     cy.get('.surucu-listesi').should('not.exist')
   })
 
   it('teslim et akışında imza modalı açılır', () => {
     cy.wait('@teslimatlar')
-    cy.contains('.durum-btn', 'Teslim Et').click()
-    cy.contains('Dijital Teslimat').should('be.visible')
+    cy.contains('button', 'Teslim Et & İmzala').first().click()
+    cy.contains('Dijital Teslimat & İmza').should('be.visible')
     cy.get('.p-dialog input').first().should('be.visible')
   })
 })

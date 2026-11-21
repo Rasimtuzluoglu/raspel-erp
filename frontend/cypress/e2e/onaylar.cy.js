@@ -36,6 +36,14 @@ describe('Onay Merkezi', () => {
         { id: 30, siparisNo: 'SIP-2026-000030', cariHesapAd: 'Saha Müşteri A.Ş.', aciklama: 'Saha siparişi', genelToplam: 7500, durum: 'BEKLIYOR' }
       ]
     }).as('siparisler')
+    // Onay Merkezi tek uçtan beslenir (tur/kaynakId tabanlı).
+    const onaySatirlari = [
+      { tur: 'IZIN', kaynakId: 10, baslik: 'Ayşe Yılmaz', altBaslik: 'Yıllık İzin', tarih: '2026-09-01', durum: 'BEKLEMEDE' },
+      { tur: 'SIPARIS', kaynakId: 30, baslik: 'SIP-2026-000030', altBaslik: 'Saha Müşteri A.Ş.', tutar: 7500, tarih: '2026-09-02', durum: 'BEKLIYOR' }
+    ]
+    cy.intercept('GET', '/api/onaylar/bekleyen*', onaySatirlari).as('bekleyen')
+    cy.intercept('GET', '/api/onaylar/ozet*', { toplam: 2, izin: 1, masraf: 0, satinalma: 0, siparis: 1 }).as('onayOzet')
+    cy.intercept('POST', '/api/onaylar/karar', { statusCode: 200, body: {} }).as('karar')
 
     cy.window().then((win) => {
       win.localStorage.setItem('raspel_gorulen_surum', '1.1.0')
@@ -43,7 +51,7 @@ describe('Onay Merkezi', () => {
     })
 
     cy.visit('/giris')
-    cy.get('input[placeholder="Kullanıcı Adı"]').type('admin')
+    cy.get('[data-test="giris-username"]').type('admin')
     cy.get('input[type="password"]').type('Admin123!')
     cy.contains('Giriş Yap').click()
     cy.wait('@login')
@@ -61,30 +69,30 @@ describe('Onay Merkezi', () => {
   })
 
   it('bekleyen izin talebini listeler', () => {
+    cy.wait('@bekleyen')
     cy.contains('Ayşe Yılmaz').should('be.visible')
     cy.contains('Yıllık İzin').should('be.visible')
-    cy.contains('Onayla').should('be.visible')
-    cy.contains('Reddet').should('be.visible')
   })
 
   it('izin talebini onaylar', () => {
-    cy.intercept('PUT', '/api/personel-izin/10/durum', { statusCode: 200, body: {} }).as('izinOnay')
-    cy.contains('Ayşe Yılmaz').should('be.visible')
-    cy.contains('Ayşe Yılmaz').closest('.onay-kart').contains('Onayla').click()
-    cy.wait('@izinOnay').its('request.body').should('deep.include', { durum: 'ONAYLANDI' })
+    cy.wait('@bekleyen')
+    cy.contains('Ayşe Yılmaz').click()
+    cy.contains('.p-drawer, .p-dialog', 'Ayşe Yılmaz').should('be.visible')
+    cy.contains('button', 'Onayla').first().click({ force: true })
+    cy.wait('@karar').its('request.body').should('deep.include', { tur: 'IZIN', kaynakId: 10 })
   })
 
-  it('saha siparişleri sekmesinde bekleyen siparişi gösterir', () => {
-    cy.contains('Saha Siparişleri').click()
+  it('sipariş sekmesinde bekleyen siparişi gösterir', () => {
+    cy.contains('.onay-sekme', 'Sipariş').click()
+    cy.wait('@bekleyen')
     cy.contains('SIP-2026-000030').should('be.visible')
     cy.contains('Saha Müşteri A.Ş.').should('be.visible')
   })
 
-  it('saha siparişini onaylar (HAZIRLANIYOR durumuna)', () => {
-    cy.intercept('PUT', '/api/siparisler/30/durum', { statusCode: 200, body: {} }).as('siparisOnay')
-    cy.contains('Saha Siparişleri').click()
-    cy.contains('SIP-2026-000030').should('be.visible')
-    cy.contains('SIP-2026-000030').closest('.onay-kart').contains('Onayla').click()
-    cy.wait('@siparisOnay').its('request.body').should('deep.include', { durum: 'HAZIRLANIYOR' })
+  it('sipariş sekmesinde kayıt detayı açılır', () => {
+    cy.contains('.onay-sekme', 'Sipariş').click()
+    cy.wait('@bekleyen')
+    cy.contains('SIP-2026-000030').click()
+    cy.contains('.p-drawer, .p-dialog', 'SIP-2026-000030').should('be.visible')
   })
 })

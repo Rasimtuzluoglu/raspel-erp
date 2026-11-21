@@ -38,7 +38,7 @@ describe('Role Guard (USER)', () => {
     }).as('dashboard')
 
     cy.visit('/giris')
-    cy.get('input[placeholder="Kullanıcı Adı"]').type('user')
+    cy.get('[data-test="giris-username"]').type('user')
     cy.get('input[type="password"]').type('123456')
     cy.contains('Giriş Yap').click()
     cy.wait('@login')
