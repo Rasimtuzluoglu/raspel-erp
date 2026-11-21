@@ -82,3 +82,5 @@ gl-report.json
 
 # Runtime backups (WAL arsivi, base backup, offsite staging)
 backups/
+
+frontend/cypress-results.json

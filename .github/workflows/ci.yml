@@ -122,8 +122,27 @@ jobs:
           cat /tmp/vite.log
           exit 1
       - name: Cypress E2E tests
-        run: npx cypress run
+        id: cypress
+        continue-on-error: true
+        run: npx cypress run --reporter json --reporter-options output=cypress-results.json
         working-directory: ./frontend
+      - name: Cypress failure summary
+        if: always()
+        working-directory: ./frontend
+        run: |
+          if [ -f cypress-results.json ]; then
+            node -e "const r=require('./cypress-results.json');const f=[];for(const s of r.runs||[])for(const t of s.tests||[])if(t.state==='failed')f.push((s.spec&&s.spec.relative?s.spec.relative:'?')+' :: '+(t.title||[]).join(' > '));const metin=f.length?f.join('\n'):'Cypress: tum testler gecti.';require('fs').appendFileSync(process.env.GITHUB_STEP_SUMMARY||'/dev/null',metin+'\n');console.log(metin)"
+          fi
+      - name: Fail if Cypress failed
+        if: steps.cypress.outcome == 'failure'
+        run: exit 1
+      - name: Upload Cypress results (JSON)
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: cypress-results
+          path: frontend/cypress-results.json
+          if-no-files-found: ignore
       - name: Upload Cypress screenshots (on failure)
         if: failure()
         uses: actions/upload-artifact@v5
