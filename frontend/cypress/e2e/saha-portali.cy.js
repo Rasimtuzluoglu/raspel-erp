@@ -54,6 +54,13 @@ const apiMockla = () => {
   // Bilinmeyen çağrılar saha testini düşürmesin; özel intercept'ler sonra tanımlanır.
   cy.intercept('**/api/**', { statusCode: 200, body: {} })
 
+  // Oturum doğrulaması: /ben boş dönerse authStore kullanıcıyı kaybeder ve
+  // sürücü kimliği olmadığı için teslimat isteği hiç atılmaz.
+  cy.intercept('GET', '**/api/kullanicilar/ben', {
+    statusCode: 200,
+    body: { ...oturumVerisi.kullanici, sirketId: 1, companyName: 'Test Şirketi', yetkiler: ['*'] }
+  }).as('ben')
+
   cy.intercept('GET', '**/api/saha/ozet*', { statusCode: 200, body: ozetVerisi }).as('ozet')
   cy.intercept('GET', '**/api/deliveries?driverId=*', {
     statusCode: 200,
