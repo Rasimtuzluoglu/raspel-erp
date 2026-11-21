@@ -152,7 +152,7 @@ describe('REDTEAM Faz5 — kalem eklerken sepet okunur kalmali', () => {
       const r = $k[0].getBoundingClientRect()
       expect(r.height, 'toplam cubugu ezilmis').to.be.greaterThan(60)
     })
-    cy.contains('.sticky-tamamla button', 'Satışı Tamamla').should('be.visible')
+    cy.contains('.sticky-tamamla button', 'Ödeme Al').should('be.visible')
   })
 
   it('stok yok uyarisi HALEN gosterilir (bildirimleri tamamen kaldirmadik)', () => {
