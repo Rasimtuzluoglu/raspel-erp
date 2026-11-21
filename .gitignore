@@ -84,3 +84,4 @@ gl-report.json
 backups/
 
 frontend/cypress-results.json
+frontend/cypress-results-*.json

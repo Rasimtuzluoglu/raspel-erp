@@ -124,15 +124,21 @@ jobs:
       - name: Cypress E2E tests
         id: cypress
         continue-on-error: true
-        run: npx cypress run --reporter json --reporter-options output=cypress-results.json
+        run: |
+          npx cypress run --browser chrome --reporter json --reporter-options output=cypress-results-1.json \
+            --spec "cypress/e2e/cari-hesaplar.cy.js,cypress/e2e/dashboard.cy.js,cypress/e2e/depolar.cy.js,cypress/e2e/dialog-layout.cy.js,cypress/e2e/fatura-form.cy.js,cypress/e2e/fatura.cy.js,cypress/e2e/hizli-satis.cy.js,cypress/e2e/login.cy.js,cypress/e2e/navigation.cy.js,cypress/e2e/onaylar.cy.js,cypress/e2e/pos-odeme-overlay.cy.js,cypress/e2e/pos-sepet-park.cy.js" || exit 1
+          npx cypress run --browser chrome --reporter json --reporter-options output=cypress-results-2.json \
+            --spec "cypress/e2e/raporlar-drilldown.cy.js,cypress/e2e/redteam-faz2-hizliSatis.cy.js,cypress/e2e/redteam-faz3-yetki-ikon.cy.js,cypress/e2e/redteam-faz5-sepet-ust-uste.cy.js,cypress/e2e/role-guard.cy.js,cypress/e2e/saha-portali.cy.js,cypress/e2e/satislar.cy.js,cypress/e2e/sepet-adet-kontrolleri.cy.js,cypress/e2e/sunum-modu.cy.js,cypress/e2e/tahsilat.cy.js,cypress/e2e/teslimatlar.cy.js"
         working-directory: ./frontend
       - name: Cypress failure summary
         if: always()
         working-directory: ./frontend
         run: |
-          if [ -f cypress-results.json ]; then
-            node -e "const r=require('./cypress-results.json');const f=[];for(const s of r.runs||[])for(const t of s.tests||[])if(t.state==='failed')f.push((s.spec&&s.spec.relative?s.spec.relative:'?')+' :: '+(t.title||[]).join(' > '));const metin=f.length?f.join('\n'):'Cypress: tum testler gecti.';require('fs').appendFileSync(process.env.GITHUB_STEP_SUMMARY||'/dev/null',metin+'\n');console.log(metin)"
-          fi
+          for f in cypress-results-1.json cypress-results-2.json; do
+            if [ -f "$f" ]; then
+              node -e "const r=require('./$f');const f=[];for(const s of r.runs||[])for(const t of s.tests||[])if(t.state==='failed')f.push((s.spec&&s.spec.relative?s.spec.relative:'?')+' :: '+(t.title||[]).join(' > '));const metin=f.length?f.join('\n'):'$f: tum testler gecti.';require('fs').appendFileSync(process.env.GITHUB_STEP_SUMMARY||'/dev/null',metin+'\n');console.log(metin)"
+            fi
+          done
       - name: Fail if Cypress failed
         if: steps.cypress.outcome == 'failure'
         run: exit 1
@@ -141,7 +147,7 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: cypress-results
-          path: frontend/cypress-results.json
+          path: frontend/cypress-results-*.json
           if-no-files-found: ignore
       - name: Upload Cypress screenshots (on failure)
         if: failure()
