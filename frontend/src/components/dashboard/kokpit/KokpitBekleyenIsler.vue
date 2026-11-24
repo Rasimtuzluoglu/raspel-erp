@@ -60,6 +60,7 @@
           >
             <i :class="seviyeIkonu(oge.seviye)" />
           </span>
+          <span class="sr-only">{{ seviyeEtiketi(oge.seviye) }}</span>
           <span class="bekleyen-metin">{{ etiket(oge) }}</span>
           <strong class="bekleyen-deger">{{ degerMetni(oge) }}</strong>
           <i
@@ -160,6 +161,12 @@ const seviyeIkonu = (seviye) => {
   return 'pi pi-info-circle'
 }
 
+const seviyeEtiketi = (seviye) => {
+  if (seviye === 'KRITIK') return t('dashboard.bekleyenSeviyeKritik')
+  if (seviye === 'WARN') return t('dashboard.bekleyenSeviyeUyari')
+  return t('dashboard.bekleyenSeviyeBilgi')
+}
+
 const degerMetni = (oge) => {
   const adet = Number(oge?.adet)
   if (Number.isFinite(adet) && adet > 0) return String(adet)
@@ -197,7 +204,7 @@ const degerMetni = (oge) => {
   padding: 1px 6px;
   border-radius: 999px;
   background: var(--danger-soft);
-  color: var(--danger);
+  color: var(--danger-text);
   font-size: 10px;
   font-weight: 700;
   text-align: center;
@@ -248,15 +255,15 @@ const degerMetni = (oge) => {
 }
 .bekleyen-ikon--kritik {
   background: var(--danger-soft);
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .bekleyen-ikon--uyari {
   background: var(--warning-soft);
-  color: var(--warning);
+  color: var(--warning-text);
 }
 .bekleyen-ikon--bilgi {
   background: var(--info-soft);
-  color: var(--info);
+  color: var(--info-text);
 }
 .bekleyen-metin {
   flex: 1;

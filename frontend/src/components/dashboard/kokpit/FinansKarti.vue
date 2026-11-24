@@ -193,7 +193,7 @@ const { azaltHareket } = useHareketAzaltma()
   border: 1px solid var(--danger-border);
   border-radius: var(--radius-sm);
   background: var(--danger-soft);
-  color: var(--danger);
+  color: var(--danger-text);
   font-size: 12px;
 }
 .fin-kart-iskelet {

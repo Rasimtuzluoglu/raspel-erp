@@ -209,14 +209,14 @@ const hedef = (icgoru) => {
   height: 26px;
   border-radius: 8px;
   background: var(--bg-card);
-  color: var(--info);
+  color: var(--info-text);
   font-size: 12px;
 }
 .icgoru-kart--kritik .icgoru-ikon {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .icgoru-kart--uyari .icgoru-ikon {
-  color: var(--warning);
+  color: var(--warning-text);
 }
 .icgoru-metin {
   display: flex;

@@ -90,6 +90,9 @@ describe('KokpitAkis', () => {
     expect(wrapper.find('[data-test="akis-grup-DUN"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="akis-grup-DAHA_ESKI"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="akis-oge-2"]').exists()).toBe(true)
+    const grupBasligi = wrapper.find('.akis-grup-baslik')
+    expect(grupBasligi.attributes('role')).toBe('heading')
+    expect(grupBasligi.attributes('aria-level')).toBe('3')
   })
 
   it('grup sirasini sabit tutar ve gecersiz tarihi daha eskiye atar', () => {
@@ -117,6 +120,20 @@ describe('KokpitAkis', () => {
     expect(wrapper.find('[data-test="akis-grup-BUGUN"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="akis-grup-DAHA_ESKI"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="akis-oge-0"]').text()).toContain('az önce')
+  })
+
+  it('gun siniri: 3 gunluk bu hafta, 8 gunluk daha eski', () => {
+    const ucGun = new Date(Date.now() - 3 * 86400000).toISOString()
+    const sekizGun = new Date(Date.now() - 8 * 86400000).toISOString()
+    const wrapper = mountAkis({
+      olaylar: [
+        olay({ tarih: ucGun, tur: 'FATURA' }),
+        olay({ tarih: sekizGun, tur: 'ODEME' })
+      ]
+    })
+
+    expect(wrapper.find('[data-test="akis-grup-BU_HAFTA"] [data-test="akis-oge-0"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="akis-grup-DAHA_ESKI"] [data-test="akis-oge-1"]').exists()).toBe(true)
   })
 
   it('tur filtresi gruplari yalnizca filtrelenmis olaylardan kurar', async () => {

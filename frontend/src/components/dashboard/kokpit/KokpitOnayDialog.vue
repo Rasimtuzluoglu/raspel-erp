@@ -402,7 +402,7 @@ watch(
   color: var(--text-muted);
 }
 .onay-hata {
-  color: var(--danger);
+  color: var(--danger-text);
   justify-content: space-between;
 }
 .onay-liste {
@@ -494,12 +494,12 @@ watch(
 .onay-buton--onay {
   border-color: var(--success-border);
   background: var(--success-soft);
-  color: var(--success);
+  color: var(--success-text);
 }
 .onay-buton--red {
   border-color: var(--danger-border);
   background: var(--danger-soft);
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .onay-buton:focus-visible {
   outline: 2px solid var(--accent);
@@ -517,7 +517,7 @@ watch(
 .onay-red-etiket {
   font-size: 11px;
   font-weight: 600;
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .onay-red-alan {
   width: 100%;
@@ -536,7 +536,7 @@ watch(
 .onay-red-hata {
   margin: 0;
   font-size: 11px;
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .onay-red-eylemler {
   display: flex;

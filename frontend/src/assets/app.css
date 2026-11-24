@@ -106,6 +106,12 @@
   --info: #3b82f6;
   --info-soft: rgba(59, 130, 246, 0.15);
   --info-border: rgba(59, 130, 246, 0.32);
+  /* Metin/ikon icin okunabilir durum renkleri: koyu temada dolgu tonuyla ayni,
+     acik temada WCAG AA icin koyulastirilir (asagidaki [data-theme='light']). */
+  --success-text: var(--success);
+  --warning-text: var(--warning);
+  --danger-text: var(--danger);
+  --info-text: var(--info);
   --purple: #8b5cf6;
   --purple-soft: rgba(139, 92, 246, 0.15);
   --purple-border: rgba(139, 92, 246, 0.32);
@@ -183,6 +189,11 @@
   --kokpit-glow: radial-gradient(520px 180px at 100% 0%, rgba(13, 148, 136, 0.08), transparent 72%);
   --kokpit-parlaklik: linear-gradient(180deg, rgba(15, 23, 42, 0.02), transparent 38%);
   --kokpit-kart-golge: var(--elev-1), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  /* Acik temada dolgu renkleri metin icin soluk kaliyor: koyu esdegerler. */
+  --success-text: #047857;
+  --warning-text: #b45309;
+  --danger-text: #b91c1c;
+  --info-text: #1d4ed8;
 }
 
 /* Semantik yardımcı sınıflar (uygulama temasına göre) */

@@ -177,13 +177,13 @@ const degerMetni = (oge) => {
   font-size: 13px;
 }
 .kritik-serit-oge--kritik .kritik-serit-ikon {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .kritik-serit-oge--uyari .kritik-serit-ikon {
-  color: var(--warning);
+  color: var(--warning-text);
 }
 .kritik-serit-oge--bilgi .kritik-serit-ikon {
-  color: var(--info);
+  color: var(--info-text);
 }
 .kritik-serit-metin {
   display: flex;
@@ -219,15 +219,15 @@ const degerMetni = (oge) => {
 }
 .kritik-serit-oge--kritik .kritik-serit-rozet {
   background: var(--danger-soft);
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .kritik-serit-oge--uyari .kritik-serit-rozet {
   background: var(--warning-soft);
-  color: var(--warning);
+  color: var(--warning-text);
 }
 .kritik-serit-oge--bilgi .kritik-serit-rozet {
   background: var(--info-soft);
-  color: var(--info);
+  color: var(--info-text);
 }
 .kritik-serit-bos {
   display: flex;

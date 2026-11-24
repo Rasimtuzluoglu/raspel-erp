@@ -951,7 +951,7 @@ onBeforeUnmount(() => {
   border: 1px solid var(--danger-border);
   border-radius: var(--radius-md);
   background: var(--danger-soft);
-  color: var(--danger);
+  color: var(--danger-text);
   font-size: 12px;
 }
 .kokpit-hata-buton {
@@ -968,6 +968,13 @@ onBeforeUnmount(() => {
 .kokpit-hata-buton:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+@media (min-width: 1101px) {
+  /* Tek sayida detay karti kalirsa (USER rolu / ozellestirme) yarim satir
+     boslugu birakma; son karti iki kolona yay. */
+  .kokpit-bolum:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
 }
 @media (max-width: 1100px) {
   .kokpit-bolumler {

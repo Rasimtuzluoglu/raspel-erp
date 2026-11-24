@@ -60,7 +60,7 @@ describe('FinansOzetBandi', () => {
   it('yuklenirken iskelet gosterir', () => {
     const wrapper = mountBant({ yukleniyor: true })
 
-    expect(wrapper.findAll('.metrik-iskelet')).toHaveLength(4)
+    expect(wrapper.find('[data-test="finans-ust"]').findAll('.metrik-iskelet')).toHaveLength(4)
     expect(wrapper.findAll('.ikincil-iskelet')).toHaveLength(4)
   })
 
@@ -113,5 +113,22 @@ describe('FinansOzetBandi', () => {
     const azalan = mountBant({ kpi: [{ anahtar: 'ciro', deger: 100, degisimYuzde: -7.5 }] })
     expect(azalan.find('[data-test="kpi-ciro"] .metrik-kutu-degisim--kotu').exists()).toBe(true)
     expect(azalan.find('[data-test="kpi-ciro"]').text()).toContain('-7,5')
+  })
+
+  it('ikincil degisimde tr-TR virgul kullanir ve sifiri notr isaretler', () => {
+    const veri = kpi.map((oge) => {
+      if (oge.anahtar === 'netNakit') return { ...oge, degisimYuzde: 3.45 }
+      if (oge.anahtar === 'brutKar') return { ...oge, degisimYuzde: 0 }
+      return oge
+    })
+    const wrapper = mountBant({ kpi: veri })
+
+    const netNakit = wrapper.find('[data-test="kpi-alt-netNakit"] .ikincil-degisim')
+    expect(netNakit.text()).toContain('+3,5%')
+    expect(netNakit.classes()).toContain('ikincil-degisim--yukseis')
+
+    const brutKar = wrapper.find('[data-test="kpi-alt-brutKar"] .ikincil-degisim')
+    expect(brutKar.classes()).toContain('ikincil-degisim--notr')
+    expect(brutKar.classes()).not.toContain('ikincil-degisim--yukseis')
   })
 })

@@ -197,7 +197,7 @@ const ariaLabel = computed(() => {
 .metrik-kutu-kritik {
   flex-shrink: 0;
   font-size: 10px;
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .metrik-kutu-deger {
   display: block;
@@ -240,10 +240,10 @@ const ariaLabel = computed(() => {
   font-size: 8px;
 }
 .metrik-kutu-degisim--iyi {
-  color: var(--success);
+  color: var(--success-text);
 }
 .metrik-kutu-degisim--kotu {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .metrik-kutu-degisim--notr {
   color: var(--text-muted);

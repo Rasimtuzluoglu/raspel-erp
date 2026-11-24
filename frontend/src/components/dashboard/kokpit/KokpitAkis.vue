@@ -100,7 +100,11 @@
         class="akis-grup"
         :data-test="`akis-grup-${grup.anahtar}`"
       >
-        <span class="akis-grup-baslik">{{ grup.etiket }}</span>
+        <span
+          class="akis-grup-baslik"
+          role="heading"
+          aria-level="3"
+        >{{ grup.etiket }}</span>
         <ul class="akis-liste">
           <li
             v-for="{ olay, index } in grup.ogeler"
@@ -327,8 +331,8 @@ const zamanMetni = (tarih) => {
   width: 7px;
   height: 7px;
   border-radius: 999px;
-  background: var(--success, #10b981);
-  box-shadow: 0 0 0 3px var(--success-soft, rgba(16, 185, 129, 0.16));
+  background: var(--success);
+  box-shadow: 0 0 0 3px var(--success-soft);
 }
 .akis-filtreler {
   display: flex;
@@ -476,7 +480,7 @@ const zamanMetni = (tarih) => {
   font-size: 12px;
 }
 .akis-hata {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .akis-yenile {
   margin-left: auto;
@@ -543,6 +547,19 @@ const zamanMetni = (tarih) => {
   }
   .akis-metin-aciklama {
     display: none;
+  }
+}
+/* Dokunmatik isaretci: filtre cipleri ve akis satirlari 44 px hedefe cikar. */
+@media (pointer: coarse) {
+  .akis-filtre {
+    min-height: 44px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .akis-satir {
+    min-height: 44px;
+    padding-left: 6px;
+    padding-right: 6px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

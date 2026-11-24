@@ -301,10 +301,10 @@ const dagitimEtiketi = computed(() =>
   font-size: 8px;
 }
 .nakit-trend--iyi {
-  color: var(--success);
+  color: var(--success-text);
 }
 .nakit-trend--kotu {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .nakit-trend--notr {
   color: var(--text-muted);
@@ -422,10 +422,10 @@ const dagitimEtiketi = computed(() =>
   flex-shrink: 0;
   font-size: 10px;
   font-weight: 700;
-  color: var(--success);
+  color: var(--success-text);
 }
 .nakit-saglik--risk .nakit-saglik-rozet {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .nakit-saglik-metin {
   font-size: 10.5px;
@@ -436,7 +436,7 @@ const dagitimEtiketi = computed(() =>
   font-variant-numeric: tabular-nums;
 }
 .nakit-saglik-metin strong.negatif {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .nakit-runway {
   display: flex;
@@ -465,15 +465,15 @@ const dagitimEtiketi = computed(() =>
 }
 .nakit-runway--iyi .nakit-runway-durum {
   background: var(--success-soft);
-  color: var(--success);
+  color: var(--success-text);
 }
 .nakit-runway--uyari .nakit-runway-durum {
   background: var(--warning-soft);
-  color: var(--warning);
+  color: var(--warning-text);
 }
 .nakit-runway--risk .nakit-runway-durum {
   background: var(--danger-soft);
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .nakit-runway--notr .nakit-runway-durum {
   background: var(--bg-secondary);
@@ -532,11 +532,11 @@ const dagitimEtiketi = computed(() =>
 .nakit-net {
   font-size: 10.5px;
   font-weight: 600;
-  color: var(--success);
+  color: var(--success-text);
   font-variant-numeric: tabular-nums;
 }
 .nakit-net--negatif {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .nakit-bos {
   margin: 0;
@@ -563,7 +563,7 @@ const dagitimEtiketi = computed(() =>
 .nakit-projeksiyon-bitis {
   font-size: 14px;
   font-weight: 700;
-  color: var(--info);
+  color: var(--info-text);
   font-variant-numeric: tabular-nums;
 }
 .nakit-projeksiyon-detay {

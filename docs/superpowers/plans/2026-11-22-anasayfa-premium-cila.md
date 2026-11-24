@@ -904,12 +904,12 @@ git commit -m "docs(dashboard): premium cila plani ve oncesi/sonrasi goruntuleri
 
 ## Uygulama sonucu
 
-- **Kapsam:** Task 1–7 `4c55ed0c..ae6046ac`; Task 8 kodu `23a208d7`; bu plan/görsel commit'i sonrası.
-- **Kalite kapıları:** `npm run lint` 0 uyarı; `npm run i18n:check` temiz (6062 kullanılan / 6996 anahtar); `npm run test` 2998 test / 295 dosya yeşil; `npm run build` başarılı; Cypress `dashboard.cy.js` 16/16.
-- **Kırılım:** 1920, 1440, 1264, 1024, 768 ve 390 px'te dark+light yatay taşma yok; KPI değerleri taşmıyor. 1101 px'te uzun TRY tutarlarında yalnız ikincil KPI değerleri ellipsis'e düşüyor (4 kolonlu bandın tasarım sınırı), 1264 px'te ellipsis yok.
-- **Hizalama:** 1264+ genişliklerde akış/bekleyen işler kartları eşit yükseklikte; detay kartları satırda eşit ve footer'lar hizalı. Tek kolona düşen 1024/768/390'da kartlar içerik yüksekliğini alır.
-- **Erişilebilirlik:** `prefers-reduced-motion` kokpit geçiş/animasyonlarını kapatıyor; coarse pointer'da çipler, hızlı işlemler, bekleyen satırlar ve alt CTA'lar ≥44 px (global `html { zoom: 0.9 }` nedeniyle fiziksel ~39.6 px — proje geneli not). `sr-only` kırpma kuralları Cypress ile korunuyor.
-- **Görseller:** `2026-11-22-anasayfa-sonra-ust.png` (1440×900, dark), `2026-11-22-anasayfa-sonra-tam.png` (1440×1972, light tam sayfa); branch build'inden alındı.
+- **Kapsam:** Task 1–7 `4c55ed0c..ae6046ac`; Task 8 `23a208d7`; plan/görseller `fed75a73`; final review fix wave bu commit.
+- **Kalite kapıları:** `npm run lint` 0 uyarı; `npm run i18n:check` temiz (6065 kullanılan / 6999 anahtar); `npm run test` 3002 test / 295 dosya yeşil; `npm run build` başarılı; Cypress `dashboard.cy.js` 18/18.
+- **Kırılım:** 1920, 1440, 1264, 1152, 1024, 768 ve 390 px'te dark+light yatay taşma yok. KPI bandı 1201+ genişlikte dört, ≤1200'de iki kolon; 1152 ve 1264 px'te `1.025.330,50 ₺` gibi uzun TRY değerlerinde ellipsis yok.
+- **Hizalama:** 1264+ genişliklerde akış/bekleyen işler kartları eşit yükseklikte; detay kartları satırda eşit ve footer'lar hizalı. USER rolünde veya özelleştirmede Kâr & Marj gizlenince kalan üç karttan sonuncusu tam genişliğe yayılır (yarım satır boşluğu yok).
+- **Erişilebilirlik:** Açık temada `--success-text`/`--warning-text`/`--danger-text`/`--info-text` koyu durum metinleri kullanılır. `prefers-reduced-motion` kokpit geçiş/animasyonlarını kapatıyor; coarse pointer'da dönem butonları, para birimi seçici, üst bar ikonları, akış filtreleri ve satırları, çipler, hızlı işlemler, bekleyen satırlar ve alt CTA'lar ≥44 px (global `html { zoom: 0.9 }` nedeniyle fiziksel ~39.6 px — proje geneli not). `sr-only` kırpma kuralları Cypress ile korunuyor.
+- **Görseller:** `2026-11-22-anasayfa-sonra-ust.png` (1440×900, dark), `2026-11-22-anasayfa-sonra-tam.png` (1440×1994, light tam sayfa); branch build'inden alındı.
 
 ## Execution Handoff
 

@@ -324,7 +324,7 @@ onBeforeUnmount(() => {
   border: 1px solid var(--warning-border);
   border-radius: var(--radius-sm);
   background: var(--warning-soft);
-  color: var(--warning);
+  color: var(--warning-text);
   font-size: 11px;
 }
 .ozellestirme-alt-bar {

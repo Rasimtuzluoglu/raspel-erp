@@ -118,7 +118,7 @@ const userOturumVerisi = {
   yetkiler: []
 }
 
-const apiMockla = (rol = 'ADMIN') => {
+const apiMockla = (rol = 'ADMIN', veri = kokpitVerisi) => {
   cy.intercept('GET', '**/api/**', { statusCode: 200, body: [] }).as('catchAll')
   cy.intercept('POST', '**/api/**', { statusCode: 200, body: {} }).as('catchAllPost')
   cy.intercept('PUT', '**/api/**', { statusCode: 200, body: {} }).as('catchAllPut')
@@ -137,7 +137,7 @@ const apiMockla = (rol = 'ADMIN') => {
   }).as('ben')
 
   cy.intercept('GET', '**/api/dashboard/kokpit*', (req) => {
-    req.reply({ statusCode: 200, body: kokpitVerisi })
+    req.reply({ statusCode: 200, body: veri })
   }).as('kokpit')
 
   cy.intercept('GET', '**/api/dashboard/tercihler*', {
@@ -182,8 +182,8 @@ const apiMockla = (rol = 'ADMIN') => {
   }).as('excel')
 }
 
-const anasayfaAc = (oturum = oturumVerisi) => {
-  apiMockla(oturum?.kullanici?.role || 'ADMIN')
+const anasayfaAc = (oturum = oturumVerisi, veri = kokpitVerisi) => {
+  apiMockla(oturum?.kullanici?.role || 'ADMIN', veri)
   cy.visit('/', {
     onBeforeLoad(win) {
       win.localStorage.setItem(AUTH_ANAHTAR, JSON.stringify(oturum))
@@ -204,6 +204,17 @@ const yatayTasmaYok = () => {
   cy.document().then((doc) => {
     const kok = doc.documentElement
     expect(kok.scrollWidth, 'yatay taşma').to.be.at.most(kok.clientWidth + 1)
+  })
+}
+
+/** Tek sayıda kalan detay kartı iki kolonu kaplamalı (yarım satır boşluğu yok). */
+const sonDetayKartiTamGenislik = (anahtar) => {
+  cy.get('[data-test="kokpit-bolumler"]').then(($grid) => {
+    const genislik = $grid[0].getBoundingClientRect().width
+    cy.get(`[data-test="kokpit-bolum-${anahtar}"]`).should(($kart) => {
+      expect($kart[0].getBoundingClientRect().width, 'son detay kartı genişliği')
+        .to.be.closeTo(genislik, 2)
+    })
   })
 }
 
@@ -371,6 +382,8 @@ describe('Anasayfa finans kokpiti', () => {
 
     cy.get('[data-test="ozellestirme-gorunurluk-karMarj"]').uncheck({ force: true })
     cy.get('[data-test="kokpit-bolum-karMarj"]').should('not.exist')
+    cy.get('[data-test="kokpit-bolumler"] > *').should('have.length', 3)
+    sonDetayKartiTamGenislik('faturaSiparis')
 
     cy.get('[data-test="ozellestirme-kaydet"]').click()
     cy.wait('@tercihKaydet').then(({ request }) => {
@@ -405,7 +418,7 @@ describe('Anasayfa finans kokpiti', () => {
 
   it('kokpit-hizli-islemler-user: onay gizlenir, son aksiyon iki kolon kaplar', () => {
     cy.viewport(1440, 900)
-    anasayfaAc(userOturumVerisi)
+    anasayfaAc(userOturumVerisi, { ...kokpitVerisi, karMarj: null })
 
     cy.get('[data-test="hizli-onaylar"]').should('not.exist')
     cy.get('[data-test="kokpit-hizli-islemler"] .hizli-islem').should('have.length', 4)
@@ -416,6 +429,10 @@ describe('Anasayfa finans kokpiti', () => {
       const liste = $el[0].closest('.hizli-liste').getBoundingClientRect()
       expect(kart.width, 'iki kolon genişliği').to.be.greaterThan(liste.width * 0.9)
     })
+    // Yetkisiz rolde kar/marj gelmez: 3 kart kalir, son kart yarim satir boslugu birakmaz.
+    cy.get('[data-test="kokpit-bolum-karMarj"]').should('not.exist')
+    cy.get('[data-test="kokpit-bolumler"] > *').should('have.length', 3)
+    sonDetayKartiTamGenislik('faturaSiparis')
   })
 
   it('kokpit-820px: ust bar statik, ikon hedefleri 44px, sabit bar cakismasi yok', () => {
@@ -441,6 +458,33 @@ describe('Anasayfa finans kokpiti', () => {
       })
     })
     yatayTasmaYok()
+  })
+
+  it('kokpit-kpi-kirilim: 1152 iki kolon, 1264 dort kolon', () => {
+    const izgaraKolonlari = () => cy.get('[data-test="finans-ust"]').then(($el) => (
+      window.getComputedStyle($el[0]).gridTemplateColumns.split(' ').filter(Boolean)
+    ))
+
+    cy.viewport(1152, 900)
+    anasayfaAc()
+    izgaraKolonlari().should('have.length', 2)
+
+    cy.viewport(1264, 900)
+    anasayfaAc()
+    izgaraKolonlari().should('have.length', 4)
+  })
+
+  it('kokpit-sticky-davranis: 1440 ve 1024 kaydirinca ust bar yapisir', () => {
+    for (const genislik of [1440, 1024]) {
+      cy.viewport(genislik, 900)
+      anasayfaAc()
+      cy.scrollTo(0, 400)
+      cy.window().its('scrollY').should('be.greaterThan', 0)
+      cy.get('[data-test="kokpit-global-filtre"]').should(($el) => {
+        const top = $el[0].getBoundingClientRect().top
+        expect(top, `${genislik}px sticky top`).to.be.within(-1, 1)
+      })
+    }
   })
 
   it('kokpit-390px: yatay tasma yok, mobil sikistirma uygulanir', () => {

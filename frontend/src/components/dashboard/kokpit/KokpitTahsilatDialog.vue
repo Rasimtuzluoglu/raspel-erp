@@ -523,7 +523,7 @@ watch(
 }
 .hizli-temizle:hover,
 .hizli-temizle:focus-visible {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .hizli-hata {
   margin: 0;
@@ -531,7 +531,7 @@ watch(
   border: 1px solid var(--danger-border);
   border-radius: var(--radius-sm);
   background: var(--danger-soft);
-  color: var(--danger);
+  color: var(--danger-text);
   font-size: 11px;
 }
 .hizli-eylemler {

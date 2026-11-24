@@ -6,6 +6,7 @@ import KokpitBekleyenIsler from '../dashboard/kokpit/KokpitBekleyenIsler.vue'
 const ogeler = [
   { anahtar: 'bekleyenOnay', etiket: 'Bekleyen Onay', seviye: 'WARN', adet: 3, tutar: null },
   { anahtar: 'vadesiGecen', etiket: 'Vadesi Geçen', seviye: 'KRITIK', adet: 2, tutar: 15000 },
+  { anahtar: 'likidite', etiket: 'Likidite', seviye: 'BILGI', adet: null, tutar: 4.2 },
   { anahtar: 'kritikStok', etiket: 'Kritik Stok', seviye: 'WARN', adet: null, tutar: null }
 ]
 
@@ -45,6 +46,18 @@ describe('KokpitBekleyenIsler', () => {
     const wrapper = mountKart()
 
     expect(wrapper.find('[data-test="kokpit-bekleyen-bos"]').exists()).toBe(true)
+  })
+
+  it('uyari ve bilgi seviyelerini ve ekran okuyucu etiketini isaretler', () => {
+    const wrapper = mountKart({ ogeler })
+
+    expect(wrapper.find('[data-test="bekleyen-ikon-bekleyenOnay"]').classes())
+      .toContain('bekleyen-ikon--uyari')
+    expect(wrapper.find('[data-test="bekleyen-ikon-likidite"]').classes())
+      .toContain('bekleyen-ikon--bilgi')
+    expect(wrapper.find('[data-test="bekleyen-oge-bekleyenOnay"] .sr-only').text()).toBe('Uyarı')
+    expect(wrapper.find('[data-test="bekleyen-oge-likidite"] .sr-only').text()).toBe('Bilgi')
+    expect(wrapper.find('[data-test="bekleyen-oge-vadesiGecen"] .sr-only').text()).toBe('Kritik')
   })
 
   it('onay yetkisi varsa onay merkezi baglantisi cikar', async () => {

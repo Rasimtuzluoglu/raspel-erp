@@ -143,6 +143,19 @@ describe('kâr/marj ve fatura/sipariş bölümleri', () => {
     expect(wrapper.find('.fatura-durum-bar').exists()).toBe(true)
   })
 
+  it('fatura tahsilat orani esikleri Alacak/Verecek ile ayni', () => {
+    for (const [oran, seviye] of [[90, 'iyi'], [70, 'uyari'], [30, 'kotu'], [null, 'notr']]) {
+      const wrapper = mount(FaturaSiparisBolumu, {
+        ...mountOptions,
+        props: { veri: { ...faturaVeri, tahsilatOrani: oran }, paraBirimi: 'TRY' }
+      })
+      const performans = wrapper.find('[data-test="fatura-tahsilat-performansi"]')
+      expect(performans.classes()).toContain(`fatura-performans--${seviye}`)
+      expect(wrapper.find('.fatura-stat-deger--' + seviye).exists()).toBe(true)
+      if (seviye === 'notr') expect(performans.text()).toContain('—')
+    }
+  })
+
   it('faturaBolumuVadesiGecenIlkSekizGosterir', () => {
     const wrapper = mount(FaturaSiparisBolumu, {
       ...mountOptions,

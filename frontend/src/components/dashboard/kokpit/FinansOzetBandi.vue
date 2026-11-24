@@ -6,7 +6,10 @@
     :aria-label="t('dashboard.finansalOzet')"
   >
     <template v-if="yukleniyor && kpi.length === 0">
-      <div class="finans-ust">
+      <div
+        class="finans-ust"
+        data-test="finans-ust"
+      >
         <div
           v-for="n in 4"
           :key="`kpi-iskelet-${n}`"
@@ -152,10 +155,14 @@ const bicimliDegisim = (yuzde) => {
   const sayi = Number(yuzde)
   if (!Number.isFinite(sayi)) return ''
   const isaret = sayi > 0 ? '+' : ''
-  return `${isaret}${sayi.toFixed(1)}%`
+  return `${isaret}${sayi.toLocaleString('tr-TR', { maximumFractionDigits: 1 })}%`
 }
 
-const trendSinifi = (yuzde) => (Number(yuzde) < 0 ? 'ikincil-degisim--dusus' : 'ikincil-degisim--yukseis')
+const trendSinifi = (yuzde) => {
+  const sayi = Number(yuzde)
+  if (!Number.isFinite(sayi) || sayi === 0) return 'ikincil-degisim--notr'
+  return sayi < 0 ? 'ikincil-degisim--dusus' : 'ikincil-degisim--yukseis'
+}
 </script>
 
 <style scoped>
@@ -248,10 +255,13 @@ const trendSinifi = (yuzde) => (Number(yuzde) < 0 ? 'ikincil-degisim--dusus' : '
   font-weight: 700;
 }
 .ikincil-degisim--yukseis {
-  color: var(--success, #10b981);
+  color: var(--success-text);
 }
 .ikincil-degisim--dusus {
-  color: var(--danger);
+  color: var(--danger-text);
+}
+.ikincil-degisim--notr {
+  color: var(--text-muted);
 }
 .ikincil-iskelet {
   width: 118px;
@@ -284,7 +294,7 @@ const trendSinifi = (yuzde) => (Number(yuzde) < 0 ? 'ikincil-degisim--dusus' : '
     animation: none;
   }
 }
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
   .finans-ust {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

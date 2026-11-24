@@ -263,11 +263,11 @@ const cariDetay = (satir) => {
   color: var(--text-muted);
 }
 .alacak-net strong {
-  color: var(--success);
+  color: var(--success-text);
   font-variant-numeric: tabular-nums;
 }
 .alacak-net--negatif strong {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .bolum-hizli-buton {
   display: inline-flex;
@@ -372,21 +372,21 @@ const cariDetay = (satir) => {
 }
 .alacak-performans--iyi .alacak-performans-ust strong,
 .alacak-stat-deger--iyi {
-  color: var(--success);
+  color: var(--success-text);
 }
 .alacak-performans--uyari .alacak-performans-bar span {
   background: var(--warning);
 }
 .alacak-performans--uyari .alacak-performans-ust strong,
 .alacak-stat-deger--uyari {
-  color: var(--warning);
+  color: var(--warning-text);
 }
 .alacak-performans--kotu .alacak-performans-bar span {
   background: var(--danger);
 }
 .alacak-performans--kotu .alacak-performans-ust strong,
 .alacak-stat-deger--kotu {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 /* Oran yoksa renkli durum iddiası kurulmaz; sessiz nötr görünüm kalır. */
 .alacak-performans--notr .alacak-performans-bar span {
@@ -405,7 +405,7 @@ const cariDetay = (satir) => {
   border: 1px solid var(--warning-border);
   border-radius: var(--radius-sm);
   background: var(--warning-soft);
-  color: var(--warning);
+  color: var(--warning-text);
   font-size: 10.5px;
 }
 .alacak-oncelik i {
@@ -433,7 +433,7 @@ const cariDetay = (satir) => {
   border: 1px solid var(--warning-border);
   border-radius: var(--radius-xs);
   background: transparent;
-  color: var(--warning);
+  color: var(--warning-text);
   font-size: 9.5px;
   font-weight: 700;
   cursor: pointer;

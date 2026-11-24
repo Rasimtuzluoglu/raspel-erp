@@ -243,7 +243,7 @@ const stil = (adim) => {
   font-variant-numeric: tabular-nums;
 }
 .kopru-deger.negatif {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 @media (max-width: 520px) {
   .kopru-satir {

@@ -231,7 +231,7 @@ const { t } = useI18n()
   padding: 1px 5px;
   border-radius: var(--radius-pill);
   background: var(--danger-soft);
-  color: var(--danger);
+  color: var(--danger-text);
   font-size: 10px;
   font-weight: 700;
   text-align: center;

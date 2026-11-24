@@ -269,13 +269,13 @@ const gunBasligi = (gun) =>
   white-space: nowrap;
 }
 .nakit-ozet-kutu--giris strong {
-  color: var(--success);
+  color: var(--success-text);
 }
 .nakit-ozet-kutu--cikis strong {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .nakit-ozet-kutu--yogun strong {
-  color: var(--warning);
+  color: var(--warning-text);
 }
 .nakit-takvim-lejant {
   display: flex;
@@ -359,7 +359,7 @@ const gunBasligi = (gun) =>
   font-variant-numeric: tabular-nums;
 }
 .nakit-takvim-gun-net.negatif {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .nakit-takvim-iskelet {
   display: grid;

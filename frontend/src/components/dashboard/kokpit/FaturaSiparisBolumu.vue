@@ -41,7 +41,10 @@
       </div>
       <div class="fatura-stat">
         <span class="fatura-stat-etiket">{{ t('dashboard.kokpitFaturaSiparisTahsilatOrani') }}</span>
-        <strong class="fatura-stat-deger">{{ tahsilatOraniMetni }}</strong>
+        <strong
+          class="fatura-stat-deger"
+          :class="'fatura-stat-deger--' + tahsilatSeviyesi"
+        >{{ tahsilatOraniMetni }}</strong>
         <span class="fatura-stat-alt">{{ t('dashboard.kokpitFaturaSiparisDurumlar') }}</span>
       </div>
       <div class="fatura-stat">
@@ -53,6 +56,7 @@
 
     <div
       class="fatura-performans"
+      :class="'fatura-performans--' + tahsilatSeviyesi"
       data-test="fatura-tahsilat-performansi"
     >
       <div class="fatura-performans-ust">
@@ -173,18 +177,31 @@ const vadesiGecenTutar = computed(() => Number(veriDegeri.value.vadesiGecenTutar
 const vadesiGecenAdet = computed(() => Number(veriDegeri.value.vadesiGecenAdet) || 0)
 const hedef = computed(() => veriDegeri.value.hedef || { route: '/tahsilat', query: {} })
 
+/** Ham oran gecerli mi? Null/eksik/sayisal olmayan deger notr sayilir. */
+const tahsilatGecerli = computed(() => {
+  const ham = veriDegeri.value.tahsilatOrani
+  if (ham === null || ham === undefined || ham === '') return false
+  return Number.isFinite(Number(ham))
+})
+
 const tahsilatOraniMetni = computed(() => {
-  if (veriDegeri.value.tahsilatOrani === null || veriDegeri.value.tahsilatOrani === undefined) {
-    return '—'
-  }
+  if (!tahsilatGecerli.value) return '—'
   const deger = Number(veriDegeri.value.tahsilatOrani)
-  if (!Number.isFinite(deger)) return '—'
   return `${deger.toLocaleString('tr-TR', { maximumFractionDigits: 1 })}%`
 })
 
-const tahsilatOraniDegeri = computed(() =>
-  Math.min(100, Math.max(0, Number(veriDegeri.value.tahsilatOrani) || 0))
-)
+const tahsilatOraniDegeri = computed(() => {
+  if (!tahsilatGecerli.value) return 0
+  return Math.min(100, Math.max(0, Number(veriDegeri.value.tahsilatOrani)))
+})
+
+const tahsilatSeviyesi = computed(() => {
+  if (!tahsilatGecerli.value) return 'notr'
+  const oran = tahsilatOraniDegeri.value
+  if (oran >= 80) return 'iyi'
+  if (oran >= 50) return 'uyari'
+  return 'kotu'
+})
 
 const siparisDurumAnahtarlari = {
   TEKLIF: 'dashboard.siparisDurumTeklif',
@@ -427,8 +444,34 @@ const faturaDetay = (satir) => {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--accent), var(--success));
+  background: var(--text-muted);
   transition: width var(--dur-base) var(--ease-standard);
+}
+/* Tahsilat orani esigi Alacak/Verecek kartiyla ayni: >=80 iyi, >=50 uyari, <50 kotu. */
+.fatura-performans--iyi .fatura-performans-bar span {
+  background: var(--success);
+}
+.fatura-performans--uyari .fatura-performans-bar span {
+  background: var(--warning);
+}
+.fatura-performans--kotu .fatura-performans-bar span {
+  background: var(--danger);
+}
+.fatura-performans--iyi .fatura-performans-ust strong,
+.fatura-stat-deger--iyi {
+  color: var(--success-text);
+}
+.fatura-performans--uyari .fatura-performans-ust strong,
+.fatura-stat-deger--uyari {
+  color: var(--warning-text);
+}
+.fatura-performans--kotu .fatura-performans-ust strong,
+.fatura-stat-deger--kotu {
+  color: var(--danger-text);
+}
+.fatura-performans--notr .fatura-performans-ust strong,
+.fatura-stat-deger--notr {
+  color: var(--text-muted);
 }
 .fatura-durum-bar {
   display: flex;

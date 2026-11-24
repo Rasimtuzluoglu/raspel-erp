@@ -317,7 +317,7 @@ const PARA_BIRIMLERI = ['TRY', 'USD', 'EUR']
   border: 1px solid var(--success-border);
   border-radius: var(--radius-pill);
   background: var(--success-soft);
-  color: var(--success);
+  color: var(--success-text);
   font-size: 10.5px;
   font-weight: 700;
   cursor: pointer;
@@ -462,6 +462,20 @@ const PARA_BIRIMLERI = ['TRY', 'USD', 'EUR']
   .kokpit-donem-buton {
     flex: 1;
     text-align: center;
+  }
+  .kokpit-ikon-buton {
+    width: 44px;
+    height: 44px;
+  }
+}
+/* Dokunmatik isaretci: ust bar kontrolleri 44 px hedefe cikar.
+   Masaustu/ince isaretci boyutlari degismez. */
+@media (pointer: coarse) {
+  .kokpit-donem-buton {
+    min-height: 44px;
+  }
+  .kokpit-para-secim {
+    height: 44px;
   }
   .kokpit-ikon-buton {
     width: 44px;
