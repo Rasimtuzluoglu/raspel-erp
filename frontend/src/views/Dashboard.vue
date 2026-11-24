@@ -840,7 +840,7 @@ onBeforeUnmount(() => {
 /* Orta: son işlemler + bekleyen işler. */
 .kokpit-orta {
   display: grid;
-  grid-template-columns: minmax(0, 2.4fr) minmax(220px, 1fr);
+  grid-template-columns: minmax(0, 2.2fr) minmax(280px, 1fr);
   gap: var(--kokpit-bosluk);
   align-items: stretch;
   min-width: 0;

@@ -74,4 +74,55 @@ describe('KokpitAkis', () => {
 
     expect(wrapper.find('[data-test="akis-oge-0"]').text()).toContain('$')
   })
+
+  it('olaylari gune gore gruplar ve global indeksi korur', () => {
+    const bugun = new Date()
+    const dun = new Date(Date.now() - 86400000)
+    const eski = new Date(Date.now() - 10 * 86400000)
+    const wrapper = mountAkis({
+      olaylar: [
+        olay({ tarih: bugun.toISOString() }),
+        olay({ tarih: dun.toISOString(), tur: 'FATURA' }),
+        olay({ tarih: eski.toISOString(), tur: 'ODEME' })
+      ]
+    })
+    expect(wrapper.find('[data-test="akis-grup-BUGUN"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="akis-grup-DUN"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="akis-grup-DAHA_ESKI"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="akis-oge-2"]').exists()).toBe(true)
+  })
+
+  it('grup sirasini sabit tutar ve gecersiz tarihi daha eskiye atar', () => {
+    const bugun = new Date().toISOString()
+    const dun = new Date(Date.now() - 86400000).toISOString()
+    const wrapper = mountAkis({
+      olaylar: [
+        olay({ tarih: null, tur: 'ODEME' }),
+        olay({ tarih: dun, tur: 'FATURA' }),
+        olay({ tarih: bugun })
+      ]
+    })
+
+    const gruplar = wrapper.findAll('[data-test^="akis-grup-"]').map((grup) => grup.attributes('data-test'))
+    expect(gruplar).toEqual(['akis-grup-BUGUN', 'akis-grup-DUN', 'akis-grup-DAHA_ESKI'])
+    // Global indeks giriş sırasını korur: geçersiz tarih 0, bugünkü olay 2.
+    expect(wrapper.find('[data-test="akis-grup-DAHA_ESKI"] [data-test="akis-oge-0"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="akis-grup-BUGUN"] [data-test="akis-oge-2"]').exists()).toBe(true)
+  })
+
+  it('tur filtresi gruplari yalnizca filtrelenmis olaylardan kurar', async () => {
+    const bugun = new Date().toISOString()
+    const dun = new Date(Date.now() - 86400000).toISOString()
+    const wrapper = mountAkis({
+      olaylar: [
+        olay({ tarih: bugun }),
+        olay({ tarih: dun, tur: 'FATURA' })
+      ]
+    })
+
+    await wrapper.find('[data-test="akis-filtre-FATURA"]').trigger('click')
+
+    expect(wrapper.find('[data-test="akis-grup-BUGUN"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="akis-grup-DUN"]').exists()).toBe(true)
+  })
 })

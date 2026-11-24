@@ -53,10 +53,13 @@
           @click="emit('oge-sec', oge)"
         >
           <span
-            class="bekleyen-nokta"
+            class="bekleyen-ikon"
             :class="seviyeSinifi(oge.seviye)"
+            :data-test="`bekleyen-ikon-${oge.anahtar}`"
             aria-hidden="true"
-          />
+          >
+            <i :class="seviyeIkonu(oge.seviye)" />
+          </span>
           <span class="bekleyen-metin">{{ etiket(oge) }}</span>
           <strong class="bekleyen-deger">{{ degerMetni(oge) }}</strong>
           <i
@@ -146,9 +149,15 @@ const etiket = (oge) => {
 }
 
 const seviyeSinifi = (seviye) => {
-  if (seviye === 'KRITIK') return 'bekleyen-nokta--kritik'
-  if (seviye === 'WARN') return 'bekleyen-nokta--uyari'
-  return 'bekleyen-nokta--bilgi'
+  if (seviye === 'KRITIK') return 'bekleyen-ikon--kritik'
+  if (seviye === 'WARN') return 'bekleyen-ikon--uyari'
+  return 'bekleyen-ikon--bilgi'
+}
+
+const seviyeIkonu = (seviye) => {
+  if (seviye === 'KRITIK') return 'pi pi-exclamation-circle'
+  if (seviye === 'WARN') return 'pi pi-exclamation-triangle'
+  return 'pi pi-info-circle'
 }
 
 const degerMetni = (oge) => {
@@ -166,6 +175,7 @@ const degerMetni = (oge) => {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  height: 100%;
   gap: 8px;
 }
 .bekleyen-baslik {
@@ -195,6 +205,7 @@ const degerMetni = (oge) => {
 .bekleyen-liste {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -225,21 +236,27 @@ const degerMetni = (oge) => {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
-.bekleyen-nokta {
-  width: 8px;
-  height: 8px;
+.bekleyen-ikon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
-  border-radius: 999px;
-  background: var(--text-muted);
+  border-radius: 9px;
+  font-size: 12px;
 }
-.bekleyen-nokta--kritik {
-  background: var(--danger);
+.bekleyen-ikon--kritik {
+  background: var(--danger-soft);
+  color: var(--danger);
 }
-.bekleyen-nokta--uyari {
-  background: var(--warning, #f59e0b);
+.bekleyen-ikon--uyari {
+  background: var(--warning-soft);
+  color: var(--warning);
 }
-.bekleyen-nokta--bilgi {
-  background: var(--accent);
+.bekleyen-ikon--bilgi {
+  background: var(--info-soft);
+  color: var(--info);
 }
 .bekleyen-metin {
   flex: 1;

@@ -90,44 +90,54 @@
       {{ t('dashboard.akisBos') }}
     </p>
 
-    <ul
+    <div
       v-else
-      class="akis-liste"
+      class="akis-gruplar"
     >
-      <li
-        v-for="(olay, index) in gorunen"
-        :key="`${olay.tur || 'olay'}-${olay.tarih || index}-${index}`"
+      <div
+        v-for="grup in gruplar"
+        :key="grup.anahtar"
+        class="akis-grup"
+        :data-test="`akis-grup-${grup.anahtar}`"
       >
-        <button
-          type="button"
-          class="akis-satir"
-          :data-test="`akis-oge-${index}`"
-          @click="emit('sec', olay)"
-        >
-          <span
-            class="akis-ikon"
-            :style="ikonStili(olay)"
-            aria-hidden="true"
+        <span class="akis-grup-baslik">{{ grup.etiket }}</span>
+        <ul class="akis-liste">
+          <li
+            v-for="{ olay, index } in grup.ogeler"
+            :key="`${olay.tur || 'olay'}-${olay.tarih || index}-${index}`"
           >
-            <i :class="olay.ikon || 'pi pi-circle'" />
-          </span>
-          <span class="akis-metin">
-            <strong class="akis-metin-baslik">{{ olay.baslik || olay.tur }}</strong>
-            <small
-              v-if="olay.aciklama"
-              class="akis-metin-aciklama"
-            >{{ olay.aciklama }}</small>
-          </span>
-          <span class="akis-sag">
-            <span
-              v-if="olay.tutar !== null && olay.tutar !== undefined"
-              class="akis-tutar"
-            >{{ formatPara(olay.tutar, paraBirimi) }}</span>
-            <small class="akis-zaman">{{ zamanMetni(olay.tarih) }}</small>
-          </span>
-        </button>
-      </li>
-    </ul>
+            <button
+              type="button"
+              class="akis-satir"
+              :data-test="`akis-oge-${index}`"
+              @click="emit('sec', olay)"
+            >
+              <span
+                class="akis-ikon"
+                :style="ikonStili(olay)"
+                aria-hidden="true"
+              >
+                <i :class="olay.ikon || 'pi pi-circle'" />
+              </span>
+              <span class="akis-metin">
+                <strong class="akis-metin-baslik">{{ olay.baslik || olay.tur }}</strong>
+                <small
+                  v-if="olay.aciklama"
+                  class="akis-metin-aciklama"
+                >{{ olay.aciklama }}</small>
+              </span>
+              <span class="akis-sag">
+                <span
+                  v-if="olay.tutar !== null && olay.tutar !== undefined"
+                  class="akis-tutar"
+                >{{ formatPara(olay.tutar, paraBirimi) }}</span>
+                <small class="akis-zaman">{{ zamanMetni(olay.tarih) }}</small>
+              </span>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
 
     <button
       v-if="filtreli.length > varsayilanAdet"
@@ -219,6 +229,47 @@ const turSec = (kod) => {
   tur.value = kod
   genisletildi.value = false
 }
+
+const GRUP_SIRASI = ['BUGUN', 'DUN', 'BU_HAFTA', 'DAHA_ESKI']
+const GRUP_ETIKETI = {
+  BUGUN: 'dashboard.gunBugun',
+  DUN: 'dashboard.gunDun',
+  BU_HAFTA: 'dashboard.gunBuHafta',
+  DAHA_ESKI: 'dashboard.gunDahaEski'
+}
+
+/** Takvim günü farkına göre grup; geçersiz/eksik tarih "daha eski" sayılır. */
+const gunGrubu = (tarih) => {
+  if (!tarih) return 'DAHA_ESKI'
+  const zaman = new Date(tarih).getTime()
+  if (!Number.isFinite(zaman)) return 'DAHA_ESKI'
+  const bugun = new Date()
+  bugun.setHours(0, 0, 0, 0)
+  const gun = new Date(zaman)
+  gun.setHours(0, 0, 0, 0)
+  const fark = Math.round((bugun.getTime() - gun.getTime()) / 86400000)
+  if (fark === 0) return 'BUGUN'
+  if (fark === 1) return 'DUN'
+  if (fark >= 2 && fark <= 7) return 'BU_HAFTA'
+  return 'DAHA_ESKI'
+}
+
+/** Görünen (filtre + "Tümünü gör" uygulanmış) olayları sabit sıralı gün gruplarına böler. */
+const gruplar = computed(() => {
+  const kova = new Map()
+  gorunen.value.forEach((olay, index) => {
+    const anahtar = gunGrubu(olay?.tarih)
+    if (!kova.has(anahtar)) kova.set(anahtar, [])
+    kova.get(anahtar).push({ olay, index })
+  })
+  return GRUP_SIRASI
+    .filter((anahtar) => kova.has(anahtar))
+    .map((anahtar) => ({
+      anahtar,
+      etiket: t(GRUP_ETIKETI[anahtar]),
+      ogeler: kova.get(anahtar)
+    }))
+})
 
 watch(() => props.olaylar, () => {
   // Yeni veri geldiğinde seçili tür artık yoksa "Tümü"ye dön.
@@ -313,6 +364,23 @@ const zamanMetni = (tarih) => {
 .akis-filtre:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+.akis-gruplar {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.akis-grup + .akis-grup {
+  margin-top: 6px;
+}
+.akis-grup-baslik {
+  display: block;
+  padding: 6px 6px 2px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 .akis-liste {
   display: flex;

@@ -28,7 +28,8 @@ describe('KokpitBekleyenIsler', () => {
     const vadesi = wrapper.find('[data-test="bekleyen-oge-vadesiGecen"]')
     // Adet varsa adet gösterilir (tutar değil); seviye rengi kritik olur.
     expect(vadesi.text()).toContain('2')
-    expect(wrapper.find('.bekleyen-nokta--kritik').exists()).toBe(true)
+    expect(wrapper.find('[data-test="bekleyen-ikon-vadesiGecen"]').exists()).toBe(true)
+    expect(wrapper.find('.bekleyen-ikon--kritik').exists()).toBe(true)
   })
 
   it('kaleme tiklaninca oge-sec yayar', async () => {
