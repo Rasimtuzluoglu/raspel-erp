@@ -800,17 +800,27 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* Yapışkan üst bar: atalardaki `overflow-x: hidden` sticky için scroll
+   konteyneri üretiyordu. `clip` aynı yatay kırpmayı korur, scroll konteyneri
+   üretmez; kural yalnız kokpit sayfası varken uygulanır. */
+:global(.main-content:has(.kokpit-sayfa)),
+:global(.app-container:has(.kokpit-sayfa)),
+:global(#app:has(.kokpit-sayfa)) {
+  overflow-x: clip;
+}
 .kokpit-sayfa {
   --kokpit-bosluk: 14px;
   display: flex;
   flex-direction: column;
   gap: var(--kokpit-bosluk);
   min-width: 0;
-  padding: 12px 14px 24px;
+  max-width: 1760px;
+  margin: 0 auto;
+  padding: 16px 18px 28px;
 }
 /* Kullanıcı tercihi: ferah görünüm. */
 .kokpit-sayfa--ferah {
-  --kokpit-bosluk: 22px;
+  --kokpit-bosluk: 24px;
 }
 .kokpit-sayfa--ferah :deep(.akis-satir),
 .kokpit-sayfa--ferah :deep(.bekleyen-satir) {
@@ -962,7 +972,7 @@ onBeforeUnmount(() => {
 }
 @media (max-width: 600px) {
   .kokpit-sayfa {
-    padding: 8px 9px 20px;
+    padding: 10px 12px 22px;
   }
 }
 </style>

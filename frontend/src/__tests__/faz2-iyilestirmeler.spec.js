@@ -80,6 +80,6 @@ describe('Faz2 — Global yoğunluk', () => {
   it('kokpit üst filtresi sade ve yapışkan', () => {
     const filtre = oku('components/dashboard/kokpit/KokpitGlobalFiltre.vue')
     expect(filtre).toMatch(/\.kokpit-filtre \{[\s\S]*?position:\s*sticky/)
-    expect(filtre).toMatch(/\.kokpit-baslik \{[\s\S]*?font-size:\s*18px/)
+    expect(filtre).toMatch(/\.kokpit-baslik \{[\s\S]*?font-size:\s*22px/)
   })
 })

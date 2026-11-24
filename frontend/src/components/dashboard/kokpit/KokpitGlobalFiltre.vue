@@ -208,7 +208,7 @@ const PARA_BIRIMLERI = ['TRY', 'USD', 'EUR']
   flex-wrap: wrap;
   align-items: center;
   gap: 10px 16px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--bg-header);
@@ -222,18 +222,30 @@ const PARA_BIRIMLERI = ['TRY', 'USD', 'EUR']
   min-width: 0;
 }
 .kokpit-eyebrow {
-  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--accent);
 }
-.kokpit-baslik {
+.kokpit-eyebrow::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+/* `.main-content h1` genel kuralını (24px, alt boşluk) bastırmak için
+   yeterli özgüllük: üst bar başlığı 22px kalmalı. */
+.kokpit-filtre .kokpit-filtre-baslik .kokpit-baslik {
   margin: 0;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 700;
   line-height: 1.15;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
   color: var(--text-primary);
 }
 .kokpit-kontroller {
@@ -246,18 +258,19 @@ const PARA_BIRIMLERI = ['TRY', 'USD', 'EUR']
 }
 .kokpit-donem {
   display: inline-flex;
-  padding: 2px;
+  padding: 3px;
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
   background: var(--bg-muted);
 }
 .kokpit-donem-buton {
-  padding: 4px 9px;
+  min-height: 30px;
+  padding: 0 12px;
   border: 0;
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -273,9 +286,9 @@ const PARA_BIRIMLERI = ['TRY', 'USD', 'EUR']
   outline-offset: 1px;
 }
 .kokpit-donem-buton--aktif {
-  background: var(--bg-card);
+  background: var(--accent-soft);
   color: var(--accent);
-  box-shadow: var(--elev-1);
+  box-shadow: none;
 }
 .kokpit-para {
   display: inline-flex;
@@ -325,7 +338,7 @@ const PARA_BIRIMLERI = ['TRY', 'USD', 'EUR']
   animation: none;
 }
 .kokpit-guncelleme {
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -442,14 +455,15 @@ const PARA_BIRIMLERI = ['TRY', 'USD', 'EUR']
   .kokpit-donem {
     width: 100%;
     justify-content: space-between;
+    overflow-x: auto;
   }
   .kokpit-donem-buton {
     flex: 1;
     text-align: center;
   }
   .kokpit-ikon-buton {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
   }
 }
 </style>

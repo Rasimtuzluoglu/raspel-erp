@@ -373,6 +373,15 @@ describe('Anasayfa finans kokpiti', () => {
     yatayTasmaYok()
   })
 
+  it('390px viewportta yatay tasma olmaz', () => {
+    cy.viewport(390, 844)
+    anasayfaAc()
+    cy.get('[data-test="dashboard-kokpit"]', { timeout: 20000 }).should('exist')
+    cy.document().then((doc) => {
+      expect(doc.documentElement.scrollWidth).to.be.at.most(390)
+    })
+  })
+
   it('kokpit-excel: dışa aktarma isteği gönderilir', () => {
     cy.viewport(1440, 900)
     anasayfaAc()
