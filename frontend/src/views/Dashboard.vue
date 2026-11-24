@@ -850,12 +850,22 @@ onBeforeUnmount(() => {
   min-width: 0;
 }
 .kokpit-bolum-baslik {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 4px 0 -6px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
   color: var(--text-secondary);
   text-transform: uppercase;
+}
+.kokpit-bolum-baslik::before {
+  content: '';
+  width: 16px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
 }
 .kokpit-alt {
   display: flex;
@@ -915,6 +925,9 @@ onBeforeUnmount(() => {
 }
 .kokpit-bolum {
   min-width: 0;
+}
+.kokpit-bolum > * {
+  height: 100%;
 }
 .kokpit-hata {
   display: flex;

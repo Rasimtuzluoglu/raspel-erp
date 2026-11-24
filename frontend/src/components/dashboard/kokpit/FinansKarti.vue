@@ -89,8 +89,9 @@ const { azaltHareket } = useHareketAzaltma()
   display: flex;
   flex-direction: column;
   gap: 10px;
+  height: 100%;
   min-width: 0;
-  padding: 13px 14px;
+  padding: var(--kokpit-kart-pad);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background:
@@ -153,7 +154,7 @@ const { azaltHareket } = useHareketAzaltma()
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.2;
   color: var(--text-primary);
@@ -163,7 +164,7 @@ const { azaltHareket } = useHareketAzaltma()
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: 11.5px;
   line-height: 1.3;
   color: var(--text-muted);
 }
@@ -174,8 +175,14 @@ const { azaltHareket } = useHareketAzaltma()
   margin-left: auto;
   flex-shrink: 0;
 }
-.fin-kart-govde,
+.fin-kart-govde {
+  flex: 1 1 auto;
+  min-width: 0;
+}
 .fin-kart-alt {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
   min-width: 0;
 }
 .fin-kart-hata {

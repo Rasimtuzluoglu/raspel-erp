@@ -40,12 +40,16 @@
       </div>
       <div class="alacak-stat">
         <span class="alacak-stat-etiket">{{ t('dashboard.kokpitAlacakVerecekTahsilatOrani') }}</span>
-        <strong class="alacak-stat-deger">{{ tahsilatOraniMetni }}</strong>
+        <strong
+          class="alacak-stat-deger"
+          :class="'alacak-stat-deger--' + tahsilatSeviyesi"
+        >{{ tahsilatOraniMetni }}</strong>
       </div>
     </div>
 
     <div
       class="alacak-performans"
+      :class="'alacak-performans--' + tahsilatSeviyesi"
       data-test="alacak-tahsilat-performansi"
     >
       <div class="alacak-performans-ust">
@@ -185,6 +189,12 @@ const enBuyukBorclu = computed(() => borclular.value[0] || null)
 const tahsilatOraniDegeri = computed(() =>
   Math.min(100, Math.max(0, Number(veriDegeri.value.tahsilatOrani) || 0))
 )
+const tahsilatSeviyesi = computed(() => {
+  const oran = tahsilatOraniDegeri.value
+  if (oran >= 80) return 'iyi'
+  if (oran >= 50) return 'uyari'
+  return 'kotu'
+})
 const hedef = computed(() => veriDegeri.value.hedef || { route: '/cari-hesaplar', query: {} })
 
 const tahsilatOraniMetni = computed(() => {
@@ -349,8 +359,29 @@ const cariDetay = (satir) => {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--accent), var(--success));
+  background: var(--text-muted);
   transition: width var(--dur-base) var(--ease-standard);
+}
+.alacak-performans--iyi .alacak-performans-bar span {
+  background: var(--success);
+}
+.alacak-performans--iyi .alacak-performans-ust strong,
+.alacak-stat-deger--iyi {
+  color: var(--success);
+}
+.alacak-performans--uyari .alacak-performans-bar span {
+  background: var(--warning);
+}
+.alacak-performans--uyari .alacak-performans-ust strong,
+.alacak-stat-deger--uyari {
+  color: var(--warning);
+}
+.alacak-performans--kotu .alacak-performans-bar span {
+  background: var(--danger);
+}
+.alacak-performans--kotu .alacak-performans-ust strong,
+.alacak-stat-deger--kotu {
+  color: var(--danger);
 }
 .alacak-oncelik {
   display: flex;
@@ -447,6 +478,38 @@ const cariDetay = (satir) => {
 .alacak-hizli-islem:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+.finans-detay-buton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-end;
+  width: auto;
+  padding: 4px 2px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.finans-detay-buton:hover,
+.finans-detay-buton:focus-visible {
+  color: var(--accent-hover);
+}
+.finans-detay-buton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.finans-detay-buton i {
+  font-size: 8.5px;
+}
+@media (max-width: 600px) {
+  .finans-detay-buton {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
 }
 @media (max-width: 760px) {
   .alacak-tablolar {

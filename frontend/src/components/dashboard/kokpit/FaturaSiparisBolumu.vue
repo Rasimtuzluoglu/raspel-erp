@@ -469,7 +469,37 @@ const faturaDetay = (satir) => {
   font-weight: 600;
   color: var(--text-muted);
 }
+.finans-detay-buton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-end;
+  width: auto;
+  padding: 4px 2px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.finans-detay-buton:hover,
+.finans-detay-buton:focus-visible {
+  color: var(--accent-hover);
+}
+.finans-detay-buton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.finans-detay-buton i {
+  font-size: 8.5px;
+}
 @media (max-width: 600px) {
+  .finans-detay-buton {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
   .fatura-ozet {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

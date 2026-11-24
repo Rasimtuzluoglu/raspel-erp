@@ -115,6 +115,38 @@ describe('nakit ve alacak/verecek bölümleri', () => {
     expect(wrapper.emitted('detay')[0][0].query.cariId).toBe('1')
   })
 
+  it('tahsilat oranini esige gore renklendirir', () => {
+    const iyi = mount(AlacakVerecekBolumu, {
+      ...mountOptions,
+      props: { veri: { ...alacakVeri, tahsilatOrani: 90 }, paraBirimi: 'TRY' }
+    })
+    const kotu = mount(AlacakVerecekBolumu, {
+      ...mountOptions,
+      props: { veri: { ...alacakVeri, tahsilatOrani: 30 }, paraBirimi: 'TRY' }
+    })
+    expect(iyi.find('[data-test="alacak-tahsilat-performansi"]').classes()).toContain('alacak-performans--iyi')
+    expect(kotu.find('[data-test="alacak-tahsilat-performansi"]').classes()).toContain('alacak-performans--kotu')
+  })
+
+  it('tahsilat esikleri 49/50/79/80 sinirlarinda dogru seviyeyi secer', () => {
+    const seviyeler = [
+      [80, 'iyi'],
+      [79, 'uyari'],
+      [50, 'uyari'],
+      [49, 'kotu']
+    ]
+
+    for (const [oran, seviye] of seviyeler) {
+      const wrapper = mount(AlacakVerecekBolumu, {
+        ...mountOptions,
+        props: { veri: { ...alacakVeri, tahsilatOrani: oran }, paraBirimi: 'TRY' }
+      })
+      const performans = wrapper.find('[data-test="alacak-tahsilat-performansi"]')
+      expect(performans.classes()).toContain(`alacak-performans--${seviye}`)
+      expect(wrapper.find('.alacak-stat-deger--' + seviye).exists()).toBe(true)
+    }
+  })
+
   it('bolumDetayOlayiHedefTasiyor', async () => {
     const nakitWrapper = mount(NakitBolumu, {
       ...mountOptions,
