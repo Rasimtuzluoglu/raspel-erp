@@ -5,7 +5,8 @@
     class="metrik-kutu"
     :class="{
       'metrik-kutu--kritik': kritik,
-      'metrik-kutu--link': !!to
+      'metrik-kutu--link': !!to,
+      'metrik-kutu--buyuk': boyut === 'buyuk'
     }"
     :data-test="dataTest"
     :aria-label="ariaLabel"
@@ -49,7 +50,7 @@
     <MikroGrafik
       v-if="sparklineVar"
       :seriler="sparkline"
-      :yukseklik="32"
+      :yukseklik="sparklineYukseklik"
       :aria-label="`${etiket} mini grafik`"
       class="metrik-kutu-sparkline"
     />
@@ -74,7 +75,13 @@ const props = defineProps({
   altEtiket: { type: String, default: '' },
   kritikEtiket: { type: String, default: 'Kritik' },
   degisimEtiketi: { type: String, default: '' },
-  dataTest: { type: String, default: 'metrik-kutu' }
+  dataTest: { type: String, default: 'metrik-kutu' },
+  boyut: {
+    type: String,
+    default: 'normal',
+    validator: (deger) => ['normal', 'buyuk'].includes(deger)
+  },
+  sparklineYukseklik: { type: Number, default: 32 }
 })
 
 const sayisalDeger = computed(() => {
@@ -180,7 +187,7 @@ const ariaLabel = computed(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: var(--kokpit-etiket);
   font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--text-muted);
@@ -195,12 +202,21 @@ const ariaLabel = computed(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 21px;
+  font-size: var(--kokpit-deger);
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.02em;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
+}
+.metrik-kutu--buyuk {
+  padding: calc(var(--kokpit-kart-pad) + 2px);
+}
+.metrik-kutu--buyuk .metrik-kutu-etiket {
+  font-size: 12px;
+}
+.metrik-kutu--buyuk .metrik-kutu-deger {
+  font-size: var(--kokpit-deger-buyuk);
 }
 .metrik-kutu-alt {
   display: flex;

@@ -32,10 +32,16 @@
 
     <template v-else>
       <!-- Öncelikli 4 metrik: ciro, marj, alacak, verecek -->
-      <div class="finans-ust">
+      <div
+        class="finans-ust"
+        :class="{ 'finans-ust--odakli': birincil.length > 0 }"
+        data-test="finans-ust"
+      >
         <MetrikKutu
-          v-for="oge in birincil"
+          v-for="(oge, index) in birincil"
           :key="oge.anahtar"
+          :boyut="index === 0 ? 'buyuk' : 'normal'"
+          :sparkline-yukseklik="index === 0 ? 44 : 28"
           :etiket="etiket(oge)"
           :deger="oge.deger"
           :degisim-yuzde="oge.degisimYuzde"
@@ -160,7 +166,7 @@ const trendSinifi = (yuzde) => (Number(yuzde) < 0 ? 'ikincil-degisim--dusus' : '
 }
 .finans-ust {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: minmax(240px, 1.45fr) repeat(3, minmax(0, 1fr));
   gap: 12px;
   min-width: 0;
 }
@@ -193,17 +199,19 @@ const trendSinifi = (yuzde) => (Number(yuzde) < 0 ? 'ikincil-degisim--dusus' : '
 .finans-ikincil {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0;
   min-width: 0;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
 }
 .ikincil-cip {
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
-  padding: 5px 10px;
-  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border: 1px solid transparent;
   border-radius: 999px;
-  background: var(--bg-card);
+  background: transparent;
   color: var(--text-secondary);
   font-size: 11.5px;
   text-decoration: none;
@@ -211,6 +219,10 @@ const trendSinifi = (yuzde) => (Number(yuzde) < 0 ? 'ikincil-degisim--dusus' : '
   transition:
     border-color var(--dur-fast) var(--ease-standard),
     color var(--dur-fast) var(--ease-standard);
+}
+.ikincil-cip + .ikincil-cip {
+  border-left: 1px solid var(--border);
+  border-radius: 0;
 }
 .ikincil-cip:hover,
 .ikincil-cip:focus-visible {
@@ -272,10 +284,6 @@ const trendSinifi = (yuzde) => (Number(yuzde) < 0 ? 'ikincil-degisim--dusus' : '
 @media (max-width: 520px) {
   .finans-ust {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .ikincil-cip {
-    flex: 1 1 100%;
-    justify-content: space-between;
   }
 }
 </style>

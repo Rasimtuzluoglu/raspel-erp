@@ -69,4 +69,24 @@ describe('FinansOzetBandi', () => {
 
     expect(wrapper.find('[data-test="kpi-marj"]').text()).toContain('30%')
   })
+
+  it('ilk metrigi buyuk odak karti olarak isaretler', () => {
+    const wrapper = mountBant({ kpi })
+    const ciro = wrapper.find('[data-test="kpi-ciro"]')
+    expect(ciro.classes()).toContain('metrik-kutu--buyuk')
+    expect(wrapper.find('[data-test="finans-ust"]').classes()).toContain('finans-ust--odakli')
+  })
+
+  it('dort buyuk metrik ve kompakt serit korunur', () => {
+    const wrapper = mountBant({ kpi })
+    expect(wrapper.findAll('.finans-ust > *')).toHaveLength(4)
+    expect(wrapper.find('[data-test="finans-ikincil"]').exists()).toBe(true)
+  })
+
+  it('degisim yuzdesi yoksa sahte rozet gostermez', () => {
+    const wrapper = mountBant({ kpi: [{ anahtar: 'ciro', deger: 0 }] })
+    expect(wrapper.find('[data-test="kpi-ciro"]').text()).toContain('0,00')
+    expect(wrapper.find('[data-test="kpi-ciro"] .metrik-kutu-degisim--notr').exists()).toBe(true)
+    expect(wrapper.find('[data-test="kpi-ciro"]').text()).not.toContain('-100')
+  })
 })
