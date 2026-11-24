@@ -444,7 +444,9 @@ const PARA_BIRIMLERI = ['TRY', 'USD', 'EUR']
     display: none;
   }
 }
-@media (max-width: 760px) {
+/* Kabuk 900 px'te sabit mobil üst bara geçiyor; üst bar da aynı eşikte
+   statikleşmeli. 761–900 bandında sticky başlık sabit barın altına kaçıyordu. */
+@media (max-width: 900px) {
   .kokpit-filtre {
     position: static;
   }

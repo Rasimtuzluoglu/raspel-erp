@@ -198,12 +198,46 @@ const yatayTasmaYok = () => {
   })
 }
 
+/**
+ * 390 px yatay taşma denetimi.
+ * Atalardaki `overflow-x` kırpması `documentElement.scrollWidth` değerini
+ * viewport genişliğine sabitlediği için görünür düzen kaplarının kutuları ayrıca
+ * viewport ile karşılaştırılır. İç kaydırması bilinçli olan `.kokpit-donem` ve
+ * `.akis-filtreler` yalnız dış kutusuyla denetlenir; çocukları listeye alınmaz.
+ */
+const yatayTasmaDenetimi = () => {
+  const seciciler = [
+    '.kokpit-sayfa',
+    '.kokpit-filtre',
+    '.kokpit-hero',
+    '.kokpit-orta',
+    '.kokpit-bolumler',
+    '.kokpit-bolum',
+    '.finans-ozet-bandi',
+    '.kokpit-hizli-islemler',
+    '.kokpit-akis',
+    '.kokpit-bekleyen',
+    '.fin-kart'
+  ]
+  cy.window().then((win) => {
+    const genislik = win.document.documentElement.clientWidth
+    cy.get(seciciler.join(', ')).each(($el) => {
+      const kutu = $el[0].getBoundingClientRect()
+      if (kutu.width <= 0 || kutu.height <= 0) return
+      const ad = `${$el[0].tagName.toLowerCase()}.${String($el[0].className).split(' ')[0]}`
+      expect(kutu.left, `${ad} sol kenar`).to.be.at.least(-0.5)
+      expect(kutu.right, `${ad} sağ kenar`).to.be.at.most(genislik + 0.5)
+    })
+  })
+}
+
 describe('Anasayfa finans kokpiti', () => {
   it('kokpit-ilk-yukleme: oncelikli metrikler, akis ve bekleyen isler gorunur', () => {
     cy.viewport(1440, 900)
     anasayfaAc()
 
     cy.contains('h1', 'Finans Masası').should('be.visible')
+    cy.get('[data-test="kokpit-global-filtre"]').should('have.css', 'position', 'sticky')
     // Öncelikli 4 KPI büyük kart; kalan 4 metrik kompakt çip.
     cy.get('[data-test="finans-ozet-bandi"] .finans-ust [data-test^="kpi-"]').should('have.length', 4)
     cy.get('[data-test="finans-ikincil"] [data-test^="kpi-alt-"]').should('have.length', 4)
@@ -380,6 +414,8 @@ describe('Anasayfa finans kokpiti', () => {
     cy.document().then((doc) => {
       expect(doc.documentElement.scrollWidth).to.be.at.most(390)
     })
+    yatayTasmaDenetimi()
+    cy.get('[data-test="kokpit-global-filtre"]').should('have.css', 'position', 'static')
   })
 
   it('kokpit-excel: dışa aktarma isteği gönderilir', () => {
