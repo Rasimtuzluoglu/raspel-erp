@@ -30,6 +30,48 @@
               fill="currentColor"
             />
           </template>
+          <template v-else-if="tip === 'alan'">
+            <defs>
+              <linearGradient
+                :id="gradyanId(seriIndex)"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop
+                  offset="0%"
+                  :style="{ stopColor: seri.renk }"
+                  stop-opacity="0.28"
+                />
+                <stop
+                  offset="100%"
+                  :style="{ stopColor: seri.renk }"
+                  stop-opacity="0"
+                />
+              </linearGradient>
+            </defs>
+            <polygon
+              v-if="seri.degerler.length > 1"
+              :points="alanNoktalari(seri.degerler)"
+              :fill="`url(#${gradyanId(seriIndex)})`"
+            />
+            <polyline
+              :points="cizgiNoktalari(seri.degerler)"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              vector-effect="non-scaling-stroke"
+            />
+            <circle
+              :cx="100"
+              :cy="yKoordinati(seri.degerler[seri.degerler.length - 1])"
+              r="2.2"
+              fill="currentColor"
+            />
+          </template>
           <template v-else>
             <polygon
               v-if="tip === 'sparkline' && seri.degerler.length > 1"
@@ -58,6 +100,11 @@
   </div>
 </template>
 
+<script>
+/** Birden çok MikroGrafik örneğinde gradyan kimliklerinin çakışmaması için sayaç. */
+let sayac = 0
+</script>
+
 <script setup>
 import { computed } from 'vue'
 
@@ -65,7 +112,7 @@ const props = defineProps({
   tip: {
     type: String,
     default: 'sparkline',
-    validator: (deger) => ['sparkline', 'line', 'bar'].includes(deger)
+    validator: (deger) => ['sparkline', 'line', 'bar', 'alan'].includes(deger)
   },
   etiketler: { type: Array, default: () => [] },
   seriler: { type: Array, default: () => [] },
@@ -76,6 +123,10 @@ const props = defineProps({
 })
 
 const PAD = 3
+
+/** Örnek başına benzersiz taban; her seri kendi gradyan kimliğini alır. */
+const gradyanTaban = `mikro-alan-${++sayac}`
+const gradyanId = (seriIndex) => `${gradyanTaban}-${seriIndex}`
 
 /** Ham sayı dizisi veya `{ ad, degerler, renk }` serilerini tek biçime getirir. */
 const serilerDuz = computed(() => {

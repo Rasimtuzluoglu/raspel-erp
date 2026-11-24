@@ -37,8 +37,9 @@
         <strong class="nakit-stat-deger gizli-veri">{{ formatPara(toplam, paraBirimi) }}</strong>
         <MikroGrafik
           v-if="sparkline.length > 1"
+          tip="alan"
           :seriler="sparkline"
-          :yukseklik="30"
+          :yukseklik="40"
           :aria-label="`${t('dashboard.kokpitNakitToplam')} trend`"
           data-test="nakit-sparkline"
         />

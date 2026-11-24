@@ -41,6 +41,7 @@
           v-for="(oge, index) in birincil"
           :key="oge.anahtar"
           :boyut="index === 0 ? 'buyuk' : 'normal'"
+          :grafik-tip="index === 0 ? 'alan' : 'sparkline'"
           :sparkline-yukseklik="index === 0 ? 44 : 28"
           :etiket="etiket(oge)"
           :deger="oge.deger"

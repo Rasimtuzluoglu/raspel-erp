@@ -126,7 +126,7 @@
         </div>
         <MikroGrafik
           v-if="trend.length > 0"
-          tip="line"
+          tip="alan"
           :seriler="trendSerileri"
           :yukseklik="64"
           :aria-label="t('dashboard.kokpitKarMarjTrend')"
@@ -220,6 +220,7 @@ import MikroGrafik from './MikroGrafik.vue'
 import MiniTablo from './MiniTablo.vue'
 import KarKoprusu from './KarKoprusu.vue'
 import { formatPara } from '../../../utils/format.js'
+import { GRAFIK } from '../../../utils/grafikRenkleri.js'
 
 const props = defineProps({
   veri: { type: Object, default: null },
@@ -273,17 +274,17 @@ const trendSerileri = computed(() => [
   {
     ad: t('dashboard.kokpitKarMarjCiro'),
     degerler: trend.value.map((ay) => Number(ay.ciro) || 0),
-    renk: 'var(--accent)'
+    renk: GRAFIK.yesil
   },
   {
     ad: t('dashboard.kokpitKarMarjMaliyet'),
     degerler: trend.value.map((ay) => Number(ay.maliyet) || 0),
-    renk: 'var(--warning)'
+    renk: GRAFIK.kirmizi
   },
   {
     ad: t('dashboard.kokpitKarMarjKar'),
     degerler: trend.value.map((ay) => Number(ay.kar) || 0),
-    renk: 'var(--success)'
+    renk: GRAFIK.mavi
   }
 ])
 const marjSeri = computed(() => trend.value.map((ay) => Number(ay.marj) || 0))
@@ -557,13 +558,13 @@ const cariDetay = (satir) => {
   border-radius: var(--radius-pill);
 }
 .kar-legend-item--ciro::before {
-  background: var(--accent);
+  background: var(--success);
 }
 .kar-legend-item--maliyet::before {
-  background: var(--warning);
+  background: var(--danger);
 }
 .kar-legend-item--kar::before {
-  background: var(--success);
+  background: var(--info);
 }
 .kar-bos-metin {
   margin: 0;

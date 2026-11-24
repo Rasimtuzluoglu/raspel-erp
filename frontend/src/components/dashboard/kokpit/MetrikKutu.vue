@@ -49,6 +49,7 @@
 
     <MikroGrafik
       v-if="sparklineVar"
+      :tip="grafikTip"
       :seriler="sparkline"
       :yukseklik="sparklineYukseklik"
       :aria-label="`${etiket} mini grafik`"
@@ -81,7 +82,8 @@ const props = defineProps({
     default: 'normal',
     validator: (deger) => ['normal', 'buyuk'].includes(deger)
   },
-  sparklineYukseklik: { type: Number, default: 32 }
+  sparklineYukseklik: { type: Number, default: 32 },
+  grafikTip: { type: String, default: 'sparkline' }
 })
 
 const sayisalDeger = computed(() => {
