@@ -63,6 +63,16 @@
   --shadow-yukari: var(--elev-2);
   --focus-ring: 0 0 0 2px var(--accent-border);
 
+  /* Kokpit yüzey dili */
+  --kokpit-glow: radial-gradient(520px 180px at 100% 0%, rgba(20, 184, 166, 0.10), transparent 72%);
+  --kokpit-parlaklik: linear-gradient(180deg, rgba(255, 255, 255, 0.028), transparent 38%);
+  --kokpit-ust-cizgi: linear-gradient(90deg, var(--accent), transparent 72%);
+  --kokpit-kart-golge: var(--elev-1), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  --kokpit-deger-buyuk: clamp(26px, 2.2vw, 34px);
+  --kokpit-deger: clamp(19px, 1.5vw, 23px);
+  --kokpit-etiket: 11.5px;
+  --kokpit-kart-pad: 16px;
+
   /* Olcek: hareket */
   --dur-fast: 0.15s;
   --dur-base: 0.2s;
@@ -170,6 +180,9 @@
   --shadow-kart: var(--elev-1);
   --shadow-yukari: var(--elev-2);
   --focus-ring: 0 0 0 2px var(--accent-border);
+  --kokpit-glow: radial-gradient(520px 180px at 100% 0%, rgba(13, 148, 136, 0.08), transparent 72%);
+  --kokpit-parlaklik: linear-gradient(180deg, rgba(15, 23, 42, 0.02), transparent 38%);
+  --kokpit-kart-golge: var(--elev-1), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 /* Semantik yardımcı sınıflar (uygulama temasına göre) */
@@ -219,6 +232,20 @@
 .bg-warning-soft { background: var(--warning-soft); }
 .bg-danger-soft { background: var(--danger-soft); }
 .bg-info-soft { background: var(--info-soft); }
+
+/* Yalnizca ekran okuyucuya gorunen icerik: gorsel olarak gizlenir,
+   erisilebilirlik agacinda kalir (canli duyuru alanlari vb.). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 /* Ortak odak halkasi (eraserilebilirlik + aksan) */
 :where(button, a, input, select, textarea, [tabindex]):focus-visible {

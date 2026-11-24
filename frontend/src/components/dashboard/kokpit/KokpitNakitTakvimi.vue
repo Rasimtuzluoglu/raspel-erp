@@ -216,9 +216,9 @@ const gunBasligi = (gun) =>
   border-radius: var(--radius-lg);
   background:
     radial-gradient(700px 150px at 0% 0%, var(--accent-soft), transparent 72%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 38%),
+    var(--kokpit-parlaklik),
     var(--bg-card);
-  box-shadow: var(--elev-1), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  box-shadow: var(--kokpit-kart-golge);
 }
 .nakit-takvim-ust {
   display: flex;

@@ -226,6 +226,17 @@ describe('Anasayfa finans kokpiti', () => {
     // Nakit takvimi varsayılan kapalı (ikincil bölge).
     cy.get('[data-test="nakit-takvimi"]').should('not.exist')
     yatayTasmaYok()
+    // Canlı duyuru alanı görsel olarak gizli olmalı; yoksa "Son güncelleme" iki kez görünür.
+    // Not: Cypress 1×1 kırpılmış (.sr-only) öğeleri de "görünür" saydığı için
+    // görünürlük yerine gerçek kutu ölçüsü ve kırpma stili doğrulanır.
+    cy.get('[data-test="dashboard-kokpit"] [role="status"]')
+      .should('have.class', 'sr-only')
+      .and('have.css', 'position', 'absolute')
+      .and(($el) => {
+        const kutu = $el[0].getBoundingClientRect()
+        expect(kutu.width, 'canlı duyuru genişliği').to.be.at.most(1)
+        expect(kutu.height, 'canlı duyuru yüksekliği').to.be.at.most(1)
+      })
   })
 
   it('kokpit-akis: satira tiklayinca ilgili ekrana gider', () => {

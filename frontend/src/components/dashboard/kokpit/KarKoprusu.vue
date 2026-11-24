@@ -150,7 +150,7 @@ const stil = (adim) => {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 45%),
+    var(--kokpit-parlaklik),
     var(--bg-muted);
 }
 .kopru-ust {

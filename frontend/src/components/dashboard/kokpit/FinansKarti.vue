@@ -94,10 +94,10 @@ const { azaltHareket } = useHareketAzaltma()
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background:
-    radial-gradient(420px 130px at 100% 0%, rgba(20, 184, 166, 0.07), transparent 70%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 34%),
+    var(--kokpit-glow),
+    var(--kokpit-parlaklik),
     var(--bg-card);
-  box-shadow: var(--elev-1), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  box-shadow: var(--kokpit-kart-golge);
   isolation: isolate;
   transition:
     border-color var(--dur-base) var(--ease-standard),
@@ -108,7 +108,7 @@ const { azaltHareket } = useHareketAzaltma()
   position: absolute;
   inset: 0 0 auto 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--accent), transparent 74%);
+  background: var(--kokpit-ust-cizgi);
   opacity: 0.55;
   pointer-events: none;
 }

@@ -167,7 +167,7 @@ const hedef = (icgoru) => {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 50%),
+    var(--kokpit-parlaklik),
     var(--bg-muted);
   color: inherit;
   text-decoration: none;
@@ -193,7 +193,7 @@ const hedef = (icgoru) => {
 .icgoru-kart:focus-visible {
   border-color: var(--accent-border);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 50%),
+    var(--kokpit-parlaklik),
     var(--bg-secondary);
 }
 .icgoru-kart:focus-visible {
