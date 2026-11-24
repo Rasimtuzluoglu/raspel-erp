@@ -830,6 +830,10 @@ onBeforeUnmount(() => {
 .kokpit-sayfa--ferah :deep(.hizli-islem) {
   min-height: 48px;
 }
+/* Birincil karo ferah modda da destek karolardan belirgin yüksek kalır. */
+.kokpit-sayfa--ferah :deep(.hizli-islem--birincil) {
+  min-height: 58px;
+}
 /* Hero: sol (KPI + kritik), sağ (hızlı işlemler). */
 .kokpit-hero {
   display: grid;

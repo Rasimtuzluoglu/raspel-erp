@@ -110,6 +110,15 @@ describe('KokpitAkis', () => {
     expect(wrapper.find('[data-test="akis-grup-BUGUN"] [data-test="akis-oge-2"]').exists()).toBe(true)
   })
 
+  it('gelecege tarihli olayi bugun grubuna atar', () => {
+    const yarin = new Date(Date.now() + 86400000).toISOString()
+    const wrapper = mountAkis({ olaylar: [olay({ tarih: yarin })] })
+
+    expect(wrapper.find('[data-test="akis-grup-BUGUN"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="akis-grup-DAHA_ESKI"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="akis-oge-0"]').text()).toContain('az önce')
+  })
+
   it('tur filtresi gruplari yalnizca filtrelenmis olaylardan kurar', async () => {
     const bugun = new Date().toISOString()
     const dun = new Date(Date.now() - 86400000).toISOString()

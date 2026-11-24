@@ -42,7 +42,7 @@
                 <stop
                   offset="0%"
                   :style="{ stopColor: seri.renk }"
-                  stop-opacity="0.28"
+                  :stop-opacity="alanDolguOpakligi"
                 />
                 <stop
                   offset="100%"
@@ -65,12 +65,6 @@
               stroke-linejoin="round"
               vector-effect="non-scaling-stroke"
             />
-            <circle
-              :cx="100"
-              :cy="yKoordinati(seri.degerler[seri.degerler.length - 1])"
-              r="2.2"
-              fill="currentColor"
-            />
           </template>
           <template v-else>
             <polygon
@@ -92,8 +86,17 @@
         </g>
       </template>
     </svg>
+    <template v-if="cizilebilir && tip === 'alan'">
+      <span
+        v-for="(seri, seriIndex) in serilerDuz"
+        :key="`nokta-${seriIndex}`"
+        class="mikro-son-nokta"
+        :style="noktaStili(seri)"
+        aria-hidden="true"
+      />
+    </template>
     <span
-      v-else
+      v-if="!cizilebilir"
       class="mikro-grafik-bos"
       aria-hidden="true"
     />
@@ -133,9 +136,11 @@ const serilerDuz = computed(() => {
   const girdi = Array.isArray(props.seriler) ? props.seriler : []
   if (girdi.length === 0) return []
   if (typeof girdi[0] === 'number') {
+    const degerler = girdi.map(Number).filter(Number.isFinite)
+    if (degerler.length === 0) return []
     return [{
       ad: '',
-      degerler: girdi.map(Number).filter(Number.isFinite),
+      degerler,
       renk: props.renk
     }]
   }
@@ -150,6 +155,9 @@ const serilerDuz = computed(() => {
 })
 
 const cizilebilir = computed(() => serilerDuz.value.length > 0)
+
+/** Çok serili alanlarda üst üste binen dolgu daha soluk kalır. */
+const alanDolguOpakligi = computed(() => (serilerDuz.value.length > 1 ? 0.16 : 0.28))
 
 const tumDegerler = computed(() => serilerDuz.value.flatMap((seri) => seri.degerler))
 
@@ -166,6 +174,17 @@ const oran = (deger) => {
 const yKoordinati = (deger) => {
   const kullanilabilir = Math.max(1, props.yukseklik - PAD * 2)
   return PAD + (1 - oran(deger)) * kullanilabilir
+}
+
+/** Son noktayı temsil eden CSS işareti: SVG germe/kırpma uygulamaz, gerçek daire kalır. */
+const noktaStili = (seri) => {
+  const son = seri.degerler[seri.degerler.length - 1]
+  const yukseklik = Math.max(1, props.yukseklik)
+  return {
+    top: `${(yKoordinati(son) / yukseklik) * 100}%`,
+    left: '100%',
+    background: seri.renk
+  }
 }
 
 const cizgiNoktalari = (degerler) => {
@@ -207,6 +226,7 @@ const barYukseklik = (deger) => {
 
 <style scoped>
 .mikro-grafik {
+  position: relative;
   width: 100%;
   min-width: 0;
   color: var(--accent);
@@ -223,5 +243,14 @@ const barYukseklik = (deger) => {
   height: 1px;
   margin-top: 50%;
   background: var(--border);
+}
+.mikro-son-nokta {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 1px var(--bg-card);
+  pointer-events: none;
 }
 </style>

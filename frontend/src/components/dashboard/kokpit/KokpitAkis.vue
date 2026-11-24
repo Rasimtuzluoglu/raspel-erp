@@ -248,7 +248,9 @@ const gunGrubu = (tarih) => {
   const gun = new Date(zaman)
   gun.setHours(0, 0, 0, 0)
   const fark = Math.round((bugun.getTime() - gun.getTime()) / 86400000)
-  if (fark === 0) return 'BUGUN'
+  // Geleceğe tarihlenmiş kayıtlar "daha eski" görünmemeli; göreli zaman
+  // "az önce" derken eski grubuna düşmek çelişkiliydi.
+  if (fark <= 0) return 'BUGUN'
   if (fark === 1) return 'DUN'
   if (fark >= 2 && fark <= 7) return 'BU_HAFTA'
   return 'DAHA_ESKI'

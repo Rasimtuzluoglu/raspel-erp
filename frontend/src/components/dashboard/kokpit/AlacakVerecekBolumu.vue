@@ -186,10 +186,18 @@ const net = computed(() => {
 const borclular = computed(() => Array.isArray(veriDegeri.value.borclular) ? veriDegeri.value.borclular : [])
 const tedarikciler = computed(() => Array.isArray(veriDegeri.value.tedarikciler) ? veriDegeri.value.tedarikciler : [])
 const enBuyukBorclu = computed(() => borclular.value[0] || null)
-const tahsilatOraniDegeri = computed(() =>
-  Math.min(100, Math.max(0, Number(veriDegeri.value.tahsilatOrani) || 0))
-)
+/** Ham oran geçerli mi? Null/eksik/sayısal olmayan değer "nötr" sayılır. */
+const tahsilatGecerli = computed(() => {
+  const ham = veriDegeri.value.tahsilatOrani
+  if (ham === null || ham === undefined || ham === '') return false
+  return Number.isFinite(Number(ham))
+})
+const tahsilatOraniDegeri = computed(() => {
+  if (!tahsilatGecerli.value) return 0
+  return Math.min(100, Math.max(0, Number(veriDegeri.value.tahsilatOrani)))
+})
 const tahsilatSeviyesi = computed(() => {
+  if (!tahsilatGecerli.value) return 'notr'
   const oran = tahsilatOraniDegeri.value
   if (oran >= 80) return 'iyi'
   if (oran >= 50) return 'uyari'
@@ -198,11 +206,8 @@ const tahsilatSeviyesi = computed(() => {
 const hedef = computed(() => veriDegeri.value.hedef || { route: '/cari-hesaplar', query: {} })
 
 const tahsilatOraniMetni = computed(() => {
-  if (veriDegeri.value.tahsilatOrani === null || veriDegeri.value.tahsilatOrani === undefined) {
-    return '—'
-  }
+  if (!tahsilatGecerli.value) return '—'
   const deger = Number(veriDegeri.value.tahsilatOrani)
-  if (!Number.isFinite(deger)) return '—'
   return `${deger.toLocaleString('tr-TR', { maximumFractionDigits: 1 })}%`
 })
 
@@ -382,6 +387,14 @@ const cariDetay = (satir) => {
 .alacak-performans--kotu .alacak-performans-ust strong,
 .alacak-stat-deger--kotu {
   color: var(--danger);
+}
+/* Oran yoksa renkli durum iddiası kurulmaz; sessiz nötr görünüm kalır. */
+.alacak-performans--notr .alacak-performans-bar span {
+  background: var(--text-muted);
+}
+.alacak-performans--notr .alacak-performans-ust strong,
+.alacak-stat-deger--notr {
+  color: var(--text-muted);
 }
 .alacak-oncelik {
   display: flex;

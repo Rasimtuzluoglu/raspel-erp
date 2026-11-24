@@ -147,6 +147,22 @@ describe('nakit ve alacak/verecek bölümleri', () => {
     }
   })
 
+  it('tahsilat orani yoksa notr durum ve tire gosterir', () => {
+    for (const ham of [null, undefined, '', 'gecersiz']) {
+      const wrapper = mount(AlacakVerecekBolumu, {
+        ...mountOptions,
+        props: { veri: { ...alacakVeri, tahsilatOrani: ham }, paraBirimi: 'TRY' }
+      })
+      const performans = wrapper.find('[data-test="alacak-tahsilat-performansi"]')
+      expect(performans.classes()).toContain('alacak-performans--notr')
+      expect(performans.classes()).not.toContain('alacak-performans--kotu')
+      const oranDegerleri = wrapper.findAll('.alacak-stat-deger')
+      expect(oranDegerleri[2].text()).toBe('—')
+      expect(oranDegerleri[2].classes()).toContain('alacak-stat-deger--notr')
+      expect(oranDegerleri[2].classes()).not.toContain('alacak-stat-deger--kotu')
+    }
+  })
+
   it('bolumDetayOlayiHedefTasiyor', async () => {
     const nakitWrapper = mount(NakitBolumu, {
       ...mountOptions,

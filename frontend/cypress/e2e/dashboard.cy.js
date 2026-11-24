@@ -109,7 +109,16 @@ const kokpitVerisi = {
   }
 }
 
-const apiMockla = () => {
+const userOturumVerisi = {
+  ...oturumVerisi,
+  kullanici: {
+    ...oturumVerisi.kullanici,
+    role: 'USER'
+  },
+  yetkiler: []
+}
+
+const apiMockla = (rol = 'ADMIN') => {
   cy.intercept('GET', '**/api/**', { statusCode: 200, body: [] }).as('catchAll')
   cy.intercept('POST', '**/api/**', { statusCode: 200, body: {} }).as('catchAllPost')
   cy.intercept('PUT', '**/api/**', { statusCode: 200, body: {} }).as('catchAllPut')
@@ -120,7 +129,7 @@ const apiMockla = () => {
       id: 1,
       username: 'admin',
       displayName: 'Test Yönetici',
-      role: 'ADMIN',
+      role: rol,
       sirketId: 1,
       companyName: 'Test Şirketi',
       sahaKullanici: false
@@ -173,11 +182,11 @@ const apiMockla = () => {
   }).as('excel')
 }
 
-const anasayfaAc = () => {
-  apiMockla()
+const anasayfaAc = (oturum = oturumVerisi) => {
+  apiMockla(oturum?.kullanici?.role || 'ADMIN')
   cy.visit('/', {
     onBeforeLoad(win) {
-      win.localStorage.setItem(AUTH_ANAHTAR, JSON.stringify(oturumVerisi))
+      win.localStorage.setItem(AUTH_ANAHTAR, JSON.stringify(oturum))
       win.localStorage.setItem(OTURUM_POLITIKA_ANAHTAR, '1')
       win.localStorage.setItem('raspel_gorulen_surum', '1.1.0')
       win.localStorage.setItem('raspel_erp_onboarding_atlandi', '1')
@@ -219,16 +228,19 @@ const yatayTasmaDenetimi = () => {
     '.kokpit-bekleyen',
     '.fin-kart'
   ]
-  cy.window().then((win) => {
-    const genislik = win.document.documentElement.clientWidth
-    cy.get(seciciler.join(', ')).each(($el) => {
-      const kutu = $el[0].getBoundingClientRect()
-      if (kutu.width <= 0 || kutu.height <= 0) return
-      const ad = `${$el[0].tagName.toLowerCase()}.${String($el[0].className).split(' ')[0]}`
-      expect(kutu.left, `${ad} sol kenar`).to.be.at.least(-0.5)
-      expect(kutu.right, `${ad} sağ kenar`).to.be.at.most(genislik + 0.5)
-    })
-  })
+  for (const secici of seciciler) {
+    // Sinif adi degisirse denetim sessizce bos gecmesin: her secici en az bir oge bulmali.
+    cy.get(secici)
+      .should('have.length.at.least', 1)
+      .each(($el) => {
+        const kutu = $el[0].getBoundingClientRect()
+        if (kutu.width <= 0 || kutu.height <= 0) return
+        const genislik = $el[0].ownerDocument.documentElement.clientWidth
+        const ad = `${$el[0].tagName.toLowerCase()}.${String($el[0].className).split(' ')[0]}`
+        expect(kutu.left, `${ad} sol kenar`).to.be.at.least(-0.5)
+        expect(kutu.right, `${ad} sağ kenar`).to.be.at.most(genislik + 0.5)
+      })
+  }
 }
 
 describe('Anasayfa finans kokpiti', () => {
@@ -266,7 +278,12 @@ describe('Anasayfa finans kokpiti', () => {
     cy.get('[data-test="dashboard-kokpit"] [role="status"]')
       .should('have.class', 'sr-only')
       .and('have.css', 'position', 'absolute')
+      .and('have.css', 'overflow', 'hidden')
       .and(($el) => {
+        const stil = window.getComputedStyle($el[0])
+        const kirpilmis = (stil.clip && stil.clip !== 'auto') ||
+          (stil.clipPath && stil.clipPath !== 'none')
+        expect(kirpilmis, 'canlı duyuru kırpma kuralı').to.eq(true)
         const kutu = $el[0].getBoundingClientRect()
         expect(kutu.width, 'canlı duyuru genişliği').to.be.at.most(1)
         expect(kutu.height, 'canlı duyuru yüksekliği').to.be.at.most(1)
@@ -384,6 +401,46 @@ describe('Anasayfa finans kokpiti', () => {
     cy.get('[data-test="kokpit-onay-katman"]').should('be.visible')
     cy.get('[data-test="kokpit-onay-kapat"]').click()
     cy.get('[data-test="kokpit-onay-katman"]').should('not.exist')
+  })
+
+  it('kokpit-hizli-islemler-user: onay gizlenir, son aksiyon iki kolon kaplar', () => {
+    cy.viewport(1440, 900)
+    anasayfaAc(userOturumVerisi)
+
+    cy.get('[data-test="hizli-onaylar"]').should('not.exist')
+    cy.get('[data-test="kokpit-hizli-islemler"] .hizli-islem').should('have.length', 4)
+    cy.get('[data-test="hizli-masraf"]').should(($el) => {
+      const stil = window.getComputedStyle($el[0])
+      expect(stil.gridColumnStart, 'grid-column-start').to.eq('span 2')
+      const kart = $el[0].getBoundingClientRect()
+      const liste = $el[0].closest('.hizli-liste').getBoundingClientRect()
+      expect(kart.width, 'iki kolon genişliği').to.be.greaterThan(liste.width * 0.9)
+    })
+  })
+
+  it('kokpit-820px: ust bar statik, ikon hedefleri 44px, sabit bar cakismasi yok', () => {
+    cy.viewport(820, 1180)
+    anasayfaAc()
+
+    cy.get('[data-test="kokpit-global-filtre"]').should('have.css', 'position', 'static')
+    // Elle yazilan hedef 44 px; html { zoom: 0.9 } altinda hesaplanan deger
+    // 1/64 px yuvarlamasiyla ~43.99'a duser (fiziksel ~39.6 px, proje geneli not).
+    cy.get('[data-test="kokpit-global-filtre"] .kokpit-ikon-buton')
+      .should('have.length.at.least', 2)
+      .each(($el) => {
+        const stil = window.getComputedStyle($el[0])
+        expect(parseFloat(stil.width), 'ikon hedefi genişliği').to.be.at.least(43.9)
+        expect(parseFloat(stil.height), 'ikon hedefi yüksekliği').to.be.at.least(43.9)
+      })
+    // 900 px altinda kabuk sabit ust bara gecer; sticky baslik barin altina kaymamali.
+    cy.get('.sidebar').should('be.visible').then(($sidebar) => {
+      cy.get('[data-test="kokpit-global-filtre"]').then(($filtre) => {
+        const bar = $sidebar[0].getBoundingClientRect()
+        const filtre = $filtre[0].getBoundingClientRect()
+        expect(filtre.top, 'ust bar ile çakışma').to.be.at.least(bar.bottom - 0.5)
+      })
+    })
+    yatayTasmaYok()
   })
 
   it('kokpit-390px: yatay tasma yok, mobil sikistirma uygulanir', () => {

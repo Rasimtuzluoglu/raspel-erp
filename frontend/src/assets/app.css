@@ -2499,6 +2499,9 @@ label .required,
     padding: 0 !important;
     overflow: visible !important;
   }
+  .sr-only {
+    display: none !important;
+  }
 }
 
 /* NProgress - aksan rengi */
@@ -2648,6 +2651,13 @@ body {
 .kokpit-sayfa :is(a, button, select, input, [tabindex]):focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+/* Dokunmatikte kokpit alt CTA'lari 44 px hedefe cikar; masaustu yogunlugu korunur. */
+@media (hover: none) and (pointer: coarse) {
+  .kokpit-sayfa :is(.finans-detay-buton, .akis-tumu, .bekleyen-tumu, .bekleyen-alt) {
+    min-height: 44px;
+    align-items: center;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .kokpit-sayfa *,

@@ -260,6 +260,13 @@ const trendSinifi = (yuzde) => (Number(yuzde) < 0 ? 'ikincil-degisim--dusus' : '
   background: var(--bg-muted);
   animation: metrik-pulse 1.4s ease-in-out infinite;
 }
+/* Dokunmatik işaretçide çipler 44 px hedefe çıkar (yatay şeritte satır büyür). */
+@media (hover: none) and (pointer: coarse) {
+  .ikincil-cip {
+    min-height: 44px;
+    align-items: center;
+  }
+}
 @keyframes metrik-pulse {
   0%,
   100% {

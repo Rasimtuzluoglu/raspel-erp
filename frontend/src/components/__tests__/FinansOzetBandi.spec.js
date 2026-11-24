@@ -89,4 +89,29 @@ describe('FinansOzetBandi', () => {
     expect(wrapper.find('[data-test="kpi-ciro"] .metrik-kutu-degisim--notr').exists()).toBe(true)
     expect(wrapper.find('[data-test="kpi-ciro"]').text()).not.toContain('-100')
   })
+
+  it('tam olarak tek buyuk karti ve 44/28 px sparkline hiyerarsisini korur', () => {
+    const sparkline = [1, 2, 3, 4]
+    const veri = kpi.map((oge) => (
+      ['ciro', 'alacak'].includes(oge.anahtar) ? { ...oge, sparkline } : oge
+    ))
+    const wrapper = mountBant({ kpi: veri })
+
+    expect(wrapper.findAll('.metrik-kutu--buyuk')).toHaveLength(1)
+
+    const kartlar = wrapper.findAll('.finans-ust > *')
+    expect(kartlar[0].find('.mikro-grafik').element.style.height).toBe('44px')
+    const destek = kartlar.slice(1).find((kart) => kart.find('.mikro-grafik').exists())
+    expect(destek.find('.mikro-grafik').element.style.height).toBe('28px')
+  })
+
+  it('gercek degisim yuzdesinde yonlu rozet gosterir', () => {
+    const artan = mountBant({ kpi: [{ anahtar: 'ciro', deger: 100, degisimYuzde: 12 }] })
+    expect(artan.find('[data-test="kpi-ciro"] .metrik-kutu-degisim--iyi').exists()).toBe(true)
+    expect(artan.find('[data-test="kpi-ciro"]').text()).toContain('+12')
+
+    const azalan = mountBant({ kpi: [{ anahtar: 'ciro', deger: 100, degisimYuzde: -7.5 }] })
+    expect(azalan.find('[data-test="kpi-ciro"] .metrik-kutu-degisim--kotu').exists()).toBe(true)
+    expect(azalan.find('[data-test="kpi-ciro"]').text()).toContain('-7,5')
+  })
 })
