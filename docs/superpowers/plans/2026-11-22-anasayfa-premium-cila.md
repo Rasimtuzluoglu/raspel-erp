@@ -115,7 +115,7 @@ Canlı uygulamadan alınan öncesi görüntüye göre:
 - Produces: global `.sr-only` utility (position absolute, 1×1, clip).
 - Consumes: mevcut `--accent`, `--bg-card`, `--border`, `--elev-1` token'ları.
 
-- [ ] **Step 1: Başarısız Cypress testini yaz**
+- [x] **Step 1: Başarısız Cypress testini yaz**
 
 `dashboard.cy.js` içindeki ilk testin sonuna ekle:
 
@@ -124,7 +124,7 @@ Canlı uygulamadan alınan öncesi görüntüye göre:
 cy.get('[data-test="dashboard-kokpit"] [role="status"]').should('not.be.visible')
 ```
 
-- [ ] **Step 2: Testi çalıştır ve kırmızı olduğunu doğrula**
+- [x] **Step 2: Testi çalıştır ve kırmızı olduğunu doğrula**
 
 ```bash
 cd frontend
@@ -135,7 +135,7 @@ npx cypress run --browser chrome --spec cypress/e2e/dashboard.cy.js
 
 Beklenen: `expected ... to not be visible` hatası.
 
-- [ ] **Step 3: `.sr-only` utility'sini ve token'ları ekle**
+- [x] **Step 3: `.sr-only` utility'sini ve token'ları ekle**
 
 `app.css` içindeki `:root` bloğuna ekle:
 
@@ -161,7 +161,7 @@ Beklenen: `expected ... to not be visible` hatası.
 
 Global utility olarak `.sr-only` sınıfını `app.css`'in yardımcı sınıflar bölümüne taşı (dashboard.css'teki tanımın aynısı).
 
-- [ ] **Step 4: Ölü dosyayı sil ve `FinansKarti` yüzeyini token'a çevir**
+- [x] **Step 4: Ölü dosyayı sil ve `FinansKarti` yüzeyini token'a çevir**
 
 ```bash
 git grep -n "dashboard.css" -- frontend/src || true
@@ -180,7 +180,7 @@ box-shadow: var(--kokpit-kart-golge);
 
 `::before` çizgisini `background: var(--kokpit-ust-cizgi);` yap. Diğer üç dosyada `linear-gradient(180deg, rgba(255,255,255,…), transparent)` yerine `var(--kokpit-parlaklik)`; `inset 0 1px 0 rgba(255,255,255,…)` yerine `var(--kokpit-kart-golge)` kullan. Böylece açık temada beyaz parlama oluşmaz.
 
-- [ ] **Step 5: Testleri ve kalite kapılarını çalıştır**
+- [x] **Step 5: Testleri ve kalite kapılarını çalıştır**
 
 ```bash
 cd frontend
@@ -191,7 +191,7 @@ npm run build
 
 Beklenen: Cypress yeşil, lint 0 uyarı, build başarılı.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/src/assets/app.css frontend/src/assets/dashboard.css frontend/src/components/dashboard/kokpit/FinansKarti.vue frontend/src/components/dashboard/kokpit/KarKoprusu.vue frontend/src/components/dashboard/kokpit/KokpitIcgoruler.vue frontend/src/components/dashboard/kokpit/KokpitNakitTakvimi.vue frontend/cypress/e2e/dashboard.cy.js
@@ -212,7 +212,7 @@ git commit -m "refactor(dashboard): global sr-only ve kokpit yuzey tokenlari"
 - `MetrikKutu` produces: `.metrik-kutu--buyuk`, değer font-size `var(--kokpit-deger-buyuk)`, sparkline yüksekliği verilen değer.
 - `FinansOzetBandi` produces: `data-test="finans-ust"`, `.finans-ust--odakli`; ilk birincil metrikte `data-test="kpi-<anahtar>"` korunur ve `.metrik-kutu--buyuk` bulunur.
 
-- [ ] **Step 1: Başarısız testleri yaz**
+- [x] **Step 1: Başarısız testleri yaz**
 
 `FinansOzetBandi.spec.js` içine ekle:
 
@@ -238,7 +238,7 @@ it('degisim yuzdesi yoksa sahte rozet gostermez', () => {
 })
 ```
 
-- [ ] **Step 2: Testleri çalıştır ve kırmızı olduğunu doğrula**
+- [x] **Step 2: Testleri çalıştır ve kırmızı olduğunu doğrula**
 
 ```bash
 npx vitest run src/components/__tests__/FinansOzetBandi.spec.js
@@ -246,7 +246,7 @@ npx vitest run src/components/__tests__/FinansOzetBandi.spec.js
 
 Beklenen: `metrik-kutu--buyuk` / `finans-ust` bulunamadı.
 
-- [ ] **Step 3: `MetrikKutu` varyantını uygula**
+- [x] **Step 3: `MetrikKutu` varyantını uygula**
 
 Şablon köküne sınıf bağla:
 
@@ -268,7 +268,7 @@ Beklenen: `metrik-kutu--buyuk` / `finans-ust` bulunamadı.
 .metrik-kutu--buyuk .metrik-kutu-etiket { font-size: 12px; }
 ```
 
-- [ ] **Step 4: `FinansOzetBandi` grid'ini odaklı hale getir**
+- [x] **Step 4: `FinansOzetBandi` grid'ini odaklı hale getir**
 
 `<div class="finans-ust">` öğesine `data-test="finans-ust"` ve `:class="{ 'finans-ust--odakli': birincil.length > 0 }"` ekle. `v-for`'u indeksli yap:
 
@@ -305,7 +305,7 @@ CSS:
 
 Mevcut `@media` kurallarını bu değerlerle değiştir; `.finans-ust > *` sayısının 4 kalması korunur.
 
-- [ ] **Step 5: Testleri çalıştır**
+- [x] **Step 5: Testleri çalıştır**
 
 ```bash
 npx vitest run src/components/__tests__/FinansOzetBandi.spec.js
@@ -313,7 +313,7 @@ npx vitest run src/components/__tests__/FinansOzetBandi.spec.js
 
 Beklenen: tüm testler yeşil.
 
-- [ ] **Step 6: Görsel kontrol ve commit**
+- [x] **Step 6: Görsel kontrol ve commit**
 
 1440 ve 390 px'te ekran görüntüsü al; ciro kartının diğerlerinden belirgin büyük, destek kartlarının eşit yükseklikte olduğunu doğrula.
 
@@ -334,7 +334,7 @@ git commit -m "feat(dashboard): odakli KPI bandi ve sessiz ikincil metrik seridi
 - Produces: ilk aksiyonda `.hizli-islem--birincil`, her aksiyonda `.hizli-ikon` sarmalayıcısı; `data-test` kancaları aynı.
 - Produces: masaüstünde `.hizli-liste` 2 sütun; birincil karo `grid-column: span 2`.
 
-- [ ] **Step 1: Başarısız testleri yaz**
+- [x] **Step 1: Başarısız testleri yaz**
 
 ```js
 it('tahsilati birincil karo olarak isaretler', () => {
@@ -348,13 +348,13 @@ it('her aksiyonda ikon sarmalayicisi vardir', () => {
 })
 ```
 
-- [ ] **Step 2: Testleri çalıştır ve kırmızı olduğunu doğrula**
+- [x] **Step 2: Testleri çalıştır ve kırmızı olduğunu doğrula**
 
 ```bash
 npx vitest run src/components/__tests__/KokpitHizliIslemler.spec.js
 ```
 
-- [ ] **Step 3: Şablonu ve CSS'i uygula**
+- [x] **Step 3: Şablonu ve CSS'i uygula**
 
 Her `<i>` öğesini sar:
 
@@ -384,13 +384,13 @@ Tahsilat butonuna `hizli-islem--birincil` sınıfını ekle. CSS:
 
 Mevcut mobil 2 sütun kuralını yukarıdakiyle birleştir; 5 aksiyonun 6 hücreye oturmasını `hizli-islem--birincil` sağlar.
 
-- [ ] **Step 4: Testleri çalıştır**
+- [x] **Step 4: Testleri çalıştır**
 
 ```bash
 npx vitest run src/components/__tests__/KokpitHizliIslemler.spec.js
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/components/dashboard/kokpit/KokpitHizliIslemler.vue frontend/src/components/__tests__/KokpitHizliIslemler.spec.js
@@ -413,7 +413,7 @@ git commit -m "feat(dashboard): hizli islemlerde birincil karo ve 2x2 duzen"
 - `KokpitBekleyenIsler` produces: `data-test="bekleyen-ikon-<anahtar>"`, `.bekleyen-ikon--{kritik|uyari|bilgi}`; `.bekleyen-nokta` sınıfı kaldırılır (test güncellenir).
 - i18n keys: `dashboard.gunBugun`, `dashboard.gunDun`, `dashboard.gunBuHafta`, `dashboard.gunDahaEski`.
 
-- [ ] **Step 1: Başarısız testleri yaz**
+- [x] **Step 1: Başarısız testleri yaz**
 
 `KokpitAkis.spec.js`:
 
@@ -443,13 +443,13 @@ expect(wrapper.find('[data-test="bekleyen-ikon-vadesiGecen"]').exists()).toBe(tr
 expect(wrapper.find('.bekleyen-ikon--kritik').exists()).toBe(true)
 ```
 
-- [ ] **Step 2: Testleri çalıştır ve kırmızı olduğunu doğrula**
+- [x] **Step 2: Testleri çalıştır ve kırmızı olduğunu doğrula**
 
 ```bash
 npx vitest run src/components/__tests__/KokpitAkis.spec.js src/components/__tests__/KokpitBekleyenIsler.spec.js
 ```
 
-- [ ] **Step 3: i18n anahtarlarını ekle**
+- [x] **Step 3: i18n anahtarlarını ekle**
 
 `tr.json`:
 
@@ -469,7 +469,7 @@ npx vitest run src/components/__tests__/KokpitAkis.spec.js src/components/__test
 "gunDahaEski": "Older"
 ```
 
-- [ ] **Step 4: Akışı grupla**
+- [x] **Step 4: Akışı grupla**
 
 `KokpitAkis.vue` içinde `gruplar` computed'ı ekle; **`gorunen` listesi üzerinden** hesapla (filtre ve "Tümünü gör" davranışı korunur). Her grupta `{ anahtar, etiket, ogeler: [{ olay, index }] }` tut. Gün farkı: 0 → `BUGUN`, 1 → `DUN`, 2–7 → `BU_HAFTA`, aksi → `DAHA_ESKI`; geçersiz tarih `DAHA_ESKI`. Şablonda her grup için:
 
@@ -483,7 +483,7 @@ npx vitest run src/components/__tests__/KokpitAkis.spec.js src/components/__test
 
 CSS: `.akis-grup-baslik { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); padding: 6px 6px 2px; }` ve gruplar arası `margin-top: 6px`.
 
-- [ ] **Step 5: Bekleyen işler kartını dengele**
+- [x] **Step 5: Bekleyen işler kartını dengele**
 
 `.bekleyen-nokta` yerine:
 
@@ -514,14 +514,14 @@ CSS: `.akis-grup-baslik { font-size: 10px; letter-spacing: .06em; text-transform
 
 `Dashboard.vue` içinde `.kokpit-orta` sütunlarını `minmax(0, 2.2fr) minmax(280px, 1fr)` yap.
 
-- [ ] **Step 6: Testleri ve i18n kontrolünü çalıştır**
+- [x] **Step 6: Testleri ve i18n kontrolünü çalıştır**
 
 ```bash
 npx vitest run src/components/__tests__/KokpitAkis.spec.js src/components/__tests__/KokpitBekleyenIsler.spec.js
 npm run i18n:check
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add frontend/src/components/dashboard/kokpit/KokpitAkis.vue frontend/src/components/dashboard/kokpit/KokpitBekleyenIsler.vue frontend/src/views/Dashboard.vue frontend/src/locales/tr.json frontend/src/locales/en.json frontend/src/components/__tests__/KokpitAkis.spec.js frontend/src/components/__tests__/KokpitBekleyenIsler.spec.js
@@ -546,7 +546,7 @@ git commit -m "feat(dashboard): gun gruplu akis ve dengeli bekleyen isler karti"
 - `AlacakVerecekBolumu` produces: `.alacak-performans--iyi|uyari|kotu`, `.alacak-stat-deger--iyi|uyari|kotu`.
 - Eşikler: `>= 80` iyi, `>= 50` uyarı, `< 50` kötü.
 
-- [ ] **Step 1: Başarısız testleri yaz**
+- [x] **Step 1: Başarısız testleri yaz**
 
 `NakitAlacakBolumleri.spec.js` içine ekle:
 
@@ -565,13 +565,13 @@ it('tahsilat oranini esige gore renklendirir', () => {
 })
 ```
 
-- [ ] **Step 2: Testi çalıştır ve kırmızı olduğunu doğrula**
+- [x] **Step 2: Testi çalıştır ve kırmızı olduğunu doğrula**
 
 ```bash
 npx vitest run src/components/__tests__/NakitAlacakBolumleri.spec.js
 ```
 
-- [ ] **Step 3: Kart yüksekliğini ve footer'ı düzelt**
+- [x] **Step 3: Kart yüksekliğini ve footer'ı düzelt**
 
 `FinansKarti.vue`:
 
@@ -596,7 +596,7 @@ npx vitest run src/components/__tests__/NakitAlacakBolumleri.spec.js
 }
 ```
 
-- [ ] **Step 4: Tahsilat eşiğini uygula**
+- [x] **Step 4: Tahsilat eşiğini uygula**
 
 `AlacakVerecekBolumu.vue` içinde:
 
@@ -611,7 +611,7 @@ const tahsilatSeviyesi = computed(() => {
 
 Performans kapsayıcısına `:class="'alacak-performans--' + tahsilatSeviyesi"` ekle; CSS'te bar ve değer rengini `--success`, `--warning`, `--danger` üzerinden ver. Aynı sınıfı `alacak-stat-deger` için de kullan.
 
-- [ ] **Step 5: "Tümünü gör" footer'ını sessizleştir**
+- [x] **Step 5: "Tümünü gör" footer'ını sessizleştir**
 
 Çocuk bileşenlerdeki `.finans-detay-buton` tanımlarını (`NakitBolumu.vue`, `AlacakVerecekBolumu.vue`, `KarMarjBolumu.vue`, `FaturaSiparisBolumu.vue`) şu ortak davranışa getir:
 
@@ -630,13 +630,13 @@ Performans kapsayıcısına `:class="'alacak-performans--' + tahsilatSeviyesi"` 
 
 `FinansKarti` footer'ı `display: flex; justify-content: flex-end;` yap; mobilde (`max-width: 600px`) buton tam genişlik ve 44 px yüksekliğe döner.
 
-- [ ] **Step 6: Testleri çalıştır**
+- [x] **Step 6: Testleri çalıştır**
 
 ```bash
 npx vitest run src/components/__tests__/NakitAlacakBolumleri.spec.js src/components/__tests__/KarFaturaBolumleri.spec.js
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add frontend/src/components/dashboard/kokpit/FinansKarti.vue frontend/src/views/Dashboard.vue frontend/src/components/dashboard/kokpit/AlacakVerecekBolumu.vue frontend/src/components/dashboard/kokpit/FaturaSiparisBolumu.vue frontend/src/components/dashboard/kokpit/NakitBolumu.vue frontend/src/components/dashboard/kokpit/KarMarjBolumu.vue frontend/src/components/__tests__/NakitAlacakBolumleri.spec.js
@@ -660,7 +660,7 @@ git commit -m "feat(dashboard): esit yukseklikli detay kartlari ve tahsilat esig
 - `MikroGrafik` produces: `tip="alan"` için `<linearGradient>` dolgu ve son değerde `<circle>`; gradient id'si modül düzeyinde artan sayaçla benzersiz.
 - `NakitBolumu` produces: toplam likidite için `tip="alan"` sparkline; `KarMarjBolumu` trend için alan grafiği.
 
-- [ ] **Step 1: Başarısız testi yaz**
+- [x] **Step 1: Başarısız testi yaz**
 
 `MikroGrafik.spec.js`:
 
@@ -681,13 +681,13 @@ describe('MikroGrafik', () => {
 })
 ```
 
-- [ ] **Step 2: Testi çalıştır ve kırmızı olduğunu doğrula**
+- [x] **Step 2: Testi çalıştır ve kırmızı olduğunu doğrula**
 
 ```bash
 npx vitest run src/components/__tests__/MikroGrafik.spec.js
 ```
 
-- [ ] **Step 3: Alan varyantını uygula**
+- [x] **Step 3: Alan varyantını uygula**
 
 `serilerDuz` aynı kalır. Şablonda `tip === 'alan'` için:
 
@@ -705,19 +705,19 @@ npx vitest run src/components/__tests__/MikroGrafik.spec.js
 
 `gradyanId` için modül düzeyinde `let sayac = 0` ve `const gradyanId = 'mikro-alan-' + (++sayac)` kullan; Vue 3.3'te `useId` yok. `tip` validator'ına `'alan'` ekle.
 
-- [ ] **Step 4: Kullanım yerlerini güncelle**
+- [x] **Step 4: Kullanım yerlerini güncelle**
 
 - `MetrikKutu`: birincil kartta `tip="alan"` (prop olarak `grafikTip` ekle, varsayılan `'sparkline'`); `FinansOzetBandi` birincil metriğe `:grafik-tip="index === 0 ? 'alan' : 'sparkline'"` geçsin.
 - `NakitBolumu`: toplam likidite `MikroGrafik` çağrısına `tip="alan"`, yükseklik 40.
 - `KarMarjBolumu`: trend grafiğini `tip="alan"` yap; seri renkleri `frontend/src/utils/grafikRenkleri.js` içindeki `GRAFIK.yesil`, `GRAFIK.kirmizi`, `GRAFIK.mavi` sabitlerinden gelsin (hex tekrarı yok).
 
-- [ ] **Step 5: Testleri çalıştır**
+- [x] **Step 5: Testleri çalıştır**
 
 ```bash
 npx vitest run src/components/__tests__/MikroGrafik.spec.js src/components/__tests__/FinansOzetBandi.spec.js src/components/__tests__/NakitAlacakBolumleri.spec.js
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/src/components/dashboard/kokpit/MikroGrafik.vue frontend/src/components/dashboard/kokpit/MetrikKutu.vue frontend/src/components/dashboard/kokpit/FinansOzetBandi.vue frontend/src/components/dashboard/kokpit/NakitBolumu.vue frontend/src/components/dashboard/kokpit/KarMarjBolumu.vue frontend/src/components/__tests__/MikroGrafik.spec.js
@@ -738,7 +738,7 @@ git commit -m "feat(dashboard): alan grafigi ve tutarli grafik paleti"
 - `Dashboard.vue` produces: `max-width: 1760px`, masaüstü `padding: 16px 18px 28px`, mobil `10px 12px 22px`.
 - `dashboard.cy.js` produces: 390 px'te yatay taşma yok assert'i.
 
-- [ ] **Step 1: Başarısız Cypress testini yaz**
+- [x] **Step 1: Başarısız Cypress testini yaz**
 
 `dashboard.cy.js` içine ekle:
 
@@ -755,7 +755,7 @@ it('390px viewportta yatay tasma olmaz', () => {
 
 Mevcut spec oturumu localStorage ile kuruyorsa aynı `beforeEach` kullanılır; ek kurulum gerekmez.
 
-- [ ] **Step 2: Testi çalıştır ve kırmızı olduğunu doğrula**
+- [x] **Step 2: Testi çalıştır ve kırmızı olduğunu doğrula**
 
 ```bash
 npx cypress run --browser chrome --spec cypress/e2e/dashboard.cy.js
@@ -763,7 +763,7 @@ npx cypress run --browser chrome --spec cypress/e2e/dashboard.cy.js
 
 Beklenen: taşma varsa `scrollWidth` assert'i kırmızı. Taşma yoksa test yeşil başlar; Task 7'nin kalanı görsel iyileştirme olarak ilerler, testi yeşil tut.
 
-- [ ] **Step 3: Üst bar hiyerarşisini uygula**
+- [x] **Step 3: Üst bar hiyerarşisini uygula**
 
 `KokpitGlobalFiltre.vue` CSS:
 
@@ -783,7 +783,7 @@ Beklenen: taşma varsa `scrollWidth` assert'i kırmızı. Taşma yoksa test yeş
 
 `sonGuncelleme` metnini 11 px yap; 1200 px altında gizleme kuralı korunur.
 
-- [ ] **Step 4: Sayfa ritmini uygula**
+- [x] **Step 4: Sayfa ritmini uygula**
 
 `Dashboard.vue`:
 
@@ -802,14 +802,14 @@ Beklenen: taşma varsa `scrollWidth` assert'i kırmızı. Taşma yoksa test yeş
 
 `--kokpit-bosluk` token'ını `.kokpit-sayfa` içinde tanımla; `app.css`'teki genel token ile çakışmasın.
 
-- [ ] **Step 5: Cypress ve build'i çalıştır**
+- [x] **Step 5: Cypress ve build'i çalıştır**
 
 ```bash
 npx cypress run --browser chrome --spec cypress/e2e/dashboard.cy.js
 npm run build
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/src/components/dashboard/kokpit/KokpitGlobalFiltre.vue frontend/src/views/Dashboard.vue frontend/cypress/e2e/dashboard.cy.js
@@ -829,11 +829,11 @@ git commit -m "feat(dashboard): premium ust bar ve sayfa ritmi"
 - Consumes: önceki task'ların tüm sınıf ve prop'ları.
 - Produces: 390/768/1024/1440/1920 doğrulanmış, klavye ve reduced-motion uyumlu ekran.
 
-- [ ] **Step 1: Odak ve dokunma hedeflerini kontrol et**
+- [x] **Step 1: Odak ve dokunma hedeflerini kontrol et**
 
 Tüm yeni butonlarda `:focus-visible` var mı bak. Eksikse `outline: 2px solid var(--accent); outline-offset: 2px;` ekle. `@media (pointer: coarse)` altında hızlı işlem, bekleyen satır ve footer butonlarının en az 44 px olduğunu doğrula.
 
-- [ ] **Step 2: Reduced-motion kontrolü**
+- [x] **Step 2: Reduced-motion kontrolü**
 
 Yeni gradyan/geçişler için:
 
@@ -846,7 +846,7 @@ Yeni gradyan/geçişler için:
 
 Grafik çizimi statik SVG olduğu için ek animasyon yok; varsa kaldır.
 
-- [ ] **Step 3: Açık/koyu tema ve kırılım kontrolü**
+- [x] **Step 3: Açık/koyu tema ve kırılım kontrolü**
 
 Sırayla 1920, 1440, 1264, 1024, 768, 390 px ve `light`/`dark` temada sayfayı aç. Şunları doğrula:
 
@@ -856,7 +856,7 @@ Sırayla 1920, 1440, 1264, 1024, 768, 390 px ve `light`/`dark` temada sayfayı a
 - Detay kartları satırda eşit yükseklikte; footer'lar hizalı.
 - Açık temada beyaz parlama/teal leke yok.
 
-- [ ] **Step 4: Tam kalite kapılarını çalıştır**
+- [x] **Step 4: Tam kalite kapılarını çalıştır**
 
 ```bash
 cd frontend
@@ -868,18 +868,18 @@ npm run build
 
 Beklenen: lint 0 uyarı, i18n temiz, 3000+ test yeşil, build başarılı.
 
-- [ ] **Step 5: Cypress dashboard spec'ini çalıştır**
+- [x] **Step 5: Cypress dashboard spec'ini çalıştır**
 
 ```bash
 npx vite preview --port 5173 --strictPort   # ayrı terminal
 npx cypress run --browser chrome --spec cypress/e2e/dashboard.cy.js
 ```
 
-- [ ] **Step 6: Öncesi/sonrası ekran görüntüsünü al**
+- [x] **Step 6: Öncesi/sonrası ekran görüntüsünü al**
 
 Gerçek uygulamada (Traefik `http://localhost`) geçici bir Cypress spec'i ile 1440 px viewport ve tam sayfa görüntüsü al; `docs/superpowers/specs/assets/` altına `2026-11-22-anasayfa-sonra-ust.png` ve `-tam.png` olarak kaydet. Geçici spec'i commit etme.
 
-- [ ] **Step 7: Planı işaretle ve commit**
+- [x] **Step 7: Planı işaretle ve commit**
 
 ```bash
 git add docs/superpowers/plans/2026-11-22-anasayfa-premium-cila.md docs/superpowers/specs/assets/2026-11-22-anasayfa-sonra-ust.png docs/superpowers/specs/assets/2026-11-22-anasayfa-sonra-tam.png
@@ -901,6 +901,15 @@ git commit -m "docs(dashboard): premium cila plani ve oncesi/sonrasi goruntuleri
 | Tema | Manuel dark/light | Token'lar doğru |
 | Erişilebilirlik | Klavye Tab + ekran okuyucu | Odak görünür, `sr-only` gizli |
 | Görsel | 1440/390 ekran görüntüsü | Odak, hizalama, boşluklar |
+
+## Uygulama sonucu
+
+- **Kapsam:** Task 1–7 `4c55ed0c..ae6046ac`; Task 8 kodu `23a208d7`; bu plan/görsel commit'i sonrası.
+- **Kalite kapıları:** `npm run lint` 0 uyarı; `npm run i18n:check` temiz (6062 kullanılan / 6996 anahtar); `npm run test` 2998 test / 295 dosya yeşil; `npm run build` başarılı; Cypress `dashboard.cy.js` 16/16.
+- **Kırılım:** 1920, 1440, 1264, 1024, 768 ve 390 px'te dark+light yatay taşma yok; KPI değerleri taşmıyor. 1101 px'te uzun TRY tutarlarında yalnız ikincil KPI değerleri ellipsis'e düşüyor (4 kolonlu bandın tasarım sınırı), 1264 px'te ellipsis yok.
+- **Hizalama:** 1264+ genişliklerde akış/bekleyen işler kartları eşit yükseklikte; detay kartları satırda eşit ve footer'lar hizalı. Tek kolona düşen 1024/768/390'da kartlar içerik yüksekliğini alır.
+- **Erişilebilirlik:** `prefers-reduced-motion` kokpit geçiş/animasyonlarını kapatıyor; coarse pointer'da çipler, hızlı işlemler, bekleyen satırlar ve alt CTA'lar ≥44 px (global `html { zoom: 0.9 }` nedeniyle fiziksel ~39.6 px — proje geneli not). `sr-only` kırpma kuralları Cypress ile korunuyor.
+- **Görseller:** `2026-11-22-anasayfa-sonra-ust.png` (1440×900, dark), `2026-11-22-anasayfa-sonra-tam.png` (1440×1972, light tam sayfa); branch build'inden alındı.
 
 ## Execution Handoff
 
