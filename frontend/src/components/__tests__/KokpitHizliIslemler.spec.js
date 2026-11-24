@@ -48,4 +48,14 @@ describe('KokpitHizliIslemler', () => {
 
     expect(wrapper.find('[data-test="hizli-onaylar"]').exists()).toBe(false)
   })
+
+  it('tahsilati birincil karo olarak isaretler', () => {
+    const wrapper = mountBar()
+    expect(wrapper.find('[data-test="hizli-tahsilat"]').classes()).toContain('hizli-islem--birincil')
+  })
+
+  it('her aksiyonda ikon sarmalayicisi vardir', () => {
+    const wrapper = mountBar()
+    expect(wrapper.findAll('.hizli-ikon')).toHaveLength(5)
+  })
 })

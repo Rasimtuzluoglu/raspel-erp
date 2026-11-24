@@ -13,14 +13,16 @@
     <div class="hizli-liste">
       <button
         type="button"
-        class="hizli-islem"
+        class="hizli-islem hizli-islem--birincil"
         data-test="hizli-tahsilat"
         @click="emit('tahsilat')"
       >
-        <i
-          class="pi pi-wallet"
+        <span
+          class="hizli-ikon"
           aria-hidden="true"
-        />
+        >
+          <i class="pi pi-wallet" />
+        </span>
         <span class="hizli-etiket">{{ t('dashboard.kokpitTahsilat') }}</span>
         <i
           class="pi pi-angle-right hizli-ok"
@@ -34,10 +36,12 @@
         data-test="hizli-odeme"
         @click="emit('odeme')"
       >
-        <i
-          class="pi pi-credit-card"
+        <span
+          class="hizli-ikon"
           aria-hidden="true"
-        />
+        >
+          <i class="pi pi-credit-card" />
+        </span>
         <span class="hizli-etiket">{{ t('dashboard.kokpitHizliOdeme') }}</span>
         <i
           class="pi pi-angle-right hizli-ok"
@@ -50,10 +54,12 @@
         class="hizli-islem"
         data-test="hizli-yeni-fatura"
       >
-        <i
-          class="pi pi-file-plus"
+        <span
+          class="hizli-ikon"
           aria-hidden="true"
-        />
+        >
+          <i class="pi pi-file-plus" />
+        </span>
         <span class="hizli-etiket">{{ t('dashboard.yeniFatura') }}</span>
         <i
           class="pi pi-angle-right hizli-ok"
@@ -66,10 +72,12 @@
         class="hizli-islem"
         data-test="hizli-masraf"
       >
-        <i
-          class="pi pi-receipt"
+        <span
+          class="hizli-ikon"
           aria-hidden="true"
-        />
+        >
+          <i class="pi pi-receipt" />
+        </span>
         <span class="hizli-etiket">{{ t('dashboard.kokpitHizliMasraf') }}</span>
         <i
           class="pi pi-angle-right hizli-ok"
@@ -84,10 +92,12 @@
         data-test="hizli-onaylar"
         @click="emit('onaylar')"
       >
-        <i
-          class="pi pi-check-square"
+        <span
+          class="hizli-ikon"
           aria-hidden="true"
-        />
+        >
+          <i class="pi pi-check-square" />
+        </span>
         <span class="hizli-etiket">{{ t('dashboard.onaylar') }}</span>
         <span
           v-if="bekleyenOnay > 0"
@@ -138,9 +148,9 @@ const { t } = useI18n()
   text-transform: uppercase;
 }
 .hizli-liste {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
 }
 .hizli-islem {
   position: relative;
@@ -164,6 +174,13 @@ const { t } = useI18n()
     background var(--dur-fast) var(--ease-standard),
     color var(--dur-fast) var(--ease-standard);
 }
+.hizli-islem--birincil {
+  grid-column: span 2;
+  min-height: 58px;
+}
+.hizli-islem:last-child:nth-child(4) {
+  grid-column: span 2;
+}
 .hizli-islem:hover,
 .hizli-islem:focus-visible {
   border-color: var(--accent-border);
@@ -177,6 +194,25 @@ const { t } = useI18n()
 .hizli-islem i {
   flex-shrink: 0;
   font-size: 13px;
+}
+.hizli-ikon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+}
+.hizli-islem--birincil .hizli-ikon {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.hizli-islem--birincil .hizli-etiket {
+  font-size: 13px;
+  font-weight: 700;
 }
 .hizli-etiket {
   flex: 1;
@@ -202,13 +238,10 @@ const { t } = useI18n()
 }
 @media (pointer: coarse) {
   .hizli-islem {
-    min-height: 44px;
+    min-height: 48px;
   }
-}
-@media (max-width: 640px) {
-  .hizli-liste {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .hizli-islem--birincil {
+    min-height: 58px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
