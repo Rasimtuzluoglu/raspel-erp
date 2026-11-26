@@ -24,6 +24,13 @@
 > 3342 → 2694 satır. `.dialog-form`, `ad/iban/krediLimiti/temsilciId` DOM
 > sözleşmesi korundu. Yeni/duzenle/kopya akışları `cariId` + `baslangicVerisi`
 > prop'larıyla sürüyor; 6 yeni bileşen testi eklendi.
+>
+> **Dilim 3 tamamlandı (2026-11-26):** Arama + filtre paneli + aktif filtre
+> çipleri `components/cari/CariFiltreCubugu.vue` bileşenine taşındı; parent
+> 2694 → 2543 satır. `.cari-filtreler`, `.cari-arama` ve
+> `data-test="cari-aktif-filtreler"` korundu; state `v-model`/emit ile bağlı.
+> 7 yeni bileşen testi eklendi; kaynak-tabanlı iki denetim yeni bileşene
+> yönlendirildi.
 
 ### 1. `CariKartDialog.vue` (en büyük kazanç, ~405 şablon + ~500 script)
 Mevcut 896–1300 arası “Hareketler” diyaloğu aslında **360 kart**: özet + ekstre aracı + hareket tablosu + 4 sekme (faturalar, özel fiyatlar, ürün geçmişi, notlar).

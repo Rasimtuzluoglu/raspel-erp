@@ -351,7 +351,7 @@ describe('REDTEAM Faz3.3 - PrimeVue 4: p-input-icon-left kaldirildi', () => {
       'components/TeklifListesi.vue',
       'components/YasalIcerik.vue',
       'views/AdresDefteri.vue',
-      'views/CariHesaplar.vue',
+      'components/cari/CariFiltreCubugu.vue',
       'views/FaturaGecmisRaporu.vue',
       'views/Faturalar.vue',
       'views/Satis.vue',

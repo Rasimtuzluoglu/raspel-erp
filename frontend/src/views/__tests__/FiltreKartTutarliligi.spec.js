@@ -10,7 +10,7 @@ import { join } from 'node:path'
 const oku = (p) => readFileSync(join(process.cwd(), 'src', p), 'utf8')
 
 const EKRANLAR = [
-  ['views/CariHesaplar.vue', 'cari-filtreler'],
+  ['components/cari/CariFiltreCubugu.vue', 'cari-filtreler'],
   ['views/Stoklar.vue', 'filter-bar'],
   ['views/Irsaliyeler.vue', 'irsaliye-arac'],
   ['views/Tahsilat.vue', 'tahsilat-arac'],

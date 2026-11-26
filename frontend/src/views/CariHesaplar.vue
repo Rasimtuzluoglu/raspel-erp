@@ -32,98 +32,32 @@
       :metin="t('cariHesaplar.ipucuMetin')"
     />
 
-    <div class="cari-filtreler filtre-kart">
-      <IconField class="cari-arama">
-        <InputIcon class="pi pi-search" />
-        <InputText
-          ref="aramaGirdiRef"
-          v-model="aramaMetni"
-          :placeholder="t('cariHesaplar.aramaPlaceholder')"
-          @input="ara"
-        />
-      </IconField>
-      <Dropdown
-        v-model="filtreTur"
-        :options="cariTurSecenekleri"
-        option-label="label"
-        option-value="value"
-        :placeholder="t('cariHesaplar.tur')"
-        class="filtre-select"
-        show-clear
-        @change="filtreDegisti"
-      />
-      <Dropdown
-        v-model="filtreBakiye"
-        :options="bakiyeFiltreleri"
-        option-label="label"
-        option-value="value"
-        :placeholder="t('cariHesaplar.bakiye')"
-        class="filtre-select"
-        show-clear
-        @change="filtreDegisti"
-      />
-      <AutoComplete
-        v-model="filtreEtiket"
-        :suggestions="etiketOnerileri"
-        :placeholder="t('cariHesaplar.etiketFiltre')"
-        class="filtre-select"
-        input-class="w-full"
-        dropdown
-        data-test="cari-etiket-filtre"
-        @complete="etiketOner"
-        @focus="etiketOner({ query: filtreEtiket })"
-        @item-select="filtreEtiketAra"
-        @keyup.enter="filtreEtiketAra"
-        @blur="filtreEtiketAra"
-      />
-      <Button
-        v-if="filtreTur || filtreBakiye || filtreEtiket"
-        :label="t('cariHesaplar.temizle')"
-        icon="pi pi-times"
-        size="small"
-        class="p-button-outlined"
-        @click="filtreleriTemizle"
-      />
-      <div class="cari-filtre-sag">
-        <Button
-          v-if="riskGorebilir"
-          :label="t('cariHesaplar.riskliFiltre')"
-          icon="pi pi-exclamation-triangle"
-          size="small"
-          class="p-button-outlined p-button-danger cari-riskli-btn"
-          data-test="cari-riskli"
-          @click="riskliCarilerAc"
-        />
-        <TabloAyarlari
-          tablo-key="cari"
-          :kolonlar="kolonlar"
-          @update:kolonlar="kolonGuncelle"
-          @update:yogunluk="tabloYogunluk = $event"
-        />
-      </div>
-    </div>
-
-    <div
-      v-if="aktifFiltreler.length > 0"
-      class="cari-aktif-filtreler"
-      data-test="cari-aktif-filtreler"
-    >
-      <span class="cari-aktif-etiket">{{ t('cariHesaplar.aktifFiltreler') }}</span>
-      <button
-        v-for="f in aktifFiltreler"
-        :key="f.tip"
-        type="button"
-        class="cari-filtre-cip"
-        :aria-label="`${f.etiket} â€” ${t('cariHesaplar.filtreKaldir')}`"
-        @click="filtreCipKaldir(f.tip)"
-      >
-        {{ f.etiket }}
-        <i
-          class="pi pi-times"
-          aria-hidden="true"
-        />
-      </button>
-    </div>
+    <CariFiltreCubugu
+      ref="filtreCubuguRef"
+      :arama="aramaMetni"
+      :tur="filtreTur"
+      :bakiye="filtreBakiye"
+      :etiket="filtreEtiket"
+      :etiket-onerileri="etiketOnerileri"
+      :cari-tur-secenekleri="cariTurSecenekleri"
+      :bakiye-filtreleri="bakiyeFiltreleri"
+      :aktif-filtreler="aktifFiltreler"
+      :risk-gorebilir="riskGorebilir"
+      :kolonlar="kolonlar"
+      @update:arama="aramaMetni = $event"
+      @update:tur="filtreTur = $event"
+      @update:bakiye="filtreBakiye = $event"
+      @update:etiket="filtreEtiket = $event"
+      @update:kolonlar="kolonGuncelle"
+      @update:yogunluk="tabloYogunluk = $event"
+      @ara="ara"
+      @filtre-degisti="filtreDegisti"
+      @etiket-oner="etiketOner"
+      @etiket-ara="filtreEtiketAra"
+      @filtreleri-temizle="filtreleriTemizle"
+      @cip-kaldir="filtreCipKaldir"
+      @riskli="riskliCarilerAc"
+    />
 
     <div
       v-if="loading && ilkYukleme"
@@ -1003,7 +937,6 @@ import { useRouter, useRoute } from 'vue-router'
 import { excelAPI, hareketAPI, notAPI, faturaAPI, cariHesapAPI, raporAPI } from '../api/index.js'
 import { useKisayollar } from '../composables/useKisayollar.js'
 import { usePanoyaKopyala } from '../composables/usePanoyaKopyala.js'
-import TabloAyarlari from '../components/TabloAyarlari.vue'
 import EmptyState from '../components/EmptyState.vue'
 import IlkZiyaretIpuclari from '../components/IlkZiyaretIpuclari.vue'
 import TahsilatGirDialog from '../components/TahsilatGirDialog.vue'
@@ -1023,6 +956,7 @@ import { useI18n } from 'vue-i18n'
 import CariHareketBasligi from '../components/cari/CariHareketBasligi.vue'
 import CariHareketTablosu from '../components/cari/CariHareketTablosu.vue'
 import CariHesapFormDialog from '../components/cari/CariHesapFormDialog.vue'
+import CariFiltreCubugu from '../components/cari/CariFiltreCubugu.vue'
 import CariFaturalarSekmesi from '../components/cari/CariFaturalarSekmesi.vue'
 import CariNotlarSekmesi from '../components/cari/CariNotlarSekmesi.vue'
 import CariOzelFiyatlarSekmesi from '../components/cari/CariOzelFiyatlarSekmesi.vue'
@@ -1082,9 +1016,7 @@ useKisayollar({
   // Ctrl+K: arama kutusuna odaklan. Ã–nceden placeholder'da "Ctrl+F" yazÄ±yordu
   // ama hiÃ§bir kÄ±sayol baÄŸlÄ± deÄŸildi (tarayÄ±cÄ±nÄ±n kendi bul iÅŸlevi aÃ§Ä±lÄ±yordu).
   ara: () => {
-    const el = aramaGirdiRef.value?.$el || aramaGirdiRef.value
-    el?.focus?.()
-    el?.select?.()
+    filtreCubuguRef.value?.odakla()
   }
 })
 
@@ -1092,6 +1024,7 @@ const showDialog = ref(false)
 const formDialogRef = ref(null)
 const formCariId = ref(null)
 const formBaslangicVerisi = ref(null)
+const filtreCubuguRef = ref(null)
 const showHareketlerDialog = ref(false)
 const kartDialogAcik = ref(false)
 const kartCariId = ref(null)
@@ -1121,7 +1054,6 @@ const ekstreBitis = ref(null)
 const selectedCariHesaplar = ref([])
 const selectedCariHesap = ref(null)
 const aramaMetni = ref('')
-const aramaGirdiRef = ref(null)
 const islemMenu = ref(null)
 let aramaZamanlayici = null
 onUnmounted(() => {
@@ -2153,64 +2085,16 @@ import { formatTarih as formatDate } from '../utils/format.js'
   background: var(--danger-soft);
   color: var(--danger);
 }
-.cari-filtreler {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-  align-items: center;
-}
-.cari-arama {
-  flex: 1 1 240px;
-  min-width: 200px;
-  max-width: 360px;
-}
-.cari-arama :deep(.p-inputtext) {
-  width: 100%;
-}
-.cari-filtre-sag {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.cari-aktif-filtreler {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin: -4px 0 12px;
-}
-.cari-aktif-etiket {
-  font-size: 11.5px;
-  color: var(--text-muted);
-}
-.cari-filtre-cip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 30px;
-  padding: 3px 9px;
-  border: 1px solid var(--accent-border);
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-family: inherit;
-  font-size: 11.5px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 160ms ease-out, border-color 160ms ease-out;
-}
-.cari-filtre-cip:hover {
-  background: var(--accent-soft-strong);
-}
-.cari-filtre-cip i {
-  font-size: 9px;
-}
-.cari-filtre-cip:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
+
+
+
+
+
+
+
+
+
+
 .cari-kpi {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -2242,26 +2126,11 @@ import { formatTarih as formatDate } from '../utils/format.js'
   font-size: 11px;
   color: var(--text-muted);
 }
-.filtre-select {
-  width: 200px;
-}
-.cari-filtreler :deep(.p-autocomplete) {
-  width: 200px;
-}
-.cari-filtreler :deep(.p-autocomplete input) {
-  width: 100%;
-}
-.cari-filtreler :deep(.p-autocomplete-dropdown) {
-  width: 2.25rem;
-  border: 1px solid var(--border);
-  border-left: 0;
-  background: var(--bg-card);
-  color: var(--text-muted);
-}
-.cari-filtreler :deep(.p-autocomplete-dropdown:hover) {
-  background: var(--bg-muted);
-  color: var(--text-primary);
-}
+
+
+
+
+
 .cari-kart-liste {
   display: none;
 }
@@ -2319,14 +2188,8 @@ import { formatTarih as formatDate } from '../utils/format.js'
   .cari-kart-liste {
     display: block;
   }
-  .cari-arama {
-    max-width: none;
-    flex: 1 1 100%;
-  }
-  .cari-filtre-sag {
-    margin-left: 0;
-  }
 }
+  
 .tahsilat-cari {
   margin-bottom: 14px;
   font-size: 14px;
