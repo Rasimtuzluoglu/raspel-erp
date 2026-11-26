@@ -519,6 +519,22 @@ describe('Anasayfa finans kokpiti', () => {
     cy.get('[data-test="kokpit-global-filtre"]').should('have.css', 'position', 'static')
   })
 
+  it('kokpit-genis-ekran: 1920 ve 2560ta icerik genisler, tasma olmaz', () => {
+    const beklenen = [
+      { genislik: 1920, enAz: 1650, enCok: 1750 },
+      { genislik: 2560, enAz: 2100, enCok: 2250 }
+    ]
+    for (const { genislik, enAz, enCok } of beklenen) {
+      cy.viewport(genislik, 1080)
+      anasayfaAc()
+      yatayTasmaYok()
+      cy.get('.kokpit-sayfa').then(($el) => {
+        const icerikGenisligi = $el[0].getBoundingClientRect().width
+        expect(icerikGenisligi, `${genislik}px içerik genişliği`).to.be.within(enAz, enCok)
+      })
+    }
+  })
+
   it('kokpit-excel: dışa aktarma isteği gönderilir', () => {
     cy.viewport(1440, 900)
     anasayfaAc()

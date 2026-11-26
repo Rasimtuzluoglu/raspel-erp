@@ -810,13 +810,31 @@ onBeforeUnmount(() => {
 }
 .kokpit-sayfa {
   --kokpit-bosluk: 14px;
+  /* İçerik tavanı. 2200px'te 2 sütunlu detay kartları ~1075 CSS px kalır;
+     daha geniş ekranlarda tavan kademeli büyür (kart üst sınırı ~1275 CSS px).
+     Değerler CSS px; `html { zoom: .9 }` olduğu için ekranda 0.9 ile ölçeklenir.
+     Kırılımlar `@media` olduğundan FİZİKSEL viewport ile değerlendirilir
+     (zoom media sorgusunu etkilemez). */
+  --kokpit-icerik-max: 2200px;
   display: flex;
   flex-direction: column;
   gap: var(--kokpit-bosluk);
   min-width: 0;
-  max-width: 1760px;
+  max-width: var(--kokpit-icerik-max);
   margin: 0 auto;
   padding: 16px 18px 28px;
+}
+/* Geniş ekran: tavan kademeli büyür. Sonuç: 2K'da yan boşluk ~4%,
+   ultrawide'da ~13%. Tavan altındaki viewport'larda kural bağlamaz. */
+@media (min-width: 2300px) {
+  .kokpit-sayfa {
+    --kokpit-icerik-max: 2400px;
+  }
+}
+@media (min-width: 3100px) {
+  .kokpit-sayfa {
+    --kokpit-icerik-max: 2600px;
+  }
 }
 /* Kullanıcı tercihi: ferah görünüm. */
 .kokpit-sayfa--ferah {
@@ -833,6 +851,13 @@ onBeforeUnmount(() => {
 /* Birincil karo ferah modda da destek karolardan belirgin yüksek kalır. */
 .kokpit-sayfa--ferah :deep(.hizli-islem--birincil) {
   min-height: 58px;
+}
+/* Geniş ekranda 14px kart aralığı ince kalıyor: yalnız kompakt yoğunlukta
+   ritmi 16px'e çıkar; kullanıcının "ferah" tercihi (24px) korunur. */
+@media (min-width: 2100px) {
+  .kokpit-sayfa:not(.kokpit-sayfa--ferah) {
+    --kokpit-bosluk: 16px;
+  }
 }
 /* Hero: sol (KPI + kritik), sağ (hızlı işlemler). */
 .kokpit-hero {
