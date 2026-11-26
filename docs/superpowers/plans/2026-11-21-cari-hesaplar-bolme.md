@@ -42,6 +42,13 @@
 > `components/cari/CariListePaneli.vue` bileşenine taşındı; parent
 > 2463 → 1977 satır. `.table-container`, `.cari-kart*`, `.bakiye-rozet` ve
 > tüm `data-test` kancaları korundu; 5 yeni bileşen testi eklendi.
+>
+> **Dilim 5b tamamlandı (2026-11-26):** Kalan yardımcı diyaloglar
+> (risk, toplu güncelleme, adres, açılış, toplu e-posta)
+> `components/cari/CariYardimciDiyaloglar.vue`; Hareketler/360 kabuğu
+> `components/cari/CariKartDialog.vue` bileşenine taşındı. Parent
+> 1977 → 1338 satır. 9 yeni bileşen testi; seçim-kolonu kaynak denetimi
+> yeni bileşene yönlendirildi.
 
 ### 1. `CariKartDialog.vue` (en büyük kazanç, ~405 şablon + ~500 script)
 Mevcut 896–1300 arası “Hareketler” diyaloğu aslında **360 kart**: özet + ekstre aracı + hareket tablosu + 4 sekme (faturalar, özel fiyatlar, ürün geçmişi, notlar).

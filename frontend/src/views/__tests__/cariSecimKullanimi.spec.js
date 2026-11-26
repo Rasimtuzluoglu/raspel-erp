@@ -12,7 +12,7 @@ import en from '../../locales/en.json'
  */
 
 const SRC = join(process.cwd(), 'src')
-const cari = readFileSync(join(SRC, 'views/CariHesaplar.vue'), 'utf8')
+const cari = readFileSync(join(SRC, 'components/cari/CariListePaneli.vue'), 'utf8')
 const tablo = readFileSync(join(SRC, 'components/AppDataTable.vue'), 'utf8')
 
 const cariBolum = (secici) => {

@@ -98,7 +98,7 @@
       @sayfa-degisti="cariSayfaDegisti"
       @sirala="cariSirala"
       @tahsilat="tahsilatAc"
-      @toplu-email="topluEmailDialog = true"
+      @toplu-email="yardimciDiyaloglarRef.value?.emailAc()"
       @toplu-sil="batchSil"
       @csv="batchCsvExport"
       @yeni="openDialog"
@@ -114,75 +114,27 @@
     />
 
     <!-- Hareketler Dialog -->
-    <Dialog
+    <CariKartDialog
       v-model:visible="showHareketlerDialog"
-      :modal="true"
-      :style="{ width: '820px', maxWidth: '96vw' }"
-      :draggable="false"
-    >
-      <template #header>
-        <div class="hareket-baslik">
-          <i class="pi pi-list" />
-          <span>{{ t('cariHesaplar.hareketlerBaslik') }}</span>
-        </div>
-      </template>
-      <CariHareketBasligi
-        :cari="selectedCariHesap"
-        :ozet="hareketOzeti"
-        @ekstre="ekstreGonder"
-      />
-
-      <CariHareketTablosu
-        :hareketler="cariHareketler"
-        :bakiye="cariHareketlerBakiye"
-        :yukleniyor="cariHareketlerYukleniyor"
-      >
-        <TabView
-          scrollable
-          class="cari-sekmeler"
-        >
-          <TabPanel :header="t('cariHesaplar.gecmisFaturalarTab')">
-            <CariFaturalarSekmesi
-              :faturalar="cariFaturalar"
-              @fatura-detay="faturaDetayAc"
-            />
-          </TabPanel>
-
-          <TabPanel :header="t('cariHesaplar.ozelFiyatlar')">
-            <CariOzelFiyatlarSekmesi
-              :ozel-fiyatlar="cariOzelFiyatlar"
-              @ekle="ozelFiyatEkleGonder"
-              @sil="cariOzelFiyatSil"
-            />
-          </TabPanel>
-
-          <TabPanel :header="t('cariHesaplar.gecmisteAldigiUrunler')">
-            <CariUrunGecmisiSekmesi
-              :son-urunler="sonUrunler"
-              :secili="seciliUrunFiyatGecmisi"
-              @goster="urunFiyatGecmisiGoster"
-              @kapat="urunFiyatKapat"
-            />
-          </TabPanel>
-
-          <TabPanel :header="t('cariHesaplar.gorusmeNotlari')">
-            <CariNotlarSekmesi
-              :notlar="cariNotlar"
-              @ekle="notEkleGonder"
-              @sil="cariNotSil"
-            />
-          </TabPanel>
-        </TabView>
-      </CariHareketTablosu>
-
-      <template #footer>
-        <Button
-          :label="t('stoklar.kapat')"
-          icon="pi pi-times"
-          @click="showHareketlerDialog = false"
-        />
-      </template>
-    </Dialog>
+      :cari="selectedCariHesap"
+      :ozet="hareketOzeti"
+      :hareketler="cariHareketler"
+      :bakiye="cariHareketlerBakiye"
+      :yukleniyor="cariHareketlerYukleniyor"
+      :faturalar="cariFaturalar"
+      :ozel-fiyatlar="cariOzelFiyatlar"
+      :son-urunler="sonUrunler"
+      :secili-urun="seciliUrunFiyatGecmisi"
+      :notlar="cariNotlar"
+      @ekstre="ekstreGonder"
+      @fatura-detay="faturaDetayAc"
+      @ozel-fiyat-ekle="ozelFiyatEkleGonder"
+      @ozel-fiyat-sil="cariOzelFiyatSil"
+      @urun-goster="urunFiyatGecmisiGoster"
+      @urun-kapat="urunFiyatKapat"
+      @not-ekle="notEkleGonder"
+      @not-sil="cariNotSil"
+    />
 
     <TahsilatGirDialog
       v-model:visible="tahsilatDialog"
@@ -197,52 +149,16 @@
       @kaydedildi="borclandirmaSonrasiYenile"
     />
 
-    <Dialog
-      v-model:visible="topluEmailDialog"
-      :modal="true"
-      :draggable="false"
-      :style="{ width: '520px', maxWidth: '96vw' }"
-    >
-      <template #header>
-        <div class="dialog-baslik">
-          <i class="pi pi-envelope" />
-          <span>{{ t('cariHesaplar.topluEposta') }}</span>
-        </div>
-      </template>
-      <p class="toplu-email-aciklama">
-        {{ t('cariHesaplar.topluEpostaAciklama', { n: selectedCariHesaplar ? selectedCariHesaplar.length : 0 }) }}
-      </p>
-      <div class="form-group">
-        <label>{{ t('cariHesaplar.konu') }}</label>
-        <InputText
-          v-model="topluEmailKonu"
-          class="w-full"
-          :placeholder="t('cariHesaplar.epostaKonusuPlaceholder')"
-        />
-      </div>
-      <div class="form-group">
-        <label>{{ t('cariHesaplar.mesaj') }}</label>
-        <Textarea
-          v-model="topluEmailMesaj"
-          rows="5"
-          class="w-full"
-          :placeholder="t('cariHesaplar.epostaIcerigiPlaceholder')"
-        />
-      </div>
-      <template #footer>
-        <Button
-          :label="t('common.cancel')"
-          icon="pi pi-times"
-          class="p-button-text"
-          @click="topluEmailDialog = false"
-        />
-        <Button
-          :label="t('cariHesaplar.epostaIstemisiniAc')"
-          icon="pi pi-envelope"
-          @click="topluEmailGonder"
-        />
-      </template>
-    </Dialog>
+    <CariYardimciDiyaloglar
+      ref="yardimciDiyaloglarRef"
+      :secili-cari-hesaplar="selectedCariHesaplar"
+      :cari-tur-secenekleri="cariTurSecenekleri"
+      :aktif-secenekleri="aktifSecenekleri"
+      @yenilendi="formKaydedildi"
+      @secili-temizle="selectedCariHesaplar = []"
+    />
+
+
 
     <CariFaturaDetayDialog
       v-model:visible="faturaDetayDialog"
@@ -264,312 +180,6 @@
       @tahsilat="tahsilatAc"
       @fatura="yeniFatura"
     />
-
-    <Dialog
-      v-model:visible="acilisDialogVisible"
-      modal
-      :draggable="false"
-      :style="{ width: '440px', maxWidth: '96vw' }"
-    >
-      <template #header>
-        <div class="dialog-baslik">
-          <i class="pi pi-flag" />
-          <span>{{ t('cariHesaplar.acilisFisi') }}</span>
-        </div>
-      </template>
-      <p class="toplu-secim-bilgi">
-        {{ acilisCari?.ad }}
-      </p>
-      <div class="form-alani">
-        <label>{{ t('cariHesaplar.acilisTutar') }}</label>
-        <InputNumber
-          v-model="acilisForm.tutar"
-          :min-fraction-digits="2"
-          :max-fraction-digits="2"
-          class="w-full"
-          :placeholder="t('cariHesaplar.acilisTutarYardim')"
-        />
-      </div>
-      <div class="form-alani">
-        <label>{{ t('cariHesaplar.acilisTarih') }}</label>
-        <DatePicker
-          v-model="acilisForm.tarih"
-          date-format="dd.mm.yy"
-          show-icon
-          class="w-full"
-        />
-      </div>
-      <div class="form-alani">
-        <label>{{ t('cariHesaplar.acilisAciklama') }}</label>
-        <InputText
-          v-model="acilisForm.aciklama"
-          class="w-full"
-        />
-      </div>
-      <small>{{ t('cariHesaplar.acilisYardim') }}</small>
-      <template #footer>
-        <Button
-          :label="t('common.cancel')"
-          class="p-button-text"
-          @click="acilisDialogVisible = false"
-        />
-        <Button
-          :label="t('common.save')"
-          icon="pi pi-check"
-          :loading="acilisKaydediliyor"
-          @click="acilisKaydet"
-        />
-      </template>
-    </Dialog>
-
-    <Dialog
-      v-model:visible="adresDialogVisible"
-      modal
-      :draggable="false"
-      :style="{ width: '760px', maxWidth: '96vw' }"
-    >
-      <template #header>
-        <div class="dialog-baslik">
-          <i class="pi pi-map-marker" />
-          <span>{{ t('cariHesaplar.adreslerBaslik') }}</span>
-        </div>
-      </template>
-      <p class="toplu-secim-bilgi">
-        {{ adresCari?.ad }}
-      </p>
-      <DataTable
-        :value="adresler"
-        data-key="id"
-        striped-rows
-        responsive-layout="scroll"
-        :paginator="adresler.length > 5"
-        :rows="5"
-      >
-        <Column
-          field="baslik"
-          :header="t('cariHesaplar.adresBaslik')"
-        />
-        <Column
-          field="adres"
-          :header="t('cariHesaplar.adres')"
-        />
-        <Column
-          field="il"
-          :header="t('cariHesaplar.il')"
-        />
-        <Column :header="t('cariHesaplar.adresVarsayilan')">
-          <template #body="{ data }">
-            <i
-              v-if="data.varsayilan"
-              class="pi pi-check"
-            />
-          </template>
-        </Column>
-        <Column
-          :header="t('common.actions')"
-          style="width: 80px"
-        >
-          <template #body="{ data }">
-            <Button
-              :aria-label="t('common.delete')"
-              :title="t('common.delete')"
-              icon="pi pi-trash"
-              class="p-button-rounded p-button-danger p-button-sm"
-              @click="adresSil(data)"
-            />
-          </template>
-        </Column>
-        <template #empty>
-          <p>{{ t('cariHesaplar.adresYok') }}</p>
-        </template>
-      </DataTable>
-
-      <Divider />
-
-      <div class="adres-form">
-        <InputText
-          v-model="adresForm.baslik"
-          :placeholder="t('cariHesaplar.adresBaslik')"
-        />
-        <InputText
-          v-model="adresForm.adres"
-          :placeholder="t('cariHesaplar.adres')"
-          class="genis"
-        />
-        <InputText
-          v-model="adresForm.il"
-          :placeholder="t('cariHesaplar.il')"
-        />
-        <InputText
-          v-model="adresForm.ilce"
-          :placeholder="t('cariHesaplar.ilce')"
-        />
-        <InputText
-          v-model="adresForm.yetkiliKisi"
-          :placeholder="t('cariHesaplar.yetkili')"
-        />
-        <InputText
-          v-model="adresForm.telefon"
-          :placeholder="t('cariHesaplar.telefon')"
-        />
-        <div class="varsayilan-alan">
-          <Checkbox
-            v-model="adresForm.varsayilan"
-            :binary="true"
-            input-id="adresVarsayilan"
-          />
-          <label for="adresVarsayilan">{{ t('cariHesaplar.adresVarsayilan') }}</label>
-        </div>
-        <Button
-          :label="t('common.add')"
-          icon="pi pi-plus"
-          :loading="adresKaydediliyor"
-          @click="adresEkleKaydet"
-        />
-      </div>
-    </Dialog>
-
-    <Dialog
-      v-model:visible="topluDialogVisible"
-      modal
-      :draggable="false"
-      :style="{ width: '460px', maxWidth: '96vw' }"
-    >
-      <template #header>
-        <div class="dialog-baslik">
-          <i class="pi pi-pencil" />
-          <span>{{ t('cariHesaplar.topluGuncelleBaslik') }}</span>
-        </div>
-      </template>
-      <p class="toplu-secim-bilgi">
-        {{ t('cariHesaplar.topluSecilen', { sayi: selectedCariHesaplar.length }) }}
-      </p>
-      <div class="form-alani">
-        <label>{{ t('cariHesaplar.tur') }}</label>
-        <Dropdown
-          v-model="topluForm.tur"
-          :options="cariTurSecenekleri"
-          option-label="label"
-          option-value="value"
-          show-clear
-          :placeholder="t('cariHesaplar.degisiklikYok')"
-          class="w-full"
-        />
-      </div>
-      <div class="form-alani">
-        <label>{{ t('cariHesaplar.krediLimiti') }}</label>
-        <InputNumber
-          v-model="topluForm.krediLimiti"
-          :min="0"
-          :min-fraction-digits="2"
-          :max-fraction-digits="2"
-          :placeholder="t('cariHesaplar.degisiklikYok')"
-          class="w-full"
-        />
-      </div>
-      <div class="form-alani">
-        <label>{{ t('cariHesaplar.vadeGun') }}</label>
-        <InputNumber
-          v-model="topluForm.odemeVadesi"
-          :min="0"
-          :placeholder="t('cariHesaplar.degisiklikYok')"
-          class="w-full"
-        />
-      </div>
-      <div class="form-alani">
-        <label>{{ t('cariHesaplar.durum') }}</label>
-        <Dropdown
-          v-model="topluForm.aktif"
-          :options="aktifSecenekleri"
-          option-label="label"
-          option-value="value"
-          show-clear
-          :placeholder="t('cariHesaplar.degisiklikYok')"
-          class="w-full"
-        />
-      </div>
-      <template #footer>
-        <Button
-          :label="t('common.cancel')"
-          class="p-button-text"
-          @click="topluDialogVisible = false"
-        />
-        <Button
-          :label="t('common.save')"
-          icon="pi pi-check"
-          :loading="topluKaydediliyor"
-          @click="topluGuncelleKaydet"
-        />
-      </template>
-    </Dialog>
-
-    <Dialog
-      v-model:visible="riskDialogVisible"
-      modal
-      :draggable="false"
-      :style="{ width: '760px', maxWidth: '96vw' }"
-    >
-      <template #header>
-        <div class="dialog-baslik">
-          <i class="pi pi-exclamation-triangle" />
-          <span>{{ t('cariHesaplar.riskliCarilerBaslik') }}</span>
-        </div>
-      </template>
-      <div
-        v-if="riskYukleniyor"
-        class="loading-iskelet"
-      >
-        <SkeletonLoader
-          :count="4"
-          height="40px"
-        />
-      </div>
-      <DataTable
-        v-else
-        :value="riskliCariler"
-        data-key="cariId"
-        striped-rows
-        responsive-layout="scroll"
-        :paginator="riskliCariler.length > 10"
-        :rows="10"
-      >
-        <Column
-          field="cariAd"
-          :header="t('cariHesaplar.ad')"
-        />
-        <Column
-          :header="t('cariHesaplar.borc')"
-        >
-          <template #body="{ data }">
-            {{ formatCurrency(data.borc) }}
-          </template>
-        </Column>
-        <Column
-          :header="t('cariHesaplar.krediLimiti')"
-        >
-          <template #body="{ data }">
-            {{ formatCurrency(data.krediLimiti) }}
-          </template>
-        </Column>
-        <Column
-          :header="t('cariHesaplar.asimTutari')"
-        >
-          <template #body="{ data }">
-            <span class="negative">{{ formatCurrency(data.asimTutari) }}</span>
-          </template>
-        </Column>
-        <Column
-          :header="t('cariHesaplar.riskOrani')"
-        >
-          <template #body="{ data }">
-            %{{ data.riskOrani }}
-          </template>
-        </Column>
-        <template #empty>
-          <p>{{ t('cariHesaplar.riskliYok') }}</p>
-        </template>
-      </DataTable>
-    </Dialog>
   </div>
 </template>
 
@@ -590,23 +200,17 @@ import BorclandirmaGirDialog from '../components/BorclandirmaGirDialog.vue'
 import CariKart360Dialog from '../components/CariKart360Dialog.vue'
 import CariFaturaDetayDialog from '../components/CariFaturaDetayDialog.vue'
 import PageHeader from '../components/PageHeader.vue'
-import TabView from 'primevue/tabview'
-import TabPanel from 'primevue/tabpanel'
 import Menu from 'primevue/menu'
 import { formatCurrency } from '../utils/format.js'
 import { escapeHtml } from '../utils/escapeHtml.js'
 import { fisPenceresiAcVeYazdir } from '../utils/fisYazdir.js'
 import { useI18n } from 'vue-i18n'
-import CariHareketBasligi from '../components/cari/CariHareketBasligi.vue'
-import CariHareketTablosu from '../components/cari/CariHareketTablosu.vue'
 import CariHesapFormDialog from '../components/cari/CariHesapFormDialog.vue'
 import CariFiltreCubugu from '../components/cari/CariFiltreCubugu.vue'
 import CariKpiBandi from '../components/cari/CariKpiBandi.vue'
 import CariListePaneli from '../components/cari/CariListePaneli.vue'
-import CariFaturalarSekmesi from '../components/cari/CariFaturalarSekmesi.vue'
-import CariNotlarSekmesi from '../components/cari/CariNotlarSekmesi.vue'
-import CariOzelFiyatlarSekmesi from '../components/cari/CariOzelFiyatlarSekmesi.vue'
-import CariUrunGecmisiSekmesi from '../components/cari/CariUrunGecmisiSekmesi.vue'
+import CariYardimciDiyaloglar from '../components/cari/CariYardimciDiyaloglar.vue'
+import CariKartDialog from '../components/cari/CariKartDialog.vue'
 
 const toastBildirim = useToastBildirim()
 const confirm = useConfirm()
@@ -671,25 +275,12 @@ const formDialogRef = ref(null)
 const formCariId = ref(null)
 const formBaslangicVerisi = ref(null)
 const filtreCubuguRef = ref(null)
+const yardimciDiyaloglarRef = ref(null)
 const showHareketlerDialog = ref(false)
 const kartDialogAcik = ref(false)
 const kartCariId = ref(null)
 const kartCari = ref(null)
-const riskDialogVisible = ref(false)
-const riskliCariler = ref([])
-const riskYukleniyor = ref(false)
-const topluDialogVisible = ref(false)
-const topluKaydediliyor = ref(false)
-const topluForm = ref({ tur: null, krediLimiti: null, odemeVadesi: null, aktif: null })
-const adresDialogVisible = ref(false)
-const adresCari = ref(null)
-const adresler = ref([])
-const adresKaydediliyor = ref(false)
-const adresForm = ref({ baslik: '', adres: '', il: '', ilce: '', yetkiliKisi: '', telefon: '', varsayilan: false })
-const acilisDialogVisible = ref(false)
-const acilisCari = ref(null)
-const acilisKaydediliyor = ref(false)
-const acilisForm = ref({ tutar: null, tarih: null, aciklama: '' })
+
 const loading = ref(false)
 const ilkYukleme = ref(true)
 const cariHareketler = ref([])
@@ -763,133 +354,10 @@ const cariOzetYukle = async () => {
   }
 }
 
-// Faz 2.1: kredi limitini aÅŸan cariler (risk listesi).
-const riskliCarilerAc = async () => {
-  riskDialogVisible.value = true
-  if (riskliCariler.value.length) return
-  riskYukleniyor.value = true
-  try {
-    const r = await cariHesapAPI.riskliCariler()
-    riskliCariler.value = unwrapList(r.data) || []
-  } catch (e) {
-    toastBildirim.hata(e?.response?.data?.message || t('common.error'))
-  } finally {
-    riskYukleniyor.value = false
-  }
-}
-
-// Faz 2.3: seÃ§ili carilerde toplu alan gÃ¼ncelleme.
-const topluGuncelleAc = () => {
-  topluForm.value = { tur: null, krediLimiti: null, odemeVadesi: null, aktif: null }
-  topluDialogVisible.value = true
-}
-
-const topluGuncelleKaydet = async () => {
-  const payload = { idler: selectedCariHesaplar.value.map((c) => c.id) }
-  const f = topluForm.value
-  if (f.tur != null) payload.tur = f.tur
-  if (f.krediLimiti != null) payload.krediLimiti = f.krediLimiti
-  if (f.odemeVadesi != null) payload.odemeVadesi = f.odemeVadesi
-  if (f.aktif != null) payload.aktif = f.aktif
-  if (Object.keys(payload).length <= 1) {
-    toastBildirim.uyari(t('cariHesaplar.topluAlanSec'))
-    return
-  }
-  topluKaydediliyor.value = true
-  try {
-    await cariHesapAPI.topluGuncelle(payload)
-    toastBildirim.basarili(t('cariHesaplar.topluGuncellendi'))
-    topluDialogVisible.value = false
-    selectedCariHesaplar.value = []
-    loadCariHesaplar(cariSayfa.value, cariSayfaBoyutu.value)
-  } catch (e) {
-    toastBildirim.hata(e?.response?.data?.message || t('common.error'))
-  } finally {
-    topluKaydediliyor.value = false
-  }
-}
-
-// Faz 2.5: cari Ã§oklu adres yÃ¶netimi.
-const bosAdresForm = () => ({ baslik: '', adres: '', il: '', ilce: '', yetkiliKisi: '', telefon: '', varsayilan: false })
-
-const adresleriYukle = async () => {
-  if (!adresCari.value) return
-  try {
-    const r = await cariHesapAPI.adresler(adresCari.value.id)
-    adresler.value = unwrapList(r.data) || []
-  } catch (e) {
-    toastBildirim.hata(e?.response?.data?.message || t('common.error'))
-  }
-}
-
-const adreslerAc = async (c) => {
-  adresCari.value = c
-  adresForm.value = bosAdresForm()
-  adresDialogVisible.value = true
-  await adresleriYukle()
-}
-
-const adresEkleKaydet = async () => {
-  // Cift gonderim engeli: ayni adres iki kez eklenmesin.
-  if (adresKaydediliyor.value) return
-  if (!adresForm.value.adres || !adresForm.value.adres.trim()) {
-    toastBildirim.uyari(t('cariHesaplar.adresZorunlu'))
-    return
-  }
-  adresKaydediliyor.value = true
-  try {
-    await cariHesapAPI.adresEkle(adresCari.value.id, adresForm.value)
-    toastBildirim.basarili(t('cariHesaplar.adresEklendi'))
-    adresForm.value = bosAdresForm()
-    await adresleriYukle()
-  } catch (e) {
-    toastBildirim.hata(e?.response?.data?.message || t('common.error'))
-  } finally {
-    adresKaydediliyor.value = false
-  }
-}
-
-const adresSil = async (a) => {
-  try {
-    await cariHesapAPI.adresSil(adresCari.value.id, a.id)
-    toastBildirim.basarili(t('cariHesaplar.adresSilindi'))
-    await adresleriYukle()
-  } catch (e) {
-    toastBildirim.hata(e?.response?.data?.message || t('common.error'))
-  }
-}
-
-// Faz 2.8: aÃ§Ä±lÄ±ÅŸ fiÅŸi / devir kaydÄ±.
-const acilisAc = (c) => {
-  acilisCari.value = c
-  acilisForm.value = { tutar: null, tarih: new Date(), aciklama: '' }
-  acilisDialogVisible.value = true
-}
-
-const acilisKaydet = async () => {
-  // Cift gonderim engeli: ayni acilis hareketi iki kez yazilmasin.
-  if (acilisKaydediliyor.value) return
-  if (!acilisForm.value.tutar) {
-    toastBildirim.uyari(t('cariHesaplar.acilisTutarZorunlu'))
-    return
-  }
-  acilisKaydediliyor.value = true
-  try {
-    await hareketAPI.acilis({
-      cariHesapId: acilisCari.value.id,
-      tutar: acilisForm.value.tutar,
-      tarih: acilisForm.value.tarih ? tarihIso(acilisForm.value.tarih) : null,
-      aciklama: acilisForm.value.aciklama
-    })
-    toastBildirim.basarili(t('cariHesaplar.acilisKaydedildi'))
-    acilisDialogVisible.value = false
-    loadCariHesaplar(cariSayfa.value, cariSayfaBoyutu.value)
-  } catch (e) {
-    toastBildirim.hata(e?.response?.data?.message || t('common.error'))
-  } finally {
-    acilisKaydediliyor.value = false
-  }
-}
+// Yardimci diyaloglar tek bir bilesende; parent yalnizca acma metodlarini cagirir.
+const riskliCarilerAc = () => yardimciDiyaloglarRef.value?.riskliAc()
+const topluGuncelleAc = () => yardimciDiyaloglarRef.value?.topluAc()
+const acilisAc = (cari) => yardimciDiyaloglarRef.value?.acilisAc(cari)
 
 const filtreleriTemizle = () => {
   aramaMetni.value = ''
@@ -1341,24 +809,6 @@ const yeniFatura = (cariHesap) => {
   router.push({ name: 'Faturalar', query: { cariId: cariHesap.id } })
 }
 
-const topluEmailDialog = ref(false)
-const topluEmailKonu = ref('')
-const topluEmailMesaj = ref('')
-
-const topluEmailGonder = () => {
-  const alicilar = (selectedCariHesaplar.value || [])
-    .filter((c) => c.email)
-    .map((c) => c.email)
-  if (alicilar.length === 0) {
-    toastBildirim.uyari(t('cariHesaplar.epostaAdresiYok'))
-    return
-  }
-  const mailto = `mailto:?bcc=${alicilar.join(',')}&subject=${encodeURIComponent(topluEmailKonu.value || '')}&body=${encodeURIComponent(topluEmailMesaj.value || '')}`
-  window.open(mailto, '_blank')
-  topluEmailDialog.value = false
-  toastBildirim.basarili(t('cariHesaplar.epostaIstemiAcildi', { n: alicilar.length }))
-}
-
 const tahsilatDialog = ref(false)
 const tahsilatHedefCari = ref(null)
 
@@ -1452,7 +902,7 @@ const ekstreAc = () => {
   if (kartCari.value) viewHareketler(kartCari.value)
 }
 const adresAc360 = () => {
-  if (kartCari.value) adreslerAc(kartCari.value)
+  if (kartCari.value) yardimciDiyaloglarRef.value?.adresAc(kartCari.value)
 }
 
 const cariOzelFiyatlar = ref([])
@@ -1710,11 +1160,7 @@ import { formatTarih as formatDate } from '../utils/format.js'
 
 
 
-.toplu-email-aciklama {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-bottom: 14px;
-}
+
 .cari-ozel-fiyatlar {
   margin-top: 20px;
   border-top: 1px solid var(--border);
@@ -1957,16 +1403,8 @@ h3 {
 }
 
 
-.hareket-baslik {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  font-size: 15px;
-}
-.hareket-baslik i {
-  color: var(--accent);
-}
+
+
 .ekstre-arac {
   display: flex;
   align-items: center;
@@ -1990,103 +1428,13 @@ h3 {
 .ekstre-tarih {
   width: 150px;
 }
-.dialog-baslik {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  font-size: 15px;
-}
-.dialog-baslik i {
-  color: var(--accent);
-}
-.toplu-secim-bilgi {
-  margin: 0 0 14px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-.form-alani {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-bottom: 14px;
-}
-.form-alani label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-.adres-form {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  align-items: center;
-}
-.adres-form .genis {
-  grid-column: 1 / -1;
-}
-.varsayilan-alan {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-@media (max-width: 640px) {
-  .adres-form {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
 
 
 
 
-.form-group {
-  margin-bottom: 14px;
-}
-.form-group:last-child {
-  margin-bottom: 0;
-}
-.form-group label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 700;
-  color: var(--text-primary) !important;
-  font-size: 13px;
-}
 
 
 
-.form-group :deep(.p-inputtext[aria-invalid='true']),
-.form-group :deep(.p-textarea[aria-invalid='true']) {
-  border-color: var(--danger) !important;
-  box-shadow: 0 0 0 3px var(--danger-soft) !important;
-}
-
-.form-group :deep(.p-inputtext),
-.form-group :deep(.p-textarea) {
-  width: 100%;
-  background: var(--bg-primary) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 8px;
-  padding: 10px 12px !important;
-  color: var(--text-primary) !important;
-  font-size: 14px;
-}
-.form-group :deep(.p-inputtext:enabled:focus),
-.form-group :deep(.p-textarea:enabled:focus) {
-  border-color: var(--accent) !important;
-  box-shadow: 0 0 0 3px var(--accent-soft-strong) !important;
-}
-.form-group :deep(.p-inputtext.p-invalid),
-.form-group :deep(.p-textarea.p-invalid) {
-  border-color: var(--danger) !important;
-}
 
 .error {
   display: block;
@@ -2101,10 +1449,7 @@ h3 {
   font-weight: bold;
 }
 
-.negative {
-  color: var(--danger);
-  font-weight: bold;
-}
+
 
 .badge {
   padding: 4px 12px;
