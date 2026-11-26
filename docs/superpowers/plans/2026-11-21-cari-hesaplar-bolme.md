@@ -18,6 +18,12 @@
 > `components/cari/CariHareketBasligi.vue` bileşenine taşındı (parent 3859 → 3792 satır).
 > Not: Otomatik/metin tabanlı taşıma denemeleri mojibake yorumlar ve çapraz bağlar
 > yüzünden kırıldı; bundan sonraki dilimler **elle** ve küçük adımlarla yapılmalı.
+>
+> **Dilim 2 tamamlandı (2026-11-26):** Form dialogu
+> `components/cari/CariHesapFormDialog.vue` bileşenine taşındı; parent
+> 3342 → 2694 satır. `.dialog-form`, `ad/iban/krediLimiti/temsilciId` DOM
+> sözleşmesi korundu. Yeni/duzenle/kopya akışları `cariId` + `baslangicVerisi`
+> prop'larıyla sürüyor; 6 yeni bileşen testi eklendi.
 
 ### 1. `CariKartDialog.vue` (en büyük kazanç, ~405 şablon + ~500 script)
 Mevcut 896–1300 arası “Hareketler” diyaloğu aslında **360 kart**: özet + ekstre aracı + hareket tablosu + 4 sekme (faturalar, özel fiyatlar, ürün geçmişi, notlar).
