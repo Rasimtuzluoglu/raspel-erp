@@ -31,6 +31,12 @@
 > `data-test="cari-aktif-filtreler"` korundu; state `v-model`/emit ile bağlı.
 > 7 yeni bileşen testi eklendi; kaynak-tabanlı iki denetim yeni bileşene
 > yönlendirildi.
+>
+> **Dilim 4 tamamlandı (2026-11-26):** KPI kartları + bakiye filtre tıklamaları
+> `components/cari/CariKpiBandi.vue` bileşenine taşındı; parent
+> 2543 → 2463 satır. `kpi-toplam`, `kpi-alacak`, `kpi-borc` ve
+> `.cari-kpi-not` sözleşmesi korundu; 6 yeni bileşen testi eklendi.
+> `.bakiye-rozet` tablo/mobil kartlarda kaldı.
 
 ### 1. `CariKartDialog.vue` (en büyük kazanç, ~405 şablon + ~500 script)
 Mevcut 896–1300 arası “Hareketler” diyaloğu aslında **360 kart**: özet + ekstre aracı + hareket tablosu + 4 sekme (faturalar, özel fiyatlar, ürün geçmişi, notlar).

@@ -70,65 +70,15 @@
       />
     </div>
 
-    <div
-      v-if="!ilkYukleme"
-      class="cari-kpi"
-    >
-      <button
-        type="button"
-        class="cari-kpi-tikla"
-        data-test="kpi-toplam"
-        :title="t('cariHesaplar.toplamCari')"
-        @click="filtreleriTemizle"
-      >
-        <KpiKart
-          :baslik="t('cariHesaplar.toplamCari')"
-          :deger="cariOzet.toplamKayit ?? cariHesapStore.toplamKayit"
-          :para-birimi="false"
-          ikon="pi pi-users"
-          renk="#14b8a6"
-        />
-      </button>
-      <button
-        type="button"
-        class="cari-kpi-tikla"
-        :class="{ 'cari-kpi-tikla--aktif': filtreBakiye === 'alacak' }"
-        data-test="kpi-alacak"
-        :aria-pressed="filtreBakiye === 'alacak' ? 'true' : 'false'"
-        :title="t('cariHesaplar.bizeAlacakli')"
-        @click="kpiBakiyeFiltre('alacak')"
-      >
-        <KpiKart
-          :baslik="t('cariHesaplar.bizeAlacakli')"
-          :deger="cariOzet.alacakli ?? 0"
-          ikon="pi pi-arrow-down-left"
-          renk="#22c55e"
-        />
-      </button>
-      <button
-        type="button"
-        class="cari-kpi-tikla"
-        :class="{ 'cari-kpi-tikla--aktif': filtreBakiye === 'borc' }"
-        data-test="kpi-borc"
-        :aria-pressed="filtreBakiye === 'borc' ? 'true' : 'false'"
-        :title="t('cariHesaplar.bizeBorclu')"
-        @click="kpiBakiyeFiltre('borc')"
-      >
-        <KpiKart
-          :baslik="t('cariHesaplar.bizeBorclu')"
-          :deger="cariOzet.borclu ?? 0"
-          ikon="pi pi-arrow-up-right"
-          renk="#ef4444"
-        />
-      </button>
-    </div>
-
-    <p
-      v-if="!ilkYukleme && aktifFiltreler.length > 0"
-      class="cari-kpi-not"
-    >
-      {{ t('cariHesaplar.kpiTumCariNotu') }}
-    </p>
+    <CariKpiBandi
+      :cari-ozet="cariOzet"
+      :toplam-kayit="cariHesapStore.toplamKayit"
+      :filtre-bakiye="filtreBakiye"
+      :yukleniyor="ilkYukleme"
+      :aktif-filtreler="aktifFiltreler"
+      @temizle="filtreleriTemizle"
+      @bakiye-filtre="kpiBakiyeFiltre"
+    />
 
     <div
       v-if="!ilkYukleme"
@@ -944,7 +894,6 @@ import BorclandirmaGirDialog from '../components/BorclandirmaGirDialog.vue'
 import CariKart360Dialog from '../components/CariKart360Dialog.vue'
 import CariFaturaDetayDialog from '../components/CariFaturaDetayDialog.vue'
 import PageHeader from '../components/PageHeader.vue'
-import KpiKart from '../components/KpiKart.vue'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
 import Menu from 'primevue/menu'
@@ -957,6 +906,7 @@ import CariHareketBasligi from '../components/cari/CariHareketBasligi.vue'
 import CariHareketTablosu from '../components/cari/CariHareketTablosu.vue'
 import CariHesapFormDialog from '../components/cari/CariHesapFormDialog.vue'
 import CariFiltreCubugu from '../components/cari/CariFiltreCubugu.vue'
+import CariKpiBandi from '../components/cari/CariKpiBandi.vue'
 import CariFaturalarSekmesi from '../components/cari/CariFaturalarSekmesi.vue'
 import CariNotlarSekmesi from '../components/cari/CariNotlarSekmesi.vue'
 import CariOzelFiyatlarSekmesi from '../components/cari/CariOzelFiyatlarSekmesi.vue'
@@ -2095,37 +2045,11 @@ import { formatTarih as formatDate } from '../utils/format.js'
 
 
 
-.cari-kpi {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.cari-kpi-tikla {
-  display: block;
-  width: 100%;
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-lg, 14px);
-  background: transparent;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.cari-kpi-tikla:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-.cari-kpi-tikla--aktif {
-  box-shadow: 0 0 0 2px var(--accent);
-  border-radius: var(--radius-lg, 14px);
-}
-.cari-kpi-not {
-  margin: -8px 0 10px;
-  font-size: 11px;
-  color: var(--text-muted);
-}
+
+
+
+
+
 
 
 
