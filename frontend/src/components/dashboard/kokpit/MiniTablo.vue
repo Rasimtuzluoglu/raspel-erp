@@ -15,7 +15,13 @@
             scope="col"
             :class="[hizaSinifi(kolon), { 'mini-tablo-gizle-mobil': kolon.mobilGizle }]"
           >
-            {{ kolon.etiket }}
+            <template v-if="kolon.etiket">
+              {{ kolon.etiket }}
+            </template>
+            <span
+              v-else
+              class="mini-tablo-gizli-metin"
+            >{{ kolon.erisilebilirEtiket || baslik }}</span>
           </th>
         </tr>
       </thead>
@@ -130,7 +136,8 @@ const sec = (satir) => {
   table-layout: fixed;
   border-collapse: collapse;
 }
-.mini-tablo-baslik-gizli {
+.mini-tablo-baslik-gizli,
+.mini-tablo-gizli-metin {
   position: absolute;
   width: 1px;
   height: 1px;

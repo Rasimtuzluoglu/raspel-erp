@@ -228,7 +228,7 @@ const cariKolonlari = [
 
 const borcluKolonlari = [
   ...cariKolonlari,
-  { anahtar: 'islem', etiket: '', hiza: 'sag' }
+  { anahtar: 'islem', etiket: '', erisilebilirEtiket: t('dashboard.kokpitIslem'), hiza: 'sag' }
 ]
 
 const kappaSec = (kova) => {

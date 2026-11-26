@@ -216,6 +216,7 @@ const trendSinifi = (yuzde) => {
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
+  min-height: 27px;
   padding: 4px 10px;
   border: 1px solid transparent;
   border-radius: 999px;

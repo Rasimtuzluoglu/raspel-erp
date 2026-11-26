@@ -124,11 +124,13 @@
             <span class="kar-legend-item kar-legend-item--kar">{{ t('dashboard.kokpitKarMarjKar') }}</span>
           </span>
         </div>
-        <MikroGrafik
+        <BuyukGrafik
           v-if="trend.length > 0"
-          tip="alan"
+          :etiketler="trendEtiketleri"
           :seriler="trendSerileri"
-          :yukseklik="64"
+          :yukseklik="196"
+          :para-birimi="paraBirimi"
+          sifir-cizgisi
           :aria-label="t('dashboard.kokpitKarMarjTrend')"
           data-test="kar-trend-grafik"
         />
@@ -217,6 +219,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FinansKarti from './FinansKarti.vue'
 import MikroGrafik from './MikroGrafik.vue'
+import BuyukGrafik from './BuyukGrafik.vue'
 import MiniTablo from './MiniTablo.vue'
 import KarKoprusu from './KarKoprusu.vue'
 import { formatPara } from '../../../utils/format.js'
@@ -230,7 +233,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['detay'])
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const veriVar = computed(() => !!props.veri)
 const ciro = computed(() => Number(props.veri?.ciro) || 0)
@@ -288,6 +291,13 @@ const trendSerileri = computed(() => [
   }
 ])
 const marjSeri = computed(() => trend.value.map((ay) => Number(ay.marj) || 0))
+const trendEtiketleri = computed(() =>
+  trend.value.map((ay) => {
+    const [yil, ayNo] = String(ay.ay || '').split('-').map(Number)
+    if (!yil || !ayNo) return ay.ay || ''
+    return new Date(yil, ayNo - 1, 1).toLocaleDateString(locale.value || 'tr-TR', { month: 'short' })
+  })
+)
 
 const urunler = computed(() =>
   (Array.isArray(props.veri?.urunler) ? props.veri.urunler : []).slice(0, 5)

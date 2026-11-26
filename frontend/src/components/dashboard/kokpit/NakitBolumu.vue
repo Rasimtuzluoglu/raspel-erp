@@ -129,19 +129,51 @@
       <span class="nakit-grafik-baslik">{{ t('dashboard.kokpitNakitGunlukAkis') }}</span>
       <span
         class="nakit-net"
-        :class="{ 'nakit-net--negatif': gunlukNet < 0 }"
+        :class="{ 'nakit-net--negatif': seciliNet < 0 }"
       >
-        {{ t('dashboard.kokpitNakitNet') }}: {{ formatPara(gunlukNet, paraBirimi) }}
+        {{ t('dashboard.kokpitNakitNet') }}: {{ formatPara(seciliNet, paraBirimi) }}
       </span>
     </div>
-    <MikroGrafik
-      v-if="gunlukSeri.length > 0"
-      tip="bar"
-      :seriler="[{ degerler: gunlukSeri, renk: 'var(--accent)' }]"
-      :yukseklik="52"
-      :aria-label="t('dashboard.kokpitNakitGunlukAkis')"
-      data-test="nakit-gunluk-grafik"
-    />
+    <div
+      v-if="barEtiketleri.length > 0"
+      class="nakit-buyuk-grafik"
+    >
+      <div
+        class="nakit-grafik-secim"
+        role="group"
+        :aria-label="t('dashboard.kokpitNakitGunlukAkis')"
+      >
+        <button
+          type="button"
+          class="nakit-grafik-secim-buton"
+          :class="{ 'nakit-grafik-secim-buton--aktif': grafikGun === 7 }"
+          :aria-pressed="grafikGun === 7"
+          data-test="nakit-grafik-7"
+          @click="grafikGun = 7"
+        >
+          {{ t('dashboard.kokpitGrafik7Gun') }}
+        </button>
+        <button
+          type="button"
+          class="nakit-grafik-secim-buton"
+          :class="{ 'nakit-grafik-secim-buton--aktif': grafikGun === 30 }"
+          :aria-pressed="grafikGun === 30"
+          data-test="nakit-grafik-30"
+          @click="grafikGun = 30"
+        >
+          {{ t('dashboard.kokpitGrafik30Gun') }}
+        </button>
+      </div>
+      <BuyukGrafik
+        tip="bar"
+        :etiketler="barEtiketleri"
+        :seriler="barSerileri"
+        :yukseklik="176"
+        :para-birimi="paraBirimi"
+        :aria-label="t('dashboard.kokpitNakitGunlukAkis')"
+        data-test="nakit-gunluk-grafik"
+      />
+    </div>
     <p
       v-else
       class="nakit-bos"
@@ -163,13 +195,21 @@
         <span>{{ t('dashboard.kokpitNakitBeklenenGiris') }} <strong class="gizli-veri">{{ formatPara(projeksiyon.toplamBeklenenGiris, paraBirimi) }}</strong></span>
         <span>{{ t('dashboard.kokpitNakitBeklenenCikis') }} <strong class="gizli-veri">{{ formatPara(projeksiyon.toplamBeklenenCikis, paraBirimi) }}</strong></span>
       </div>
-      <MikroGrafik
+      <BuyukGrafik
         v-if="projeksiyonSeri.length > 1"
-        :seriler="[{ degerler: projeksiyonSeri, renk: 'var(--info)' }]"
-        :yukseklik="34"
+        :etiketler="projeksiyonEtiketleri"
+        :seriler="[{ ad: t('dashboard.kokpitNakitProjeksiyon'), degerler: projeksiyonSeri, renk: 'var(--info)', dolgu: true }]"
+        :yukseklik="190"
+        :para-birimi="paraBirimi"
+        :hedef-band="hedefBand"
+        sifir-cizgisi
         :aria-label="t('dashboard.kokpitNakitProjeksiyon')"
         data-test="nakit-projeksiyon-grafik"
       />
+      <p class="nakit-hedef-band-not">
+        {{ t('dashboard.kokpitNakitHedefBand') }}:
+        {{ formatPara(hedefBand.alt, paraBirimi) }} – {{ formatPara(hedefBand.ust, paraBirimi) }}
+      </p>
     </div>
 
     <template #alt>
@@ -190,10 +230,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FinansKarti from './FinansKarti.vue'
 import MikroGrafik from './MikroGrafik.vue'
+import BuyukGrafik from './BuyukGrafik.vue'
 import { formatPara } from '../../../utils/format.js'
 
 const props = defineProps({
@@ -204,7 +245,10 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['detay'])
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+const NAKIT_GUVENLI_BANT = 50000
+const grafikGun = ref(7)
 
 const nakit = computed(() => props.veri || {})
 const kasa = computed(() => Number(nakit.value.kasa) || 0)
@@ -226,10 +270,45 @@ const gunlukAkis = computed(() =>
 const gunlukSeri = computed(() => gunlukAkis.value.map((gun) => Number(gun.net) || 0))
 const gunlukNet = computed(() => gunlukSeri.value.reduce((toplamDeger, deger) => toplamDeger + deger, 0))
 const projeksiyon = computed(() => nakit.value.projeksiyon || {})
+const seciliNet = computed(() => {
+  if (grafikGun.value !== 30) return gunlukNet.value
+  const giris = Number(projeksiyon.value.toplamBeklenenGiris) || 0
+  const cikis = Number(projeksiyon.value.toplamBeklenenCikis) || 0
+  return giris - cikis
+})
 const projeksiyonSeri = computed(() => {
   const gunler = Array.isArray(projeksiyon.value.gunluk) ? projeksiyon.value.gunluk : []
   return gunler.map((gun) => Number(gun.kumulatif) || 0)
 })
+
+const gunEtiketi = (tarih) => {
+  const zaman = new Date(tarih)
+  if (Number.isNaN(zaman.getTime())) return ''
+  return zaman.toLocaleDateString(locale.value || 'tr-TR', { day: '2-digit', month: '2-digit' })
+}
+const barKaynagi = computed(() =>
+  grafikGun.value === 30
+    ? (Array.isArray(projeksiyon.value.gunluk) ? projeksiyon.value.gunluk : [])
+    : gunlukAkis.value
+)
+const barEtiketleri = computed(() => barKaynagi.value.map((gun) => gunEtiketi(gun.tarih)))
+const barSerileri = computed(() => [
+  {
+    ad: t('dashboard.kokpitNakitGiris'),
+    degerler: barKaynagi.value.map((gun) => Number(gun.giris) || 0),
+    renk: 'var(--success)'
+  },
+  {
+    ad: t('dashboard.kokpitNakitCikis'),
+    degerler: barKaynagi.value.map((gun) => Number(gun.cikis) || 0),
+    renk: 'var(--danger)'
+  }
+])
+const projeksiyonEtiketleri = computed(() =>
+  (Array.isArray(projeksiyon.value.gunluk) ? projeksiyon.value.gunluk : [])
+    .map((gun) => gunEtiketi(gun.tarih))
+)
+const hedefBand = computed(() => ({ alt: 0, ust: NAKIT_GUVENLI_BANT }))
 const tahminiBitis = computed(() => Number(projeksiyon.value.tahminiBitisBakiyesi) || 0)
 const net30 = computed(() =>
   (Number(projeksiyon.value.toplamBeklenenGiris) || 0) -
@@ -537,6 +616,45 @@ const dagitimEtiketi = computed(() =>
 }
 .nakit-net--negatif {
   color: var(--danger-text);
+}
+.nakit-buyuk-grafik {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.nakit-grafik-secim {
+  display: inline-flex;
+  align-self: flex-end;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-muted);
+}
+.nakit-grafik-secim-buton {
+  padding: 3px 9px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.nakit-grafik-secim-buton--aktif {
+  background: var(--bg-card);
+  color: var(--accent);
+  box-shadow: var(--elev-1);
+}
+.nakit-grafik-secim-buton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.nakit-hedef-band-not {
+  margin: 0;
+  font-size: 10.5px;
+  color: var(--text-muted);
 }
 .nakit-bos {
   margin: 0;

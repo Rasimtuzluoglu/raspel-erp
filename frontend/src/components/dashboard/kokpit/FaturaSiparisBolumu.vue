@@ -278,7 +278,7 @@ const vadeKolonlari = [
   { anahtar: 'cariAd', etiket: t('dashboard.kokpitFaturaSiparisCari'), mobilGizle: true },
   { anahtar: 'vadeTarihi', etiket: t('dashboard.kokpitFaturaSiparisVade'), bicim: 'tarih', mobilGizle: true },
   { anahtar: 'kalanTutar', etiket: t('dashboard.kokpitFaturaSiparisKalan'), hiza: 'sag', bicim: 'para' },
-  { anahtar: 'islem', etiket: '', hiza: 'sag' }
+  { anahtar: 'islem', etiket: '', erisilebilirEtiket: t('dashboard.kokpitIslem'), hiza: 'sag' }
 ]
 
 const durumDetay = (kova) => {

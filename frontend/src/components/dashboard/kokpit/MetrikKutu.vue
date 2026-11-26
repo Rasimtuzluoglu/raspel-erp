@@ -9,7 +9,6 @@
       'metrik-kutu--buyuk': boyut === 'buyuk'
     }"
     :data-test="dataTest"
-    :aria-label="ariaLabel"
   >
     <div class="metrik-kutu-ust">
       <span class="metrik-kutu-etiket">{{ etiket }}</span>
@@ -52,7 +51,7 @@
       :tip="grafikTip"
       :seriler="sparkline"
       :yukseklik="sparklineYukseklik"
-      :aria-label="`${etiket} mini grafik`"
+      aria-hidden="true"
       class="metrik-kutu-sparkline"
     />
   </component>
@@ -131,15 +130,6 @@ const degisimIkonu = computed(() => {
 const sparklineVar = computed(() =>
   Array.isArray(props.sparkline) && props.sparkline.length > 1
 )
-
-const ariaLabel = computed(() => {
-  const parcalar = [`${props.etiket}: ${bicimliDeger.value}`]
-  const degisimEtiketi = props.altEtiket || props.degisimEtiketi
-  if (degisimVar.value && degisimEtiketi) {
-    parcalar.push(`${degisimEtiketi} ${degisimMetni.value}`)
-  }
-  return parcalar.join(', ')
-})
 </script>
 
 <style scoped>

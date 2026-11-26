@@ -22,12 +22,19 @@ const nakitVeri = {
   toplam: 120000,
   trendYuzde: 4.2,
   sparkline: [90000, 100000, 120000],
-  gunlukAkis: [{ net: 100 }, { net: -50 }, { net: 25 }],
+  gunlukAkis: [
+    { tarih: '2026-11-24', giris: 200, cikis: 100, net: 100 },
+    { tarih: '2026-11-25', giris: 50, cikis: 100, net: -50 },
+    { tarih: '2026-11-26', giris: 100, cikis: 75, net: 25 }
+  ],
   projeksiyon: {
     tahminiBitisBakiyesi: 140000,
     toplamBeklenenGiris: 5000,
     toplamBeklenenCikis: 3000,
-    gunluk: [{ kumulatif: 120000 }, { kumulatif: 140000 }]
+    gunluk: [
+      { tarih: '2026-11-27', giris: 2000, cikis: 1000, kumulatif: 121000 },
+      { tarih: '2026-11-28', giris: 3000, cikis: 2000, kumulatif: 122000 }
+    ]
   },
   hedef: { route: '/kasa', query: {} }
 }
@@ -64,6 +71,22 @@ describe('nakit ve alacak/verecek bölümleri', () => {
     expect(wrapper.find('[data-test="nakit-sparkline"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="nakit-saglik"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="nakit-runway"]').exists()).toBe(true)
+  })
+
+  it('nakitBolumu30GunSecimindeProjeksiyonSerisiniVeNetiniKullanir', async () => {
+    const wrapper = mount(NakitBolumu, {
+      ...mountOptions,
+      props: { veri: nakitVeri, paraBirimi: 'TRY' }
+    })
+
+    expect(wrapper.find('[data-test="nakit-gunluk-grafik"]').findAll('rect[fill="currentColor"]')).toHaveLength(6)
+    expect(wrapper.find('.nakit-net').text()).toContain('75,00')
+
+    await wrapper.find('[data-test="nakit-grafik-30"]').trigger('click')
+
+    expect(wrapper.find('[data-test="nakit-grafik-30"]').attributes('aria-pressed')).toBe('true')
+    expect(wrapper.find('[data-test="nakit-gunluk-grafik"]').findAll('rect[fill="currentColor"]')).toHaveLength(4)
+    expect(wrapper.find('.nakit-net').text()).toContain('2.000,00')
   })
 
   it('nakitBolumuBosVerideSifirGosterir', () => {

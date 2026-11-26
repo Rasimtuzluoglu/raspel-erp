@@ -86,6 +86,23 @@ describe('kokpit çekirdek görselleri', () => {
     expect(wrapper.find('tbody tr').attributes('tabindex')).toBe('0')
   })
 
+  it('miniTabloBosBaslikIcinErisilebilirEtiketKullanir', () => {
+    const wrapper = mount(MiniTablo, {
+      props: {
+        kolonlar: [
+          { anahtar: 'ad', etiket: 'Ad' },
+          { anahtar: 'islem', etiket: '', erisilebilirEtiket: 'İşlem' }
+        ],
+        satirlar: [{ id: 1, ad: 'Müşteri A', islem: 'Git' }]
+      }
+    })
+
+    const basliklar = wrapper.findAll('th')
+    expect(basliklar).toHaveLength(2)
+    expect(basliklar[1].find('.mini-tablo-gizli-metin').text()).toBe('İşlem')
+    expect(basliklar[1].attributes('scope')).toBe('col')
+  })
+
   it('miniTabloBosMetinGosterir', () => {
     const wrapper = mount(MiniTablo, {
       props: { kolonlar: [], satirlar: [], bosMetin: 'Kayıt yok' }
