@@ -37,6 +37,11 @@
 > 2543 → 2463 satır. `kpi-toplam`, `kpi-alacak`, `kpi-borc` ve
 > `.cari-kpi-not` sözleşmesi korundu; 6 yeni bileşen testi eklendi.
 > `.bakiye-rozet` tablo/mobil kartlarda kaldı.
+>
+> **Dilim 5a tamamlandı (2026-11-26):** Liste tablosu + mobil kartlar + batch bar
+> `components/cari/CariListePaneli.vue` bileşenine taşındı; parent
+> 2463 → 1977 satır. `.table-container`, `.cari-kart*`, `.bakiye-rozet` ve
+> tüm `data-test` kancaları korundu; 5 yeni bileşen testi eklendi.
 
 ### 1. `CariKartDialog.vue` (en büyük kazanç, ~405 şablon + ~500 script)
 Mevcut 896–1300 arası “Hareketler” diyaloğu aslında **360 kart**: özet + ekstre aracı + hareket tablosu + 4 sekme (faturalar, özel fiyatlar, ürün geçmişi, notlar).
