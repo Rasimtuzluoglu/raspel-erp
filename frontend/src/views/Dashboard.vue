@@ -888,6 +888,18 @@ onBeforeUnmount(() => {
 .kokpit-orta-bekleyen {
   min-width: 0;
 }
+/* Geniş ekran (≥2300px): oranlar içerik yoğunluğuna göre daralır. Hero sağ rayı
+   540px'te kapanır (hızlı işlem karoları, 1760px içerikteki ~500px genişliğe
+   yaklaşır); orta satırda "Bekleyen İşler" 1/2.8 paya çıkar. Eşiğin altında
+   kural bağlamaz: 1440/1920/390 düzeni birebir aynı kalır. */
+@media (min-width: 2300px) {
+  .kokpit-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(420px, 540px);
+  }
+  .kokpit-orta {
+    grid-template-columns: minmax(0, 1.8fr) minmax(340px, 1fr);
+  }
+}
 .kokpit-bolum-baslik {
   display: flex;
   align-items: center;

@@ -288,6 +288,14 @@ const hedef = (icgoru) => {
     transition: none;
   }
 }
+/* Geniş ekran (≥2300px): 3 kolonluk temel ızgara, veri 2 kart geldiğinde boş
+   kolon bırakıyordu. auto-fit boş izleri kapatır: 2 kart → 2 eşit kolon,
+   3 kart → 3 kolon. Temel kural ve mobil tek kolon kuralı korunur. */
+@media (min-width: 2300px) {
+  .icgoru-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
 @media (max-width: 900px) {
   .icgoru-grid,
   .icgoru-iskelet {

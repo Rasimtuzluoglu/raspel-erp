@@ -536,6 +536,24 @@ const zamanMetni = (tarih) => {
     opacity: 0.9;
   }
 }
+/* Geniş ekran (≥2300px): tek kolon akış satırı gereğinden fazla uzuyordu
+   (2560'ta 1614px; tutar sağa savruluyordu). İki kolon + satır bazlı denge:
+   `columns` flex kapsayıcıda çalışmadığı için `display: block` şart.
+   `break-inside` gruba değil `li`'ye uygulanır; böylece tek gün grubu da
+   iki kolona dengelenir. "Tümünü gör" butonu bu kabın dışında, tam genişlik kalır. */
+@media (min-width: 2300px) {
+  .akis-gruplar {
+    display: block;
+    columns: 2;
+    column-gap: calc(var(--kokpit-bosluk) + 8px);
+  }
+  .akis-grup-baslik {
+    break-after: avoid-column;
+  }
+  .akis-liste li {
+    break-inside: avoid;
+  }
+}
 @media (max-width: 640px) {
   .akis-satir {
     padding: 7px 4px;

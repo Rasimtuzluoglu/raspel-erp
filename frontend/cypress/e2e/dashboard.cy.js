@@ -532,6 +532,14 @@ describe('Anasayfa finans kokpiti', () => {
         const icerikGenisligi = $el[0].getBoundingClientRect().width
         expect(icerikGenisligi, `${genislik}px içerik genişliği`).to.be.within(enAz, enCok)
       })
+      if (genislik >= 2300) {
+        // ≥2300: akış iki iç kolona bölünür, hero sağ rayı 540px'te kapanır.
+        cy.get('.akis-gruplar').should('have.css', 'column-count', '2')
+        cy.get('.kokpit-hero-sag').should(($el) => {
+          const stil = $el[0].ownerDocument.defaultView.getComputedStyle($el[0])
+          expect(parseFloat(stil.width), 'hero sağ kolon genişliği').to.be.at.most(540.5)
+        })
+      }
     }
   })
 
