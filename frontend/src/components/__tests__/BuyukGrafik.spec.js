@@ -74,4 +74,9 @@ describe('BuyukGrafik', () => {
     expect(ipucu.text()).toContain('Şub')
     expect(ipucu.text()).toContain('Ciro')
   })
+
+  it('yTikSayisi ile eksen tik sayisini ayarlar (varsayilan 5)', () => {
+    expect(mountGrafik().findAll('.buyuk-grafik-y-etiket')).toHaveLength(5)
+    expect(mountGrafik({ yTikSayisi: 3 }).findAll('.buyuk-grafik-y-etiket')).toHaveLength(3)
+  })
 })

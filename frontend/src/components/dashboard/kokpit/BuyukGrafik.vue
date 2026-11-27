@@ -161,6 +161,8 @@ const props = defineProps({
   seriler: { type: Array, default: () => [] },
   tip: { type: String, default: 'line', validator: (d) => ['line', 'bar'].includes(d) },
   yukseklik: { type: Number, default: 190 },
+  /** Y ekseni çizgi/etiket sayısı. Kompakt (ör. 66px) grafiklerde 3'e düşürülür. */
+  yTikSayisi: { type: Number, default: 5 },
   paraBirimi: { type: String, default: 'TRY' },
   hedefBand: { type: Object, default: null },
   sifirCizgisi: { type: Boolean, default: false },
@@ -192,7 +194,7 @@ const yOrani = (deger) => {
 }
 
 const yTikleri = computed(() => {
-  const adet = 5
+  const adet = Math.max(2, Math.min(10, Math.round(Number(props.yTikSayisi) || 5)))
   return Array.from({ length: adet }, (_, i) => ustSinir.value - (aralik.value * i) / (adet - 1))
 })
 

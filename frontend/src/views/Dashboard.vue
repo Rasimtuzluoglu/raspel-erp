@@ -75,6 +75,14 @@
       />
     </div>
 
+    <!-- İlk ekran: 30 günlük nakit projeksiyonu özeti (grafik fold içinde). -->
+    <KokpitNakitSerit
+      v-if="nakitProjeksiyon || ilkYukleme"
+      :projeksiyon="nakitProjeksiyon"
+      :para-birimi="kokpitStore.paraBirimi"
+      :yukleniyor="ilkYukleme"
+    />
+
     <div class="kokpit-orta">
       <KokpitAkis
         class="kokpit-orta-akis"
@@ -219,6 +227,7 @@ import FaturaSiparisBolumu from '../components/dashboard/kokpit/FaturaSiparisBol
 import KokpitOzellestirme from '../components/dashboard/kokpit/KokpitOzellestirme.vue'
 import KokpitIcgoruler from '../components/dashboard/kokpit/KokpitIcgoruler.vue'
 import KokpitNakitTakvimi from '../components/dashboard/kokpit/KokpitNakitTakvimi.vue'
+import KokpitNakitSerit from '../components/dashboard/kokpit/KokpitNakitSerit.vue'
 import KokpitAkis from '../components/dashboard/kokpit/KokpitAkis.vue'
 import KokpitBekleyenIsler from '../components/dashboard/kokpit/KokpitBekleyenIsler.vue'
 

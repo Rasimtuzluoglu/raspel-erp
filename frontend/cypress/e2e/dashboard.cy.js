@@ -56,7 +56,10 @@ const kokpitVerisi = {
       toplamBeklenenCikis: 3000,
       tahminiBitisBakiyesi: 140000,
       gunSayisi: 30,
-      gunluk: [{ kumulatif: 120000 }, { kumulatif: 140000 }]
+      gunluk: [
+        { tarih: '2026-10-28', kumulatif: 120000 },
+        { tarih: '2026-10-29', kumulatif: 140000 }
+      ]
     },
     hedef: { route: '/kasa', query: {} }
   },
@@ -541,6 +544,22 @@ describe('Anasayfa finans kokpiti', () => {
         })
       }
     }
+  })
+
+  it('kokpit-nakit-serit: 1440x900 ilk ekranda projeksiyon seridi', () => {
+    cy.viewport(1440, 900)
+    anasayfaAc()
+
+    cy.get('[data-test="kokpit-nakit-serit"]')
+      .should('be.visible')
+      .then(($el) => {
+        const kutu = $el[0].getBoundingClientRect()
+        expect(kutu.bottom, 'nakit seridi fold icinde').to.be.at.most(900)
+      })
+    cy.get('[data-test="kokpit-nakit-serit-grafik"]').should('exist')
+    cy.get('[data-test="kokpit-nakit-serit-detay"]')
+      .should('be.visible')
+      .and('have.attr', 'href', '/kasa')
   })
 
   it('kokpit-excel: dışa aktarma isteği gönderilir', () => {

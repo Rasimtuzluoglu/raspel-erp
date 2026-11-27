@@ -236,6 +236,7 @@ import FinansKarti from './FinansKarti.vue'
 import MikroGrafik from './MikroGrafik.vue'
 import BuyukGrafik from './BuyukGrafik.vue'
 import { formatPara } from '../../../utils/format.js'
+import { NAKIT_GUVENLI_BANT } from '../../../utils/nakitSabitleri.js'
 
 const props = defineProps({
   veri: { type: Object, default: null },
@@ -247,7 +248,6 @@ const props = defineProps({
 const emit = defineEmits(['detay'])
 const { t, locale } = useI18n()
 
-const NAKIT_GUVENLI_BANT = 50000
 const grafikGun = ref(7)
 
 const nakit = computed(() => props.veri || {})
