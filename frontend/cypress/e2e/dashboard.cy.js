@@ -263,7 +263,7 @@ describe('Anasayfa finans kokpiti', () => {
     anasayfaAc()
 
     cy.contains('h1', 'Finans Masası').should('be.visible')
-    cy.get('[data-test="kokpit-global-filtre"]').should('have.css', 'position', 'sticky')
+    cy.get('[data-test="kokpit-global-filtre"]').should('have.css', 'position', 'relative')
     // Öncelikli 4 KPI büyük kart; kalan 4 metrik kompakt çip.
     cy.get('[data-test="finans-ozet-bandi"] .finans-ust [data-test^="kpi-"]').should('have.length', 4)
     cy.get('[data-test="finans-ikincil"] [data-test^="kpi-alt-"]').should('have.length', 4)
@@ -452,7 +452,7 @@ describe('Anasayfa finans kokpiti', () => {
         expect(parseFloat(stil.width), 'ikon hedefi genişliği').to.be.at.least(43.9)
         expect(parseFloat(stil.height), 'ikon hedefi yüksekliği').to.be.at.least(43.9)
       })
-    // 900 px altinda kabuk sabit ust bara gecer; sticky baslik barin altina kaymamali.
+    // 900 px altinda kabuk sabit ust bara gecer; ust bar statik kalir.
     cy.get('.sidebar').should('be.visible').then(($sidebar) => {
       cy.get('[data-test="kokpit-global-filtre"]').then(($filtre) => {
         const bar = $sidebar[0].getBoundingClientRect()
@@ -477,15 +477,16 @@ describe('Anasayfa finans kokpiti', () => {
     izgaraKolonlari().should('have.length', 4)
   })
 
-  it('kokpit-sticky-davranis: 1440 ve 1024 kaydirinca ust bar yapisir', () => {
+  it('kokpit-ust-bar-kayar: 1440 ve 1024 kaydirinca ust bar yukari kayar', () => {
     for (const genislik of [1440, 1024]) {
       cy.viewport(genislik, 900)
       anasayfaAc()
+      cy.get('[data-test="kokpit-global-filtre"]').should('have.css', 'position', 'relative')
       cy.scrollTo(0, 400)
       cy.window().its('scrollY').should('be.greaterThan', 0)
       cy.get('[data-test="kokpit-global-filtre"]').should(($el) => {
         const top = $el[0].getBoundingClientRect().top
-        expect(top, `${genislik}px sticky top`).to.be.within(-1, 1)
+        expect(top, `${genislik}px ust bar top`).to.be.lessThan(0)
       })
     }
   })

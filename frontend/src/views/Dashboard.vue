@@ -809,9 +809,8 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* Yapışkan üst bar: atalardaki `overflow-x: hidden` sticky için scroll
-   konteyneri üretiyordu. `clip` aynı yatay kırpmayı korur, scroll konteyneri
-   üretmez; kural yalnız kokpit sayfası varken uygulanır. */
+/* Kokpit sayfasında yatay taşma kırpması: `clip` scroll konteyneri üretmez,
+   sticky/scroll davranışını etkilemez; kural yalnız kokpit varken uygulanır. */
 :global(.main-content:has(.kokpit-sayfa)),
 :global(.app-container:has(.kokpit-sayfa)),
 :global(#app:has(.kokpit-sayfa)) {

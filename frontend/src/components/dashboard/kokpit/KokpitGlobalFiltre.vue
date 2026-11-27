@@ -201,9 +201,9 @@ const PARA_BIRIMLERI = ['TRY', 'USD', 'EUR']
 
 <style scoped>
 .kokpit-filtre {
-  position: sticky;
-  top: 0;
-  z-index: 5;
+  /* Sayfa akışıyla kayar (sticky değil). Kart görünümü (zemin, kenarlık,
+     gölge, radius) aynı kalır; backdrop-filter sticky olmadığı için kaldırıldı. */
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -212,7 +212,6 @@ const PARA_BIRIMLERI = ['TRY', 'USD', 'EUR']
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--bg-header);
-  backdrop-filter: blur(14px);
   box-shadow: var(--elev-1);
 }
 .kokpit-filtre-baslik {
@@ -444,8 +443,8 @@ const PARA_BIRIMLERI = ['TRY', 'USD', 'EUR']
     display: none;
   }
 }
-/* Kabuk 900 px'te sabit mobil üst bara geçiyor; üst bar da aynı eşikte
-   statikleşmeli. 761–900 bandında sticky başlık sabit barın altına kaçıyordu. */
+/* Kabuk 900 px'te sabit mobil üst bara geçiyor; üst bar mobilde statik kalır
+   (masaüstünde de akıştadır; sticky yok). */
 @media (max-width: 900px) {
   .kokpit-filtre {
     position: static;
