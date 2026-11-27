@@ -229,7 +229,7 @@ const PARA_BIRIMLERI = ['TRY', 'USD', 'EUR']
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .kokpit-eyebrow::before {
   content: '';

@@ -310,7 +310,7 @@
   background: rgba(148, 163, 184, 0.06);
 }
 [data-theme='light'] .sidebar-menu a.active {
-  color: var(--accent-hover);
+  color: var(--accent-text);
   background: var(--accent-soft);
 }
 [data-theme='light'] .sidebar-arama {
@@ -610,7 +610,7 @@ img {
   background: rgba(148, 163, 184, 0.08);
 }
 .sidebar-menu a.active {
-  color: var(--accent);
+  color: var(--accent-text);
   background: var(--accent-soft);
   box-shadow: inset 3px 0 0 var(--accent);
 }

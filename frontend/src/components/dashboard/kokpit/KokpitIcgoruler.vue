@@ -146,7 +146,7 @@ const hedef = (icgoru) => {
   border: 1px solid var(--accent-border);
   border-radius: var(--radius-pill);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 8.5px;
   font-weight: 700;
   letter-spacing: 0.05em;

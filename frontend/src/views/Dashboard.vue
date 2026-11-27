@@ -845,6 +845,11 @@ onBeforeUnmount(() => {
     --kokpit-icerik-max: 2600px;
   }
 }
+@media (min-width: 3700px) {
+  .kokpit-sayfa {
+    --kokpit-icerik-max: 2800px;
+  }
+}
 /* Kullanıcı tercihi: ferah görünüm. */
 .kokpit-sayfa--ferah {
   --kokpit-bosluk: 24px;

@@ -394,13 +394,14 @@ const dagitimEtiketi = computed(() =>
   gap: 3px;
   font-size: 10.5px;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent-text);
   text-decoration: none;
   white-space: nowrap;
 }
 .bolum-hizli-link:hover,
 .bolum-hizli-link:focus-visible {
-  color: var(--accent-hover);
+  color: var(--accent-text);
+  text-decoration: underline;
 }
 .bolum-hizli-link:focus-visible {
   outline: 2px solid var(--accent);
@@ -644,7 +645,7 @@ const dagitimEtiketi = computed(() =>
 }
 .nakit-grafik-secim-buton--aktif {
   background: var(--bg-card);
-  color: var(--accent);
+  color: var(--accent-text);
   box-shadow: var(--elev-1);
 }
 .nakit-grafik-secim-buton:focus-visible {
@@ -704,14 +705,15 @@ const dagitimEtiketi = computed(() =>
   padding: 4px 2px;
   border: 0;
   background: transparent;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 11.5px;
   font-weight: 700;
   cursor: pointer;
 }
 .finans-detay-buton:hover,
 .finans-detay-buton:focus-visible {
-  color: var(--accent-hover);
+  color: var(--accent-text);
+  text-decoration: underline;
 }
 .finans-detay-buton:focus-visible {
   outline: 2px solid var(--accent);

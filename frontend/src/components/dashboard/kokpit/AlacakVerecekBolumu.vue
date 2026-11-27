@@ -277,7 +277,7 @@ const cariDetay = (satir) => {
   border: 1px solid var(--accent-border);
   border-radius: var(--radius-xs);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 10px;
   font-weight: 600;
   white-space: nowrap;
@@ -478,7 +478,7 @@ const cariDetay = (satir) => {
   border: 1px solid var(--accent-border);
   border-radius: var(--radius-xs);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 9.5px;
   font-weight: 600;
   white-space: nowrap;
@@ -501,14 +501,15 @@ const cariDetay = (satir) => {
   padding: 4px 2px;
   border: 0;
   background: transparent;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 11.5px;
   font-weight: 700;
   cursor: pointer;
 }
 .finans-detay-buton:hover,
 .finans-detay-buton:focus-visible {
-  color: var(--accent-hover);
+  color: var(--accent-text);
+  text-decoration: underline;
 }
 .finans-detay-buton:focus-visible {
   outline: 2px solid var(--accent);

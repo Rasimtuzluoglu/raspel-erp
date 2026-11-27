@@ -522,10 +522,12 @@ describe('Anasayfa finans kokpiti', () => {
     cy.get('[data-test="kokpit-global-filtre"]').should('have.css', 'position', 'static')
   })
 
-  it('kokpit-genis-ekran: 1920 ve 2560ta icerik genisler, tasma olmaz', () => {
+  it('kokpit-genis-ekran: 1920, 2560 ve 3840ta icerik genisler, tasma olmaz', () => {
     const beklenen = [
       { genislik: 1920, enAz: 1650, enCok: 1750 },
-      { genislik: 2560, enAz: 2100, enCok: 2250 }
+      { genislik: 2560, enAz: 2100, enCok: 2250 },
+      // 4K: 2800 CSS tavan -> ~2520 fiziksel (zoom 0.9)
+      { genislik: 3840, enAz: 2450, enCok: 2600 }
     ]
     for (const { genislik, enAz, enCok } of beklenen) {
       cy.viewport(genislik, 1080)
