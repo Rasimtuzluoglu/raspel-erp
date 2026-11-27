@@ -360,12 +360,12 @@ const zamanMetni = (tarih) => {
 .akis-filtre:hover,
 .akis-filtre:focus-visible {
   border-color: var(--accent-border);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .akis-filtre--aktif {
   border-color: var(--accent-border);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .akis-filtre:focus-visible {
   outline: 2px solid var(--accent);

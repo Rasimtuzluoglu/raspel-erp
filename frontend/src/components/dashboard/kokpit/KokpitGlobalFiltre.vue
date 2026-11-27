@@ -287,7 +287,7 @@ const PARA_BIRIMLERI = ['TRY', 'USD', 'EUR']
 }
 .kokpit-donem-buton--aktif {
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   box-shadow: none;
 }
 .kokpit-para {

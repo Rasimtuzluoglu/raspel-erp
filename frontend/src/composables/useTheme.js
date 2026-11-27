@@ -39,6 +39,8 @@ function applyMode(m) {
   root.classList.toggle('p-dark', etkin === 'dark')
   localStorage.setItem(MODE_KEY, mode.value)
   temaRengiSenkron(etkin)
+  // Tema değişince aksan metni yeniden hesaplanır (inline token güncel kalır).
+  root.style.setProperty('--accent-text', aksanMetinRengi(accentColor.value, etkin === 'dark'))
 }
 
 /**
@@ -92,6 +94,71 @@ function hexToRgb(hex) {
   }
 }
 
+/** `#rrggbb` -> [r, g, b]; geçersizse null. */
+function hexDizi(hex) {
+  try {
+    const h = String(hex).replace('#', '')
+    if (h.length !== 6) return null
+    const dizi = [0, 2, 4].map((i) => parseInt(h.substring(i, i + 2), 16))
+    return dizi.some((n) => Number.isNaN(n)) ? null : dizi
+  } catch {
+    return null
+  }
+}
+
+function rgbHex(dizi) {
+  return '#' + dizi.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')
+}
+
+function karistir(a, b, oran) {
+  return a.map((v, i) => v + (b[i] - v) * oran)
+}
+
+/** WCAG bağıl parlaklık (0-1). */
+function parlaklik(rgb) {
+  const kanal = (v) => {
+    const s = v / 255
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
+  }
+  return 0.2126 * kanal(rgb[0]) + 0.7152 * kanal(rgb[1]) + 0.0722 * kanal(rgb[2])
+}
+
+/** İki rengin WCAG kontrast oranı (1-21); geçersiz renkte 0. */
+export function kontrastOrani(hexA, hexB) {
+  const a = hexDizi(hexA)
+  const b = hexDizi(hexB)
+  if (!a || !b) return 0
+  const [l1, l2] = [parlaklik(a), parlaklik(b)].sort((x, y) => y - x)
+  return (l1 + 0.05) / (l2 + 0.05)
+}
+
+/**
+ * Marka renginden küçük metin için WCAG-güvenli bir ton üretir.
+ *
+ * Hedef zemin `%18 aksan + kart` karışımıdır (rozet / aktif çip). Kart
+ * zemininden biraz daha zorlayıcı olduğu için sonuç her iki yüzeyde de geçer.
+ * Koyu temada beyaza, açık temada siyaha doğru ikili aramayla >= 5:1 aranır;
+ * 4.6 yerine 5 hedeflenir çünkü aktif çiplerde zemin `--bg-muted` üzerine
+ * bindiğinde varsayılan karışımdan birkaç puan daha koyu olabiliyor.
+ */
+export function aksanMetinRengi(hex, koyu) {
+  const taban = hexDizi(hex)
+  if (!taban) return koyu ? '#2dd4bf' : '#115e59'
+  const kart = koyu ? [20, 27, 38] : [255, 255, 255]
+  const zemin = rgbHex(karistir(kart, taban, 0.18))
+  if (kontrastOrani(hex, zemin) >= 5) return hex
+  const hedef = koyu ? [255, 255, 255] : [0, 0, 0]
+  let alt = 0
+  let ust = 1
+  for (let i = 0; i < 12; i += 1) {
+    const oran = (alt + ust) / 2
+    const deneme = rgbHex(karistir(taban, hedef, oran))
+    if (kontrastOrani(deneme, zemin) >= 5) ust = oran
+    else alt = oran
+  }
+  return rgbHex(karistir(taban, hedef, ust))
+}
+
 function applyColor(hex) {
   if (!hex) return
   accentColor.value = hex
@@ -107,6 +174,9 @@ function applyColor(hex) {
     style.setProperty('--accent-soft-strong', `rgba(${rgb}, 0.28)`)
     style.setProperty('--accent-border', `rgba(${rgb}, 0.42)`)
   }
+  // Küçük aksan metinleri için okunabilir ton (koyu: beyaza, açık: siyaha).
+  const koyu = document.documentElement.getAttribute('data-theme') !== 'light'
+  style.setProperty('--accent-text', aksanMetinRengi(hex, koyu))
   localStorage.setItem(COLOR_KEY, hex)
 }
 

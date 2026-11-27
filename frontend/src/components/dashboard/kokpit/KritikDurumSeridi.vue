@@ -219,15 +219,15 @@ const degerMetni = (oge) => {
 }
 .kritik-serit-oge--kritik .kritik-serit-rozet {
   background: var(--danger-soft);
-  color: var(--danger-text);
+  color: var(--danger-on-soft);
 }
 .kritik-serit-oge--uyari .kritik-serit-rozet {
   background: var(--warning-soft);
-  color: var(--warning-text);
+  color: var(--warning-on-soft);
 }
 .kritik-serit-oge--bilgi .kritik-serit-rozet {
   background: var(--info-soft);
-  color: var(--info-text);
+  color: var(--info-on-soft);
 }
 .kritik-serit-bos {
   display: flex;

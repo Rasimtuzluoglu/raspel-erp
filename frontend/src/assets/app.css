@@ -116,6 +116,19 @@
   --purple-soft: rgba(139, 92, 246, 0.15);
   --purple-border: rgba(139, 92, 246, 0.32);
 
+  /* Kucuk metinler icin tema-duyarli okunabilirlik token'lari (WCAG AA 4.5:1).
+     `--text-muted` ve `--accent` bilincli olarak degismez: ilki tum uygulamada
+     kullanilir, ikincisi marka dolgusudur. Bu token'lar yalniz ilgili
+     bilesenlerde (sidebar, rozet, aksan metni) kullanilir. */
+  --sidebar-metin: #94a3b8;
+  --sidebar-kbd: #94a3b8;
+  --sidebar-kredi: #8b99ad;
+  --danger-on-soft: #f87171;
+  --warning-on-soft: #f59e0b;
+  --info-on-soft: #60a5fa;
+  /* `useTheme` marka rengine gore runtime'da gunceller; bu deger ilk boyama icin. */
+  --accent-text: #2dd4bf;
+
   /* Renk paleti (tema-bagimsiz sabit tonlar) — kural icinde hex tekrari yerine
      tek otorite. Degerler mevcut gorunumu birebir korur. */
   --white: #ffffff;
@@ -174,7 +187,9 @@
   --bg-header: rgba(255, 255, 255, 0.85);
   --text-primary: #0f172a;
   --text-secondary: #475569;
-  --text-muted: #94a3b8;
+  /* #94a3b8 beyaz uzerinde 2.56:1 kaliyordu; #5b6b80 beyazda 5.44,
+     `--bg-muted` zemininde 4.95 ile AA esigini gecer (koyu tema degismez). */
+  --text-muted: #5b6b80;
   --accent: #0d9488;
   --accent-hover: #0f766e;
   --accent-contrast: #ffffff;
@@ -194,6 +209,14 @@
   --warning-text: #b45309;
   --danger-text: #b91c1c;
   --info-text: #1d4ed8;
+  /* Kucuk metin / rozet token'lari (bkz. :root aciklamasi). */
+  --sidebar-metin: #475569;
+  --sidebar-kbd: #475569;
+  --sidebar-kredi: #64748b;
+  --danger-on-soft: #b91c1c;
+  --warning-on-soft: #92400e;
+  --info-on-soft: #1d4ed8;
+  --accent-text: #115e59;
 }
 
 /* Semantik yardımcı sınıflar (uygulama temasına göre) */
@@ -344,7 +367,7 @@
   color: var(--slate-300);
 }
 [data-theme='light'] .sidebar-arama kbd {
-  color: var(--slate-400);
+  color: var(--sidebar-kbd);
 }
 
 html {
@@ -647,7 +670,7 @@ img {
   background: rgba(148, 163, 184, 0.06);
   border: 1px solid rgba(148, 163, 184, 0.1);
   border-radius: 8px;
-  color: var(--slate-500);
+  color: var(--sidebar-metin);
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
@@ -669,7 +692,7 @@ img {
   border-radius: 3px;
   font-size: 10px;
   font-family: inherit;
-  color: var(--slate-600);
+  color: var(--sidebar-kbd);
 }
 
 .sidebar-alt {
@@ -737,7 +760,7 @@ img {
   display: inline-block;
   font-size: 10px;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent-text);
   background: var(--accent-soft);
   padding: 1px 6px;
   border-radius: 4px;
@@ -856,10 +879,10 @@ img {
 
 .sidebar-credit {
   font-size: 10px;
-  color: var(--text-muted);
+  color: var(--sidebar-kredi);
   text-align: center;
   padding-top: 2px;
-  opacity: 0.6;
+  opacity: 1;
   letter-spacing: 0.3px;
 }
 

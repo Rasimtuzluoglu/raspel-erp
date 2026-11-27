@@ -215,13 +215,14 @@ const seriler = computed(() => [{
   align-items: center;
   gap: 4px;
   margin-top: 2px;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 11px;
   font-weight: 600;
   text-decoration: none;
 }
 .nakit-serit-link:hover {
-  color: var(--accent-hover);
+  color: var(--accent-text);
+  text-decoration: underline;
 }
 .nakit-serit-link:focus-visible {
   outline: 2px solid var(--accent);
